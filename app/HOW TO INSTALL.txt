@@ -1,0 +1,12 @@
+ZigaPlay, offline edition (built 2026-10-22 21:36 UTC)
+
+Put everything in this folder on any website host that serves files over https. Netlify Drop
+(app.netlify.com/drop) takes this zip exactly as it is; make a free account there so the site stays up.
+GitHub Pages works too.
+Open the address in Safari on your iPhone once while you are online, wait a few seconds,
+then tap Share, then Add to Home Screen. From then on, the ZigaPlay icon opens with no WiFi or cell service.
+
+Your saves live on that device, inside the Home Screen app. To move a Lynties game between this ZigaPlay
+and another one, use Menu, then Save code in Lynties, and "Use a save code" on the other title screen.
+
+ZigaPlay.html (sent next to this zip) is the same console in one file, for a computer or an app that opens HTML files.
