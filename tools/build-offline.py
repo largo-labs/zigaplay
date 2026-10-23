@@ -106,6 +106,14 @@ def main():
         html = FONT_LINK.sub('', read(os.path.join(src, c['file'])))
         for ref in re.findall(r'''(?:src|href)\s*=\s*["'](?!data:|https?:|#|blob:|javascript:|mailto:|about:)([^"'${}]+)["']''', html):
             print(f"warning: {c['id']} refers to {ref!r}, which the offline edition does not carry", file=sys.stderr)
+        # a game drawn with three.js (Lynties 3D) carries its copy of three.js inside itself offline
+        tdir = os.path.join(src, os.path.dirname(c['file']), '3d')
+        if '3d/three.module.min.js' in html and os.path.exists(os.path.join(tdir, 'three.core.min.js')):
+            core, mod = read(os.path.join(tdir, 'three.core.min.js')), read(os.path.join(tdir, 'three.module.min.js'))
+            if '</script' in core or '</script' in mod:
+                sys.exit('three.js contains </script and cannot be packed inline')
+            k = html.rfind('</body>')
+            html = (html[:k] if k >= 0 else html) + f'<script type="text/plain" id="three-core">{core}</script><script type="text/plain" id="three-mod">{mod}</script>' + (html[k:] if k >= 0 else '')
         packed.append(f'<script type="text/plain" id="cart-{c["id"]}">{b64(html.encode("utf-8"))}</script>')
         if c['art'] and not c['art'].startswith('data:'):
             art = read(os.path.join(src, c['art']), 'rb')

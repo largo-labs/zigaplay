@@ -288,7 +288,8 @@ html.wide .console.widegame .grille{display:none}
      the game reads it back with ZIGAPLAY.takeRestore('<id>').
 
    WHAT THE CONSOLE OFFERS A GAME   (window.parent.ZIGAPLAY, same origin)
-   - claude        this page's window.claude, so a game can keep cloud saves in this artifact's database.
+   - claude        this page's window.claude (through a bridge that rebuilds the game's objects as this
+                   page's own), so a game can keep cloud saves in this artifact's database.
                    Each game keeps its saves in its own folder: data/users/<user id>/<game id>/saves
    - AudioContext  use it (the console also sets it as the game's window.AudioContext before the game
                    runs) so presses on the console's own buttons can start the game's sound
@@ -498,9 +499,35 @@ addEventListener('blur',()=>{if(state!=='game')releaseAll()});
 for(const ev of['pointerdown','keydown'])addEventListener(ev,sfxUnlock,{capture:true,passive:true});
 
 /* ---------- what the games can reach ---------- */
+/* ---------- cloud saves for the games ----------
+   A game runs in its own frame, so the objects it hands to window.claude (a save's body, query options)
+   were made in that frame, and the platform can turn those down as not being plain objects. Every call a
+   game makes goes through this bridge instead: arguments are rebuilt as this page's own objects (functions,
+   such as snapshot listeners, pass through as they are), and what comes back (namespaces, document and
+   collection refs, queries, snapshots, promises) is wrapped the same way, so every later call is covered. */
+const ownCopy=x=>{if(x===null||typeof x!=='object')return x;if(Array.isArray(x))return x.map(ownCopy);
+  if(Object.prototype.toString.call(x)!=='[object Object]')return x;
+  const o={};for(const k of Object.keys(x))o[k]=ownCopy(x[k]);return o};
+const hasMethods=v=>{for(let o=v;o&&Object.getPrototypeOf(o)!==null;o=Object.getPrototypeOf(o))for(const k of Object.getOwnPropertyNames(o)){if(k==='constructor')continue;try{if(typeof v[k]==='function')return true}catch(e){}}return false};
+const bridged=new WeakMap();
+const bridge=v=>{
+  if(v===null||(typeof v!=='object'&&typeof v!=='function'))return v;
+  if(typeof v==='object'&&typeof v.then==='function')return v.then(bridge);
+  if(Array.isArray(v)||(typeof v==='object'&&!hasMethods(v)))return v;
+  if(bridged.has(v))return bridged.get(v);
+  const call=(f,self,a)=>bridge(f.apply(self,a.map(ownCopy)));
+  const p=new Proxy(typeof v==='function'?function(){}:{},{
+    get:(_,k)=>{const x=v[k];return typeof x==='function'?(...a)=>call(x,v,a):x},
+    has:(_,k)=>k in v,
+    apply:(_,self,a)=>call(v,undefined,a)});
+  bridged.set(v,p);return p};
+let claudeBridge=null;
+const gameClaude=()=>{const c=window.claude;if(!c||typeof c.use!=='function')return null;
+  return claudeBridge||(claudeBridge=Object.freeze({use:name=>Promise.resolve(c.use(name)).then(bridge)}))};
+
 window.ZIGAPLAY=Object.freeze({
   version:1,
-  get claude(){return window.claude},
+  get claude(){return gameClaude()},
   AudioContext:ZPAudioContext,
   takeRestore(id){const r=restore[id];delete restore[id];return r||null},
   cartReady(api){},

@@ -11,6 +11,14 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 
 Kettō's own source lives in [largo-labs/ketto](https://github.com/largo-labs/ketto). The cartridge here is built from it (see [Updating Kettō](#updating-ketto)).
 
+## This branch: Lynties in 3D
+
+On `lynties-3d`, Lynties draws its world in 3D. It's a toy-like diorama seen from behind and above, with toon-shaded trees, houses, walls and swaying tall grass. You and everyone you meet are small chibi figures, and your trainer wears the look you pick on the title screen. The game itself is unchanged: maps, battles, menus and saves all work as on `main`, and battles keep their pixel art.
+
+- `games/lynties/3d/` holds three.js (r183, MIT). The offline edition packs it inside the page.
+- `tools/lynties-3d/` builds the 3D cartridge from the regular game: `python3 tools/lynties-3d/build.py <regular lynties index.html> games/lynties/index.html`. The 3D layer lives in `tools/lynties-3d/src/w3d.js`.
+- If WebGL or three.js can't load, the game falls back to its pixel-art world.
+
 ## Playing it
 
 There are two ways to play from this repo:
