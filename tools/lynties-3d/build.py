@@ -33,9 +33,9 @@ def main(base, out):
         "const TIMG_G={},TIMG_O={};\nfunction buildTiles(){for(const[name,d]of Object.entries(TL)){TIMG[name]=[];TIMG_G[name]=[];TIMG_O[name]=[];for(let v=0;v<4;v++){const fr=[],gr=[],ob=[];")
 
     # the screen draws the 3D world when it can
-    rep("if(B&&B.shown){const sh=B.shake&&now-B.shake<260;ctx.save();if(sh)ctx.translate(Math.round((rnd()-.5)*5),Math.round((rnd()-.5)*4));drawBattle(now);ctx.restore()}else if(S&&S.flags.started)drawWorld(now);else{ctx.fillStyle='#0a1026';ctx.fillRect(0,0,W,H)}",
-        "const w3on=W3.ok&&!(B&&B.shown)&&!!(S&&S.flags.started);show3D(w3on);\n"
-        "  if(B&&B.shown){const sh=B.shake&&now-B.shake<260;ctx.save();if(sh)ctx.translate(Math.round((rnd()-.5)*5),Math.round((rnd()-.5)*4));drawBattle(now);ctx.restore()}else if(S&&S.flags.started){if(w3on)draw3D(now);else drawWorld(now)}else{ctx.fillStyle='#0a1026';ctx.fillRect(0,0,W,H)}")
+    rep("if(INTRO)drawIntro(now);else if(B&&B.shown){const sh=B.shake&&now-B.shake<260;ctx.save();if(sh)ctx.translate(Math.round((rnd()-.5)*5),Math.round((rnd()-.5)*4));drawBattle(now);ctx.restore()}else if(S&&S.flags.started)drawWorld(now);else{ctx.fillStyle='#0a1026';ctx.fillRect(0,0,W,H)}",
+        "const w3on=W3.ok&&!INTRO&&!(B&&B.shown)&&!!(S&&S.flags.started);show3D(w3on||(W3.ok&&!!INTRO));\n"
+        "  if(INTRO){if(W3.ok)w3intro(now);else drawIntro(now)}else if(B&&B.shown){const sh=B.shake&&now-B.shake<260;ctx.save();if(sh)ctx.translate(Math.round((rnd()-.5)*5),Math.round((rnd()-.5)*4));drawBattle(now);ctx.restore()}else if(S&&S.flags.started){if(w3on)draw3D(now);else drawWorld(now)}else{ctx.fillStyle='#0a1026';ctx.fillRect(0,0,W,H)}")
     rep("if(cv.width!==240||cv.height!==H){cv.width=240;cv.height=H}ctx.imageSmoothingEnabled=false}",
         "if(cv.width!==240||cv.height!==H){cv.width=240;cv.height=H}ctx.imageSmoothingEnabled=false;size3D()}")
 

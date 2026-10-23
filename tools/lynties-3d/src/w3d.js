@@ -410,29 +410,57 @@ function w3kidProto(key,p){
   root.traverse(o=>{if(o.isMesh&&!o.userData.outline)o.castShadow=true});
   return root}
 function w3at(o,x,y,z,rx=0,ry=0,rz=0,s=null){o.position.set(x,y,z);o.rotation.set(rx,ry,rz);if(s!=null)Array.isArray(s)?o.scale.set(...s):o.scale.setScalar(s);return o}
-function w3cap(head,col,OL,sides=true){const R=W3HR;
-  head.add(w3at(w3part(new THREE.SphereGeometry(R*1.075,26,16,0,Math.PI*2,0,Math.PI*.6),col,{ol:OL}),0,.005,-.01,-.5,0,0));
-  for(let i=-2;i<=2;i++){const a=i*.34;head.add(w3at(w3part(W3G.cone(6),col,{ol:OL*.7}),Math.sin(a)*R*.9,R*.52,Math.cos(a)*R*.8,Math.PI+.55,a,0,[.06,.13,.06]))}
-  if(sides)for(const s of[-1,1])head.add(w3at(w3part(new THREE.BoxGeometry(.055,.17,.13),col,{ol:OL*.7}),s*R*.99,-.03,-.03))}
-function w3hair(head,st,hair,hood,OL){const R=W3HR;
+/* a smooth hair shell over the head: from the crown down to a hairline that can dip into bangs at the front,
+   sideburns at the sides and the nape at the back. d is the angle away from the front of the face (0 front, PI back) */
+function w3shell(R,edge,{nf=56,nt=16,puff=.05}={}){const P2=[],idx=[];
+  for(let i=0;i<=nt;i++)for(let j=0;j<=nf;j++){const ph=Math.PI/2+Math.PI+j/nf*Math.PI*2,d=Math.abs(Math.atan2(Math.sin(ph-Math.PI/2),Math.cos(ph-Math.PI/2))),th=edge(d)*i/nt,r=R*(1+puff*Math.cos(th));
+    P2.push(-r*Math.cos(ph)*Math.sin(th),r*Math.cos(th),r*Math.sin(ph)*Math.sin(th))}
+  for(let i=0;i<nt;i++)for(let j=0;j<nf;j++){const a=i*(nf+1)+j,b=a+nf+1;idx.push(a,b,a+1,b,b+1,a+1)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P2,3));g.setIndex(idx);g.computeVertexNormals();return g}
+const w3ss=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+/* the hairline: forehead with scalloped bangs, a sideburn by each ear, and the nape */
+function w3hairline({front=.37,bang=.09,side=.5,burn=.08,back=.72,bangW=1.05,lobes=5}){const PI=Math.PI;
+  return d=>{const a=d/PI;let t=front+(back-front)*w3ss(.18,.92,a)+(side-front-(back-front)*w3ss(.18,.92,.5))*Math.exp(-(((a-.5)/.16)**2));
+    if(d<bangW){const k=1-d/bangW;t+=bang*Math.pow(Math.abs(Math.cos(d/bangW*PI*lobes/2)),1.4)*(.45+.55*k)}
+    t+=burn*Math.exp(-(((a-.4)/.045)**2));return t*PI}}
+function w3hair(head,st,hair,hood,OL){const R=W3HR,PI=Math.PI;
+  const shell=(edge,col,r=R*1.075,o={})=>head.add(w3part(w3shell(r,edge,o),col,{ol:OL}));
   if(st==='hood'){
-    head.add(w3part(new THREE.SphereGeometry(R*1.1,26,8,0,Math.PI*2,0,Math.PI*.36),hood,{ol:OL}));
-    head.add(w3part(new THREE.SphereGeometry(R*1.1,26,10,Math.PI/2+.9,Math.PI*2-1.8,Math.PI*.36,Math.PI*.46),hood,{ol:OL}));
-    head.add(w3at(w3part(new THREE.TorusGeometry(R*.82,.03,8,24,Math.PI*1.25),dk(hood),{ol:0}),0,-.005,R*.6,0,0,-Math.PI*.125));
-    for(let i=-1;i<=1;i++)head.add(w3at(w3part(W3G.cone(6),hair,{ol:OL*.6}),i*.07,R*.5,R*.85,Math.PI+.6,0,0,[.05,.1,.05]));
-    for(const s of[-1,1])head.add(w3at(new THREE.Mesh(W3G.cyl(5),w3toon('#f4f1ea')),s*.06,-R*.85,R*.62,0,0,0,[.008,.12,.008]));
+    /* the hood: a big soft shell with an oval face opening, a rim around it, and a little fringe peeking out */
+    const RH=R*1.2,nt=18,nf=40,top=.3*PI,bot=.88*PI,P2=[],idx=[],rimL=[],rimR=[];
+    for(let i=0;i<=nt;i++){const th=top+(bot-top)*i/nt,u=(th-top)/(bot-top),w=1.02*Math.pow(Math.sin(Math.min(1,u*1.25)*PI/2),.6)*(u>.82?1-(u-.82)*1.6:1);
+      for(let j=0;j<=nf;j++){const ph=PI/2+w+(PI*2-2*w)*j/nf,r=RH*(1-.06*u*u);P2.push(-r*Math.cos(ph)*Math.sin(th),r*Math.cos(th)-u*.03,r*Math.sin(ph)*Math.sin(th))}
+      const pl=P2.slice((i*(nf+1))*3,(i*(nf+1))*3+3),pr=P2.slice((i*(nf+1)+nf)*3,(i*(nf+1)+nf)*3+3);rimL.push(new THREE.Vector3(...pl));rimR.push(new THREE.Vector3(...pr))}
+    for(let i=0;i<nt;i++)for(let j=0;j<nf;j++){const a=i*(nf+1)+j,b=a+nf+1;idx.push(a,b,a+1,b,b+1,a+1)}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P2,3));g.setIndex(idx);g.computeVertexNormals();
+    head.add(w3part(g,hood,{ol:OL}));
+    head.add(w3part(new THREE.SphereGeometry(RH,40,10,0,PI*2,0,top),hood,{ol:OL}));
+    const rim=new THREE.CatmullRomCurve3([...rimL.slice().reverse(),...rimR]);head.add(w3part(new THREE.TubeGeometry(rim,40,.026,8,false),dk(hood),{ol:0}));
+    shell(w3hairline({front:.34,bang:.08,side:.46,burn:0,back:.5,bangW:.8,lobes:4}),hair,R*1.06);
+    for(const sx of[-1,1])head.add(w3at(w3part(new THREE.CapsuleGeometry(.012,.08,3,6),'#f4f1ea',{ol:0}),sx*.07,-R*1.02,R*.7,.25,0,0));
     return}
-  if(st==='cap'){w3cap(head,hair,OL);
-    head.add(w3at(w3part(new THREE.SphereGeometry(R*1.12,26,12,0,Math.PI*2,0,Math.PI*.44),hood,{ol:OL}),0,.02,-.005,-.18,0,0));
-    head.add(w3at(w3part(new THREE.CylinderGeometry(R*.95,R*.95,.03,24,1,false,-.9,1.8),dk(hood),{ol:OL*.8}),0,R*.5,R*.42,-.2,0,0));
-    head.add(w3at(w3part(W3G.ball(),dk(hood),{ol:0}),0,R*1.11,-.03,0,0,0,.028));return}
-  if(st==='long'){w3cap(head,hair,OL,false);
-    head.add(w3at(w3part(new THREE.BoxGeometry(.4,.46,.07),hair,{ol:OL}),0,-.17,-R*.86,.12,0,0));
-    for(const s of[-1,1])head.add(w3at(w3part(new THREE.BoxGeometry(.065,.36,.11),hair,{ol:OL*.8}),s*R*.99,-.14,.02));return}
-  /* short: a cap of hair with a couple of tufts on top */
-  w3cap(head,hair,OL);
-  head.add(w3at(w3part(W3G.cone(6),hair,{ol:OL*.7}),.03,R*1.02,-.02,-.4,0,-.5,[.05,.14,.05]));
-  head.add(w3at(w3part(W3G.cone(6),hair,{ol:OL*.7}),-.05,R*.98,-.07,-.7,0,.4,[.045,.12,.045]))}
+  if(st==='cap'){
+    shell(w3hairline({front:.42,bang:.06,side:.53,burn:.06,back:.72,lobes:4}),hair,R*1.05,{puff:0});
+    /* the cap: a crown tilted back a little, a band, a curved brim out front and a button on top */
+    const cap=new THREE.Group();cap.rotation.x=-.12;head.add(cap);
+    cap.add(w3part(new THREE.SphereGeometry(R*1.14,36,14,0,PI*2,0,PI*.5),hood,{ol:OL}));
+    const sh=new THREE.Shape(),N=24,Rb=R*1.1;for(let k=0;k<=N;k++){const u=PI*k/N,x=-Math.cos(u)*Rb,y=Math.sin(u)*(Rb*.62+.17);k?sh.lineTo(x,y):sh.moveTo(x,y)}
+    for(let k=N;k>=0;k--){const u=PI*k/N;sh.lineTo(-Math.cos(u)*Rb*.98,Math.sin(u)*Rb*.6)}
+    const bg=new THREE.ExtrudeGeometry(sh,{depth:.026,bevelEnabled:true,bevelThickness:.006,bevelSize:.006,bevelSegments:1,curveSegments:2});bg.rotateX(PI/2);
+    cap.add(w3at(w3part(bg,dk(hood),{ol:OL*.8}),0,R*.38,0,.18,0,0));
+    cap.add(w3at(w3part(W3G.ball(),dk(hood),{ol:0}),0,R*1.14,0,0,0,0,.03));
+    return}
+  if(st==='long'){
+    shell(w3hairline({front:.36,bang:.1,side:.58,burn:.1,back:.8,lobes:5}),hair,R*1.08);
+    /* soft hair falling down the back and two locks framing the face */
+    head.add(w3at(w3part(W3G.ball(),hair,{ol:OL}),0,-R*.62,-R*.5,.25,0,0,[R*1.02,R*1.22,R*.62]));
+    for(const sx of[-1,1])head.add(w3at(w3part(new THREE.CapsuleGeometry(.052,.2,4,10),hair,{ol:OL*.8}),sx*R*.9,-R*.72,R*.18,.1,0,sx*.12));
+    return}
+  /* short: a full head of hair with bangs, sideburns and a few tufts sweeping back */
+  shell(w3hairline({front:.37,bang:.1,side:.5,burn:.09,back:.7,lobes:5}),hair);
+  for(const[a,y,z,rx,rz,s]of[[.05,1.02,-.25,-1.1,-.3,1],[-.07,.94,-.45,-1.5,.35,.9],[.1,.82,-.62,-1.9,-.2,.8]])
+    head.add(w3at(w3part(W3G.cone(7),hair,{ol:OL*.7}),a*R,y*R,z*R,rx,0,rz,[.05*s,.15*s,.05*s]));
+  head.add(w3at(w3part(W3G.cone(6),hair,{ol:OL*.6}),.02,R*1.07,R*.12,.35,0,-.25,[.022,.09,.022]))}
 /* merge each moving part's static pieces into one mesh (and one outline), so a crowd stays cheap to draw */
 function w3bake(root,moving){root.updateMatrixWorld(true);
   for(const node of moving){const pieces=[],kill=[];const inv=new THREE.Matrix4().copy(node.matrixWorld).invert();
@@ -590,3 +618,32 @@ function w3look(now){const cv=$('#look3');if(!W3.ok||!cv)return false;
   const n=L2.kid,dt=Math.min(.05,(now-(L2.lt||now))/1000)||.016;L2.lt=now;
   w3animKid(n,dt,false,false,'down');n.yaw=0;n.root.rotation.y=Math.sin(now/1600)*.9+now/2600%(Math.PI*2)*0;n.root.rotation.y=(now/2200)%(Math.PI*2);
   L2.r.render(L2.sc,L2.cam);return true}
+
+/* ---------- the opening cutscene: Prof. Wren under a spotlight, with a Lynty, then you, then your rival ---------- */
+function w3intro(now){const I=INTRO;if(!I)return;const dt=Math.min(.05,(now-(W3.ilt||now))/1000)||.016;W3.ilt=now;
+  if(!W3.ix){const sc=new THREE.Scene(),bg=document.createElement('canvas');bg.width=4;bg.height=256;const g=bg.getContext('2d'),gr=g.createLinearGradient(0,0,0,256);
+    gr.addColorStop(0,'#121c44');gr.addColorStop(.55,'#33579a');gr.addColorStop(1,'#86b2e2');g.fillStyle=gr;g.fillRect(0,0,4,256);const bt=new THREE.CanvasTexture(bg);bt.colorSpace=THREE.SRGBColorSpace;sc.background=bt;
+    sc.add(new THREE.HemisphereLight('#ffffff','#46588a',1.7));const d=new THREE.DirectionalLight('#fff2dc',2.3);d.position.set(-2.5,6,4);d.castShadow=true;d.shadow.mapSize.set(1024,1024);
+    const sh=d.shadow.camera;sh.left=-3;sh.right=3;sh.top=3;sh.bottom=-3;sh.near=1;sh.far=20;d.shadow.radius=3;d.shadow.bias=-.0008;sc.add(d);
+    /* a soft spotlight on the floor */
+    const fc=document.createElement('canvas');fc.width=fc.height=128;const f2=fc.getContext('2d'),fg=f2.createRadialGradient(64,64,0,64,64,64);fg.addColorStop(0,'rgba(255,248,226,1)');fg.addColorStop(.6,'rgba(236,226,200,.85)');fg.addColorStop(1,'rgba(236,226,200,0)');f2.fillStyle=fg;f2.fillRect(0,0,128,128);
+    const ft=new THREE.CanvasTexture(fc);ft.colorSpace=THREE.SRGBColorSpace;const floor=new THREE.Mesh(new THREE.CircleGeometry(2.6,48).rotateX(-Math.PI/2),new THREE.MeshLambertMaterial({map:ft,transparent:true,depthWrite:false}));floor.receiveShadow=true;sc.add(floor);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(.3,.36,32),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));sc.add(ring);
+    W3.ix={sc,cam:new THREE.PerspectiveCamera(28,1,.1,60),ring,prof:null,right:null,key:''}}
+  const X=W3.ix,asp=W3.aspect||1,tanh=Math.tan(14*Math.PI/180),dist=Math.max(4.8,2.9/(2*tanh*asp));
+  if(X.cam.aspect!==asp){X.cam.aspect=asp;X.cam.updateProjectionMatrix()}X.cam.position.set(0,.4+dist*.2,dist);X.cam.lookAt(0,.32,0);
+  if(!X.prof){X.prof=w3kid('prof',PAL.prof);X.prof.root.position.set(-.72,0,0);X.sc.add(X.prof.root)}
+  const talking=!$('#dialog').hidden&&!!advanceFn;w3animKid(X.prof,dt,false,false,'down',null);X.prof.root.rotation.y=.42;X.prof.head.rotation.x+=talking?Math.sin(now/90)*.03:0;
+  /* whoever stands beside him */
+  const key=I.who+'|'+(I.who==='lyn'?I.lyn:I.who==='you'?JSON.stringify(PAL.player):'');
+  if(key!==X.key){X.key=key;if(X.right){X.sc.remove(X.right.root);if(X.right.tex)X.right.tex.dispose()}X.right=null;
+    if(I.who==='lyn'){const tx=w3tex(sprCanvas(I.lyn,true,false),{mip:false}),pl=new THREE.Mesh(new THREE.PlaneGeometry(1.35,1.35).translate(0,.675,0),new THREE.MeshLambertMaterial({map:tx,transparent:true,alphaTest:.45,side:THREE.DoubleSide}));
+      pl.castShadow=true;const root=new THREE.Group();root.add(pl);X.right={root,tex:tx,lyn:pl}}
+    else if(I.who==='you')X.right=w3kid('player',Object.assign({style:'hood'},PAL.player));
+    else if(I.who==='rival')X.right=w3kid('rival',PAL.rival);
+    if(X.right){X.right.root.position.set(.78,0,.05);X.sc.add(X.right.root)}}
+  const k=clamp((now-I.t0)/380,0,1),pop=k<1?1+Math.sin(k*Math.PI)*.18-(1-k)*(1-k):1;
+  if(X.right){const r=X.right;r.root.scale.setScalar((r.lyn?1:W3K.kid)*Math.max(.01,pop));
+    if(r.lyn)r.lyn.position.y=Math.sin(now/420)*.04;else{w3animKid(r,dt,false,false,'down',null);r.root.rotation.y=-.42}}
+  X.ring.position.set(.78,.6,.1);X.ring.lookAt(X.cam.position);X.ring.scale.setScalar(1+k*3.2);X.ring.material.opacity=I.who==='lyn'&&k<1?(1-k)*.9:0;
+  W3.r.render(X.sc,X.cam);ctx.clearRect(0,0,W,H)}

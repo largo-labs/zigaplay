@@ -13,7 +13,7 @@ Kettō's own source lives in [largo-labs/ketto](https://github.com/largo-labs/ke
 
 ## Lynties in 3D
 
-Lynties draws its world in 3D: a little diorama seen from behind and above, with smooth-lit trees, houses, cliffs, walls and swaying tall grass. You and everyone you meet are small chibi figures, and your trainer wears the look and the name you pick at the start. Battles keep their pixel art.
+Lynties draws its world in 3D: a little diorama seen from behind and above, with smooth-lit trees, houses, cliffs, walls and swaying tall grass. You and everyone you meet are small chibi figures. A new game opens with a cutscene: Prof. Wren explains Lynties with one of his own beside him, then asks what you look like, your name and your rival's name. Battles keep their pixel art.
 
 - `games/lynties/3d/` holds three.js (r183, MIT). The offline edition packs it inside the page.
 - The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.

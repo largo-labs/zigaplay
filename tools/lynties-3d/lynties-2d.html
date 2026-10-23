@@ -145,6 +145,7 @@ p{margin:0}
 .btn.primary{background:var(--coral);color:var(--line)}
 .btn.sm{padding:6px 12px;font-size:14px}
 #dialog .btn{background:var(--deck);color:var(--ink)}
+#dialog .btn.primary{background:var(--coral);color:var(--line)}
 .btn:disabled,.row:disabled,.irow:disabled{opacity:.45;cursor:default}
 
 /* sheet */
@@ -309,9 +310,9 @@ p{margin:0}
 /* your trainer: the look editor on the title screen */
 #tLookBtn .tl-in{display:inline-flex;align-items:center;gap:8px}
 #tLookImg{width:32px;height:32px;image-rendering:pixelated}
-.name-row{display:flex;gap:8px;align-items:center;width:320px;max-width:100%;margin:0 auto 10px}.name-row label{font-size:14px;color:var(--dim)}
-.name-row input{flex:1;min-width:0;font:inherit;font-size:16px;padding:9px 10px;border-radius:8px;border:2px solid var(--line);background:var(--deck-2);color:var(--ink);box-shadow:0 3px 0 var(--line)}
-.name-row input:focus{outline:3px solid var(--sand);outline-offset:1px}
+.ask-name{flex:1 1 100%;display:flex}.ask-name input{flex:1;min-width:0;font:inherit;font-size:16px;padding:9px 10px;border-radius:8px;border:2px solid var(--line);background:#fffaf0;color:#1b1430;box-shadow:inset 0 2px 0 rgba(27,20,48,.12)}
+.ask-name input:focus{outline:3px solid var(--coral);outline-offset:1px}
+#title.intro{background:rgba(8,12,30,.6)!important}#title.intro .kicker,#title.intro h1,#title.intro .parade,#title.intro .t-tag,#title.intro #tSnd{display:none}#title.intro .t-in{padding-top:12px}
 #lookCv{width:320px;max-width:100%;height:auto;aspect-ratio:160/88;image-rendering:pixelated;background:linear-gradient(180deg,#1d2a55 0%,#16365a 62%,#2a5e4a 62%,#24503f 100%);border:2px solid var(--line);border-radius:10px;box-shadow:0 3px 0 var(--line)}
 .look-rows{display:flex;flex-direction:column;gap:6px;width:100%}
 .look-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--deck);border:2px solid var(--line);border-radius:8px;box-shadow:0 2px 0 var(--line);padding:7px 10px;font-size:15px;color:var(--ink)}
@@ -584,7 +585,6 @@ body::before{content:"";position:fixed;inset:-50% 0 0;pointer-events:none;z-inde
     </div>
     <div class="t-slots" id="tLook" hidden>
       <p class="t-slot-title" id="tLookTitle">Your trainer</p>
-      <div class="name-row" id="nameRow" hidden><label for="tName">Name</label><input id="tName" maxlength="12" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Your name"><button class="btn sm" id="tNameRand">Random</button></div>
       <canvas id="lookCv" width="160" height="88" aria-label="Your trainer"></canvas>
       <div class="look-rows" id="lookRows"></div>
       <button class="btn primary" id="tLookDone">Done</button>
@@ -3951,7 +3951,7 @@ function trackFor(){if(EVO)return EVO.revealed?areaTrack():'evolve';if(B)return 
 let lastT=performance.now();
 function loop(now){const dt=Math.min(50,now-lastT);lastT=now;
   if(mode==='world')updateWorld(dt);
-  if(B&&B.shown){const sh=B.shake&&now-B.shake<260;ctx.save();if(sh)ctx.translate(Math.round((rnd()-.5)*5),Math.round((rnd()-.5)*4));drawBattle(now);ctx.restore()}else if(S&&S.flags.started)drawWorld(now);else{ctx.fillStyle='#0a1026';ctx.fillRect(0,0,W,H)}
+  if(INTRO)drawIntro(now);else if(B&&B.shown){const sh=B.shake&&now-B.shake<260;ctx.save();if(sh)ctx.translate(Math.round((rnd()-.5)*5),Math.round((rnd()-.5)*4));drawBattle(now);ctx.restore()}else if(S&&S.flags.started)drawWorld(now);else{ctx.fillStyle='#0a1026';ctx.fillRect(0,0,W,H)}
   if(EVO)drawEvo(now);
   MUS.want(trackFor());
   if(wipeT>0){ctx.fillStyle='#0a1026';const C=16,mx=W/2,my=H/2,md=mx+my;ctx.beginPath();
@@ -4567,23 +4567,70 @@ function renderSlots(){const list=$('#tSlotList');list.innerHTML='';const games=
     const d=el('button','slot-del','Delete');d.setAttribute('aria-label',`Delete ${nm}`);d.onclick=()=>{tConfirm=id;renderSlots()};
     row.append(b,d);list.append(row)});
   if(tConfirm==null){const f=list.querySelector('.slot');if(f)f.focus()}}
+/* ---------- the opening: Prof. Wren in a spotlight with one of his Lynties. He asks what you look like, your name,
+   and your rival's name, then the scene opens onto Lynhaven, where you pick your partner ---------- */
+let INTRO=null;
+const RIVAL_NAMES=['Remy','Blaze','Juno','Rook','Sasha','Theo','Vega','Kip','Nova','Ash','Quinn','Drew'];
+function introShow(who){if(INTRO){INTRO.who=who;INTRO.t0=performance.now()}}
+/* the trainer editor, over the scene */
+function lookStep(){return new Promise(res=>{const t=$('#title');t.classList.add('intro');t.hidden=false;$('#tMain').hidden=true;$('#tSlots').hidden=true;$('#tCodeBox').hidden=true;mode='title';
+  lookPanel(()=>{t.hidden=true;t.classList.remove('intro');$('#tLookBack').hidden=false;mode='intro';res()},'intro')})}
+/* the professor asks for a name: type one, or take a random one */
+function askName(text,who,{suggest=NAMES,def=''}={}){return new Promise(res=>{const prev=mode;mode='dialog';held.clear();const d=$('#dialog');d.hidden=false;const w=$('#dlgWho');w.textContent=who||'';w.hidden=!who;$('#dlgCaret').hidden=true;const c=$('#dlgChoices');c.innerHTML='';
+  const t=typer($('#dlgTxt'),text);advanceFn=()=>t.finish();
+  t.done.then(()=>{advanceFn=null;const row=el('div','ask-name'),inp=document.createElement('input');inp.maxLength=12;inp.value=def;inp.placeholder='Type a name';inp.autocomplete='off';inp.spellcheck=false;inp.setAttribute('autocapitalize','words');inp.setAttribute('enterkeyhint','done');inp.setAttribute('aria-label','Name');
+    const rb=el('button','btn sm','Random'),ok=el('button','btn sm primary','OK');
+    rb.onclick=()=>{let n;do n=pick(suggest);while(n===inp.value&&suggest.length>1);inp.value=n;MUS.sfx('tick')};
+    const done=()=>{const v=cleanName(inp.value);if(!v){rb.onclick();inp.focus();return}c.innerHTML='';d.hidden=true;mode=prev==='dialog'?'world':prev;MUS.sfx('chime');res(v)};
+    ok.onclick=done;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();done()}});inp.addEventListener('click',e=>e.stopPropagation());
+    row.append(inp);c.append(row,rb,ok);(def?ok:rb).focus({preventScroll:true})})})}
 async function newGame(slot){
-  const nm=cleanName($('#tName').value)||pick(NAMES);
-  const no=nextSaveNo();SLOT=String(slot);S=newState();S.saveNo=no;S.name=nm;S.look=Object.assign({},LOOK);setMap('world');syncMap(CM);const ly=TOWNS[0].y0;Object.assign(P,{x:20,y:ly+6,fx:20,fy:ly+6,t:1,dir:'up',moving:false});S.flags.started=true;hideTitle();mode='world';curZone='t0';updTop();
-  await sleep(350);
-  await talk([`Ah, there you are, ${nm}! I'm Professor Wren.`,"Lynties are the creatures that live all over this land. Each one has an element: Water, Fire, Earth, Air, Leaf, Spark, Frost or Shadow.","Elements matter in battle. Water puts out Fire, Fire burns Leaf, and Leaf drinks up Water. Every element is strong against some and weak against others.","Lynties grow stronger as they battle, and every one evolves twice: at level 30, and into its final form at level 60.","Now, pick your partner!"],'Prof. Wren');
+  const no=nextSaveNo();SLOT=String(slot);S=newState();S.saveNo=no;S.look=Object.assign({},LOOK);setMap('world');syncMap(CM);hideTitle();updTop();
+  const lyn=pick(ORDER.filter(id=>!SP[id].leg&&!SP[id].cave)),W2='Prof. Wren';
+  INTRO={who:'none',lyn,t0:performance.now()};mode='intro';
+  await sleep(600);
+  await talk(["Hello there! Welcome to the world of Lynties!","My name is Wren. Around here, people call me the Lynty Professor."],W2);
+  introShow('lyn');MUS.sfx('chime');await sleep(700);
+  await talk([`This is ${SP[lyn].name}. Creatures like it are called Lynties.`,"Lynties live all over this land. Each one has an element: Water, Fire, Earth, Air, Leaf, Spark, Frost or Shadow.","Elements matter in battle. Water puts out Fire, Fire burns Leaf, and Leaf drinks up Water. Every element is strong against some and weak against others.","Lynties grow stronger as they battle, and every one evolves twice: at level 30, and into its final form at level 60."],W2);
+  introShow('none');
+  await talk(["Now, tell me a little about yourself. What do you look like?"],W2);
+  await lookStep();S.look=Object.assign({},LOOK);
+  introShow('you');await sleep(450);
+  const nm=await askName("Ah, I see! And what's your name?",W2,{suggest:NAMES});S.name=nm;
+  await talk([`${nm}, is it? What a fine name!`],W2);
+  introShow('rival');await sleep(450);
+  await talk(["This is my apprentice. You two have been rivals for as long as anyone can remember."],W2);
+  const rn=await askName("...Er, what was their name again?",W2,{suggest:RIVAL_NAMES,def:'Remy'});S.flags.rivalName=rn;
+  await talk([`That's right! ${rn}!`],W2);
+  introShow('you');await sleep(350);
+  await talk([`${nm}, your very own Lynty adventure is about to begin!`,"Come find me outside my lab, and I'll give you a partner of your own."],W2);
+  const ly=TOWNS[0].y0;
+  await wipe(async()=>{INTRO=null;Object.assign(P,{x:20,y:ly+6,fx:20,fy:ly+6,t:1,dir:'up',moving:false});S.flags.started=true;curZone='t0';updTop()});
+  mode='world';await sleep(300);
+  await talk(["There you are! Now, pick your partner!"],W2);
   const id=await pickStarter();
   S.team.push(mkMon(id,10));caughtMark(id);S.flags.starter=true;S.flags.rivalSp=RIVAL_PICK[id]||'shellby';S.flags.rivalN=0;
-  await talk([`${SP[id].name}! A wonderful choice.`,'When a wild Lynty is worn down in battle, toss a Bond Charm to befriend it. Here are a few to start.'],'Prof. Wren');
+  await talk([`${SP[id].name}! A wonderful choice.`,'When a wild Lynty is worn down in battle, toss a Bond Charm to befriend it. Here are a few to start.'],W2);
   const r=S.flags.rivalSp,e=await rivalArrive();
-  await talk(["Professor! Did I miss it? You said I could pick a partner too!"],RIVAL.short);
-  await talk([`Right on time, Remy. This is ${nm}.`],'Prof. Wren');
-  await talk([`Hi, ${nm}! You picked ${SP[id].name}? Then I'll take ${SP[r].name}. It's strong against yours!`,"Every time you beat a Warden, I'll come find you. Let's see whose partner gets stronger!"],RIVAL.short);
+  await talk(["Professor! Did I miss it? You said I could pick a partner too!"],rn);
+  await talk([`Right on time, ${rn}.`],W2);
+  await talk([`Hey, ${nm}! You picked ${SP[id].name}? Then I'll take ${SP[r].name}. It's strong against yours!`,"Every time you beat a Warden, I'll come find you. Let's see whose partner gets stronger!"],rn);
   await rivalLeave(e);
-  await talk([`Off you go, ${nm}!`],'Prof. Wren');
+  await talk([`Off you go, ${nm}!`],W2);
   save();zoneToast(zoneAt(CM,P.y))}
+/* the scene in pixel art (the 3D world draws its own) */
+const _ipx={};
+function drawIntro(now){const I=INTRO,g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#14204a');g.addColorStop(.6,'#35589a');g.addColorStop(1,'#7aa6d8');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const by=Math.round(H*.6);ctx.globalAlpha=.35;pEll(W/2,by,104,13,'#fff6d8');ctx.globalAlpha=1;
+  const pc=_ipx.prof||(_ipx.prof=trainerBuf(PAL.prof,'idle').canvas(1));ctx.drawImage(pc,Math.round(W*.27)-32,by-86,64,88);
+  const k=clamp((now-I.t0)/360,0,1),sc=k<1?Math.sin(k*Math.PI*.6)/Math.sin(Math.PI*.6)*1.08:1;
+  if(I.who==='lyn'){const c=sprCanvas(I.lyn,true,false),z=Math.round(80*sc),bob=Math.round(Math.sin(now/420)*2);if(z>0)ctx.drawImage(c,Math.round(W*.7)-z/2,by-z+4+bob,z,z);
+    if(k<1){ctx.globalAlpha=1-k;ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(Math.round(W*.7),by-36,8+k*40,0,7);ctx.stroke();ctx.globalAlpha=1}}
+  else if(I.who==='you'||I.who==='rival'){const key=I.who+JSON.stringify(I.who==='you'?PAL.player:PAL.rival),c=_ipx[key]||(_ipx[key]=trainerBuf(I.who==='you'?PAL.player:PAL.rival,'idle').canvas(1));
+    ctx.save();ctx.globalAlpha=Math.min(1,k*1.5);ctx.translate(Math.round(W*.7)+32,0);ctx.scale(-1,1);ctx.drawImage(c,0,by-86,64,88);ctx.restore()}}
 /* ---------- Remy, your rival: after every Warden you beat, Remy is waiting outside with a stronger team ---------- */
-const RIVAL={id:'remy',name:'Rival Remy',short:'Remy'};
+const rivalName=()=>S&&S.flags.rivalName||'Remy',rivalT=()=>({id:'remy',name:'Rival '+rivalName(),short:rivalName()});
+PAL.rival={hood:'#c8402e',hair:'#c8402e',style:'short',skin:'#e8b98f',coat:'#2f3550',pants:'#3b3a52',boots:'#1b1430',bag:'#ffd36a'};
 const RIVAL_PICK={embrit:'shellby',shellby:'sproutle',sproutle:'embrit'};
 const RIVAL_MATES=['gustling','pebblit','zapkit','chillbit','dusklet'];
 const wardenCrests=()=>(S.crests||[]).filter(id=>WARD.some(w=>w.id===id)).length;
@@ -4606,13 +4653,13 @@ const RIVAL_LINES=[
   {pre:n=>["Eight crests. Only the Champion is left.","But before you face Wren, you face me. Give it everything you've got!"],win:n=>["...That was our best battle ever.",`Go beat Wren, ${n}. When you're done, I'll be waiting for a rematch.`]},
 ];
 /* Remy walks up to you from a few tiles away, or just appears beside you if there's no room */
-async function rivalArrive(){PAL.rival=PAL.rival||{hood:'#c8402e',hair:'#c8402e',style:'short',skin:'#e8b98f',coat:'#2f3550',pants:'#3b3a52',boots:'#1b1430',bag:'#ffd36a'};
+async function rivalArrive(){
   const free=(x,y)=>walkT(tAt(x,y))&&!entAt(x,y)&&!warpAt(x,y)&&!(x===P.x&&y===P.y);
   mode='dialog';held.clear();running=false;
   for(const d of['down','left','right','up']){const[dx,dy]=DIRV[d];if(![1,2,3].every(k=>free(P.x+dx*k,P.y+dy*k)))continue;
-    const e=npcE(P.x+dx*3,P.y+dy*3,OPP[d],'rival',RIVAL.short,()=>{},{rival:1});CM.ents.push(e);P.dir=d;
+    const e=npcE(P.x+dx*3,P.y+dy*3,OPP[d],'rival',rivalName(),()=>{},{rival:1});CM.ents.push(e);P.dir=d;
     MUS.sfx('spot');e.alert=1;await sleep(600);e.alert=0;await entStep(e,OPP[d]);await entStep(e,OPP[d]);mode='world';return e}
-  for(const d of['down','left','right','up']){const[dx,dy]=DIRV[d];if(!free(P.x+dx,P.y+dy))continue;const e=npcE(P.x+dx,P.y+dy,OPP[d],'rival',RIVAL.short,()=>{},{rival:1});CM.ents.push(e);P.dir=d;MUS.sfx('spot');await sleep(300);mode='world';return e}
+  for(const d of['down','left','right','up']){const[dx,dy]=DIRV[d];if(!free(P.x+dx,P.y+dy))continue;const e=npcE(P.x+dx,P.y+dy,OPP[d],'rival',rivalName(),()=>{},{rival:1});CM.ents.push(e);P.dir=d;MUS.sfx('spot');await sleep(300);mode='world';return e}
   mode='world';return null}
 async function rivalLeave(e){if(!e)return;const m=MAPS.world;
   if(CM===m&&m.ents.includes(e)){mode='dialog';held.clear();const d=OPP[e.dir],[dx,dy]=DIRV[d];
@@ -4620,11 +4667,11 @@ async function rivalLeave(e){if(!e)return;const m=MAPS.world;
   for(const mm of Object.values(MAPS)){const i=mm.ents.indexOf(e);if(i>=0)mm.ents.splice(i,1)}}
 async function rivalChallenge(){if(!rivalDue()||!canFight())return;const k=(S.flags.rivalN||0)+1,L2=RIVAL_LINES[clamp(k,1,8)-1],nm=pname();
   const e=await rivalArrive();
-  await talk(S.flags.rivalLost===k?["Back for more? Good. Let's go again!"]:L2.pre(nm),RIVAL.short);
+  await talk(S.flags.rivalLost===k?["Back for more? Good. Let's go again!"]:L2.pre(nm),rivalT().short);
   const team=rivalTeam(k),z=zoneAt(CM,P.y);
-  const res=await runBattle({trainer:RIVAL,team,reg:{bg:THEMES[z.theme].bg}});
+  const res=await runBattle({trainer:rivalT(),team,reg:{bg:THEMES[z.theme].bg}});
   if(res==='win'){S.flags.rivalN=k;delete S.flags.rivalLost;const rw=Math.round(8*Math.max(...team.map(m=>m.lvl)));S.shells+=rw;updTop();save();
-    await talk([...L2.win(nm),`You received ${rw} shells.`],RIVAL.short);await rivalLeave(e)}
+    await talk([...L2.win(nm),`You received ${rw} shells.`],rivalT().short);await rivalLeave(e)}
   else{S.flags.rivalLost=k;await rivalLeave(e)}}
 
 function firstLocked(){for(let i=1;i<TOWNS.length-1;i++)if(!S.crests.includes(TOWNS[i].ward))return i;return TOWNS.length-1}
@@ -4683,14 +4730,14 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)saveOnLeave
 addEventListener('pagehide',saveOnLeave);
 $('#tCont').onclick=()=>{const n=lastSlot(),sv=n&&readSlot(n);if(sv)continueGame(sv,n)};
 $('#tLoad').onclick=()=>slotPanel();
-$('#tNew').onclick=()=>lookPanel(()=>newGame(newSlotId()));
+$('#tNew').onclick=()=>newGame(newSlotId());
 $('#tLookBtn').onclick=()=>lookPanel(null);$('#tLookImg').src=personCanvas('player','down',0).toDataURL();
 /* the look editor: each row is one choice. Left and right (or tapping the row's left or right half) step through it */
 let lookAfter=null,lookRaf=0;
 const LOOK_ROWS=[['style','Style'],['hair','Hair'],['hat','Hood / cap'],['skin','Skin'],['coat','Coat'],['pants','Trousers'],['bag','Bag']];
 const lookRowOn=k=>k==='hat'?LOOK.style==='hood'||LOOK.style==='cap':k==='hair'?LOOK.style!=='hood':true;
-function lookPanel(after){lookAfter=after;$('#tMain').hidden=true;$('#tLook').hidden=false;$('#nameRow').hidden=!after;if(after)$('#tName').value='';
-  $('#tLookTitle').textContent=after?'Make your trainer':'Your trainer';$('#tLookDone').textContent=after?'Start your journey':'Done';
+function lookPanel(after,kind){lookAfter=after;$('#tMain').hidden=true;$('#tLook').hidden=false;$('#tLookBack').hidden=kind==='intro';
+  $('#tLookTitle').textContent=kind==='intro'?'What do you look like?':after?'Make your trainer':'Your trainer';$('#tLookDone').textContent=kind==='intro'?"That's me!":after?'Start your journey':'Done';
   renderLook();requestAnimationFrame(()=>{const b=$('#lookRows button');if(b)b.focus()});cancelAnimationFrame(lookRaf);lookRaf=requestAnimationFrame(lookTick)}
 function closeLook(){$('#tLook').hidden=true;cancelAnimationFrame(lookRaf);setLook(LOOK,true)}
 function renderLook(){const rows=$('#lookRows'),fk=document.activeElement&&rows.contains(document.activeElement)?document.activeElement.dataset.k:null;rows.innerHTML='';
@@ -4707,10 +4754,8 @@ function lookTick(now){if($('#tLook').hidden)return;const cv2=$('#lookCv'),g=cv2
   const dirs=['down','left','up','right'],d=dirs[Math.floor(now/1800)%4],fr=Math.floor(now/220)%4;
   g.fillStyle='rgba(9,15,36,.3)';g.beginPath();g.ellipse(120,84,18,3,0,0,7);g.fill();
   g.drawImage(personCanvas('player',d,fr===1?1:fr===3?2:0),96,32,48,48);lookRaf=requestAnimationFrame(lookTick)}
-$('#tNameRand').onclick=()=>{const cur=$('#tName').value;let n;do n=pick(NAMES);while(n===cur);$('#tName').value=n;MUS.sfx('tick')};
-$('#tName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#tName').blur()}});
 $('#tLookDone').onclick=()=>{const a=lookAfter;lookAfter=null;closeLook();if(a)a();else{$('#tMain').hidden=false;$('#tLookBtn').focus()}};
-$('#tLookBack').onclick=()=>{lookAfter=null;closeLook();$('#tMain').hidden=false;$('#tLookBtn').focus()};
+$('#tLookBack').onclick=()=>{if($('#title').classList.contains('intro'))return;lookAfter=null;closeLook();$('#tMain').hidden=false;$('#tLookBtn').focus()};
 /* keyboard on the look editor: up and down move between rows, left and right change one */
 addEventListener('keydown',e=>{if(mode!=='title'||$('#tLook').hidden)return;const ae=document.activeElement,bs=[...$('#tLook').querySelectorAll('button')],i=bs.indexOf(ae);
   if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&ae&&ae.classList.contains('look-row')){e.preventDefault();lookCycle(ae.dataset.k,e.key==='ArrowLeft'?-1:1)}
