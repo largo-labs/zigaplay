@@ -4,7 +4,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 
 | Cartridge | What it is | Controls |
 |---|---|---|
-| **Lynties** | A creature RPG: explore the Long Road, beat eight Wardens, and bond with 146 Lynties. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
+| **Lynties** | A creature RPG: explore the Long Road, beat eight Wardens, and bond with 146 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Kettō** | Pixel samurai duels, tournaments, a Fighter Forge and a 20-chapter 3D story. It plays sideways. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · START pause |
