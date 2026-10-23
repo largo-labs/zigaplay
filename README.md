@@ -4,20 +4,21 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 
 | Cartridge | What it is | Controls |
 |---|---|---|
-| **Lynties** | A creature RPG: explore the Long Road, beat eight Wardens, and bond with 146 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
+| **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 146 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Kettō** | Pixel samurai duels, tournaments, a Fighter Forge and a 20-chapter 3D story. It plays sideways. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · START pause |
 
 Kettō's own source lives in [largo-labs/ketto](https://github.com/largo-labs/ketto). The cartridge here is built from it (see [Updating Kettō](#updating-ketto)).
 
-## This branch: Lynties in 3D
+## Lynties in 3D
 
-On `lynties-3d`, Lynties draws its world in 3D. It's a toy-like diorama seen from behind and above, with toon-shaded trees, houses, walls and swaying tall grass. You and everyone you meet are small chibi figures, and your trainer wears the look you pick on the title screen. The game itself is unchanged: maps, battles, menus and saves all work as on `main`, and battles keep their pixel art.
+Lynties draws its world in 3D: a little diorama seen from behind and above, with smooth-lit trees, houses, cliffs, walls and swaying tall grass. You and everyone you meet are small chibi figures, and your trainer wears the look and the name you pick at the start. Battles keep their pixel art.
 
 - `games/lynties/3d/` holds three.js (r183, MIT). The offline edition packs it inside the page.
-- `tools/lynties-3d/` builds the 3D cartridge from the regular game: `python3 tools/lynties-3d/build.py <regular lynties index.html> games/lynties/index.html`. The 3D layer lives in `tools/lynties-3d/src/w3d.js`.
-- If WebGL or three.js can't load, the game falls back to its pixel-art world.
+- The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.
+- `tools/lynties-3d/src/w3d.js` is the 3D world. `tools/lynties-3d/build.py` adds it to the game to make the cartridge: `python3 tools/lynties-3d/build.py tools/lynties-3d/lynties-2d.html games/lynties/index.html`.
+- If WebGL or three.js can't load, the cartridge falls back to the pixel-art world.
 
 ## Playing it
 
@@ -55,6 +56,10 @@ tools/ketto-cart.py         builds games/ketto/index.html from a checkout of lar
 - **Inside the console:** games detect it with `window.parent.ZIGAPLAY`, and each one still runs fine on its own. Every game prefixes its `localStorage` keys with its own id, because they all share one origin.
 
 The full contract is the comment above `CARTS` in `index.html`.
+
+## Updating Lynties
+
+Edit the game in `tools/lynties-3d/lynties-2d.html`, or the 3D world in `tools/lynties-3d/src/w3d.js`. Then rebuild the cartridge with the command above and rebuild `app/`.
 
 ## Adding a game
 
