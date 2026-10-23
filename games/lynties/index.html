@@ -310,6 +310,9 @@ p{margin:0}
 /* your trainer: the look editor on the title screen */
 #tLookBtn .tl-in{display:inline-flex;align-items:center;gap:8px}
 #tLookImg{width:32px;height:32px;image-rendering:pixelated}
+.name-row{display:flex;gap:8px;align-items:center;width:320px;max-width:100%;margin:0 auto 10px}.name-row label{font-size:14px;color:var(--dim)}
+.name-row input{flex:1;min-width:0;font:inherit;font-size:16px;padding:9px 10px;border-radius:8px;border:2px solid var(--line);background:var(--deck-2);color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.name-row input:focus{outline:3px solid var(--sand);outline-offset:1px}
 .look-stage{position:relative;width:320px;max-width:100%;margin:0 auto}#look3{position:absolute;right:3%;top:3%;width:40%;height:94%;pointer-events:none}
 #lookCv{display:block;width:320px;max-width:100%;height:auto;aspect-ratio:160/88;image-rendering:pixelated;background:linear-gradient(180deg,#1d2a55 0%,#16365a 62%,#2a5e4a 62%,#24503f 100%);border:2px solid var(--line);border-radius:10px;box-shadow:0 3px 0 var(--line)}
 .look-rows{display:flex;flex-direction:column;gap:6px;width:100%}
@@ -583,6 +586,7 @@ body::before{content:"";position:fixed;inset:-50% 0 0;pointer-events:none;z-inde
     </div>
     <div class="t-slots" id="tLook" hidden>
       <p class="t-slot-title" id="tLookTitle">Your trainer</p>
+      <div class="name-row" id="nameRow" hidden><label for="tName">Name</label><input id="tName" maxlength="12" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Your name"><button class="btn sm" id="tNameRand">Random</button></div>
       <div class="look-stage"><canvas id="lookCv" width="160" height="88" aria-label="Your trainer"></canvas><canvas id="look3" aria-hidden="true"></canvas></div>
       <div class="look-rows" id="lookRows"></div>
       <button class="btn primary" id="tLookDone">Done</button>
@@ -3668,7 +3672,8 @@ async function doWarp(w){if(mode!=='world')return;
   await wipe(async()=>{setMap(w.map);syncMap(CM);Object.assign(P,{x:w.tx,y:w.ty,fx:w.tx,fy:w.ty,t:1,moving:false,dir:w.dir||P.dir})});
   mode='world';
   if(CM.interior){curZone=null;interiorToast()}else{const z=zoneAt(CM,P.y);curZone=z.key;enterZone(z)}
-  save()}
+  save();
+  if(CM.id==='world'&&rivalDue()){await sleep(250);if(mode==='world')await rivalChallenge()}}
 function interiorToast(){if(CM.sanctum){const id=S.flags.altarSp,on=S.flags.champ&&!S.flags.altarDone&&id;showToastBox(CM.name,on?`${S.flags.altarShiny?'✦ A SHINY ':''}${SP[id].name} rests on the altar`:'The altar has given its gift',S.flags.altarShiny&&on?'#ffe27a':'#e0b84a');if(on&&S.flags.altarShiny)MUS.sfx('shiny');return}const tw=townById(CM.town);showToastBox(CM.name,CM.hall?'Solve each puzzle · beat 3 fighters':tw.name,CM.hall&&tw.ward?HALL_C[wardOf(tw.ward).el||'crown']:'#f1c66b')}
 /* line of sight: four tiles straight ahead, blocked by walls, gates and people */
 function sees(e){const[dx,dy]=DIRV[e.dir];for(let k=1;k<=4;k++){const x=e.x+dx*k,y=e.y+dy*k;if(x===P.x&&y===P.y)return true;if(!walkT(tAt(x,y))||entAt(x,y))return false}return false}
@@ -3955,7 +3960,7 @@ let lastT=performance.now();
    the game simply keeps the pixel-art view. */
 let THREE=null;
 var W3={ok:false,stats:()=>W3.r?Object.assign({},W3.r.info.render,{geos:W3.r.info.memory.geometries,tex:W3.r.info.memory.textures,chunks:W3.chunks.size,ents:W3.ents.size}):null,failed:false,loading:false,m:null,chunks:new Map(),ents:new Map(),U:null,shown:false,frame:0};
-const W3K={fov:34,pitch:.8,viewW:9.4,CH:12,PAD:4,ahead:12,behind:7,kid:1.32};
+const W3K={fov:34,pitch:.8,viewW:9.4,CH:12,PAD:4,ahead:12,behind:7,kid:1.32,gs:2};
 
 function load3D(){
   if(W3.loading||W3.ok)return;
@@ -3977,10 +3982,10 @@ function init3D(){
   try{
     const box=$('#screenBox'),c=document.createElement('canvas');c.id='cv3';box.insertBefore(c,box.firstChild);
     const r=new THREE.WebGLRenderer({canvas:c,antialias:true,powerPreference:'high-performance'});
-    r.outputColorSpace=THREE.SRGBColorSpace;r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
+    r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.NeutralToneMapping;r.toneMappingExposure=1.05;r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFShadowMap;
     const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(W3K.fov,1,1,120);
     const hemi=new THREE.HemisphereLight('#ffffff','#5a6470',1.5),sun=new THREE.DirectionalLight('#fff3dc',2.4);
-    sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+    sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.radius=3;
     const s2=sun.shadow.camera;s2.left=-12;s2.right=12;s2.top=12;s2.bottom=-12;s2.near=1;s2.far=70;sun.shadow.bias=-.0006;sun.shadow.normalBias=.03;
     sc.add(hemi,sun,sun.target);
     const lamp=new THREE.PointLight('#ffd9a0',0,13,1.1);sc.add(lamp);
@@ -3998,7 +4003,7 @@ function show3D(on){if(!W3.ok||W3.shown===on)return;W3.shown=on;W3.cv.style.visi
 
 /* ---------- materials: banded toon shading, ink outlines, and a see-through hole around you ---------- */
 let _w3grad=null;
-function w3grad(){if(_w3grad)return _w3grad;const d=new Uint8Array([105,175,255,255]);_w3grad=new THREE.DataTexture(d,4,1,THREE.RedFormat);_w3grad.minFilter=_w3grad.magFilter=THREE.NearestFilter;_w3grad.needsUpdate=true;return _w3grad}
+function w3grad(){if(_w3grad)return _w3grad;const d=new Uint8Array([150,188,222,255]);_w3grad=new THREE.DataTexture(d,4,1,THREE.RedFormat);_w3grad.minFilter=_w3grad.magFilter=THREE.NearestFilter;_w3grad.needsUpdate=true;return _w3grad}
 /* anything standing between the camera and you dissolves in a fine dither, so walls and trees never hide you */
 const W3FADE=`varying vec3 vW3;uniform vec3 uPly;uniform vec3 uCam;
 const float W3BY[16]=float[16](0.,8.,2.,10.,12.,4.,14.,6.,3.,11.,1.,9.,15.,7.,13.,5.);
@@ -4016,7 +4021,9 @@ function w3fadeable(mat){mat.onBeforeCompile=sh=>{sh.uniforms.uPly=W3.U.uPly;sh.
 const _w3m=new Map();
 function w3toon(hex,o={}){const k='t'+hex+JSON.stringify(o);if(_w3m.has(k))return _w3m.get(k);const{fade,...rest}=o;
   const m=new THREE.MeshToonMaterial(Object.assign({color:new THREE.Color(hex),gradientMap:w3grad()},rest));if(fade)w3fadeable(m);_w3m.set(k,m);return m}
-function w3vc(fade){const k='vc'+(fade?1:0);if(_w3m.has(k))return _w3m.get(k);const m=new THREE.MeshToonMaterial({vertexColors:true,gradientMap:w3grad()});if(fade)w3fadeable(m);_w3m.set(k,m);return m}
+function w3vc(fade,toon=false){const k='vc'+(fade?1:0)+(toon?'t':'');if(_w3m.has(k))return _w3m.get(k);const m=toon?new THREE.MeshToonMaterial({vertexColors:true,gradientMap:w3grad()}):new THREE.MeshLambertMaterial({vertexColors:true});if(fade)w3fadeable(m);_w3m.set(k,m);return m}
+/* plain smooth-lit material for scenery */
+function w3lam(hex){const k='l'+hex;if(_w3m.has(k))return _w3m.get(k);const m=new THREE.MeshLambertMaterial({color:new THREE.Color(hex)});_w3m.set(k,m);return m}
 function w3ink(width=.02,hex='#1b1430',fade=false){const k='i'+width+hex+fade;if(_w3m.has(k))return _w3m.get(k);
   const u=THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{w:{value:width},col:{value:new THREE.Color(hex)}}]);u.uPly=W3.U.uPly;u.uCam=W3.U.uCam;
   const m=new THREE.ShaderMaterial({side:THREE.BackSide,uniforms:u,fog:true,
@@ -4049,7 +4056,7 @@ function w3merge(pieces){let n=0;const qs=pieces.map(([g,mx,hex])=>{const q=g.in
   for(const[q,hex]of qs){const cnt=q.attributes.position.count;P2.set(q.attributes.position.array,o*3);N.set(q.attributes.normal.array,o*3);col.set(hex);
     for(let i=0;i<cnt;i++){C[(o+i)*3]=col.r;C[(o+i)*3+1]=col.g;C[(o+i)*3+2]=col.b}o+=cnt;q.dispose()}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P2,3));g.setAttribute('normal',new THREE.BufferAttribute(N,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));g.computeBoundingSphere();return g}
-function w3mergedMesh(pieces,{ol=.022,fade=true,shadow=true}={}){if(!pieces.length)return null;const g=w3merge(pieces),m=new THREE.Mesh(g,w3vc(fade));m.castShadow=shadow;m.receiveShadow=true;
+function w3mergedMesh(pieces,{ol=.022,fade=true,shadow=true,toon=false}={}){if(!pieces.length)return null;const g=w3merge(pieces),m=new THREE.Mesh(g,w3vc(fade,toon));m.castShadow=shadow;m.receiveShadow=true;
   if(ol>0){const o=new THREE.Mesh(g,w3ink(ol,'#1b1430',fade));o.userData.outline=true;m.add(o)}return m}
 const w3M4=(x,y,z,ry=0,sx=1,sy=sx,sz=sx,rx=0,rz=0)=>new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(sx,sy,sz));
 const _w3g=new Map();function w3geo(k,f){if(!_w3g.has(k))_w3g.set(k,f());return _w3g.get(k)}
@@ -4091,7 +4098,7 @@ function w3kind(t){if(_w3kind[t])return _w3kind[t];const d=TL[t];let k='flat';
 
 /* a tile canvas with the ground only (objects are drawn separately in 3D) */
 const w3gimg=(t,v,f)=>{const a=TIMG_G[t][v];return a[f%a.length]};
-function w3tex(canvas,{rep=false,mip=true}={}){const tx=new THREE.CanvasTexture(canvas);tx.colorSpace=THREE.SRGBColorSpace;tx.magFilter=THREE.NearestFilter;
+function w3tex(canvas,{rep=false,mip=true,smooth=false}={}){const tx=new THREE.CanvasTexture(canvas);tx.colorSpace=THREE.SRGBColorSpace;tx.magFilter=smooth?THREE.LinearFilter:THREE.NearestFilter;
   tx.minFilter=mip?THREE.LinearMipmapLinearFilter:THREE.NearestFilter;tx.generateMipmaps=mip;tx.anisotropy=W3.aniso||1;if(rep){tx.wrapS=tx.wrapT=THREE.RepeatWrapping}return tx}
 const _w3tt={};function w3tileTex(t,v=0){const k=t+v;return _w3tt[k]||(_w3tt[k]=w3tex(w3gimg(t,v,0),{rep:true}))}
 
@@ -4105,36 +4112,39 @@ function w3obj(t,x,y,P){
   const cx=x+.5,cz=y+.5,r=mulberry(((x*73856093)^(y*19349663)^hashStr(t))>>>0),j=()=>r()-.5,c=TL[t].c,add=(g,mx,hex)=>P.push([g,mx,hex]);
   const base=t.replace(/_.*$/,'');
   switch(base){
-    case 'tree':case 'darktree':{const dk2=t==='darktree',s=.9+r()*.24,ry=r()*6.28,ox=j()*.14,oz=j()*.14,X=cx+ox,Z=cz+oz;
-      const trunk=dk2?'#3a2a2a':'#7a5232',c1=dk2?'#45386b':'#4a9a48',c2=dk2?'#3b2f5c':'#3f8f3e',c3=dk2?'#5a4a86':'#62b85a';
-      add(W3G.tcone(.72,7),w3M4(X,.36*s,Z,ry,.12*s,.72*s,.12*s),trunk);
-      add(W3G.sph(1),w3M4(X,1.1*s,Z,ry,.56*s,.5*s,.56*s),c1);
-      add(W3G.sph(0),w3M4(X-.27*s,.9*s,Z+.12*s,ry,.37*s,.33*s,.37*s),c2);
-      add(W3G.sph(0),w3M4(X+.26*s,.93*s,Z-.06*s,ry,.39*s,.35*s,.39*s),c2);
-      add(W3G.sph(0),w3M4(X+.06*s,1.4*s,Z-.04*s,ry,.33*s,.29*s,.33*s),c3);
-      if(dk2)for(let i=0;i<3;i++)add(W3G.sph(0),w3M4(X+j()*.8,.85+r()*.6,Z+.3+r()*.15,0,.045),'#c9b6ff');
+    case 'tree':case 'darktree':{const dk2=t==='darktree',s=.9+r()*.26,ry=r()*6.28,ox=j()*.16,oz=j()*.16,X=cx+ox,Z=cz+oz,lx=j()*.08,lz=j()*.08;
+      const trunk=dk2?'#3e302e':'#6e4e34',c1=dk2?'#4a3c70':'#4f9a46',jit=(h,a)=>mix(h,r()<.5?'#10140c':'#f4ffd8',r()*a);
+      add(W3G.tcone(.7,7),w3M4(X,.4*s,Z,ry,.11*s,.8*s,.11*s,lz,-lx),trunk);
+      add(W3G.sph(1),w3M4(X+lx*4,1.08*s,Z+lz*4,ry,.54*s,.46*s,.54*s),jit(c1,.1));
+      for(let k=0;k<3;k++){const a=ry+k/3*6.28+j()*.6,rr=(.3+r()*.1)*s,d=(.3+r()*.08)*s;
+        add(W3G.sph(1),w3M4(X+lx*4+Math.cos(a)*d,(.88+r()*.28)*s,Z+lz*4+Math.sin(a)*d*.9,r()*6,rr*(.92+r()*.16),rr*(.8+r()*.15),rr*(.92+r()*.16)),jit(c1,.16))}
+      add(W3G.sph(1),w3M4(X+lx*5,1.38*s,Z+lz*5,r()*6,.3*s,.25*s,.3*s),jit(c1,.08));
+      if(dk2)for(let i=0;i<3;i++)add(W3G.sph(0),w3M4(X+j()*.8,.85+r()*.6,Z+.3+r()*.15,0,.04),'#c9b6ff');
+      if(P.blobs)P.blobs.push([X,Z,.95*s]);
       return true}
     case 'pine':{const s=.9+r()*.25,X=cx+j()*.12,Z=cz+j()*.12,ry=r()*6.28;
       add(W3G.cyl(6),w3M4(X,.18*s,Z,0,.08*s,.36*s,.08*s),'#6b4a2a');
       [[.36,.6,.5],[.78,.48,.42],[1.14,.34,.34]].forEach(([yy,rr,hh],i)=>{add(W3G.cone(8),w3M4(X,(yy+hh/2)*s,Z,ry+i,rr*s,hh*s,rr*s),i%2?'#255a42':'#2f6b4f');
         add(W3G.cone(8),w3M4(X,(yy+hh*.82)*s,Z,ry+i,rr*.42*s,hh*.36*s,rr*.42*s),'#f4f9ff')});
+      if(P.blobs)P.blobs.push([X,Z,.8*s]);
       return true}
     case 'palm':{const X=cx+j()*.1,Z=cz+j()*.1,lean=.18+r()*.12,ry=r()*6.28,dx=Math.cos(ry)*lean,dz=Math.sin(ry)*lean;let px2=X,pz2=Z;
       for(let i=0;i<4;i++){const k=i/4,yy=.16+i*.28;add(W3G.cyl(6),w3M4(X+dx*k*k,yy,Z+dz*k*k,0,.075-i*.008,.3,.075-i*.008,dz*.6,-dx*.6),i%2?'#8a5c32':'#9a6b3c');px2=X+dx*k*k;pz2=Z+dz*k*k}
       const ty=1.24;for(let i=0;i<6;i++){const a=i/6*6.28+r()*.3;add(W3G.box(),w3M4(px2+Math.cos(a)*.3,ty-.06,pz2+Math.sin(a)*.3,-a,.62,.035,.16,0,.42),i%2?'#3f9a4a':'#4fb25a')}
       for(let i=0;i<3;i++)add(W3G.sph(1),w3M4(px2+Math.cos(i*2.1)*.09,ty-.12,pz2+Math.sin(i*2.1)*.09,0,.07),'#6b4a2a');
-      return true}
+      if(P.blobs)P.blobs.push([px2,pz2,.75]);return true}
     case 'boulder':case 'basalt':{const bas=base==='basalt',X=cx+j()*.1,Z=cz+j()*.1,s=.9+r()*.2,col=bas?'#3e3439':c;
       add(W3G.dode(),w3M4(X,.3*s,Z,r()*6.28,.46*s,.36*s,.42*s),col);
       add(W3G.dode(),w3M4(X+.3,.14,Z+.22,r()*6.28,.18,.14,.16),bas?'#2e2629':lt(col));
       if(bas){add(W3G.box(),w3M4(X-.05,.5*s,Z+.18,.4,.32,.035,.04,0,.3),'#ff7a2a');add(W3G.box(),w3M4(X+.12,.42*s,Z+.3,-.5,.22,.03,.035,0,-.4),'#ffb13d')}
-      return true}
+      if(P.blobs)P.blobs.push([X,Z,.62*s]);return true}
     case 'crystal':{const cols=['#5bc0eb','#7fd8f0','#a9ecff'];[[-.22,.08,.55,.13],[.02,-.05,1,.17],[.24,.1,.7,.14]].forEach(([dx,dz,h,w],i)=>{const tx=j()*.25,tz=j()*.25;
         add(W3G.cyl(6),w3M4(cx+dx,h*.42,cz+dz,i,w,h*.84,w,tx,tz),cols[i]);add(W3G.cone(6),w3M4(cx+dx-tz*h*.4,h*.84+.09,cz+dz+tx*h*.4,i,w,.2,w,tx,tz),lt(cols[i]))});
       return true}
-    case 'hedge':{for(const[dx,dz,rr,hh]of[[-.24,.03,.36,.42],[.24,-.02,.36,.44],[0,.04,.4,.48]])add(W3G.sph(1),w3M4(cx+dx,hh,cz+dz,r()*6.28,rr+.04,hh,rr+.02),'#3f8f3e');
+    case 'hedge':{for(const[dx,dz,rr,hh]of[[-.24,.03,.36,.42],[.24,-.02,.36,.44],[0,.04,.4,.48]])add(W3G.sph(1),w3M4(cx+dx,hh,cz+dz,r()*6.28,rr+.04,hh,rr+.02),mix('#3f8f3e',r()<.5?'#10140c':'#e8ffd0',r()*.12));
+      for(let i=0;i<5;i++){const a=r()*6.28;add(W3G.sph(0),w3M4(cx+Math.cos(a)*.38,.35+r()*.5,cz+Math.sin(a)*.34,r()*6,.14,.12,.14),mix('#3f8f3e','#0e2a10',r()*.25))}
       for(let i=0;i<4;i++)add(W3G.sph(0),w3M4(cx+j()*.7,.6+r()*.3,cz+.32,0,.06),'#7fcf6a');
-      return true}
+      if(P.blobs)P.blobs.push([cx,cz,.72]);return true}
     case 'fence':{for(const dx of[.12,.88])add(W3G.box(),w3M4(x+dx,.32,cz,0,.1,.64,.1),'#8a5a34');
       for(const yy of[.3,.5])add(W3G.box(),w3M4(cx,yy,cz,0,1,.08,.06),'#c08a54');
       return true}
@@ -4162,7 +4172,7 @@ function w3rubble(t,x,y,P){const p2=t.slice(3),pc=CAVE_PAL[p2],r=mulberry(((x*79
 
 /* ---------- solid blocks: walls, cliffs, counters. One textured mesh per kind of block in a chunk ---------- */
 const _w3xm=new Map();
-function w3texMat(tex,fade=true,o={}){const k=tex.uuid+fade+JSON.stringify(o);if(_w3xm.has(k))return _w3xm.get(k);const m=new THREE.MeshToonMaterial(Object.assign({map:tex,gradientMap:w3grad()},o));if(fade)w3fadeable(m);_w3xm.set(k,m);return m}
+function w3texMat(tex,fade=true,o={}){const k=tex.uuid+fade+JSON.stringify(o);if(_w3xm.has(k))return _w3xm.get(k);const m=new THREE.MeshLambertMaterial(Object.assign({map:tex},o));if(fade)w3fadeable(m);_w3xm.set(k,m);return m}
 function w3blocks(m,list){/* list: [t,x,y,h] of one block kind. Three groups: sides, front faces, tops */
   const spec=w3block(list[0][0]),hAt=new Map(list.map(([t,x,y,h])=>[x+','+y,h]));
   const A=[[],[],[]],N=[[],[],[]],U=[[],[],[]];
@@ -4189,10 +4199,10 @@ function w3blockH(m,t,x,y){const sp=w3block(t);let h=sp.h;
 
 /* ---------- tall grass: swaying tufts that part around you ---------- */
 function w3grassGeo(t){return w3geo('gr'+t,()=>{const base=TL[t].c,P=[];
-  for(let i=0;i<9;i++){const a=i/9*6.283+(i%2)*.3,h=.34+((i*37)%5)*.05,rr=i===8?0:.09;P.push([W3G.blade(),w3M4(Math.cos(a)*rr,h/2,Math.sin(a)*rr,a,.05,h,.05,Math.sin(a)*.34,-Math.cos(a)*.34),base])}
-  const g=w3merge(P),pos=g.attributes.position,col=g.attributes.color,lo=new THREE.Color(dk(base)),hi=new THREE.Color(mix(base,'#fffbe0',.45)),c=new THREE.Color();
+  for(let i=0;i<12;i++){const a=i/12*6.283+(i%3)*.4,h=.3+((i*37)%7)*.035,rr=i>=10?.02:.06+((i*13)%3)*.03;P.push([W3G.blade(),w3M4(Math.cos(a)*rr,h/2,Math.sin(a)*rr,a,.06,h,.06,Math.sin(a)*.3,-Math.cos(a)*.3),base])}
+  const g=w3merge(P),pos=g.attributes.position,col=g.attributes.color,lo=new THREE.Color(mix(dk(base),base,.35)),hi=new THREE.Color(mix(base,'#fffbe0',.32)),c=new THREE.Color();
   for(let i=0;i<pos.count;i++){c.copy(lo).lerp(hi,clamp(pos.getY(i)/.5,0,1));col.setXYZ(i,c.r,c.g,c.b)}return g})}
-function w3grassMat(){const k='grassmat';if(_w3m.has(k))return _w3m.get(k);const m=new THREE.MeshToonMaterial({vertexColors:true,gradientMap:w3grad()});
+function w3grassMat(){const k='grassmat';if(_w3m.has(k))return _w3m.get(k);const m=new THREE.MeshLambertMaterial({vertexColors:true});
   m.onBeforeCompile=sh=>{sh.uniforms.uPly=W3.U.uPly;sh.uniforms.uTime=W3.U.uTime;
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform vec3 uPly;uniform float uTime;').replace('#include <project_vertex>',`vec4 wp=vec4(transformed,1.);
       #ifdef USE_INSTANCING
@@ -4226,11 +4236,10 @@ function w3house(m,b,own){
   x2.fillStyle=wc;x2.fillRect(0,0,cv.width,fh);
   face.forEach((t,i)=>{if(t&&!/roof/.test(t))x2.drawImage(TIMG[t][0][0],0,0,16,16,i*16,fh-Math.round(16*1.55),16,Math.round(16*1.55))});
   x2.fillStyle='rgba(0,0,0,.12)';x2.fillRect(0,0,cv.width,2);
-  const ftex=w3tex(cv),fm=new THREE.MeshToonMaterial({map:ftex,gradientMap:w3grad()}),wm=w3toon(wc);
+  const ftex=w3tex(cv),fm=new THREE.MeshLambertMaterial({map:ftex}),wm=w3lam(wc);
   own.push(ftex,fm);
   const bg=new THREE.BoxGeometry(W,WH,zf-zb);own.push(bg);
   const walls=new THREE.Mesh(bg,[wm,wm,wm,wm,fm,wm]);walls.position.set(b.x0+W/2,WH/2,(zb+zf)/2);walls.castShadow=walls.receiveShadow=true;g.add(walls);
-  const wo=new THREE.Mesh(bg,w3ink(0,'#1b1430'));wo.scale.set(1+.05/W,1+.05/WH,1+.05/(zf-zb));wo.position.copy(walls.position);g.add(wo);
   /* the roof: a gable over the whole house, painted with the roof tile */
   const x0=b.x0-OV,x1=b.x1+1+OV,f=zf+OV,k=zb-OV,zm=(f+k)/2,ye=WH-.04,yr=WH+RISE,sl=Math.hypot(RISE,(f-k)/2);
   const P2=[],U2=[];const q=(a,b2,c,d,ua,ub,uc,ud)=>{P2.push(...a,...b2,...c,...a,...c,...d);U2.push(...ua,...ub,...uc,...ua,...uc,...ud)};
@@ -4242,29 +4251,30 @@ function w3house(m,b,own){
   rg.addGroup(0,nRoof,0);rg.addGroup(nRoof,6,1);own.push(rg);
   const rtex=w3tileTex(roofT,0),rm=w3texMat(rtex,false);
   const roof=new THREE.Mesh(rg,[rm,wm]);roof.castShadow=roof.receiveShadow=true;g.add(roof);
-  const ro=new THREE.Mesh(rg,w3ink(0,'#1b1430'));ro.scale.set(1.012,1.03,1.02);ro.position.set(-(b.x0+W/2)*.012,-WH*.03,-zm*.02);g.add(ro);
   /* a chimney on red roofs, and a step in front of each door */
-  if(roofT==='roofR'){const ch=w3part(W3G.box(),'#a8564a',{ol:.02});ch.scale.set(.32,.7,.32);ch.position.set(b.x0+W*.72,yr-.05,zm+.25);g.add(ch)}
-  face.forEach((t,i)=>{if(t==='door'||t==='hdoor'||(t&&t.startsWith('lgate_'))){const st=w3part(W3G.box(),'#b4ab98',{ol:.015});st.scale.set(.8,.08,.3);st.position.set(b.x0+i+.5,.04,zf+.15);st.castShadow=false;g.add(st)}});
+  if(roofT==='roofR'){const ch=new THREE.Mesh(W3G.box(),w3lam('#a8564a'));ch.castShadow=true;ch.scale.set(.32,.7,.32);ch.position.set(b.x0+W*.72,yr-.05,zm+.25);g.add(ch)}
+  face.forEach((t,i)=>{if(t==='door'||t==='hdoor'||(t&&t.startsWith('lgate_'))){const st=new THREE.Mesh(W3G.box(),w3lam('#b4ab98'));st.receiveShadow=true;st.scale.set(.8,.08,.3);st.position.set(b.x0+i+.5,.04,zf+.15);st.castShadow=false;g.add(st)}});
   return g}
 
 /* ---------- chunks: the world is built in strips of rows around you, and dropped again behind you ---------- */
 function w3chunk(m,ci){
   const CH=W3K.CH,pad=w3pad(m),y0=ci*CH,ya=pad?y0:Math.max(0,y0),yb=pad?y0+CH:Math.min(m.h,y0+CH),xs=-pad,xe=m.w+pad;if(yb<=ya)return null;
   const grp=new THREE.Group(),Wd=xe-xs,Hh=yb-ya,own=[];
-  const cv=document.createElement('canvas');cv.width=Wd*16;cv.height=Hh*16;const g2=cv.getContext('2d');g2.imageSmoothingEnabled=false;
-  const anim=[],tiles=[],pieces=[],far=[],blocks=new Map(),grass=new Map(),cut=[],water=[];
+  const GS=W3K.gs,cv=document.createElement('canvas');cv.width=Wd*16*GS;cv.height=Hh*16*GS;const g2=cv.getContext('2d');g2.imageSmoothingEnabled=true;g2.imageSmoothingQuality='high';
+  const anim=[],tiles=[],pieces=[],far=[],blocks=new Map(),grass=new Map(),cut=[],water=[];pieces.blobs=[];far.blobs=null;
   for(let y=ya;y<yb;y++)for(let x=xs;x<xe;x++){const t=w3t(m,x,y);tiles.push(t);if(!t)continue;const k=w3kind(t);const gt=k==='bld'?w3under(m,x,y):t;
-    g2.drawImage(w3gimg(gt,vari(x,y),0),(x-xs)*16,(y-ya)*16);if(TL[gt].anim&&k!=='block')anim.push([x,y,gt]);
+    g2.drawImage(w3gimg(gt,vari(x,y),0),(x-xs)*16*GS,(y-ya)*16*GS,16*GS,16*GS);if(TL[gt].anim&&k!=='block')anim.push([x,y,gt]);
     const out=x<0||x>=m.w||y<0||y>=m.h;
     if(k==='obj'){if(!w3obj(t,x,y,out?far:pieces))cut.push([t,x,y])}
     else if(k==='block'){if(!blocks.has(t))blocks.set(t,[]);blocks.get(t).push([t,x,y,w3blockH(m,t,x,y)])}
     else if(k==='grass'){if(!grass.has(t))grass.set(t,[]);grass.get(t).push([x,y])}
     else if(k==='rubble')w3rubble(t,x,y,pieces);
     else if(k==='water')water.push([x,y,t])}
-  const tex=w3tex(cv),gmat=new THREE.MeshToonMaterial({map:tex,gradientMap:w3grad()}),pg=new THREE.PlaneGeometry(Wd,Hh);own.push(tex,gmat,pg);
+  if(!m.interior)w3mottle(g2,cv,ci,m.cave);
+  const tex=w3tex(cv,{smooth:true}),gmat=new THREE.MeshLambertMaterial({map:tex}),pg=new THREE.PlaneGeometry(Wd,Hh);own.push(tex,gmat,pg);
   const gm=new THREE.Mesh(pg,gmat);gm.rotation.x=-Math.PI/2;gm.position.set(xs+Wd/2,0,ya+Hh/2);gm.receiveShadow=true;grp.add(gm);
-  const st=w3mergedMesh(pieces,{ol:.022});if(st){own.push(st.geometry);grp.add(st)}
+  const st=w3mergedMesh(pieces,{ol:0});if(st){w3groundAO(st.geometry);own.push(st.geometry);grp.add(st)}
+  if(pieces.blobs.length){const bl=w3blobs(pieces.blobs);own.push(bl);grp.add(bl)}
   const fs=w3mergedMesh(far,{ol:0,fade:false,shadow:false});if(fs){own.push(fs.geometry);grp.add(fs)}
   for(const list of blocks.values()){const bm=w3blocks(m,list);own.push(bm.geometry);grp.add(bm)}
   for(const[t,cells]of grass){const gi=w3grass(t,cells);own.push(gi);grp.add(gi)}
@@ -4281,6 +4291,17 @@ function w3waterTex(){if(_w3wt)return _w3wt;const c=document.createElement('canv
 function w3water(cells,own){const P2=[],U2=[];for(const[x,y,t]of cells){const h=t.startsWith('lava')?.03:.025;P2.push(x,h,y+1,x+1,h,y+1,x+1,h,y,x,h,y+1,x+1,h,y,x,h,y);U2.push(x/2,(y+1)/2,(x+1)/2,(y+1)/2,(x+1)/2,y/2,x/2,(y+1)/2,(x+1)/2,y/2,x/2,y/2)}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U2,2));own.push(g);
   const m=new THREE.Mesh(g,w3geo('waterm',()=>new THREE.MeshBasicMaterial({map:w3waterTex(),transparent:true,opacity:.55,depthWrite:false})));m.renderOrder=1;return m}
+/* soft light and shade across the ground, so it reads as one field rather than a grid of tiles */
+function w3mottle(g2,cv,ci,cave){const r=mulberry((ci*2654435761)>>>0),n=Math.round(cv.width*cv.height/(32*32*W3K.gs*W3K.gs)/2.2);
+  for(let i=0;i<n;i++){const x=r()*cv.width,y=r()*cv.height,rad=(18+r()*40)*W3K.gs,dark=r()<.6,gr=g2.createRadialGradient(x,y,0,x,y,rad);
+    gr.addColorStop(0,dark?`rgba(10,16,8,${cave?.12:.09})`:'rgba(255,250,220,.06)');gr.addColorStop(1,'rgba(0,0,0,0)');g2.fillStyle=gr;g2.fillRect(x-rad,y-rad,rad*2,rad*2)}}
+/* scenery gets darker toward the ground, like light blocked near the roots */
+function w3groundAO(g){const p=g.attributes.position,c=g.attributes.color;for(let i=0;i<p.count;i++){const k=.62+.38*clamp(p.getY(i)/1.3,0,1);c.setXYZ(i,c.getX(i)*k,c.getY(i)*k,c.getZ(i)*k)}c.needsUpdate=true}
+let _w3blob=null;
+function w3blobTex(){if(_w3blob)return _w3blob;const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(.55,'rgba(0,0,0,.25)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);_w3blob=new THREE.CanvasTexture(c);return _w3blob}
+function w3blobs(list){const g=w3geo('blobpl',()=>new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2)),m=w3geo('blobmat',()=>new THREE.MeshBasicMaterial({map:w3blobTex(),transparent:true,depthWrite:false,color:'#000000',opacity:.6}));
+  const im=new THREE.InstancedMesh(g,m,list.length),mx=new THREE.Matrix4();list.forEach(([x,z,r],i)=>{mx.compose(new THREE.Vector3(x,.012,z),new THREE.Quaternion(),new THREE.Vector3(r,1,r));im.setMatrixAt(i,mx)});im.renderOrder=1;im.frustumCulled=false;return im}
 function w3dropChunk(c){W3.world.remove(c.grp);for(const o of c.own){if(o.isInstancedMesh){o.dispose();continue}if(o.dispose)o.dispose()}}
 function w3tilesOf(m,c){const out=[];for(let y=c.ya;y<c.yb;y++)for(let x=c.xs;x<c.xe;x++)out.push(w3t(m,x,y));return out}
 function w3chunksFor(m,pz,now){
@@ -4293,7 +4314,7 @@ function w3chunksFor(m,pz,now){
   const fr=Math.floor(now/550)%2,check=now-(W3.lastCheck||0)>300;if(check)W3.lastCheck=now;
   for(const[ci,c]of W3.chunks){
     if(check){const t2=w3tilesOf(m,c);if(t2.some((t,i)=>t!==c.tiles[i])){w3dropChunk(c);const n=w3chunk(m,ci);if(n)W3.chunks.set(ci,n);else W3.chunks.delete(ci);continue}}
-    if(c.fr!==fr&&c.anim.length){c.fr=fr;const g2=c.cv.getContext('2d');for(const[x,y,t]of c.anim)g2.drawImage(w3gimg(t,vari(x,y),fr),(x-c.xs)*16,(y-c.ya)*16);c.tex.needsUpdate=true}}}
+    if(c.fr!==fr&&c.anim.length){c.fr=fr;const g2=c.cv.getContext('2d'),GS=W3K.gs;for(const[x,y,t]of c.anim)g2.drawImage(w3gimg(t,vari(x,y),fr),(x-c.xs)*16*GS,(y-c.ya)*16*GS,16*GS,16*GS);c.tex.needsUpdate=true}}}
 function w3free(o){W3.actors.remove(o.root);const own=o.root.userData.own;if(own)for(const x of own)x.dispose()}
 function w3clear(){for(const c of W3.chunks.values())w3dropChunk(c);W3.chunks.clear();for(const o of W3.ents.values())w3free(o);W3.ents.clear()}
 
@@ -4373,7 +4394,7 @@ function w3bake(root,moving){root.updateMatrixWorld(true);
       if(c.isMesh&&!c.userData.outline&&!c.userData.noBake&&c.material&&c.material.isMeshToonMaterial&&!c.material.map&&!c.material.transparent){pieces.push([c.geometry,new THREE.Matrix4().multiplyMatrices(inv,c.matrixWorld),'#'+c.material.color.getHexString()]);kill.push(c)}
       if(c.children.length)walk(c)}};
     walk(node);if(pieces.length<2)continue;
-    const mm=w3mergedMesh(pieces,{ol:.013,fade:false});for(const c of kill)c.removeFromParent();node.add(mm)}}
+    const mm=w3mergedMesh(pieces,{ol:.009,fade:false,toon:true});for(const c of kill)c.removeFromParent();node.add(mm)}}
 /* a person to place in the world: a copy of the cached figure for that palette, with its moving parts found */
 const _w3kid=new Map();
 function w3kid(key,p){const k=key+JSON.stringify(p);if(!_w3kid.has(k))_w3kid.set(k,w3kidProto(key,p));const root=_w3kid.get(k).clone(true);
@@ -4401,7 +4422,7 @@ function w3animKid(n,dt,moving,running,dir,pose){n.t+=dt;
   n.head.rotation.x=-n.body.rotation.x*.6+Math.sin(n.ph*2)*.02*n.walk;n.head.rotation.z=Math.sin(n.t*.7)*.03*(1-n.walk)}
 
 /* ---------- the things people and puzzles are made of ---------- */
-function w3static(pieces,ol=.018){const mm=w3mergedMesh(pieces,{ol,fade:false});const g=new THREE.Group();g.add(mm);g.userData.own=[mm.geometry];return g}
+function w3static(pieces,ol=0){const mm=w3mergedMesh(pieces,{ol,fade:false});const g=new THREE.Group();g.add(mm);g.userData.own=[mm.geometry];return g}
 function w3entObj(e){const S2=[],add=(g,mx,hex)=>S2.push([g,mx,hex]);
   switch(e.kind){
     case 'npc':{const n=w3kid(e.pal,PAL[e.pal]||PAL.vil1);n.kid=1;return n}
@@ -4451,9 +4472,9 @@ function w3puzzles(m){const out=[];if(!m.puzzles)return out;
 const W3ENV={
   home:{bg:'#cfe9f7',sky:'#fffaf0',gnd:'#6a7a5a',hi:1.5,sun:'#fff0d8',si:2.3},green:{bg:'#bfe6f7',sky:'#ffffff',gnd:'#5a7a4a',hi:1.45,sun:'#fff6e0',si:2.4},
   coral:{bg:'#aee3f5',sky:'#ffffff',gnd:'#6aa0b0',hi:1.55,sun:'#fffaf0',si:2.5},canyon:{bg:'#f6c8a0',sky:'#fff0e0',gnd:'#8a5a3a',hi:1.45,sun:'#ffe0b8',si:2.4},
-  dusk:{bg:'#2a2440',sky:'#a898e0',gnd:'#2a2238',hi:1.05,sun:'#c8b8ff',si:1.05},sky:{bg:'#dcebff',sky:'#ffffff',gnd:'#8aa0b0',hi:1.6,sun:'#ffffff',si:2.3},
-  storm:{bg:'#4a4870',sky:'#b8b0e8',gnd:'#3a3650',hi:1.1,sun:'#d8d0ff',si:1.15},cinder:{bg:'#4a1e18',sky:'#ffb890',gnd:'#3a1a14',hi:1.1,sun:'#ffb070',si:1.5},
-  frost:{bg:'#e6f2fb',sky:'#ffffff',gnd:'#a8c0d8',hi:1.55,sun:'#f4f8ff',si:2},crown:{bg:'#5a4478',sky:'#f0d8ff',gnd:'#4a3a5a',hi:1.25,sun:'#ffe0b0',si:1.8}};
+  dusk:{bg:'#2e2848',sky:'#b8a8f0',gnd:'#3a3050',hi:1.6,sun:'#d0c4ff',si:1.6},sky:{bg:'#dcebff',sky:'#ffffff',gnd:'#8aa0b0',hi:1.6,sun:'#ffffff',si:2.3},
+  storm:{bg:'#4e4c74',sky:'#c4bcf0',gnd:'#46405e',hi:1.55,sun:'#e0d8ff',si:1.6},cinder:{bg:'#4e2018',sky:'#ffc4a0',gnd:'#4a2418',hi:1.5,sun:'#ffb878',si:2},
+  frost:{bg:'#e6f2fb',sky:'#ffffff',gnd:'#a8c0d8',hi:1.55,sun:'#f4f8ff',si:2},crown:{bg:'#5e4880',sky:'#f0d8ff',gnd:'#54446a',hi:1.5,sun:'#ffe4b8',si:2}};
 function w3envFor(m,pz){
   if(m.cave){const c=CAVE_PAL[m.pal];return{bg:'#06070f',sky:mix(c.glow,'#ffffff',.3),gnd:c.wall,hi:1.05,sun:'#ffffff',si:.25,lamp:9,lc:'#ffe6c0',fog:[16,34]}}
   if(m.sanctum)return{bg:'#0e0a24',sky:'#b8a8ff',gnd:'#2a2450',hi:1.15,sun:'#ffe9b0',si:1.3,lamp:0,fog:[26,60]};
@@ -5120,8 +5141,11 @@ addEventListener('resize',layout);
 function hideTitle(){$('#title').hidden=true}
 function locName(sv){const p=sv.pos||{};if(p.map&&MAPS[p.map]){const m=MAPS[p.map];return m.interior?m.name:zoneAt(m,p.y).name}let k=1;while(k<TOWNS.length-1&&(sv.crests||[]).includes(TOWNS[k].ward))k++;return TOWNS[k].name}
 function slotInfo(sv){const lead=sv.team.find(m=>SP[m.sp])||{sp:'snapfin',lvl:1},n=(sv.crests||[]).length;
-  return{img:sprURL(lead.sp,false,lead.shiny),line1:`${SP[lead.sp].name} Lv ${lead.lvl} · ${n} crest${n===1?'':'s'}${sv.flags&&sv.flags.champ?' · Champion':''}`,line2:`${locName(sv)}${sv.savedAt?' · '+new Date(sv.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}`}}
+  return{img:sprURL(lead.sp,false,lead.shiny),line1:`${sv.name?cleanName(sv.name)+' · ':''}${SP[lead.sp].name} Lv ${lead.lvl} · ${n} crest${n===1?'':'s'}${sv.flags&&sv.flags.champ?' · Champion':''}`,line2:`${locName(sv)}${sv.savedAt?' · '+new Date(sv.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}`}}
 let tConfirm=null;
+const NAMES=['Ari','Bo','Cass','Dani','Eli','Finn','Gus','Hana','Ivy','Jo','Kit','Lu','Max','Nia','Ollie','Pip','Rae','Sol','Tam','Uma','Vic','Wes','Yuki','Zoe'];
+const cleanName=v=>String(v||'').replace(/[<>&"]/g,'').replace(/\s+/g,' ').trim().slice(0,12);
+const pname=()=>S&&S.name||'Trainer';
 function showTitle(){mode='title';migrateOld();$('#title').hidden=false;$('#tSlots').hidden=true;$('#tCodeBox').hidden=true;$('#tMain').hidden=false;
   const wait=CLOUD.state==='checking';for(const id of['#tCont','#tLoad','#tNew'])$(id).disabled=wait;
   $('#tSync').textContent=wait?'Checking for your saved games…':CLOUD.state==='on'?'Your saves are backed up to your Claude account.':'Saves are kept in this browser only.';
@@ -5141,13 +5165,65 @@ function renderSlots(){const list=$('#tSlotList');list.innerHTML='';const games=
     row.append(b,d);list.append(row)});
   if(tConfirm==null){const f=list.querySelector('.slot');if(f)f.focus()}}
 async function newGame(slot){
-  const no=nextSaveNo();SLOT=String(slot);S=newState();S.saveNo=no;S.look=Object.assign({},LOOK);setMap('world');syncMap(CM);const ly=TOWNS[0].y0;Object.assign(P,{x:20,y:ly+6,fx:20,fy:ly+6,t:1,dir:'up',moving:false});S.flags.started=true;hideTitle();mode='world';curZone='t0';updTop();
+  const nm=cleanName($('#tName').value)||pick(NAMES);
+  const no=nextSaveNo();SLOT=String(slot);S=newState();S.saveNo=no;S.name=nm;S.look=Object.assign({},LOOK);setMap('world');syncMap(CM);const ly=TOWNS[0].y0;Object.assign(P,{x:20,y:ly+6,fx:20,fy:ly+6,t:1,dir:'up',moving:false});S.flags.started=true;hideTitle();mode='world';curZone='t0';updTop();
   await sleep(350);
-  await talk(["Ah, there you are! I'm Professor Wren. Welcome to Lynhaven.","This land is home to creatures called Lynties. Each one carries an element: Water, Fire, Earth, Air, Leaf, Spark, Frost or Shadow.","Every Lynty evolves twice: first at level 30, then into its final form at level 60, the highest level there is.","One long road runs north from here, town to town, through wide fields of tall grass. Each town has a Trading Post where you can heal and shop, and a Warden Hall hidden behind a labyrinth.","Beat the three fighters inside a hall, then its Warden, to earn a crest. Each crest opens the road to the next town.","But first, you need a partner. These three are looking for a trainer: Embrit, Shellby and Budrake. Choose carefully!"],'Prof. Wren');
+  await talk([`Ah, there you are, ${nm}! I'm Professor Wren.`,"Lynties are the creatures that live all over this land. Each one has an element: Water, Fire, Earth, Air, Leaf, Spark, Frost or Shadow.","Elements matter in battle. Water puts out Fire, Fire burns Leaf, and Leaf drinks up Water. Every element is strong against some and weak against others.","Lynties grow stronger as they battle, and every one evolves twice: at level 30, and into its final form at level 60.","Now, pick your partner!"],'Prof. Wren');
   const id=await pickStarter();
-  S.team.push(mkMon(id,10));caughtMark(id);S.flags.starter=true;
-  await talk([`${SP[id].name}! A wonderful choice. It already looks happy to be with you.`,'Take these Bond Charms. Wear down a wild Lynty, then toss one to befriend it.','Wild Lynties hide in tall grass and shallow water along the routes. Greenvale and its Leaf Warden Hall are first, just up the road.','Tap BAG for your inventory and MAP to see the whole road.','One more thing: the game only keeps your progress when you save. Open the MENU and tap Save often! Off you go!'],'Prof. Wren');
+  S.team.push(mkMon(id,10));caughtMark(id);S.flags.starter=true;S.flags.rivalSp=RIVAL_PICK[id]||'shellby';S.flags.rivalN=0;
+  await talk([`${SP[id].name}! A wonderful choice.`,'When a wild Lynty is worn down in battle, toss a Bond Charm to befriend it. Here are a few to start.'],'Prof. Wren');
+  const r=S.flags.rivalSp,e=await rivalArrive();
+  await talk(["Professor! Did I miss it? You said I could pick a partner too!"],RIVAL.short);
+  await talk([`Right on time, Remy. This is ${nm}.`],'Prof. Wren');
+  await talk([`Hi, ${nm}! You picked ${SP[id].name}? Then I'll take ${SP[r].name}. It's strong against yours!`,"Every time you beat a Warden, I'll come find you. Let's see whose partner gets stronger!"],RIVAL.short);
+  await rivalLeave(e);
+  await talk([`Off you go, ${nm}!`],'Prof. Wren');
   save();zoneToast(zoneAt(CM,P.y))}
+/* ---------- Remy, your rival: after every Warden you beat, Remy is waiting outside with a stronger team ---------- */
+const RIVAL={id:'remy',name:'Rival Remy',short:'Remy'};
+const RIVAL_PICK={embrit:'shellby',shellby:'sproutle',sproutle:'embrit'};
+const RIVAL_MATES=['gustling','pebblit','zapkit','chillbit','dusklet'];
+const wardenCrests=()=>(S.crests||[]).filter(id=>WARD.some(w=>w.id===id)).length;
+const rivalDue=()=>!!(S&&S.flags.starter&&S.flags.rivalSp&&(S.flags.rivalN||0)<wardenCrests());
+/* the counter to your partner, for games started before Remy existed */
+function rivalSetup(){if(S.flags.rivalN==null)S.flags.rivalN=wardenCrests();
+  if(!S.flags.rivalSp){const m=S.team[0]||S.den[0],el=m?SP[SP[m.sp].line[0]].el:'fire';S.flags.rivalSp={water:'sproutle',fire:'shellby',leaf:'embrit'}[el]||'shellby'}}
+function rivalTeam(k){const wid=S.crests.filter(id=>WARD.some(w=>w.id===id))[k-1],w=WARD.find(x=>x.id===wid)||WARD[clamp(k-1,0,WARD.length-1)];
+  const L=Math.min(MAXL,Math.max(...w.team.map(t=>t[1]))+2),n=[2,2,3,3,4,4,5,5,6][clamp(k,1,8)],team=[];
+  RIVAL_MATES.slice(0,n-1).forEach((id,i)=>{const l=Math.max(3,L-3+(i%3));team.push(mkMon(evolveFor(id,l),l))});
+  team.push(mkMon(evolveFor(S.flags.rivalSp,L),L));return team}
+const RIVAL_LINES=[
+  {pre:n=>[`${n}! Wait up!`,`You beat Warden Fern already? Then you're battling me next!`],win:n=>["No way! I was so sure we had you.","Fine. Win another crest and I'll be waiting. Stronger."]},
+  {pre:n=>[`Two crests, ${n}? I've been training on the beach all week.`,"Let's go again!"],win:n=>["Ugh. The sand got in my eyes. ...Okay, you're good.","I'm bonding with more Lynties. You'll see."]},
+  {pre:n=>["There you are! Redrock's Warden is tough, huh?","Not as tough as me!"],win:n=>["Three in a row... I need a new plan."]},
+  {pre:n=>["Duskwood gives me the creeps. Good thing I've got my team.",`Ready, ${n}?`],win:n=>["You're getting really strong.","Halfway to the Champion. I'm not letting you get there first!"]},
+  {pre:n=>["The wind up here is wild! Perfect weather for a battle!"],win:n=>["My Lynties gave it everything. So did yours."]},
+  {pre:n=>["Six crests! I could hear the thunder all the way down the road.","This time I've got a plan. Battle!"],win:n=>["The plan didn't work. I need a better plan."]},
+  {pre:n=>["It's so hot up here my shoes are melting. Let's make this quick!"],win:n=>[`Seven crests... You're the real deal, ${n}.`]},
+  {pre:n=>["Eight crests. Only the Champion is left.","But before you face Wren, you face me. Give it everything you've got!"],win:n=>["...That was our best battle ever.",`Go beat Wren, ${n}. When you're done, I'll be waiting for a rematch.`]},
+];
+/* Remy walks up to you from a few tiles away, or just appears beside you if there's no room */
+async function rivalArrive(){PAL.rival=PAL.rival||{hood:'#c8402e',hair:'#c8402e',style:'short',skin:'#e8b98f',coat:'#2f3550',pants:'#3b3a52',boots:'#1b1430',bag:'#ffd36a'};
+  const free=(x,y)=>walkT(tAt(x,y))&&!entAt(x,y)&&!warpAt(x,y)&&!(x===P.x&&y===P.y);
+  mode='dialog';held.clear();running=false;
+  for(const d of['down','left','right','up']){const[dx,dy]=DIRV[d];if(![1,2,3].every(k=>free(P.x+dx*k,P.y+dy*k)))continue;
+    const e=npcE(P.x+dx*3,P.y+dy*3,OPP[d],'rival',RIVAL.short,()=>{},{rival:1});CM.ents.push(e);P.dir=d;
+    MUS.sfx('spot');e.alert=1;await sleep(600);e.alert=0;await entStep(e,OPP[d]);await entStep(e,OPP[d]);mode='world';return e}
+  for(const d of['down','left','right','up']){const[dx,dy]=DIRV[d];if(!free(P.x+dx,P.y+dy))continue;const e=npcE(P.x+dx,P.y+dy,OPP[d],'rival',RIVAL.short,()=>{},{rival:1});CM.ents.push(e);P.dir=d;MUS.sfx('spot');await sleep(300);mode='world';return e}
+  mode='world';return null}
+async function rivalLeave(e){if(!e)return;const m=MAPS.world;
+  if(CM===m&&m.ents.includes(e)){mode='dialog';held.clear();const d=OPP[e.dir],[dx,dy]=DIRV[d];
+    for(let i=0;i<4;i++){const x=e.x+dx,y=e.y+dy;if(!walkT(tAt(x,y))||entAt(x,y)||(x===P.x&&y===P.y))break;await entStep(e,d)}mode='world'}
+  for(const mm of Object.values(MAPS)){const i=mm.ents.indexOf(e);if(i>=0)mm.ents.splice(i,1)}}
+async function rivalChallenge(){if(!rivalDue()||!canFight())return;const k=(S.flags.rivalN||0)+1,L2=RIVAL_LINES[clamp(k,1,8)-1],nm=pname();
+  const e=await rivalArrive();
+  await talk(S.flags.rivalLost===k?["Back for more? Good. Let's go again!"]:L2.pre(nm),RIVAL.short);
+  const team=rivalTeam(k),z=zoneAt(CM,P.y);
+  const res=await runBattle({trainer:RIVAL,team,reg:{bg:THEMES[z.theme].bg}});
+  if(res==='win'){S.flags.rivalN=k;delete S.flags.rivalLost;const rw=Math.round(8*Math.max(...team.map(m=>m.lvl)));S.shells+=rw;updTop();save();
+    await talk([...L2.win(nm),`You received ${rw} shells.`],RIVAL.short);await rivalLeave(e)}
+  else{S.flags.rivalLost=k;await rivalLeave(e)}}
+
 function firstLocked(){for(let i=1;i<TOWNS.length-1;i++)if(!S.crests.includes(TOWNS[i].ward))return i;return TOWNS.length-1}
 function continueGame(sv,slot){
   if(slot)SLOT=String(slot);
@@ -5156,6 +5232,7 @@ function continueGame(sv,slot){
   const REMAP={narwhorn:'rayvel'};for(const m of[...(S.team||[]),...(S.den||[])])if(REMAP[m.sp])m.sp=evolveFor(REMAP[m.sp],m.lvl);
   S.team=S.team.filter(m=>SP[m.sp]);S.den=(S.den||[]).filter(m=>SP[m.sp]);if(!S.team.length){newGame(SLOT);return}
   S.shiny=Object.assign({},sv.shiny);
+  rivalSetup();
   /* a Crown Charm for every Warden already beaten, given once */
   let gift=0;if(!S.flags.crownGift){gift=(S.crests||[]).length+(S.flags.champ?1:0);S.bag.crown=(S.bag.crown||0)+gift;S.flags.crownGift=1}
   const v14=!S.flags.v14;S.flags.v14=1;
@@ -5209,7 +5286,7 @@ $('#tLookBtn').onclick=()=>lookPanel(null);$('#tLookImg').src=personCanvas('play
 let lookAfter=null,lookRaf=0;
 const LOOK_ROWS=[['style','Style'],['hair','Hair'],['hat','Hood / cap'],['skin','Skin'],['coat','Coat'],['pants','Trousers'],['bag','Bag']];
 const lookRowOn=k=>k==='hat'?LOOK.style==='hood'||LOOK.style==='cap':k==='hair'?LOOK.style!=='hood':true;
-function lookPanel(after){lookAfter=after;$('#tMain').hidden=true;$('#tLook').hidden=false;
+function lookPanel(after){lookAfter=after;$('#tMain').hidden=true;$('#tLook').hidden=false;$('#nameRow').hidden=!after;if(after)$('#tName').value='';
   $('#tLookTitle').textContent=after?'Make your trainer':'Your trainer';$('#tLookDone').textContent=after?'Start your journey':'Done';
   renderLook();requestAnimationFrame(()=>{const b=$('#lookRows button');if(b)b.focus()});cancelAnimationFrame(lookRaf);lookRaf=requestAnimationFrame(lookTick)}
 function closeLook(){$('#tLook').hidden=true;cancelAnimationFrame(lookRaf);setLook(LOOK,true)}
@@ -5227,6 +5304,8 @@ function lookTick(now){if($('#tLook').hidden)return;const cv2=$('#lookCv'),g=cv2
   const dirs=['down','left','up','right'],d=dirs[Math.floor(now/1800)%4],fr=Math.floor(now/220)%4;
   g.fillStyle='rgba(9,15,36,.3)';g.beginPath();g.ellipse(120,84,18,3,0,0,7);g.fill();
   if(!w3look(now))g.drawImage(personCanvas('player',d,fr===1?1:fr===3?2:0),96,32,48,48);lookRaf=requestAnimationFrame(lookTick)}
+$('#tNameRand').onclick=()=>{const cur=$('#tName').value;let n;do n=pick(NAMES);while(n===cur);$('#tName').value=n;MUS.sfx('tick')};
+$('#tName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#tName').blur()}});
 $('#tLookDone').onclick=()=>{const a=lookAfter;lookAfter=null;closeLook();if(a)a();else{$('#tMain').hidden=false;$('#tLookBtn').focus()}};
 $('#tLookBack').onclick=()=>{lookAfter=null;closeLook();$('#tMain').hidden=false;$('#tLookBtn').focus()};
 /* keyboard on the look editor: up and down move between rows, left and right change one */
