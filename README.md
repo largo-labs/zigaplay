@@ -7,13 +7,10 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 146 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
-| **Kettō** | Pixel samurai duels, tournaments, a Fighter Forge and a 20-chapter 3D story. It plays sideways. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · START pause |
-
-Kettō's own source lives in [largo-labs/ketto](https://github.com/largo-labs/ketto). The cartridge here is built from it (see [Updating Kettō](#updating-ketto)).
 
 ## Lynties in 3D
 
-Lynties draws its world in 3D: a little diorama seen from behind and above, with smooth-lit trees, houses, cliffs, walls and swaying tall grass. You and everyone you meet are small chibi figures. A new game opens with a cutscene: Prof. Wren explains Lynties with one of his own beside him, then asks what you look like, your name and your rival's name. Battles keep their pixel art.
+Lynties draws its world in 3D: a little diorama seen from behind and above, with smooth-lit trees, houses, cliffs, walls and swaying tall grass. You and everyone you meet are small chibi figures, and every house in every town can be entered, with people inside to talk to. A new game opens with a cutscene: Prof. Wren explains Lynties with one of his own beside him, then asks what you look like, your name and your rival's name. The Lynties themselves keep their pixel art, and so do battles, where your trainer steps in to throw each charm.
 
 - `games/lynties/3d/` holds three.js (r183, MIT). The offline edition packs it inside the page.
 - The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.
@@ -36,13 +33,12 @@ The original lives as a Claude artifact. There it also keeps cloud saves, which 
 index.html                  the console (shell, shelf, buttons, input routing, the cartridge contract in a comment above CARTS)
 games/<id>/index.html       each cartridge: a full, self-contained HTML document
 games/<id>/cart.png         its label art (3:2)
-games/ketto/3d/…            three.js and Kettō's 3D story modules. The cartridge carries these inside itself;
-                            these copies are only a fallback for the online console.
+games/lynties/3d/           three.js for Lynties' 3D world (the offline edition packs it inside the page)
 offline/                    the pixel font that stands in for the web fonts offline, and the Home Screen icons
 app/                        the built offline edition (made by tools/build-offline.py)
 tools/build-offline.py      builds the offline edition: python3 tools/build-offline.py . OUT
 tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
-tools/ketto-cart.py         builds games/ketto/index.html from a checkout of largo-labs/ketto
+tools/lynties-3d/           the Lynties game, its 3D world and the script that builds the cartridge
 ```
 
 ## How the console works
@@ -71,16 +67,6 @@ python3 tools/build-offline.py . /tmp/out
 rm -rf app && cp -r /tmp/out/ZigaPlay-offline app
 ```
 
-## Updating Kettō
-
-Run this from a checkout of largo-labs/ketto, then rebuild `app/` as above:
-
-```
-python3 tools/ketto-cart.py ../ketto games/ketto/index.html
-```
-
-The script adds the console layer (button mapping, button hints, sizing, the 3D story packed inside), and that layer only switches on inside the console. It leaves out specials and deflects on the console, for both fighters.
-
 ## Credits
 
-Kettō's 3D story uses [three.js](https://threejs.org/) (MIT, see `games/ketto/3d/vendor/three/LICENSE`). The offline pixel font is a subset of GNU Unifont.
+Lynties' 3D world uses [three.js](https://threejs.org/) (MIT, see `games/lynties/3d/LICENSE`). The offline pixel font is a subset of GNU Unifont.

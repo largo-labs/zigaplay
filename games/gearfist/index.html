@@ -472,6 +472,8 @@ const foes=()=>R.ents.filter(e=>e.kind==='foe'&&e.state!=='dead');
 /* ---------- the player ---------- */
 const spd=()=>58*P.bot.spd*(1+.08*lv('servos'));
 const dmgMul=()=>1+.12*lv('pistons');
+/* how hard enemy hits land on you */
+const HURT=1.6;
 function inputX(){let x=0;if(keys.has('left'))x--;if(keys.has('right'))x++;x+=touchDir.x;return clamp(x,-1,1)}
 const guardHeld=()=>keys.has('down')||touchDir.z>0;
 const grounded=()=>P.y>=0&&P.vy>=0;
@@ -499,6 +501,7 @@ function burst(){if(!R||R.state!=='play'||P.heat<100||P.state==='down'||P.state=
 function hurtPlayer(d,kb,down,fromX,o={}){if(P.inv>0||P.state==='down'||P.state==='dead'||P.state==='burst'||R.state!=='play')return false;
   if(P.state==='dash'&&P.move==='blink')return false;
   const front=Math.sign(fromX-P.x)===P.face||fromX===P.x;
+  d*=HURT;
   if(P.state==='guard'&&front&&!o.unblock){const chip=Math.round(d*.15);P.hp=Math.max(1,P.hp-chip);P.vx=-P.face*kb*.35;P.heat=Math.min(100,P.heat+3);SND.sfx('clank');sparks(P.x+P.face*6,LANE,-14,6,'#bfefff');R.hitstop=.03;P.flash=.04;
     if(!R.guardTip){R.guardTip=true}return'block'}
   d=Math.round(d);P.hp-=d;R.dmgTaken+=d;P.flash=.12;P.heat=Math.min(100,P.heat+2*(1+.25*lv('coolant')));R.combo=0;$('#combo').classList.remove('on');
