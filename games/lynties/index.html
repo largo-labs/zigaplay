@@ -2353,6 +2353,7 @@ function shinyMap(id){if(_shm[id])return _shm[id];const d=sprBuf(id).d;let sx=0,
   for(const c of new Set(d)){if(!c||c===INK){m[c]=c;continue}const[h,s,l]=toHsl(c);if(l>.93||l<.08){m[c]=c;continue}m[c]=s<.15?fromHsl(gh,Math.max(s,.22),l):fromHsl((h+.5)%1,s,l)}
   return _shm[id]=m}
 function sprBuf(id,sh){const k=sh?id+'*':id;if(!SPR[k]){if(sh){const b0=sprBuf(id),m=shinyMap(id),b=new Buf(40,40);b.d=b0.d.map(c=>c===null?null:m[c]);SPR[k]=b}else{const b=new Buf(40,40);ART[id](b);b.outline();SPR[k]=b}}return SPR[k]}
+const _scw={};function sprWhite(id,flip){const k=id+(flip?'f':'');return _scw[k]||(_scw[k]=sprBuf(id).canvas(1,flip,'#ffffff'))}
 function sprCanvas(id,flip=false,sh=false){const k=id+(flip?'f':'')+(sh?'*':'');return _sc[k]||(_sc[k]=sprBuf(id,sh).canvas(1,flip))}
 function sprURL(id,sil=false,sh=false){const k=id+(sil?'s':'')+(sh?'*':'');return _su[k]||(_su[k]=sprBuf(id,sh).canvas(4,false,sil?'#2e3a6b':null).toDataURL())}
 const CH_ICON=(()=>{const mk=(fill,inner,hl,crack)=>{const b=new Buf(9,9);
@@ -3031,6 +3032,16 @@ T('shelf','#7a5434',(g,o,r)=>{fill(g,'#e8dcc4');g.rect(1,1,14,14,'#7a5434');g.re
 T('counter','#c98f5a',g=>{fill(g,'#8a5a34');g.rect(0,0,16,7,'#c98f5a');g.rect(0,7,16,1,'#6e4428');g.rect(0,0,16,1,'#e0aa74');g.rect(0,12,16,1,'#7a4c2a')},{walk:0});
 T('mat','#c4554a',g=>{fill(g,'#b07a4a');g.rect(1,3,14,10,'#c4554a');g.rect(2,5,12,1,'#f1c66b');g.rect(2,10,12,1,'#f1c66b')});
 T('plant','#4caf50',(g,o)=>{fill(g,'#b07a4a');o.rect(5,10,6,5,'#c4683f');o.ell(8,7,5,4.5,'#4caf50');o.ell(5,5,2.5,2,'#5bbf4e');o.ell(11,5,2.5,2,'#5bbf4e')},{walk:0});
+/* furniture for the houses: beds (head and foot), a table, a fireplace, a rug and the lab's machines */
+const ifl=(g,o,r)=>TL.ifloor.p(g,o,r);
+T('bedT','#4a7fe0',(g,o,r)=>{ifl(g,o,r);o.rect(1,1,14,15,'#8a5a34');o.rect(1,0,14,3,'#6e4428');o.rect(2,1,12,1,'#a8743f');o.rect(3,4,10,4,'#f4f1ea');o.rect(3,4,10,1,'#ffffff');o.rect(2,9,12,7,'#4a7fe0');o.rect(2,9,12,1,'#7fa8f0')},{walk:0});
+T('bedB','#4a7fe0',(g,o,r)=>{ifl(g,o,r);o.rect(1,0,14,14,'#8a5a34');o.rect(2,0,12,11,'#4a7fe0');o.rect(2,5,12,1,'#3a64b8');o.rect(1,12,14,3,'#6e4428')},{walk:0});
+T('table','#a8743f',(g,o,r)=>{ifl(g,o,r);o.ell(8,8,6.5,5.5,'#a8743f',0);o.ell(8,7.5,5.5,4.5,'#c08a54',0);o.ell(5.5,7,2,1.5,'#e8dcc4',0);o.px(5,7,'#c4554a');o.rect(10,7,2,3,'#f4f1ea');o.px(10,7,'#8fd3ee')},{walk:0});
+T('hearth','#8a8f9a',(g,o,r,f)=>{fill(g,'#e8dcc4');g.rect(1,2,14,14,'#8a8f9a');for(const[x,y]of[[2,4],[8,4],[2,15],[11,15]])g.rect(x,y,4,1,'#6b7180');g.rect(0,1,16,2,'#7a5434');g.rect(4,7,8,9,'#2a1a14');
+  g.ell(8,13.5,3.4,2.8,'#ff7a1f',0);g.ell(8,14,2.2,1.8,'#ffd65a',0);g.px(f?6:9,10,'#ff9a2e');g.px(f?10:7,11,'#ffc93a');g.px(f?8:6,9,'#ff7a1f')},{walk:0,anim:1});
+T('rug','#c4554a',(g,o,r)=>{fill(g,'#c4554a');for(const[x,y]of[[4,4],[12,4],[8,8],[4,12],[12,12]]){g.px(x,y-1,'#f1c66b');g.px(x-1,y,'#f1c66b');g.px(x+1,y,'#f1c66b');g.px(x,y+1,'#f1c66b');g.px(x,y,'#a8433a')}});
+T('labpc','#5a5f73',(g,o,r,f)=>{fill(g,'#e8dcc4');g.rect(1,2,14,13,'#5a5f73');g.rect(1,2,14,1,'#7a8094');g.rect(3,4,10,6,'#1b2a3a');g.rect(4,5,8,4,f?'#3fc1c9':'#2fa4ac');g.px(5,6,'#bff7f5');
+  g.rect(3,12,2,1,f?'#66c659':'#2f6b2a');g.rect(6,12,2,1,'#f1c66b');g.rect(9,12,4,1,'#3b4a78')},{walk:0,anim:1});
 T('rail','#8a8fa0',g=>{fill(g,'#5e6372');g.rect(0,2,16,10,'#8a8fa0');g.rect(0,2,16,2,'#b4bac8');g.rect(0,12,16,2,'#4a4e5c');for(const x of[1,7,13])g.rect(x,4,2,8,'#a3a9b8')},{walk:0});
 T('hfront','#9aa0ae',g=>{fill(g,'#9aa0ae');g.rect(0,0,16,2,'#7a8090');for(const x of[1,13])g.rect(x,2,2,14,'#c6cbd6');g.rect(0,14,16,2,'#7a8090')},{walk:0});
 T('hdoor','#5e3a22',g=>{fill(g,'#9aa0ae');g.rect(2,2,12,14,'#3a2a2a');g.rect(3,3,10,13,'#6e4a2c');g.rect(7,3,2,13,'#4a3020');g.px(6,9,'#f1c66b');g.px(9,9,'#f1c66b')},{walk:0});
@@ -3100,6 +3111,130 @@ function trainerPal(id){const h=hashStr(id),P2=(a,sh)=>a[(h>>>sh)%a.length];
   return{hood:P2(['#e86a8a','#4a3a2a','#f1c66b','#2f6f8a','#8a5a3c','#c4554a','#5b8f4a','#9a7fe0','#e0e0e0'],1),skin:P2(['#f2c9a0','#e8b98f','#c98f63','#8a5a3c'],5),coat:P2(['#7fc4ff','#ff7a5c','#66c659','#d9a441','#9a7fe0','#3fc1c9','#f4f1ea','#c4554a','#5a5f73'],9),pants:P2(['#3b4a78','#2f2a44','#5a3e38','#6b4a2a','#4a4e5c'],13),boots:'#2a2340',bag:P2([null,'#f1c66b','#c99360',null],17)}}
 function placeTrainer(m,x,y,dir,f,id,theme){const pk='t_'+id;PAL[pk]=trainerPal(id);const h=hashStr(id);
   const e=npcE(x,y,dir,pk,f.name,null,{spot:1,rot:1,trainer:1,id,f,theme,hx:x,hy:y,period:2300+h%1300,nextTurn:0,turn:h&1?1:-1});e.talk=()=>fighterTalk(e,[]);m.ents.push(e);return e}
+/* ================= houses you can go into =================
+   Every town's houses are open now: the town hall, two homes, the guard barracks (Lynhaven has its post office
+   instead) and, in Lynhaven, Professor Wren's lab. Each has a room or two of furniture and a few people to talk
+   to. h: the hall clerk and a visitor, a: the first home, b: the second home (someone in it is fast asleep),
+   g: the barracks or post office, lab: Wren's lab. Each person is {n: name, c: conversations, a: extra
+   conversations that depend on your progress}. */
+const HOMES={
+ lynhaven:{
+  h:[{n:'Clerk Ada',c:[["Welcome to Lynhaven Town Hall! The mayor is out battling. Again.","Between you and me, the mayor has lost to Kid Teo three times this week."],
+     ["Lynhaven is where the Long Road starts. Ten towns, eight Wardens, one Champion.","We used to keep a big map of it on that wall. Then Moss borrowed it."]]},
+   {n:'Old Ferris',c:[["I walked the whole Long Road when I was your age.","Took me eleven years. I stopped for a lot of snacks."],
+     ["Your Lynties grow with every battle, and they change when they're ready.","Level 30 for the first change, level 60 for the last. Don't rush 'em."]]}],
+  lab:[{n:'Aide Juniper',c:[["The professor is outside. Wren says the fresh air helps with thinking.","Mostly it helps with napping on the bench."],
+     ["Every Lynty you meet goes into your Lyndex. Bond with one and you'll learn all about it.","Wren wants the whole Lyndex filled in. No pressure. Well, some pressure."],
+     ["Shiny Lynties have their colours flipped. About one wild Lynty in a hundred is shiny.","We have exactly zero shiny samples in this lab. If you find one... no, keep it. It's yours."]]},
+   {n:'Intern Bix',c:[["I'm sorting Lyndex cards. There are a hundred and forty-six Lynties!","I've sorted three. One of them twice."],
+     ["That machine counts how many Lynties live along the Long Road.","Right now it says 'ERROR'. Wren says that's a lot."]]}],
+  a:[{n:'Grandma Bea',c:[["Come in, come in! Want a cookie? They're Budrake-shaped.","The Budrake ate the real ones."],
+     ["My grandson trains on Route 1. Be gentle with him.","...Actually, don't. He needs to learn."]],
+     a:()=>S.crests.length>=4?[["You've been all over the Long Road! Sit down, you look thin.","Have two cookies. Have three. Have the plate."]]:[]}],
+  b:[{n:'Sleepy Tam',sleep:1,c:[["Zzz... five more minutes... Zzz..."],["Mmf... is it breakfast yet... Zzz..."]]},
+   {n:'Ivy',c:[["Sorry about my brother. He's been asleep since the last full moon.","He trains a Dusklet. It only comes out at night, so he stays up with it."],
+     ["Don't wake him up. He gets grumpy. Then the Dusklet gets grumpy.","A grumpy Dusklet is just a very small storm cloud with teeth."]]}],
+  g:[{n:'Postmaster Gil',c:[["Lynhaven Post Office! We deliver to every town on the Long Road.","Our fastest courier is a Gustling named Pidge. So is our slowest, on Mondays."],
+     ["A letter came for Professor Wren from Crownspire. It just said 'Rematch?'","Wren laughed for ten minutes and then went very quiet."]]}]},
+ greenvale:{
+  h:[{n:'Clerk Rowan',c:[["Greenvale Town Hall. The mayor's out battling, as usual.","The mayor's Fawnleaf is the best-groomed Lynty in town. It's mostly a full-time job."],
+     ["The Warden Hall is behind the labyrinth across the street.","Find your way through the maze, beat Fern's three fighters, and Fern will battle you herself."]],
+     a:()=>has('fern')?[["The Leaf Crest! Fern will plant a tree in your honor. She does that.","There are a lot of trees in Greenvale."]]:[]}],
+  a:[{n:'Florist Mae',c:[["Every flower in this house came from Fern's garden.","She gives them away faster than they grow. It's a Leaf thing."],
+     ["My Budrake used to sleep on that windowsill all afternoon.","Then it evolved and broke the windowsill."]]}],
+  b:[{n:'Napping Hal',sleep:1,c:[["Zzz... thorns... so many thorns... Zzz..."]]},
+   {n:"Hal's mum",c:[["Hal went into Bramble Hollow and came back asleep on his feet.","The herbalist out there makes a tea that knocks anyone flat. He drank three cups."]]}],
+  g:[{n:'Guard Pell',p:'guard',c:[["Shh, I'm on my break. Don't tell the captain.","Our fence guards fight with Leaf and Air Lynties. Fire burns right through the Leaf ones."],
+     ["Three fences, three gaps, three guards. Same rule in every town.","Beat all three and the way to the labyrinth is open."]]}]},
+ coral:{
+  h:[{n:'Harbor Clerk Sol',c:[["Coral Coast Town Hall! The mayor's out battling. On a surfboard, probably.","Most visitors come to watch Marisol ride a Reefwarden past the reef."],
+     ["Water Lynties can't stand Leaf and Spark moves.","If you brought a Budrake, Marisol's team is going to have a very bad day."]]}],
+  a:[{n:'Shell Collector Nell',c:[["I collect shells. Not the money kind. The seashell kind.","...Okay, both kinds. Mostly the money kind."],
+     ["Ocean Lynties gather in the bright shallows on Route 2.","I saw a shiny Tidlet there once. I screamed and it swam away."]]}],
+  b:[{n:'Fisher Bo',sleep:1,c:[["Zzz... the big one... it got away... Zzz..."]]},
+   {n:'Ria',c:[["Bo was out fishing all night. He caught one boot and one very angry Snapfin.","The Snapfin is in the bathtub now. Please don't go in there."]]}],
+  g:[{n:'Lifeguard Dex',p:'guard',c:[["Off duty! The guards here double as lifeguards.","We fight with Water Lynties. Spark moves are our worst nightmare."],
+     ["The Sunken Steps road runs east of town.","Old Salt Gideon fishes down there. Don't believe a word he says about lighthouses."]]}]},
+ redrock:{
+  h:[{n:'Clerk Pita',c:[["Redrock Town Hall. The mayor is out battling. Or digging. Hard to tell around here.","Tobin keeps a rock collection in the Warden Hall. It's mostly rocks."],
+     ["Earth Lynties shrug off Spark moves completely.","Water and Leaf moves crack them right open."]]}],
+  a:[{n:'Miner Kel',c:[["Twenty years in the canyon mines and I still can't tell a Pebblit from a pebble.","One of them bit me. That's how I found out."],
+     ["Rock Doctor Elba studies old bones out in Ironvein Gulch, east of town.","She says some Lynties are older than the canyon. I say she needs a hobby."]]}],
+  b:[{n:'Grumpy Gus',sleep:1,c:[["Zzz... no more drilling... Zzz... DRILLGORE, NO... Zzz..."]]},
+   {n:'Pip',c:[["Dad's Drillgore dug a tunnel under the house last night.","Now the kitchen is in the basement."]]}],
+  g:[{n:'Guard Ochre',p:'guard',c:[["Break time. Want some canyon jerky? It's mostly sand.","The fence guards here use Earth Lynties. Bring Water or Leaf."],
+     ["Tobin's Scarablet has the toughest shell I've ever seen.","I hit it with everything I had once. It yawned."]]}]},
+ duskwood:{
+  h:[{n:'Clerk Morrow',c:[["...Welcome to Duskwood Town Hall. The mayor is out battling. In the dark.","We keep the lamps low. Nyx says it's polite to the Shadow Lynties."],
+     ["Shadow Lynties fear Spark attacks. A little crackle goes a long way.","Bring something bright. They really hate that."]]}],
+  a:[{n:'Lantern Maker Oona',c:[["Every lantern in Duskwood is made in this house.","Travelers get lost in the woods without one. Even Nightshrouds carry a lantern."],
+     ["Nightshrouds guide lost travelers out of the woods. Nobody knows what's under the hood.","I peeked once. It was another hood."]]}],
+  b:[{n:'Night Owl Rue',sleep:1,c:[["Zzz... it's daytime... go away... Zzz..."]]},
+   {n:'Sable',c:[["Rue trains a Hootlet, so we sleep in shifts.","I'm the day shift. Rue is the night shift. The Hootlet is every shift."]]}],
+  g:[{n:'Guard Vesper',p:'guard',c:[["Shh. I'm off duty. Also, everyone in Duskwood whispers.","The fence guards here use Shadow Lynties. Spark moves light them right up."]]}]},
+ skypeaks:{
+  h:[{n:'Clerk Breeze',c:[["Sky Peaks Town Hall! The mayor is out battling. Up a mountain.","Aria says the wind decides everything. The mayor says the budget does. They argue a lot."],
+     ["Air Lynties are fast, but Spark and Frost moves knock them out of the sky.","Hold on to your hat in Aria's hall. I mean that. Mine's still up there."]]}],
+  a:[{n:'Kite Maker Lu',c:[["I make kites! Gustlings keep stealing them.","They don't fly them. They just sit on them like nests."],
+     ["Skydiver Lark jumps off the peak every morning.","Her Puffwisp catches her. Usually."]]}],
+  b:[{n:'Climber Tor',sleep:1,c:[["Zzz... one more ledge... Zzz..."]]},
+   {n:"Tor's dad",c:[["Tor climbed all three peaks yesterday. Today he's climbing nothing.","Not even the stairs. I carried him up."]]}],
+  g:[{n:'Guard Gale',p:'guard',c:[["Off duty. Want to see my Zephyrin? ...It blew away again.","The fence guards here fly Air Lynties. Spark and Frost moves bring them down."]]}]},
+ stormreach:{
+  h:[{n:'Clerk Volta',c:[["Stormreach Town Hall! The mayor is out battling. In the rain. With a metal umbrella.","We've stopped asking questions."],
+     ["Earth moves ground Spark Lynties, and Shadow ones hold up well against them too.","Rhett's Shockscale is quick, though. Really quick. Bring Salves."]]}],
+  a:[{n:'Inventor Tess',c:[["I'm building a machine that runs on Lynty static!","So far it runs on me rubbing a Zapkit on the carpet."],
+     ["Coilcalves store lightning in their horns. Pet one and your hair stands up for a week.","Mine has been standing up since Tuesday."]]}],
+  b:[{n:'Storm Watcher Ike',sleep:1,c:[["Zzz... thunder... one... two... three... Zzz..."]]},
+   {n:"Ike's grandma",c:[["Ike counts the seconds between the lightning and the thunder all night.","He fell asleep at four hundred and twelve."]]}],
+  g:[{n:'Guard Ampere',p:'guard',c:[["Break time! The guards here battle with Spark Lynties.","Earth Lynties just shrug off our moves. It's very frustrating."]]}]},
+ cinder:{
+  h:[{n:'Clerk Ember',c:[["Cinder Peak Town Hall. The mayor is out battling. Somewhere hot.","We keep every window open. All of them. Always."],
+     ["Water and Earth Lynties put out fires fast.","Watch out for Cinda's Pyraven, though. It gets hotter the longer the battle goes."]]}],
+  a:[{n:'Blacksmith Brann',c:[["My forge runs on a Furnox. Best bellows I ever had.","It eats coal, charcoal and, once, my left boot."],
+     ["Kilnkins love warm places. I found one asleep in my oven.","I didn't bake anything for a month."]]}],
+  b:[{n:'Lava Hopper Zed',sleep:1,c:[["Zzz... too hot... too hot... Zzz..."]]},
+   {n:'Fay',c:[["Zed tried to toast a marshmallow over a lava pool.","He's fine. The marshmallow isn't."]]}],
+  g:[{n:'Guard Scoria',p:'guard',c:[["On my break. Guarding a volcano is sweaty work.","The fence guards here use Fire Lynties. Water and Earth moves douse them fast."]]}]},
+ frostfell:{
+  h:[{n:'Clerk Rime',c:[["Frostfell Town Hall. Close the door! ...The mayor is out battling. In a blizzard.","Halvard says cold weather builds character. The mayor says it builds icicles."],
+     ["Fire melts ice, and Shadow moves work well against Frost too.","Halvard's Lynties don't feel the cold at all. Yours might, so keep them healthy."]]}],
+  a:[{n:'Knitter Ingrid',c:[["I knit scarves for every Lynty in Frostfell.","The Snowpips wear them. The Yetlets eat them."],
+     ["They say Aurorix brings the northern lights. I've never seen one.","I've seen the lights every winter, though. So it's around somewhere."]]}],
+  b:[{n:'Ice Fisher Olaf',sleep:1,c:[["Zzz... brr... where's my blanket... Zzz..."]]},
+   {n:'Sigrid',c:[["Olaf sat on the frozen lake for nine hours waiting for a bite.","He caught a cold. That's the only thing he caught."]]}],
+  g:[{n:'Guard Brynja',p:'guard',c:[["Off duty and thawing out.","The fence guards here use Frost Lynties. Fire melts them, and Shadow moves hit hard too."]]}]},
+ crownspire:{
+  h:[{n:'Royal Clerk Aurel',c:[["Welcome to Crownspire Hall. The mayor is out battling. They're the Champion's biggest fan.","They have a Wren poster in their office. Two, actually. And a mug."],
+     ["The Champion Hall is across the street, behind the Champion's Labyrinth.","Royal Guards patrol in there. They don't go easy on anyone."]],
+     a:()=>S.flags.champ?[["You're the new Champion! I have to update every document in this building.","That's four thousand documents. Congratulations, though!"]]:[]}],
+  a:[{n:'Superfan Bert',c:[["I've watched every Champion battle for fifty years.","Wren's was the best. Until yours, maybe. We'll see."],
+     ["They say there's an altar in the Sky Sanctum, high above the Champion Hall.","Only a Champion can wake it. Nobody knows what's up there."]]}],
+  b:[{n:'Royal Guard Cass',sleep:1,p:'guard',c:[["Zzz... halt... who goes there... Zzz..."]]},
+   {n:'Lio',c:[["Cass patrols the labyrinth all night and sleeps all day.","Please don't tell the Champion. Cass would be so embarrassed."]]}],
+  g:[{n:'Royal Guard Wynn',p:'guard',c:[["Break time. Even Royal Guards need a sandwich.","The Champion uses Lynties of every type. Bring a team that can handle anything."]]}]}};
+/* the rooms: one plan per kind of house, 9 tiles wide and 8 deep, with a mat at the bottom that takes you back out */
+function homeRoom(kind,id,name,tw,back){
+  const m=newMap('home_'+tw.id+'_'+id,9,8,'ifloor',{interior:1,name,town:tw.id,home:1});
+  for(let x=0;x<9;x++){mS(m,x,0,'iwall');mS(m,x,7,'iwall')}for(let y=0;y<8;y++){mS(m,0,y,'iwall');mS(m,8,y,'iwall')}
+  const put=(list,t)=>{for(const[x,y]of list)mS(m,x,y,t)};
+  if(kind==='hall'){put([[1,1],[2,1],[6,1],[7,1]],'shelf');put([[2,3],[3,3],[4,3],[5,3],[6,3]],'counter');put([[1,5],[7,5]],'plant');put([[4,4],[4,5],[4,6]],'rug')}
+  else if(kind==='lab'){put([[1,1],[2,1],[3,1]],'shelf');put([[5,1],[6,1],[7,1]],'labpc');put([[2,4],[6,4]],'table');put([[1,6],[7,6]],'plant');put([[3,3],[4,3],[5,3],[3,4],[4,4],[5,4],[3,5],[4,5],[5,5]],'rug')}
+  else if(kind==='post'){put([[1,1],[2,1],[3,1],[5,1],[6,1],[7,1]],'shelf');put([[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3]],'counter');put([[1,5],[7,5]],'plant')}
+  else if(kind==='bar'){put([[1,2],[3,2],[6,2]],'bedT');put([[1,3],[3,3],[6,3]],'bedB');put([[7,1]],'shelf');put([[5,5]],'table');put([[7,6]],'plant')}
+  else{/* a home: a bed, a fireplace, a bookcase, a table on a rug */put([[1,1],[2,1]],'shelf');mS(m,6,1,'hearth');mS(m,1,3,'bedT');mS(m,1,4,'bedB');mS(m,7,6,'plant');
+    put([[4,3],[5,3],[6,3],[4,4],[6,4],[4,5],[5,5],[6,5]],'rug');mS(m,5,4,'table')}
+  mS(m,4,7,'mat');m.warps.push({x:4,y:7,map:'world',tx:back[0],ty:back[1],dir:'down'});
+  /* where people stand in each plan */
+  const SPOTS={hall:[[4,2,'down'],[2,5,'right']],lab:[[4,2,'down'],[6,5,'left']],post:[[4,2,'down']],bar:[[5,4,'down'],[2,5,'right']],home:[[3,4,'down'],[7,3,'left']]};
+  const people=(HOMES[tw.id]||{})[id]||[],spots=SPOTS[kind]||SPOTS.home;
+  people.forEach((v,k)=>{const pk=v.p&&PAL[v.p]?v.p:'h_'+tw.id+id+k;if(!PAL[pk])PAL[pk]=trainerPal(pk);
+    /* whoever is fast asleep has nodded off at the table */
+    const[x,y,d]=v.sleep?(kind==='bar'?[4,5,'right']:[5,3,'down']):spots[k%spots.length];
+    const e=npcE(x,y,d,pk,v.n,null,{ci:0,c:v.c,a:v.a,sleep:v.sleep?1:0});e.talk=()=>villagerTalk(e);m.ents.push(e)});
+  return m}
+/* swap a locked door for a way in */
+function homeDoor(m,tw,x,y,kind,id,name){delete m.locked[`${x},${y}`];homeRoom(kind,id,name,tw,[x,y+1]);m.warps.push({x,y,door:1,map:'home_'+tw.id+'_'+id,tx:4,ty:6,dir:'up'})}
 function buildWorld(){
   const H2=TOWNS.length*TOWN_H+ROUTES.length*ROUTE_H,m=newMap('world',OW_W,H2,'grass',{name:'The Long Road'}),rng=mulberry(20261013);
   let y=H2;
@@ -3124,7 +3259,7 @@ function buildTown(m,tw,i,top){
   for(let x=4;x<cx-1;x++)mS(m,x,top+5,'cobble');
   for(let x=cx+1;x<=21;x++)mS(m,x,top+5,'cobble');
   for(let x=3;x<=6;x++){mS(m,x,top+2,'roofS');mS(m,x,top+3,'roofS');mS(m,x,top+4,x===4?'door':'win')}
-  m.locked[`4,${top+4}`]=`${tw.name} Town Hall. A note on the door says: Out battling. Back soon.`;
+  homeDoor(m,tw,4,top+4,'hall','h',`${tw.name} Town Hall`);
   if(tw.ward){const w=wardOf(tw.ward),el=w.el||'crown';
     const mz=tw.mz=buildMaze(tw,i);
     for(let x=18;x<=24;x++){for(let r=1;r<=2;r++)mS(m,x,top+r,'hroof_'+el);mS(m,x,top+3,'lwall_'+el);mS(m,x,top+4,x===21?'lgate_'+el:'lwall_'+el)}
@@ -3132,14 +3267,15 @@ function buildTown(m,tw,i,top){
     m.ents.push(signE(23,top+5,w.id==='wren'?"Champion's Labyrinth\nFind the way through the maze to the Champion Hall. Two Royal Guards patrol inside.":`${tw.name} Labyrinth\nThe ${EL[w.el].n} Warden Hall lies beyond the maze. Two guards patrol inside, and treasure hides in the dead ends.`));
   }else{
     for(let x=18;x<=22;x++){mS(m,x,top+2,'roofT');mS(m,x,top+3,'roofT');mS(m,x,top+4,x===20?'door':'win')}
-    m.locked[`20,${top+4}`]="Professor Wren's lab. The professor is usually standing right outside.";
+    homeDoor(m,tw,20,top+4,'lab','lab',"Prof. Wren's Lab");
     m.ents.push(npcE(20,top+5,'down','prof','Prof. Wren',profTalk,{show:()=>S.crests.length<8&&!S.flags.champ}));
     mS(m,11,top+8,'fountain');
   }
   for(let x=3;x<=6;x++){mS(m,x,top+8,'roofR');mS(m,x,top+9,'roofR');mS(m,x,top+10,x===5?'door':'win')}
-  m.locked[`5,${top+10}`]='The door is locked. Nobody seems to be home.';
+  const hn=id=>{const p=(HOMES[tw.id]||{})[id];return p?p[0].n.split(' ').pop()+"'s House":tw.name+' House'};
+  homeDoor(m,tw,5,top+10,'home','a',hn('a'));
   for(let x=19;x<=22;x++){mS(m,x,top+8,'roofT');mS(m,x,top+9,'roofT');mS(m,x,top+10,x===20?'door':'win')}
-  m.locked[`20,${top+10}`]='The door is locked. Someone inside is snoring.';
+  homeDoor(m,tw,20,top+10,'home','b',hn('b'));
   if(tw.theme==='green'||tw.theme==='home')for(const[x,y]of[[11,top+3],[12,top+3],[8,top+12],[9,top+12],[23,top+12],[24,top+13]])mS(m,x,y,'flowers');
   for(const[x,y]of[[26,top+7],[11,top+13],[26,top+12]])mS(m,x,y,ob);
   (FOLK[tw.id]||[]).forEach((v,k)=>{const pk='f_'+tw.id+k;PAL[pk]=PAL[v.p]||folkPal(v.p);const x=v.at[0],y=top+v.at[1];mS(m,x,y,g);
@@ -3156,7 +3292,7 @@ function buildTown(m,tw,i,top){
   m.warps.push({x:4,y:tp,door:1,map:'shop_'+tw.id,tx:4,ty:6,dir:'up'});
   m.ents.push(signE(6,tp+2,`${tw.name} Trading Post\nThe healer restores your Lynties, and the clerk sells supplies.`));
   for(let x=19;x<=22;x++){mS(m,x,tp-2,'roofR');mS(m,x,tp-1,'roofR');mS(m,x,tp,x===20?'door':'win')}
-  m.locked[`20,${tp}`]=i?"The town guard barracks. Everyone is out guarding the fences!":"Lynhaven Post Office. Closed for the day.";
+  homeDoor(m,tw,20,tp,i?'bar':'post','g',i?`${tw.name} Guard Barracks`:'Lynhaven Post Office');
   if(i>0)m.ents.push(signE(17,bot-2,`Welcome to ${tw.name}!\nTrading Post on your left. The town guards hold the fences to the north: beat them to reach the ${tw.ward==='wren'?'Champion':'Warden'}'s labyrinth.`));
   /* ----- middle: fenced grass district (Lynhaven gets a quiet park instead) ----- */
   if(i===0){
@@ -3450,6 +3586,8 @@ function trainerBuf(p,f){const b=new Buf(32,44),st=p.style||'hood',hr=p.hair||p.
   b.rect(19,10,1,2,INK);b.px(20,9,dk(SK));b.px(21,13,dk(SK));
   /* the front arm: down by the side, or reaching out at the other side */
   if(f==='reach'){b.line(18,21,25,20,p.coat,3);b.rect(25,18,3,4,SK);b.px(28,18,SK);b.px(28,19,SK);b.px(28,20,SK);b.px(26,17,SK);b.px(25,22,dk(SK))}
+  else if(f==='wind'){b.line(18,20,15,13,p.coat,3);b.rect(12,9,4,4,SK)}
+  else if(f==='toss'){b.line(18,21,26,15,p.coat,3);b.rect(25,12,4,4,SK);b.px(29,13,SK)}
   else{b.line(18,21,20,27,p.coat,3);b.rect(19,27,3,3,SK)}
   return b.outline()}
 let _tp={};
@@ -3732,7 +3870,7 @@ async function interact(){
   if(mode!=='world'||P.moving)return;
   const[dx,dy]=DIRV[P.dir];let x=P.x+dx,y=P.y+dy,e=entAt(x,y);
   if(!e&&tAt(x,y)==='counter'){x+=dx;y+=dy;e=entAt(x,y)}
-  if(e){if(e.kind==='npc'&&!e.anim)e.dir=OPP[P.dir];await e.talk();if(e.kind==='npc'&&!e.rot&&!e.wander&&!e.anim)e.dir=(e.fighter||e.blocker||e.stepAside)&&isBeaten(e)?e.adir:e.home;return}
+  if(e){if(e.kind==='npc'&&!e.anim&&!e.sleep)e.dir=OPP[P.dir];await e.talk();if(e.kind==='npc'&&!e.rot&&!e.wander&&!e.anim)e.dir=(e.fighter||e.blocker||e.stepAside)&&isBeaten(e)?e.adir:e.home;return}
   const t=tAt(x,y),lk=CM.locked[`${x},${y}`];
   if(lk){await talk([lk]);return}
   if(!t)return;
@@ -3797,6 +3935,10 @@ function drawPz(m,camX,camY,now){
     const[gx,gy]=pz.gate;
     if(pz.gateFx){ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(gx*16-camX,gy*16-camY,16,16)}
     if(pz.burstT&&now-pz.burstT<700){const k=(now-pz.burstT)/700;ctx.fillStyle=lt(HALL_C[pz.el]);for(let i=0;i<10;i++){const a=i*.628+k*2,r=4+k*18;ctx.fillRect(Math.round(gx*16-camX+8+Math.cos(a)*r),Math.round(gy*16-camY+8+Math.sin(a)*r*.7),2,2)}}}}
+/* little z's floating up over someone fast asleep */
+function drawZzz(x,y,now){for(let i=0;i<2;i++){const t=((now/1700)+i*.5)%1,zx=Math.round(x+t*5+Math.sin(t*6)*1.5),zy=Math.round(y-t*10),s=t<.5?1:2;
+  ctx.globalAlpha=t<.15?t/.15:t>.8?(1-t)/.2:1;const Z=[[0,0],[1,0],[2,0],[1,1],[0,2],[1,2],[2,2]];
+  ctx.fillStyle='#1b1430';for(const[a,b2]of Z)ctx.fillRect(zx+a*s-1,zy+b2*s-1,s+2,s+2);ctx.fillStyle='#ffffff';for(const[a,b2]of Z)ctx.fillRect(zx+a*s,zy+b2*s,s,s);ctx.globalAlpha=1}}
 function drawEnt(e,sx,sy,now,k){
   switch(e.kind){
     case 'sign':ctx.drawImage(SIGN,sx,sy-2);break;
@@ -3810,7 +3952,7 @@ function drawEnt(e,sx,sy,now,k){
       if(Math.floor(now/180)%5===0){ctx.fillStyle='#ffffff';ctx.fillRect(sx+((now/37|0)%28)-6,sy-26+((now/53|0)%30),1,1)}
       if(S.flags.altarShiny)for(let k=0;k<3;k++){const ph=(now/700+k/3)%1,x=sx-8+((k*37+(now/700|0)*13)%32),y=sy-28+((k*23+(now/700|0)*7)%30),z=ph<.5?2:1;ctx.fillStyle=k%2?'#fff3c4':'#ffffff';ctx.fillRect(x-z,y,z*2+1,1);ctx.fillRect(x,y-z,1,z*2+1)}break}
     case 'crystal':{const lit=now<(e.glowT||0);if(lit){ctx.globalAlpha=.4;pEll(sx+8,sy+6,12,10,e.c);ctx.globalAlpha=1}ctx.drawImage(crysC(e.c,lit),sx,sy-3);break}
-    default:{const fr=e.anim&&k<.5?(e.sn%2?1:2):0;ctx.drawImage(personCanvas(e.pal,e.dir,fr),sx,sy-4)}}
+    default:{const fr=e.anim&&k<.5?(e.sn%2?1:2):0;ctx.drawImage(personCanvas(e.pal,e.dir,fr),sx,sy-4);if(e.sleep)drawZzz(sx+11,sy-6,now)}}
   if(e.alert)drawAlert(sx,sy-20)}
 function drawAlert(x,y){ctx.fillStyle=INK;ctx.fillRect(x+3,y,10,12);ctx.fillStyle='#ffffff';ctx.fillRect(x+4,y+1,8,10);ctx.fillStyle='#ff4a3d';ctx.fillRect(x+7,y+2,2,5);ctx.fillRect(x+7,y+8,2,2)}
 function drawPlayer(px,py,camX,camY){
@@ -3880,6 +4022,7 @@ function burst(side,kind,n=22){const[cx,cy]=monCenter(side);const cols=FXC[kind]
 /* Lynties are drawn facing right, so yours faces the other side as it is and the other side's is turned round.
    A Lynty drawn facing left would go in here, to be turned round too. */
 const FACES_LEFT=new Set();
+function trainerHand(){const T=B.tr,[bx,by]=platPos('me'),x=Math.round(bx-60+(T?T.dx:0)),y=Math.round(by+3-88);return T&&T.f==='wind'?[x+28,y+22]:[x+56,y+28]}
 function drawTrainer(now){const T=B.tr;if(!T)return;const[bx,by]=platPos('me'),c=trainerCanvas(T.f),x=Math.round(bx-60+T.dx),y=Math.round(by+3-88);
   ctx.globalAlpha=clamp(T.a,0,1);pEll(x+30,by+2,22,4,'rgba(9,15,36,.25)');ctx.drawImage(c,x,y,64,88);
   if(T.f==='reach'){const k=(now-T.t0)/1000,hx=x+57,hy=y+39,r=4+Math.sin(k*14)*1.2+Math.min(4,k*10);
@@ -3894,9 +4037,16 @@ function drawMon(m,side,o,now){
   const x=Math.round(bx-w/2+o.dx),y=Math.round(by+4-w+o.dy+bob*o.scale);
   if(o.sink>0){ctx.save();ctx.beginPath();ctx.rect(0,0,W,by+5);ctx.clip();ctx.drawImage(c,x,y+o.sink*w,w,w);ctx.restore()}
   else ctx.drawImage(c,x,y,w,w);
+  if(o.white>0){ctx.globalAlpha=clamp(o.white,0,1);ctx.drawImage(sprWhite(m.sp,flip),x,y,w,w);ctx.globalAlpha=1}
 }
 function drawBattle(now){
   const bg=BG[B.bgKey],dt=Math.min(50,now-(B.lt||now));B.lt=now;
+  drawBattleBg(now);
+  for(const side of['foe','me']){const[x,y]=platPos(side),rx=side==='foe'?44:50,ry=side==='foe'?8:10;pEll(x,y+2,rx,ry,dk(bg.plat));pEll(x,y,rx,ry,bg.plat);pEll(x-rx*.22,y-ry*.3,rx*.5,ry*.35,lt(bg.plat))}
+  drawMon(B.foe,'foe',B.o.foe,now);const tf=B.tr&&B.tr.thr;if(!tf)drawTrainer(now);drawMon(B.me>=0?S.team[B.me]:null,'me',B.o.me,now);if(tf)drawTrainer(now);
+  drawCharm2D(now);drawBattleFx(now,dt)}
+/* the sky, the far hills or cave walls, and the ground */
+function drawBattleBg(now){const bg=BG[B.bgKey];
   const hy=Math.round(H*.4),bh=Math.ceil(hy/3);
   bg.sky.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(0,i*bh,W,bh+1)});
   for(const layer of[0,1]){ctx.fillStyle=layer?bg.far2||bg.far:bg.far;for(let x=0;x<W;x++){const h=Math.round(farH(bg.shape,x,layer));if(h>0)ctx.fillRect(x,hy-h,1,h)}
@@ -3904,10 +4054,11 @@ function drawBattle(now){
   if(bg.stal){for(let x=0;x<W;x++){const s=17,m2=x%s,b2=Math.floor(x/s),h=Math.round(Math.max(2,(8+((b2*11)%14))-Math.abs(m2-s/2)*1.6));ctx.fillStyle=bg.stal;ctx.fillRect(x,0,1,h);ctx.fillStyle=lt(bg.stal);if(m2<s/2)ctx.fillRect(x,h-1,1,1)}}
   if(bg.shape==='volcano'){const cx=Math.round(W*.42);ctx.fillStyle='#ff8a2a';ctx.fillRect(cx-11,hy-47,22,2);ctx.fillStyle='#ffd65a';ctx.fillRect(cx-6,hy-48,12,1)}
   ctx.fillStyle=bg.ground;ctx.fillRect(0,hy,W,H-hy);
-  ctx.fillStyle=lt(bg.ground);for(let i=0;i<16;i++){const x=Math.round((i*37+(bg.sea?now*.012:0))%W),y=hy+5+((i*23)%Math.max(1,H-hy-8));ctx.fillRect(x,y,bg.sea?8:6,1)}
-  for(const side of['foe','me']){const[x,y]=platPos(side),rx=side==='foe'?44:50,ry=side==='foe'?8:10;pEll(x,y+2,rx,ry,dk(bg.plat));pEll(x,y,rx,ry,bg.plat);pEll(x-rx*.22,y-ry*.3,rx*.5,ry*.35,lt(bg.plat))}
-  drawMon(B.foe,'foe',B.o.foe,now);drawTrainer(now);drawMon(B.me>=0?S.team[B.me]:null,'me',B.o.me,now);
-  if(B.charm){ctx.save();ctx.translate(Math.round(B.charm.x),Math.round(B.charm.y));ctx.rotate(B.charm.rot);ctx.drawImage(charmImg(B.charm.k||'charm'),-12,-12,24,24);ctx.restore()}
+  ctx.fillStyle=lt(bg.ground);for(let i=0;i<16;i++){const x=Math.round((i*37+(bg.sea?now*.012:0))%W),y=hy+5+((i*23)%Math.max(1,H-hy-8));ctx.fillRect(x,y,bg.sea?8:6,1)}}
+function drawCharm2D(now){const c=B.charm;if(!c)return;let x=c.x,y=c.y;if(c.ph==='held'){[x,y]=trainerHand()}
+  if(c.glow>0){const g2=ctx.createRadialGradient(x,y,1,x,y,18+c.glow*8);g2.addColorStop(0,`rgba(255,248,210,${Math.min(.85,.35+c.glow*.35)})`);g2.addColorStop(1,'rgba(255,248,210,0)');ctx.fillStyle=g2;ctx.fillRect(x-40,y-40,80,80)}
+  ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(c.rot||0);const z=Math.round(24*(c.sq||1));ctx.drawImage(charmImg(c.k||'charm'),-z/2,-z/2,z,z);ctx.restore()}
+function drawBattleFx(now,dt){const bg=BG[B.bgKey];
   stepParts(B.fx,dt);
   for(let i=B.bolts.length-1;i>=0;i--){const b=B.bolts[i];b.life-=dt;if(b.life<=0){B.bolts.splice(i,1);continue}ctx.strokeStyle=Math.floor(now/50)%2?'#fff6b0':'#f0cc35';ctx.lineWidth=2;ctx.beginPath();let y=b.y-44;ctx.moveTo(b.x,y);while(y<b.y+14){y+=7;ctx.lineTo(b.x+(rnd()-.5)*16,y)}ctx.stroke()}
   for(let i=B.rings.length-1;i>=0;i--){const r=B.rings[i];r.life-=dt;r.r+=dt*.06;if(r.life<=0){B.rings.splice(i,1);continue}ctx.strokeStyle=r.c;ctx.globalAlpha=clamp(r.life/420,0,1);ctx.lineWidth=2;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1}
@@ -3916,6 +4067,9 @@ function drawBattle(now){
     const[cx,cy]=monCenter(n.side),y=Math.round(cy-14-t*20-(t<.15?(.15-t)*40:0));ctx.globalAlpha=t>.7?1-(t-.7)/.3:1;ctx.font=`${n.big?18:14}px VT323, monospace`;ctx.lineWidth=3;ctx.strokeStyle='#1b1430';ctx.strokeText('-'+n.v,cx,y);ctx.fillStyle=n.c;ctx.fillText('-'+n.v,cx,y);ctx.globalAlpha=1}
   ctx.textAlign='start';
   if(k==='rain'){if(rnd()<dt*.0003)B.flashT=now;if(now-(B.flashT||-1e4)<130){ctx.fillStyle='rgba(255,255,240,.35)';ctx.fillRect(0,0,W,H)}}
+  if(B.flashW){const a=1-(now-B.flashW)/260;if(a>0){ctx.fillStyle=`rgba(255,255,255,${a*.8})`;ctx.fillRect(0,0,W,H)}else B.flashW=0}
+  if(B.banner){const t=(now-B.banner.t0)/1300;if(t>=1)B.banner=null;else{const sc=t<.15?.4+t/.15*.75:t<.25?1.15-(t-.15)*1.5:1,al=t>.8?1-(t-.8)/.2:1;
+    ctx.save();ctx.globalAlpha=al;ctx.translate(Math.round(W/2),Math.round(H*.3));ctx.scale(sc,sc);ctx.textAlign='center';ctx.font='26px VT323, monospace';ctx.lineJoin='round';ctx.lineWidth=5;ctx.strokeStyle='#1b1430';ctx.strokeText(B.banner.text,0,0);ctx.fillStyle=B.banner.c||'#ffe27a';ctx.fillText(B.banner.text,0,0);ctx.restore();ctx.textAlign='start'}}
 }
 let EVO=null;const _sil={};
 const silC=(id,c='#ffffff')=>_sil[id+c]||(_sil[id+c]=sprBuf(id).canvas(1,false,c));
@@ -4084,6 +4238,8 @@ function w3block(t){
   if(t==='iwall')return{h:1.75};
   if(t==='shelf')return{h:1.3,side:'iwall',top:'counter',front:'shelf'};
   if(t==='counter')return{h:.62};
+  if(t==='hearth')return{h:1,side:'iwall',top:'counter',front:'hearth'};
+  if(t==='labpc')return{h:1.05,side:'counter',top:'counter',front:'labpc'};
   if(t==='rail')return{h:.5};
   if(t.startsWith('hwall_'))return{h:1.95};
   if(t==='swall')return{h:2};
@@ -4151,6 +4307,16 @@ function w3obj(t,x,y,P){
     case 'fountain':{add(W3G.cyl(16),w3M4(cx,.16,cz,0,.48,.32,.48),'#a9b4c2');add(W3G.cyl(16),w3M4(cx,.31,cz,0,.4,.03,.4),'#6fd3e8');
       add(W3G.cyl(8),w3M4(cx,.55,cz,0,.07,.5,.07),'#c9d2dc');add(W3G.cyl(12),w3M4(cx,.8,cz,0,.17,.07,.17),'#c9d2dc');add(W3G.sph(1),w3M4(cx,.9,cz,0,.08),'#bff2fb');
       return true}
+    /* the houses' furniture: beds in two halves (head and foot), and a little round table set for tea */
+    case 'bedT':case 'bedB':{const head=base==='bedT',bl=['#4a7fe0','#c4554a','#66a95a','#9a7fe0'][(x*3)%4];
+      add(W3G.box(),w3M4(cx,.16,cz+(head?.05:-.05),0,.86,.24,.9),'#8a5a34');
+      add(W3G.box(),w3M4(cx,.33,head?cz+.24:cz-.06,0,.82,.1,head?.5:.84),bl);add(W3G.box(),w3M4(cx,.39,head?cz+.03:cz-.3,0,.83,.02,.06),lt(bl));
+      if(head){add(W3G.box(),w3M4(cx,.42,y+.07,0,.88,.66,.08),'#6e4428');add(W3G.sph(1),w3M4(cx,.36,y+.3,0,.3,.09,.15),'#f4f1ea')}
+      else add(W3G.box(),w3M4(cx,.3,y+.93,0,.88,.38,.08),'#6e4428');
+      return true}
+    case 'table':{add(W3G.cyl(16),w3M4(cx,.53,cz,0,.4,.06,.4),'#c08a54');add(W3G.cyl(8),w3M4(cx,.27,cz,0,.07,.5,.07),'#8a5a34');add(W3G.cyl(12),w3M4(cx,.03,cz,0,.22,.05,.22),'#8a5a34');
+      add(W3G.cyl(12),w3M4(cx-.14,.57,cz-.06,0,.13,.015,.13),'#e8dcc4');add(W3G.cyl(8),w3M4(cx+.16,.61,cz+.05,0,.05,.09,.05),'#f4f1ea');
+      if(P.blobs)P.blobs.push([cx,cz,.55]);return true}
     case 'plant':{add(W3G.tcone(.75,10),w3M4(cx,.15,cz,0,.17,.3,.17),'#c4683f');add(W3G.sph(1),w3M4(cx,.5,cz,0,.25,.23,.25),'#4caf50');
       add(W3G.sph(1),w3M4(cx-.16,.62,cz,0,.13),'#5bbf4e');add(W3G.sph(1),w3M4(cx+.15,.64,cz+.04,0,.12),'#5bbf4e');
       return true}
@@ -4447,6 +4613,7 @@ function w3animKid(n,dt,moving,running,dir,pose){n.t+=dt;
   n.legL.rotation.x=sw*.8;n.legR.rotation.x=-sw*.8;
   n.armL.rotation.x=-sw*.7;n.armR.rotation.x=sw*.7;n.armL.rotation.z=-.1-br*3;n.armR.rotation.z=.1+br*3;
   if(pose==='wave'){n.armR.rotation.z=2.5+Math.sin(n.t*10)*.3;n.armR.rotation.x=0}
+  if(pose==='sleep'){n.head.rotation.x=.5+Math.sin(n.t*1.3)*.07;n.body.rotation.x=.14;n.armL.rotation.x=n.armR.rotation.x=-.5}
   n.head.rotation.x=-n.body.rotation.x*.6+Math.sin(n.ph*2)*.02*n.walk;n.head.rotation.z=Math.sin(n.t*.7)*.03*(1-n.walk)}
 
 /* ---------- the things people and puzzles are made of ---------- */
@@ -4544,12 +4711,14 @@ function draw3D(now){
   n.root.position.set(px+.5,0,pz+.5);w3animKid(n,dt,moving,running&&moving,P.dir);w3silSync(n);
   const tx=P.t<.5?P.fx:P.x,ty=P.t<.5?P.fy:P.y,here=tAt(tx,ty);n.rip.material.opacity=here==='shallows'?.55+.2*Math.sin(now/180):0;n.rip.scale.setScalar(1+.12*Math.sin(now/240));
   /* everyone else */
-  const alerts=[];
+  const alerts=[],sleepers=[],live=new Set(m.ents);
+  /* anyone who has left the map (your rival walking off) leaves the scene too */
+  for(const[e,o]of W3.ents)if(!live.has(e)){w3free(o);W3.ents.delete(e)}
   for(const e of m.ents){let ex=e.x,ey=e.y,k=1;if(e.anim){k=clamp((now-e.anim.t0)/e.anim.dur,0,1);ex=e.anim.fx+(e.x-e.anim.fx)*k;ey=e.anim.fy+(e.y-e.anim.fy)*k}
     if(Math.abs(ey-pz)>18){const o=W3.ents.get(e);if(o){w3free(o);W3.ents.delete(e)}continue}
     let o=W3.ents.get(e);if(!o){o=w3entObj(e);if(!o)continue;W3.ents.set(e,o);W3.actors.add(o.root)}
     const v=vis(e);o.root.visible=v;if(!v)continue;o.root.position.set(ex+.5,0,ey+.5);
-    if(o.kid)w3animKid(o,dt,!!e.anim&&k<1,false,e.dir);if(o.upd)o.upd(now,dt,e);if(e.alert)alerts.push(o.root)}
+    if(o.kid)w3animKid(o,dt,!!e.anim&&k<1,false,e.dir,e.sleep?'sleep':null);if(o.upd)o.upd(now,dt,e);if(e.alert)alerts.push(o.root);if(e.sleep)sleepers.push(o.root)}
   if(W3.pzo)for(const o of W3.pzo)o.upd(now,dt);
   /* camera, light, and the see-through hole around you */
   w3camera(m,px,pz,dt,W3.snap);w3envStep(m,pz,dt,W3.snap);W3.snap=false;
@@ -4558,7 +4727,8 @@ function draw3D(now){
   W3.r.render(W3.sc,W3.cam);
   /* the pixel canvas on top stays clear, apart from "!" over anyone who has spotted you */
   ctx.clearRect(0,0,W,H);
-  const v3=new THREE.Vector3();for(const r of alerts){v3.copy(r.position);v3.y+=1.3;v3.project(W3.cam);drawAlert(Math.round((v3.x+1)/2*W)-8,Math.round((1-v3.y)/2*H)-12)}}
+  const v3=new THREE.Vector3();for(const r of alerts){v3.copy(r.position);v3.y+=1.3;v3.project(W3.cam);drawAlert(Math.round((v3.x+1)/2*W)-8,Math.round((1-v3.y)/2*H)-12)}
+  for(const r of sleepers){v3.copy(r.position);v3.y+=1.25;v3.x+=.15;v3.project(W3.cam);drawZzz(Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H),now)}}
 
 /* ---------- the trainer editor on the title screen shows your 3D figure, turning slowly ---------- */
 function w3look(now){const cv=$('#look3');if(!W3.ok||!cv)return false;
@@ -4598,7 +4768,7 @@ function w3intro(now){const I=INTRO;if(!I)return;const dt=Math.min(.05,(now-(W3.
     if(X.right){X.right.root.position.set(.78,0,.05);X.sc.add(X.right.root)}}
   const k=clamp((now-I.t0)/380,0,1),pop=k<1?1+Math.sin(k*Math.PI)*.18-(1-k)*(1-k):1;
   if(X.right){const r=X.right;r.root.scale.setScalar((r.lyn?1:W3K.kid)*Math.max(.01,pop));
-    if(r.lyn)r.lyn.position.y=Math.sin(now/420)*.04;else{w3animKid(r,dt,false,false,'down',null);r.root.rotation.y=-.42}}
+    if(r.lyn)r.lyn.position.y=(SP[I.lyn].fl?.2:0)+Math.sin(now/420)*.04;else{w3animKid(r,dt,false,false,'down',null);r.root.rotation.y=-.42}}
   X.ring.position.set(.78,.6,.1);X.ring.lookAt(X.cam.position);X.ring.scale.setScalar(1+k*3.2);X.ring.material.opacity=I.who==='lyn'&&k<1?(1-k)*.9:0;
   W3.r.render(X.sc,X.cam);ctx.clearRect(0,0,W,H)}
 
@@ -4932,7 +5102,7 @@ async function champTalk(){const who='Champion Wren';
 
 /* ================= battle ================= */
 let B=null;
-const mkO=()=>({dx:0,dy:0,scale:1,hide:false,flash:false,sink:0});
+const mkO=()=>({dx:0,dy:0,scale:1,hide:false,flash:false,sink:0,white:0});
 const cur=()=>S.team[B.me];
 const stg=s=>s>=0?(2+s)/2:2/(2-s);
 function label(side){if(side==='me')return nmOf(cur());return B.trainer?`${B.trainer.short}'s ${nmOf(B.foe)}`:`The wild ${nmOf(B.foe)}`}
@@ -5024,7 +5194,7 @@ function aiPick(){const f=B.foe,me=cur(),ms=f.moves;
   const dm=ms.filter(m=>MV[m].p);if(!dm.length)return ms[0];
   if(B.trainer||rnd()<.5){let best=dm[0],bv=-1;for(const id of dm){const x=MV[id],v=x.p*mult(x.el,SP[me.sp].el)*(x.el===SP[f.sp].el?1.25:1)*(.85+rnd()*.3);if(v>bv){bv=v;best=id}}return best}
   return pick(dm)}
-async function lunge(side){const d=side==='me'?14:-14,o=B.o[side];await tween(140,t=>o.dx=d*t);await tween(160,t=>o.dx=d*(1-t))}
+async function lunge(side){const d=side==='me'?14:-14,o=B.o[side];o.act=performance.now();await tween(140,t=>o.dx=d*t);await tween(160,t=>o.dx=d*(1-t))}
 async function useMove(side,id){
   const x=MV[id],other=side==='me'?'foe':'me',att=side==='me'?cur():B.foe,def=side==='me'?B.foe:cur(),aS=B.st[side],dS=B.st[other];
   await bmsg(`${label(side)} used ${x.n}!`,350);
@@ -5094,20 +5264,39 @@ async function throwCharm(item){
   S.bag[item]--;const f=B.foe,s=SP[f.sp],mx=stats(f).hp;
   const rate=(s.leg?.1:[.9,.5,.28][s.stage]*(s.rare?.75:1))*({star:1.6,nova:2.5}[item]||1);
   const ch=item==='crown'?1:clamp(rate*(1-.72*f.hp/mx)+.04,.04,.97),ok=rnd()<ch,shakes=ok?3:ri(0,2);
-  await bmsg(`You tossed a ${ITEMS[item].n}!`,250);
-  if(item==='crown')await bmsg("It shines with the power of a Warden's crest!",500);
-  const[sx,sy]=[W*.25,H-56],[tx,ty]=monCenter('foe');
-  B.charm={x:sx,y:sy,rot:0,k:item};MUS.sfx('toss');
-  await tween(520,t=>{B.charm.x=sx+(tx-sx)*t;B.charm.y=sy+(ty-sy)*t-Math.sin(t*Math.PI)*50;B.charm.rot=t*Math.PI*4});
-  burst('foe','charm',14);await tween(240,t=>B.o.foe.scale=1-t);B.o.foe.hide=true;B.o.foe.scale=1;
-  const gy=platPos('foe')[1]-8;await tween(240,t=>{B.charm.y=ty+(gy-ty)*t*t;B.charm.rot=0});
-  for(let i=0;i<shakes;i++){await sleep(220);MUS.sfx('wobble');await tween(380,t=>B.charm.rot=Math.sin(t*Math.PI*2)*.5)}
-  await sleep(250);
-  if(ok){burst('foe','buff',20);MUS.jingle('win');await sleep(350);B.charm=null;
+  await bmsg(`You tossed a ${ITEMS[item].n}!`,1);
+  /* your trainer steps in, winds up and throws */
+  /* (your Lynty steps aside to make room) */
+  B.tr={f:'idle',dx:-95,a:0,t0:performance.now(),thr:1};await tween(260,t=>{const e=1-(1-t)**2;B.tr.dx=-95+87*e;B.tr.a=t;B.o.me.dx=26*e});
+  B.tr.f='wind';B.charm={ph:'held',k:item,rot:0,x:0,y:0,t:0,glow:.15,sq:1};MUS.sfx('tick',62);await sleep(300);
+  B.tr.f='toss';MUS.sfx('toss');const[sx,sy]=trainerHand(),[tx,ty]=monCenter('foe');Object.assign(B.charm,{ph:'fly',x:sx,y:sy});
+  if(item==='crown')bmsgSet("It shines with the power of a Warden's crest!");
+  /* the flight: a spinning arc, trailing sparkles */
+  await tween(560,t=>{const c=B.charm;c.t=t;c.x=sx+(tx-sx)*t;c.y=sy+(ty-sy)*t-Math.sin(t*Math.PI)*54;c.rot=t*Math.PI*5;
+    if(B.tr){const u=clamp((t-.45)/.55,0,1);B.tr.dx=-8-87*u*u;B.tr.a=1-u;if(u>0)B.tr.f='idle';B.o.me.dx=26*(1-u*u)}
+    if(rnd()<.6)B.fx.push({x:c.x+(rnd()-.5)*6,y:c.y+(rnd()-.5)*6,vx:(rnd()-.5)*.02,vy:.01+rnd()*.02,life:260+rnd()*200,c:pick(['#ffffff','#fff3c4','#bff7f5']),s:rnd()<.3?2:1,tw:rnd()<.3})});
+  B.tr=null;B.o.me.dx=0;
+  /* it opens in a flash and draws the Lynty in */
+  B.charm.ph='open';B.flashW=performance.now();MUS.sfx('chime');burst('foe','charm',24);
+  await tween(320,t=>{B.o.foe.white=Math.min(1,t*2);B.o.foe.scale=1-t*t;B.charm.glow=1-t*.5});B.o.foe.hide=true;B.o.foe.scale=1;B.o.foe.white=0;
+  /* it drops and bounces */
+  B.charm.ph='drop';const gy=platPos('foe')[1]-8;await tween(240,t=>{B.charm.t=t;B.charm.y=ty+(gy-ty)*t*t;B.charm.rot*=.8});
+  MUS.sfx('thud');await tween(200,t=>{B.charm.y=gy-Math.sin(t*Math.PI)*9;B.charm.sq=1+Math.sin(t*Math.PI)*.12;B.charm.rot=0});B.charm.sq=1;B.charm.ph='rest';B.charm.glow=.25;
+  /* the wobbles: each one longer and harder than the last */
+  for(let i=0;i<shakes;i++){await sleep(i?460:320);MUS.sfx('wobble');B.charm.glow=.35+i*.3;
+    await tween(420+i*80,t=>{B.charm.rot=Math.sin(t*Math.PI*2)*(.45+i*.12);B.charm.sq=1+Math.abs(Math.sin(t*Math.PI*2))*.07})}
+  B.charm.rot=0;B.charm.sq=1;await sleep(420);
+  if(ok){/* click! stars, a ring of light and a fanfare */
+    B.charm.ph='lock';B.charm.glow=1.5;MUS.sfx('tick',96);B.flashW=performance.now();burst('foe','buff',30);
+    const[cx,cy]=[B.charm.x,B.charm.y];for(let k=0;k<26;k++){const a=k/26*6.283,v=.05+rnd()*.06;B.fx.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-.02,g:.00008,life:700+rnd()*400,c:pick(['#ffe27a','#ffffff','#fff3c4','#bff7f5']),s:2,tw:true})}
+    B.rings.push({x:cx,y:cy,r:4,life:520,c:'#fff3c4'});B.banner={text:'BONDED!',t0:performance.now()};MUS.jingle('win');
+    await tween(700,t=>B.charm.glow=1.5-t);await sleep(250);B.charm=null;
     caughtMark(f.sp,f.shiny);f.xp=0;await bmsg(s.leg?`Bonded! The legendary ${s.name} has joined you!`:`Bonded! ${f.shiny?'The shiny ':''}${s.name} is your friend now.`,1100);
     if(S.team.length<6)S.team.push(f);else{S.den.push(f);await bmsg(`Your team is full, so ${s.name} went to rest in the Den.`,1100)}
     B.over=true;B.result='caught';return true}
-  B.charm=null;burst('foe','neutral',12);B.o.foe.hide=false;await tween(220,t=>B.o.foe.scale=t);B.o.foe.scale=1;
+  /* it breaks free with a pop */
+  B.charm.ph='break';B.flashW=performance.now();B.shake=performance.now();MUS.sfx('buzz');burst('foe','neutral',18);const bx2=B.charm.x,by2=B.charm.y;B.charm=null;
+  B.rings.push({x:bx2,y:by2,r:3,life:380,c:'#ffffff'});B.o.foe.hide=false;await tween(240,t=>B.o.foe.scale=t*1.15);await tween(140,t=>B.o.foe.scale=1.15-.15*t);B.o.foe.scale=1;
   await bmsg(pick([`${s.name} shook off the charm!`,'So close! It broke free.',`${s.name} isn't ready to bond yet.`]),900);return false}
 async function endBattle(){
   const res=B.result;await sleep(150);
@@ -5425,7 +5614,7 @@ buildTiles();load3D();buildWorld();buildMini();setMap('world');layout();sndLabel
 $('#tTag').textContent=`${ORDER.length} Lynties · 8 legends · 4 caves`;
 $('#parade').innerHTML=['thalassor','ignaroth','aethyra','fulgurion','nihilux'].map(id=>`<img class="px" src="${sprURL(id)}" alt="${SP[id].name}">`).join('');
 requestAnimationFrame(loop);
-window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt};
+window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt};
 const snap=()=>S&&S.flags.starter&&!B&&CM?{S:JSON.parse(JSON.stringify(Object.assign(S,{pos:{map:CM.id,x:P.x,y:P.y,dir:P.dir}}))),slot:SLOT,dirty}:null;
 const hot=!ZP&&window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(snap);

@@ -130,6 +130,8 @@ function w3block(t){
   if(t==='iwall')return{h:1.75};
   if(t==='shelf')return{h:1.3,side:'iwall',top:'counter',front:'shelf'};
   if(t==='counter')return{h:.62};
+  if(t==='hearth')return{h:1,side:'iwall',top:'counter',front:'hearth'};
+  if(t==='labpc')return{h:1.05,side:'counter',top:'counter',front:'labpc'};
   if(t==='rail')return{h:.5};
   if(t.startsWith('hwall_'))return{h:1.95};
   if(t==='swall')return{h:2};
@@ -197,6 +199,16 @@ function w3obj(t,x,y,P){
     case 'fountain':{add(W3G.cyl(16),w3M4(cx,.16,cz,0,.48,.32,.48),'#a9b4c2');add(W3G.cyl(16),w3M4(cx,.31,cz,0,.4,.03,.4),'#6fd3e8');
       add(W3G.cyl(8),w3M4(cx,.55,cz,0,.07,.5,.07),'#c9d2dc');add(W3G.cyl(12),w3M4(cx,.8,cz,0,.17,.07,.17),'#c9d2dc');add(W3G.sph(1),w3M4(cx,.9,cz,0,.08),'#bff2fb');
       return true}
+    /* the houses' furniture: beds in two halves (head and foot), and a little round table set for tea */
+    case 'bedT':case 'bedB':{const head=base==='bedT',bl=['#4a7fe0','#c4554a','#66a95a','#9a7fe0'][(x*3)%4];
+      add(W3G.box(),w3M4(cx,.16,cz+(head?.05:-.05),0,.86,.24,.9),'#8a5a34');
+      add(W3G.box(),w3M4(cx,.33,head?cz+.24:cz-.06,0,.82,.1,head?.5:.84),bl);add(W3G.box(),w3M4(cx,.39,head?cz+.03:cz-.3,0,.83,.02,.06),lt(bl));
+      if(head){add(W3G.box(),w3M4(cx,.42,y+.07,0,.88,.66,.08),'#6e4428');add(W3G.sph(1),w3M4(cx,.36,y+.3,0,.3,.09,.15),'#f4f1ea')}
+      else add(W3G.box(),w3M4(cx,.3,y+.93,0,.88,.38,.08),'#6e4428');
+      return true}
+    case 'table':{add(W3G.cyl(16),w3M4(cx,.53,cz,0,.4,.06,.4),'#c08a54');add(W3G.cyl(8),w3M4(cx,.27,cz,0,.07,.5,.07),'#8a5a34');add(W3G.cyl(12),w3M4(cx,.03,cz,0,.22,.05,.22),'#8a5a34');
+      add(W3G.cyl(12),w3M4(cx-.14,.57,cz-.06,0,.13,.015,.13),'#e8dcc4');add(W3G.cyl(8),w3M4(cx+.16,.61,cz+.05,0,.05,.09,.05),'#f4f1ea');
+      if(P.blobs)P.blobs.push([cx,cz,.55]);return true}
     case 'plant':{add(W3G.tcone(.75,10),w3M4(cx,.15,cz,0,.17,.3,.17),'#c4683f');add(W3G.sph(1),w3M4(cx,.5,cz,0,.25,.23,.25),'#4caf50');
       add(W3G.sph(1),w3M4(cx-.16,.62,cz,0,.13),'#5bbf4e');add(W3G.sph(1),w3M4(cx+.15,.64,cz+.04,0,.12),'#5bbf4e');
       return true}
@@ -493,6 +505,7 @@ function w3animKid(n,dt,moving,running,dir,pose){n.t+=dt;
   n.legL.rotation.x=sw*.8;n.legR.rotation.x=-sw*.8;
   n.armL.rotation.x=-sw*.7;n.armR.rotation.x=sw*.7;n.armL.rotation.z=-.1-br*3;n.armR.rotation.z=.1+br*3;
   if(pose==='wave'){n.armR.rotation.z=2.5+Math.sin(n.t*10)*.3;n.armR.rotation.x=0}
+  if(pose==='sleep'){n.head.rotation.x=.5+Math.sin(n.t*1.3)*.07;n.body.rotation.x=.14;n.armL.rotation.x=n.armR.rotation.x=-.5}
   n.head.rotation.x=-n.body.rotation.x*.6+Math.sin(n.ph*2)*.02*n.walk;n.head.rotation.z=Math.sin(n.t*.7)*.03*(1-n.walk)}
 
 /* ---------- the things people and puzzles are made of ---------- */
@@ -590,12 +603,14 @@ function draw3D(now){
   n.root.position.set(px+.5,0,pz+.5);w3animKid(n,dt,moving,running&&moving,P.dir);w3silSync(n);
   const tx=P.t<.5?P.fx:P.x,ty=P.t<.5?P.fy:P.y,here=tAt(tx,ty);n.rip.material.opacity=here==='shallows'?.55+.2*Math.sin(now/180):0;n.rip.scale.setScalar(1+.12*Math.sin(now/240));
   /* everyone else */
-  const alerts=[];
+  const alerts=[],sleepers=[],live=new Set(m.ents);
+  /* anyone who has left the map (your rival walking off) leaves the scene too */
+  for(const[e,o]of W3.ents)if(!live.has(e)){w3free(o);W3.ents.delete(e)}
   for(const e of m.ents){let ex=e.x,ey=e.y,k=1;if(e.anim){k=clamp((now-e.anim.t0)/e.anim.dur,0,1);ex=e.anim.fx+(e.x-e.anim.fx)*k;ey=e.anim.fy+(e.y-e.anim.fy)*k}
     if(Math.abs(ey-pz)>18){const o=W3.ents.get(e);if(o){w3free(o);W3.ents.delete(e)}continue}
     let o=W3.ents.get(e);if(!o){o=w3entObj(e);if(!o)continue;W3.ents.set(e,o);W3.actors.add(o.root)}
     const v=vis(e);o.root.visible=v;if(!v)continue;o.root.position.set(ex+.5,0,ey+.5);
-    if(o.kid)w3animKid(o,dt,!!e.anim&&k<1,false,e.dir);if(o.upd)o.upd(now,dt,e);if(e.alert)alerts.push(o.root)}
+    if(o.kid)w3animKid(o,dt,!!e.anim&&k<1,false,e.dir,e.sleep?'sleep':null);if(o.upd)o.upd(now,dt,e);if(e.alert)alerts.push(o.root);if(e.sleep)sleepers.push(o.root)}
   if(W3.pzo)for(const o of W3.pzo)o.upd(now,dt);
   /* camera, light, and the see-through hole around you */
   w3camera(m,px,pz,dt,W3.snap);w3envStep(m,pz,dt,W3.snap);W3.snap=false;
@@ -604,7 +619,8 @@ function draw3D(now){
   W3.r.render(W3.sc,W3.cam);
   /* the pixel canvas on top stays clear, apart from "!" over anyone who has spotted you */
   ctx.clearRect(0,0,W,H);
-  const v3=new THREE.Vector3();for(const r of alerts){v3.copy(r.position);v3.y+=1.3;v3.project(W3.cam);drawAlert(Math.round((v3.x+1)/2*W)-8,Math.round((1-v3.y)/2*H)-12)}}
+  const v3=new THREE.Vector3();for(const r of alerts){v3.copy(r.position);v3.y+=1.3;v3.project(W3.cam);drawAlert(Math.round((v3.x+1)/2*W)-8,Math.round((1-v3.y)/2*H)-12)}
+  for(const r of sleepers){v3.copy(r.position);v3.y+=1.25;v3.x+=.15;v3.project(W3.cam);drawZzz(Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H),now)}}
 
 /* ---------- the trainer editor on the title screen shows your 3D figure, turning slowly ---------- */
 function w3look(now){const cv=$('#look3');if(!W3.ok||!cv)return false;
@@ -644,6 +660,6 @@ function w3intro(now){const I=INTRO;if(!I)return;const dt=Math.min(.05,(now-(W3.
     if(X.right){X.right.root.position.set(.78,0,.05);X.sc.add(X.right.root)}}
   const k=clamp((now-I.t0)/380,0,1),pop=k<1?1+Math.sin(k*Math.PI)*.18-(1-k)*(1-k):1;
   if(X.right){const r=X.right;r.root.scale.setScalar((r.lyn?1:W3K.kid)*Math.max(.01,pop));
-    if(r.lyn)r.lyn.position.y=Math.sin(now/420)*.04;else{w3animKid(r,dt,false,false,'down',null);r.root.rotation.y=-.42}}
+    if(r.lyn)r.lyn.position.y=(SP[I.lyn].fl?.2:0)+Math.sin(now/420)*.04;else{w3animKid(r,dt,false,false,'down',null);r.root.rotation.y=-.42}}
   X.ring.position.set(.78,.6,.1);X.ring.lookAt(X.cam.position);X.ring.scale.setScalar(1+k*3.2);X.ring.material.opacity=I.who==='lyn'&&k<1?(1-k)*.9:0;
   W3.r.render(X.sc,X.cam);ctx.clearRect(0,0,W,H)}
