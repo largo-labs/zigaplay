@@ -8,6 +8,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Kettō** | Pixel samurai duels, tournaments, a Fighter Forge and a 20-chapter 3D story. It plays sideways. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · START pause |
+| **Drowned Moon** | *Tides of the Drowned Moon*, a 16-bit style RPG. The moon fell into the sea; Marin can pull the tide out and let it back in, to sail, walk the seabed and solve dungeons. A party of three, turn-based battles, four dungeons and six bosses. | D-pad move · A talk/confirm · B back · START menu · SELECT turn the tide |
 
 Kettō's own source lives in [largo-labs/ketto](https://github.com/largo-labs/ketto). The cartridge here is built from it (see [Updating Kettō](#updating-ketto)).
 
@@ -19,6 +20,16 @@ Lynties draws its world in 3D: a little diorama seen from behind and above, with
 - The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.
 - `tools/lynties-3d/src/w3d.js` is the 3D world. `tools/lynties-3d/build.py` adds it to the game to make the cartridge: `python3 tools/lynties-3d/build.py tools/lynties-3d/lynties-2d.html games/lynties/index.html`.
 - If WebGL or three.js can't load, the cartridge falls back to the pixel-art world.
+
+## Drowned Moon
+
+*Tides of the Drowned Moon*: seven years ago the moon fell into the sea and split the world. The islanders and the Drowned on the seabed each think the others are ghosts. Marin's lantern holds a shard of the moon, so she can turn the tide.
+
+- **The tide is the main mechanic.** At Flood you sail and drift logs float into bridges. At Ebb the shallows and tidal pools are dry ground, and sunken places open. SELECT turns it, on the map and in dungeons.
+- **Battles are turn-based, for a party of three** (Marin, Pell the harpooner, Ysolde the moon-singer). The battle tide turns every three rounds, and Marin's *Turn Tide* flips it: water skills hit harder at Flood, moon skills at Ebb, and drowned foes lose their armor at Ebb.
+- Towns with shops and inns, gear for each hero, three save slots (in this browser), chiptune music and an ending.
+- The game is built from `tools/drownedmoon/src/` (art, maps, story, battle and so on, all in code): `python3 tools/drownedmoon/build.py` writes `games/drownedmoon/index.html`. `tools/drownedmoon/make-cart.js` redraws its label.
+- Played on its own on a phone, the game shows its own touch buttons.
 
 ## Playing it
 
@@ -43,6 +54,7 @@ app/                        the built offline edition (made by tools/build-offli
 tools/build-offline.py      builds the offline edition: python3 tools/build-offline.py . OUT
 tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
 tools/ketto-cart.py         builds games/ketto/index.html from a checkout of largo-labs/ketto
+tools/drownedmoon/          Drowned Moon's source (src/*.js) and its build script
 ```
 
 ## How the console works

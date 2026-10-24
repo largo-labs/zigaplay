@@ -1,0 +1,2251 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tides of the Drowned Moon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Tides of the Drowned Moon: a 16-bit style RPG for the ZigaPlay.
+   The world is drawn on a small canvas stretched to the screen; windows and text are HTML on top of it. */
+:root{color-scheme:dark;--ink:#f3f6ff;--dim:#9fb0d8;--gold:#ffd77a;--hp:#7dffb0;--mp:#8fd0ff;--bad:#ff7a7a;
+  --win1:#24508f;--win2:#0b1a40;--edge:#e6eeff;--ui:'Pixelify Sans',ui-monospace,monospace}
+*,::before,::after{box-sizing:border-box}
+html{font-size:clamp(10px,4.4vw,17px)}
+html,body{height:100%;margin:0}
+body{background:#02040c;color:var(--ink);font-family:var(--ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:#02040c}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+#ui{position:absolute;inset:0;pointer-events:none}
+#fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .35s}
+#fade.white{background:#e8f4ff}
+
+/* windows */
+.win{position:absolute;background:linear-gradient(180deg,var(--win1),var(--win2));border:2px solid var(--edge);border-radius:5px;
+  box-shadow:0 0 0 2px #050a1c,inset 0 0 0 1px #4d7cc4,0 3px 8px #0008;padding:.45rem .6rem;line-height:1.3;text-shadow:1px 1px 0 #050a1c}
+.win h3{margin:0 0 .25rem;font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:.06em}
+.dlg{left:.4rem;right:.4rem;bottom:.4rem;min-height:5.2rem;font-size:1rem}
+.dlg .who{position:absolute;top:-1.15rem;left:.5rem;padding:.05rem .45rem;font-size:.78rem;color:var(--gold);background:var(--win2);border:2px solid var(--edge);border-radius:4px 4px 0 0;border-bottom:0}
+.dlg .more{position:absolute;right:.55rem;bottom:.25rem;width:0;height:0;border:.3rem solid transparent;border-top-color:var(--gold);border-bottom:0;animation:bob .6s steps(2) infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+.list{display:flex;flex-direction:column}
+.opt{position:relative;padding:.08rem .2rem .08rem 1rem;display:flex;justify-content:space-between;gap:.6rem;white-space:nowrap}
+.opt.off{color:#7d8bb0}
+.opt.sel::before{content:'';position:absolute;left:.1rem;top:50%;margin-top:-.3rem;border:.3rem solid transparent;border-left:.5rem solid var(--gold);border-right:0;animation:poke .5s steps(2) infinite}
+@keyframes poke{50%{transform:translateX(2px)}}
+.opt .r{color:var(--dim)}
+.scroll{overflow:hidden}
+.small{font-size:.78rem;color:var(--dim)}
+.gold{color:var(--gold)}.hpc{color:var(--hp)}.mpc{color:var(--mp)}.bad{color:var(--bad)}
+.bar{height:.28rem;background:#04081a;border:1px solid #000;border-radius:2px;overflow:hidden;margin-top:.1rem}
+.bar i{display:block;height:100%;background:linear-gradient(#a8ffcc,#36c46f)}
+.bar.mp i{background:linear-gradient(#bfe6ff,#3e8fe0)}
+.toast{left:50%;top:.6rem;transform:translateX(-50%);font-size:.85rem;white-space:nowrap;text-align:center}
+.mapname{left:50%;top:1.2rem;transform:translateX(-50%);font-size:.9rem;padding:.3rem .9rem;letter-spacing:.08em;color:var(--gold);animation:fadeout 2.6s forwards}
+@keyframes fadeout{0%,75%{opacity:1}100%{opacity:0}}
+
+/* title */
+#title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;pointer-events:none}
+#title .logo{margin-top:16%;text-align:center;line-height:1;letter-spacing:.06em;text-shadow:0 0 8px #7fb4ff,2px 2px 0 #04081a}
+#title .logo small{display:block;font-size:.8rem;color:#bcd2ff;letter-spacing:.35em;margin-bottom:.4rem}
+#title .logo b{display:block;font-size:2.1rem;font-weight:600;color:#f4f8ff}
+#title .logo em{display:block;font-style:normal;font-size:1.05rem;color:var(--gold);letter-spacing:.3em;margin-top:.35rem}
+#title .press{position:absolute;bottom:30%;font-size:.9rem;color:#dfe8ff;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+#title .foot{position:absolute;bottom:.6rem;font-size:.65rem;color:#6b7ba8}
+
+/* battle */
+.bnames{left:.3rem;bottom:.3rem;width:38%;font-size:.82rem}
+.bparty{right:.3rem;bottom:.3rem;width:60%;font-size:.82rem;padding:.35rem .45rem}
+.prow{display:grid;grid-template-columns:1fr auto;column-gap:.4rem;padding:.12rem .1rem .12rem .7rem;position:relative}
+.prow.act::before{content:'';position:absolute;left:0;top:.38rem;border:.28rem solid transparent;border-left:.42rem solid var(--gold);border-right:0}
+.prow.ko{color:var(--bad)}
+.prow .nm{display:flex;gap:.3rem;align-items:baseline}
+.prow .st{font-size:.65rem;color:#ffb0e0}
+.prow .nums{text-align:right;font-variant-numeric:tabular-nums}
+.bmsg{left:.3rem;right:.3rem;top:.3rem;text-align:center;font-size:.9rem;padding:.3rem .5rem}
+.tidebadge{right:.3rem;top:.3rem;font-size:.7rem;padding:.15rem .45rem;letter-spacing:.06em}
+.tidebadge.flood{color:#9fd6ff}.tidebadge.ebb{color:#fff1b8}
+.bcmd{font-size:.95rem;min-width:7.4rem}
+
+/* full menu */
+.mm{inset:0;font-size:.9rem;display:flex;flex-direction:column;gap:.35rem;background:rgba(2,4,16,.62);border:0;border-radius:0;box-shadow:none;padding:.3rem}
+.card{display:grid;grid-template-columns:auto 1fr;gap:.1rem .6rem;align-items:center}
+.card canvas{width:2.4rem;height:2.4rem;image-rendering:pixelated;grid-row:span 3}
+.desc{font-size:.78rem;color:#cfe0ff;min-height:2.1em}
+.statgrid{display:grid;grid-template-columns:auto auto;gap:.05rem 1rem;font-size:.85rem}
+.up{color:#7dffb0}.down{color:#ff8a8a}
+/* touch controls, only when the game runs on its own on a phone */
+body.touch{display:flex;flex-direction:column}
+body.touch #app{height:auto;flex:1;min-height:0}
+#pad{display:none}
+body.touch #pad{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:36vh;max-height:300px;padding:.6rem 1.2rem calc(.6rem + env(safe-area-inset-bottom,0px));background:#0a0f24;border-top:2px solid #1d2a55;position:relative}
+#pad .dp{position:relative;width:9.5rem;height:9.5rem;justify-self:center}
+#pad .dp b{position:absolute;width:3.2rem;height:3.2rem;background:#263466;border:2px solid #3d4f8a;border-radius:.5rem}
+#pad .dp b.on,#pad .ab b.on,#pad .ss b.on{background:#4a64b0}
+#pad .dp .u{left:3.15rem;top:0}#pad .dp .d{left:3.15rem;bottom:0}#pad .dp .l{left:0;top:3.15rem}#pad .dp .r{right:0;top:3.15rem}
+#pad .ab{position:relative;width:9rem;height:7rem;justify-self:center}
+#pad .ab b{position:absolute;width:3.8rem;height:3.8rem;border-radius:50%;background:#7a2a5a;border:2px solid #b04a86;color:#ffd0ea;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+#pad .ab .a{right:0;top:0}#pad .ab .b{left:0;bottom:0}
+#pad .ss{position:absolute;left:50%;bottom:calc(.5rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:1rem}
+#pad .ss b{padding:.25rem .8rem;border-radius:1rem;background:#263466;border:2px solid #3d4f8a;font-size:.65rem;color:#bcd2ff;letter-spacing:.08em;font-weight:400}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" width="160" height="256"></canvas>
+  <div id="ui"></div>
+  <div id="fade"></div>
+</div>
+<div id="pad"><div class="dp"><b class="u" data-b="up"></b><b class="d" data-b="down"></b><b class="l" data-b="left"></b><b class="r" data-b="right"></b></div>
+<div class="ab"><b class="a" data-b="a">A</b><b class="b" data-b="b">B</b></div><div class="ss"><b data-b="select">SELECT</b><b data-b="start">START</b></div></div>
+<script>
+(()=>{'use strict';
+/* ===================== AUDIO: chip sound effects and a small music sequencer ===================== */
+const AU=(()=>{
+  const ZP=(()=>{try{return window.parent&&window.parent!==window&&window.parent.ZIGAPLAY||null}catch(e){return null}})();
+  const AC=(ZP&&ZP.AudioContext)||window.AudioContext||window.webkitAudioContext;
+  let ctx=null,master=null,musicBus=null,sfxBus=null,noiseBuf=null,pulses={};
+  let musicOn=true,sfxOn=true,pending='',gestured=false;
+  function init(){
+    if(ctx||!AC)return;
+    try{ctx=new AC()}catch(e){return}
+    master=ctx.createGain();master.gain.value=.9;master.connect(ctx.destination);
+    musicBus=ctx.createGain();musicBus.gain.value=.55;musicBus.connect(master);
+    sfxBus=ctx.createGain();sfxBus.gain.value=.8;sfxBus.connect(master);
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
+    const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    for(const duty of [.125,.25,.5]){const n=32,re=new Float32Array(n),im=new Float32Array(n);
+      for(let k=1;k<n;k++){im[k]=2/(k*Math.PI)*Math.sin(k*Math.PI*duty)}
+      pulses[duty]=ctx.createPeriodicWave(re,im)}
+  }
+  function unlock(){gestured=true;init();if(ctx&&ctx.state!=='running')ctx.resume().then(()=>{if(pending&&!cur){const n=pending;curName='';playMusic(n)}}).catch(()=>{})}
+  const NOTE={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  function freq(n){const m=/^([A-G])([#b]?)(-?\d)$/.exec(n);if(!m)return 0;
+    let s=NOTE[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(+m[3]+1)*12;return 440*Math.pow(2,(s-69)/12)}
+  function osc(type,f,t,len,vol,bus,opt={}){
+    if(!ctx)return;const o=ctx.createOscillator(),g=ctx.createGain();
+    if(type==='p12')o.setPeriodicWave(pulses[.125]);else if(type==='p25')o.setPeriodicWave(pulses[.25]);else o.type=type;
+    o.frequency.setValueAtTime(f,t);
+    if(opt.slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,opt.slide),t+len);
+    if(opt.vib){const l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=5.5;lg.gain.value=f*.012;l.connect(lg);lg.connect(o.frequency);l.start(t+Math.min(.12,len*.5));l.stop(t+len+.05)}
+    const a=opt.a||.006,r=Math.min(opt.r||.06,len*.6);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+a);
+    if(opt.decay)g.gain.exponentialRampToValueAtTime(Math.max(.0004,vol*opt.decay),t+len);
+    else{g.gain.setValueAtTime(vol,t+Math.max(a,len-r))}
+    g.gain.linearRampToValueAtTime(0,t+len);
+    o.connect(g);g.connect(bus||sfxBus);o.start(t);o.stop(t+len+.02);
+  }
+  function noise(t,len,vol,bus,opt={}){
+    if(!ctx)return;const s=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+    s.buffer=noiseBuf;f.type=opt.type||'highpass';f.frequency.setValueAtTime(opt.f||3000,t);
+    if(opt.f2)f.frequency.exponentialRampToValueAtTime(opt.f2,t+len);f.Q.value=opt.q||.7;
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0005,t+len);
+    s.connect(f);f.connect(g);g.connect(bus||sfxBus);s.start(t,Math.random()*.5);s.stop(t+len+.02);
+  }
+  /* ---------- sound effects ---------- */
+  const SFX={
+    tick(){osc('p25',1320,now(),.035,.05)},
+    ok(){const t=now();osc('p25',988,t,.05,.05);osc('p25',1480,t+.05,.08,.05)},
+    back(){const t=now();osc('p25',740,t,.05,.05);osc('p25',494,t+.05,.07,.05)},
+    buzz(){osc('sawtooth',110,now(),.14,.05)},
+    talk(){osc('p12',660+Math.random()*80,now(),.025,.025)},
+    door(){const t=now();noise(t,.12,.12,null,{type:'lowpass',f:900});osc('triangle',140,t,.12,.15,null,{slide:80})},
+    hit(){const t=now();noise(t,.12,.25,null,{type:'bandpass',f:1800,f2:400,q:1});osc('square',180,t,.08,.06,null,{slide:60})},
+    crit(){const t=now();noise(t,.2,.3,null,{type:'bandpass',f:2600,f2:300,q:1});osc('square',320,t,.15,.07,null,{slide:50})},
+    miss(){osc('triangle',600,now(),.12,.06,null,{slide:1200})},
+    water(){const t=now();noise(t,.5,.22,null,{type:'bandpass',f:400,f2:2400,q:2});osc('sine',300,t,.4,.08,null,{slide:900})},
+    moon(){const t=now();[1568,2093,2637,3136,2637].forEach((f,i)=>osc('p12',f,t+i*.05,.18,.035,null,{decay:.05}))},
+    heal(){const t=now();[523,659,784,1047,1319].forEach((f,i)=>osc('triangle',f,t+i*.06,.2,.08,null,{decay:.1}))},
+    tide(){const t=now();noise(t,.9,.2,null,{type:'lowpass',f:300,f2:3500,q:3});noise(t+.35,.8,.12,null,{type:'lowpass',f:3500,f2:200,q:2})},
+    swirl(){const t=now();for(let i=0;i<10;i++)osc('p25',300+i*90,t+i*.035,.06,.05);noise(t,.6,.12,null,{type:'bandpass',f:500,f2:4000,q:2})},
+    chest(){const t=now();[784,988,1175,1568].forEach((f,i)=>osc('p25',f,t+i*.07,.14,.05))},
+    level(){const t=now();[523,659,784,1047,784,1047,1319].forEach((f,i)=>osc('p25',f,t+i*.08,.12,.05))},
+    die(){const t=now();osc('square',400,t,.5,.06,null,{slide:60});noise(t,.5,.1,null,{type:'lowpass',f:2000,f2:100})},
+    boom(){const t=now();noise(t,.7,.35,null,{type:'lowpass',f:1200,f2:60});osc('triangle',90,t,.5,.25,null,{slide:30})},
+    flee(){const t=now();for(let i=0;i<5;i++)noise(t+i*.06,.05,.1,null,{f:5000})},
+    buy(){const t=now();osc('p25',1568,t,.05,.05);osc('p25',2093,t+.06,.12,.05)},
+    bell(){const t=now();[523,1047,1568,2093].forEach((f,i)=>osc('sine',f*1.002,t,2.2-i*.3,.1/(i+1),null,{decay:.01}))},
+    step(){noise(now(),.04,.05,null,{type:'lowpass',f:600})},
+    poison(){const t=now();osc('sawtooth',220,t,.2,.04,null,{slide:110})},
+    sleep(){const t=now();osc('sine',880,t,.25,.06,null,{slide:440});osc('sine',660,t+.2,.3,.05,null,{slide:330})},
+  };
+  function now(){return ctx?ctx.currentTime+.005:0}
+  function play(name){if(!sfxOn)return;unlock();if(ctx&&ctx.state==='running'&&SFX[name])try{SFX[name]()}catch(e){}}
+
+  /* ---------- music ---------- */
+  // A channel is a string of notes "D5:4 F5:2 -:2", lengths in sixteenths (a bare note keeps the last length).
+  function parse(str,tr=0){const out=[];let len=4;
+    for(const tok of str.trim().split(/\s+/)){if(!tok)continue;const [n,l]=tok.split(':');if(l)len=+l;
+      if(n==='-')out.push([0,len]);else if(n==='x'||n==='k'||n==='s')out.push([n,len]);
+      else{let f=freq(n);if(tr)f*=Math.pow(2,tr/12);out.push([f,len])}}
+    return out}
+  const CH={Dm:['D','F','A'],Bb:['Bb','D','F'],F:['F','A','C'],C:['C','E','G'],Gm:['G','Bb','D'],A:['A','C#','E'],Am:['A','C','E'],
+    G:['G','B','D'],E:['E','G#','B'],Em:['E','G','B'],D:['D','F#','A'],Eb:['Eb','G','Bb'],Cm:['C','Eb','G'],Fm:['F','Ab','C'],Ab:['Ab','C','Eb']};
+  // An arpeggio: each chord fills `bar` sixteenths, stepping `step` at a time up and down its tones.
+  function arp(chords,o=4,step=2,bar=16,shape=[0,1,2,3,2,1]){let s='';
+    for(const c of chords.split(' ')){const t=CH[c];const tones=[t[0]+o,t[1]+(noteIdx(t[1])<noteIdx(t[0])?o+1:o),t[2]+(noteIdx(t[2])<noteIdx(t[0])?o+1:o),t[0]+(o+1)];
+      for(let i=0;i<bar/step;i++)s+=tones[shape[i%shape.length]]+':'+step+' '}
+    return s}
+  function noteIdx(n){return NOTE[n[0]]+(n[1]==='#'?1:n[1]==='b'?-1:0)}
+  function bass(chords,o=2,pat=[0,0,1,0],step=4,bar=16){let s='';
+    for(const c of chords.split(' ')){const t=CH[c];const tones=[t[0]+o,t[2]+(noteIdx(t[2])<noteIdx(t[0])?o+1:o),t[0]+(o+1)];
+      for(let i=0;i<bar/step;i++)s+=tones[pat[i%pat.length]]+':'+step+' '}
+    return s}
+  const rep=(s,n)=>Array(n).fill(s).join(' ');
+  const SONGS={
+    title:{bpm:76,ch:[
+      {w:'p25',v:.05,vib:1,n:'A4:4 D5:4 E5:4 F5:4 F5:6 E5:2 D5:8 C5:4 F5:4 G5:4 A5:4 G5:12 -:4 A5:4 F5:4 D5:4 F5:4 E5:6 D5:2 Bb4:8 D5:4 C5:4 Bb4:4 G4:4 A4:12 -:4'},
+      {w:'p12',v:.028,n:arp('Dm Bb F C Dm Bb Gm A',4,2,16,[0,1,2,3,2,1,0,1])},
+      {w:'triangle',v:.12,n:bass('Dm Bb F C Dm Bb Gm A',2,[0,1],8)}]},
+    town:{bpm:100,ch:[
+      {w:'p25',v:.045,vib:1,n:'C5:4 A4:2 C5:2 F5:4 E5:4 D5:4 C5:4 G4:8 A4:4 D5:2 E5:2 F5:4 A5:4 G5:8 F5:4 D5:4 C5:4 A4:2 C5:2 F5:4 G5:4 A5:4 G5:4 E5:8 F5:4 D5:4 E5:4 G5:4 F5:12 -:4'},
+      {w:'p12',v:.025,n:arp('F C Dm Bb F C Bb F',4,4,16,[1,2,3,2])},
+      {w:'triangle',v:.12,n:bass('F C Dm Bb F C Bb F',3,[0,1,0,1],4)}]},
+    sea:{bpm:118,ch:[
+      {w:'p25',v:.045,vib:1,n:'D5:6 E5:2 F5:4 A5:4 G5:6 F5:2 E5:8 F5:4 D5:4 Bb4:4 D5:4 C5:8 E5:4 G5:4 A5:6 G5:2 F5:4 A5:4 G5:4 E5:4 C5:8 D5:4 F5:4 Bb5:4 A5:4 A5:12 -:4'},
+      {w:'p12',v:.022,n:arp('Dm C Bb C Dm C Bb A',4,2,16,[0,1,2,1])},
+      {w:'triangle',v:.13,n:bass('Dm C Bb C Dm C Bb A',2,[0,0,2,0,1,0,2,0],2)},
+      {w:'noise',v:.03,n:rep('x:4 x:2 x:2',16)}]},
+    seabed:{bpm:80,ch:[
+      {w:'triangle',v:.09,n:'B5:8 C6:8 A5:8 F5:8 G5:4 A5:4 B5:8 A5:16 E5:8 F5:8 G5:8 E5:8 D5:4 E5:4 F5:8 E5:16'},
+      {w:'p12',v:.022,n:arp('Em F Em D Em F Em D',3,2,16,[0,2,1,3])},
+      {w:'triangle',v:.07,n:bass('Em F Em D Em F Em D',2,[0],16)}]},
+    dungeon:{bpm:92,ch:[
+      {w:'p25',v:.04,vib:1,n:'E5:4 -:4 C5:4 B4:4 A4:8 -:8 C5:4 D5:4 E5:4 F5:4 E5:8 G#4:8 A4:4 C5:4 E5:4 A5:4 G5:8 F5:8 E5:4 D5:4 C5:4 D5:4 E5:16'},
+      {w:'triangle',v:.13,n:bass('Am Am F E Am Am F E',2,[0,-1,0,1].map(x=>x<0?0:x),4)},
+      {w:'noise',v:.02,n:rep('x:8 x:8',16)}]},
+    nethra:{bpm:88,ch:[
+      {w:'p25',v:.04,vib:1,n:'D5:4 G5:4 Bb5:4 A5:8 G5:4 G5:4 Eb5:4 C5:4 D5:12 D5:4 G5:4 A5:4 Bb5:6 A5:2 G5:4 Eb5:4 C5:2 D5:2 F#5:4 G5:12'},
+      {w:'p12',v:.022,n:arp('Gm Eb Cm D Gm Eb Cm Gm',4,2,12,[0,1,2,3,2,1])},
+      {w:'triangle',v:.12,n:bass('Gm Eb Cm D Gm Eb Cm Gm',2,[0,1,1],4,12)}]},
+    battle:{bpm:150,ch:[
+      {w:'p25',v:.045,n:'E5:3 E5:1 E5:2 D5:2 E5:4 A4:4 F5:3 F5:1 F5:2 E5:2 F5:4 C5:4 G5:4 F5:2 E5:2 D5:4 B4:4 E5:6 G#5:2 B5:8 A5:4 G5:2 E5:2 C5:4 E5:4 F5:4 A5:4 C6:4 A5:4 B5:4 A5:2 G5:2 D5:4 G5:4 G#5:8 E5:8'},
+      {w:'p12',v:.024,n:arp('Am F G E Am F G E',4,1,16,[0,1,2,3])},
+      {w:'triangle',v:.14,n:bass('Am F G E Am F G E',2,[0,2],2)},
+      {w:'noise',v:.05,n:rep('k:4 x:2 x:2 s:4 x:2 x:2',8)}]},
+    boss:{bpm:162,ch:[
+      {w:'p25',v:.045,n:'D5:2 D5:2 F5:2 D5:2 G#5:4 A5:4 D6:4 C6:2 A5:2 G#5:4 F5:4 F5:2 F5:2 Bb5:2 F5:2 D6:4 Bb5:4 A5:4 C#6:4 E6:4 A5:4 D6:3 C6:1 A5:4 F5:4 D5:4 E5:4 F5:4 G#5:4 A5:4 Bb5:4 A5:2 G5:2 F5:4 D5:4 C#5:8 A4:8'},
+      {w:'p12',v:.024,n:arp('Dm Dm Bb A Dm Dm Bb A',4,1,16,[0,1,2,1])},
+      {w:'triangle',v:.15,n:bass('Dm Dm Bb A Dm Dm Bb A',2,[0,0,2,0],2)},
+      {w:'noise',v:.055,n:rep('k:2 x:2 s:2 x:2 k:2 k:2 s:2 x:2',8)}]},
+    final:{bpm:172,tr:-2,from:'boss'},
+    victory:{bpm:132,ch:[
+      {w:'p25',v:.05,n:'G4:2 C5:2 E5:2 G5:6 E5:2 G5:2 C6:16 E5:4 G5:4 A5:8 G5:4 E5:4 C5:8 D5:4 E5:4 F5:4 A5:4 G5:16'},
+      {w:'p12',v:.025,n:'-:32 '+arp('C F C G',4,2,16,[0,1,2,3])},
+      {w:'triangle',v:.12,n:'C3:2 E3:2 G3:2 C4:6 G3:4 C3:16 '+bass('C F C G',2,[0,1],8)}],intro:32},
+    sad:{bpm:60,tr:-5,from:'title'},
+    ending:{bpm:84,tr:3,from:'title'},
+  };
+  for(const k in SONGS){const s=SONGS[k];if(s.from){const b=SONGS[s.from];s.ch=b.ch.map(c=>({...c}));s.intro=b.intro}}
+  let cur=null,curName='',timer=null;
+  function playMusic(name){
+    pending=name;if(!gestured&&!ctx)return;if(name===curName)return;stopMusic();curName=name;if(!name||!SONGS[name]||!ctx||ctx.state!=='running')return;
+    const s=SONGS[name],sp=60/s.bpm/4,t0=ctx.currentTime+.08;
+    const g=ctx.createGain();g.gain.value=musicOn?1:0;g.connect(musicBus);
+    cur={g,chs:s.ch.map(c=>({...c,ev:parse(c.n,s.tr||0),i:0,t:t0})),sp,intro:s.intro||0,name};
+    // channels with an intro loop back to the point after it
+    for(const c of cur.chs){let acc=0;c.loopAt=0;if(cur.intro){for(let i=0;i<c.ev.length;i++){if(acc>=cur.intro){c.loopAt=i;break}acc+=c.ev[i][1]}}}
+    timer=setInterval(pump,30);pump();
+  }
+  function pump(){if(!cur||!ctx)return;const ahead=ctx.currentTime+.2;
+    for(const c of cur.chs){let guard=0;
+      while(c.t<ahead&&guard++<64){const [f,l]=c.ev[c.i];const len=l*cur.sp;
+        if(f){if(c.w==='noise'){if(f==='k')osc('triangle',150,c.t,.12,.22,cur.g,{slide:45});else if(f==='s')noise(c.t,.12,c.v*2.2,cur.g,{type:'bandpass',f:1800,q:.8});else noise(c.t,.04,c.v,cur.g,{f:7000})}
+          else osc(c.w,f,c.t,len*.92,c.v,cur.g,{vib:c.vib&&len>.25,r:.05})}
+        c.t+=len;c.i++;if(c.i>=c.ev.length)c.i=c.loopAt||0}}}
+  function stopMusic(){if(timer)clearInterval(timer);timer=null;if(cur&&ctx){const g=cur.g;try{g.gain.setTargetAtTime(0,ctx.currentTime,.05);setTimeout(()=>g.disconnect(),400)}catch(e){}}cur=null;curName=''}
+  function setMusic(on){musicOn=on;if(cur&&ctx)cur.g.gain.value=on?1:0}
+  function setSfx(on){sfxOn=on}
+  return {unlock,play,music:playMusic,stop:stopMusic,setMusic,setSfx,get current(){return curName},get musicOn(){return musicOn},get sfxOn(){return sfxOn}};
+})();
+
+/* ===================== ART: tiles, people, monsters, effects — all drawn in code ===================== */
+const TS=16;
+function mk(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
+function rng(seed){let x=(seed|0)||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return((x>>>0)%100000)/100000}}
+function hex(c){c=c.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');const n=parseInt(c,16);return[n>>16&255,n>>8&255,n&255]}
+function shade(c,k){const [r,g,b]=hex(c);const f=v=>Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k)));return'#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mix(a,b,t){const A=hex(a),B=hex(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+const ART={};
+
+/* ---------- tiles ---------- */
+const TILE={}; // char -> {paint(g,frame,tide,x,y), solid(tide,ctx)}
+function P(g,x,y,c){g.fillStyle=c;g.fillRect(x,y,1,1)}
+function RF(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h)}
+function speck(g,seed,n,cols,box=[0,0,16,16]){const r=rng(seed);for(let i=0;i<n;i++){P(g,box[0]+(r()*box[2]|0),box[1]+(r()*box[3]|0),cols[i%cols.length])}}
+const C={
+  deep:'#1d3f8e',deep2:'#17337a',deepHi:'#4277c9',shal:'#2f7cc6',shal2:'#2a6db3',shalHi:'#7fc0f0',foam:'#e8f6ff',
+  wet:'#a8916a',wet2:'#8f7a55',wetHi:'#c2ab80',pud:'#4f7fa3',pudHi:'#9cc6e0',
+  sand:'#e6d39d',sand2:'#d1bb80',sandHi:'#f5e7bd',grass:'#5aa042',grass2:'#468530',grassHi:'#7bc35a',
+  dirt:'#b99460',dirt2:'#9d7a48',stone:'#868c9a',stone2:'#6e7482',stoneHi:'#a3a9b6',
+  wall:'#5b6372',wall2:'#3b414d',wallHi:'#7e889a',wood:'#a8743f',wood2:'#7e5530',woodHi:'#c48d55',
+  plank:'#c99a5b',plank2:'#946a38',ol:'#16101e'
+};
+function water(g,f,deep){
+  RF(g,0,0,16,16,deep?C.deep:C.shal);
+  const r=rng(deep?7:11);
+  for(let i=0;i<5;i++){const y=(r()*16|0),x0=(r()*16|0),l=3+(r()*3|0);const ph=(i+f)%4;
+    const col=ph<2?(deep?C.deepHi:C.shalHi):(deep?C.deep2:C.shal2);
+    const dx=[0,1,2,1][(f+i)%4];for(let k=0;k<l;k++)P(g,(x0+dx+k)%16,y,col)}
+  if(!deep)speck(g,5,6,[C.shal2]);
+}
+function wet(g,seed=3){RF(g,0,0,16,16,C.wet);speck(g,seed,22,[C.wet2,C.wet2,C.wetHi]);
+  const r=rng(seed*7+1);if(r()<.7){const x=1+(r()*10|0),y=2+(r()*10|0),w=3+(r()*3|0);RF(g,x,y,w,2,C.pud);RF(g,x+1,y-1,w-2,1,C.pud);P(g,x+1,y,C.pudHi)}
+  if(r()<.4){const x=(r()*14|0),y=(r()*14|0);P(g,x,y,'#f3e4d0');P(g,x+1,y,'#e2c9b0')}}
+function grass(g,seed=1){RF(g,0,0,16,16,C.grass);const r=rng(seed);
+  for(let i=0;i<7;i++){const x=r()*14|0,y=1+(r()*14|0);P(g,x,y,C.grass2);P(g,x+1,y-1,C.grass2);P(g,x+2,y,C.grass2)}
+  speck(g,seed+9,6,[C.grassHi])}
+function sand(g,seed=2){RF(g,0,0,16,16,C.sand);speck(g,seed,14,[C.sand2,C.sand2,C.sandHi])}
+function dirt(g,seed=4){RF(g,0,0,16,16,C.dirt);speck(g,seed,16,[C.dirt2,C.dirt2,'#cfae78'])}
+function stoneFloor(g,seed=5,base=C.stone,b2=C.stone2,hi=C.stoneHi){RF(g,0,0,16,16,base);RF(g,0,15,16,1,b2);RF(g,15,0,1,16,b2);RF(g,0,0,16,1,hi);RF(g,0,0,1,16,hi);
+  RF(g,8,0,1,7,b2);RF(g,0,7,16,1,b2);RF(g,4,8,1,7,b2);RF(g,12,8,1,7,b2);speck(g,seed,6,[b2,hi])}
+function bricks(g,base=C.wall,dk=C.wall2,hi=C.wallHi){RF(g,0,0,16,16,base);
+  for(let r=0;r<4;r++){const y=r*4;RF(g,0,y+3,16,1,dk);RF(g,0,y,16,1,hi);const off=r%2?0:4;for(let x=off;x<16;x+=8){RF(g,x,y,1,3,dk)}}}
+function planks(g,base=C.wood,dk=C.wood2,hi=C.woodHi,vert=false){RF(g,0,0,16,16,base);
+  for(let i=0;i<4;i++){if(vert){RF(g,i*4+3,0,1,16,dk);RF(g,i*4,0,1,16,hi)}else{RF(g,0,i*4+3,16,1,dk);RF(g,0,i*4,16,1,hi);RF(g,(i*7+3)%14,i*4,1,3,dk)}}}
+function blob(g,cx,cy,r,cols,ol){ // shaded round blob: cols dark->light
+  for(let y=-r-1;y<=r+1;y++)for(let x=-r-1;x<=r+1;x++){const d=Math.hypot(x+.5,y+.5);
+    if(d<=r+.6&&d>r-.4&&ol)P(g,cx+x,cy+y,ol)
+    else if(d<=r-.4){const l=(-(x+.5)*.6-(y+.5)*.8)/r;P(g,cx+x,cy+y,l>.45?cols[3]:l>.05?cols[2]:l>-.45?cols[1]:cols[0])}}}
+function tree(g){grass(g,21);RF(g,7,11,3,4,'#5a3a1f');RF(g,7,11,1,4,'#7a5230');blob(g,8,7,6,['#1f5226','#2f6e2a','#3f8a35','#68b24c'],C.ol)}
+function palm(g){sand(g,23);const t=['#7a5230','#5a3a1f'];for(let i=0;i<9;i++){P(g,8+(i>5?1:0),6+i,t[i%2]);P(g,9+(i>5?1:0),6+i,t[0])}
+  const fr=['#2f7a2c','#4ea23a'];[[-6,-1],[-5,2],[6,-1],[5,2],[0,-5],[-3,-4],[3,-4]].forEach(([dx,dy])=>{for(let k=0;k<6;k++){P(g,8+Math.round(dx*k/6),6+Math.round(dy*k/6)+(k>3?1:0),fr[k%2]);P(g,8+Math.round(dx*k/6),7+Math.round(dy*k/6)+(k>3?1:0),'#1f5a22')}});
+  P(g,8,6,'#6b4426');P(g,9,7,'#6b4426')}
+function rock(g,base){(base||grass)(g,31);const cols=['#4a4756','#6c6978','#918e9c','#c0bdc8'];
+  for(let y=2;y<15;y++){const w=Math.round((y-2)*0.62)+2;for(let x=8-w;x<8+w;x++){const l=(x-8)/w*-1+(y<7?.4:0);P(g,x,y,l>.6?cols[3]:l>.1?cols[2]:l>-.4?cols[1]:cols[0])}}
+  for(let y=2;y<15;y++){const w=Math.round((y-2)*0.62)+2;P(g,8-w-1,y,C.ol);P(g,8+w,y,C.ol)}RF(g,7,1,2,1,C.ol);RF(g,1,15,14,1,C.ol)}
+function foamEdges(g,n,f){ // n = [up,right,down,left] land neighbours
+  const fc=C.foam,fc2='#bfe3fb';const o=f%2;
+  if(n[0])for(let x=0;x<16;x++)P(g,x,(x+o)%3===0?1:0,(x+o)%2?fc:fc2);
+  if(n[2])for(let x=0;x<16;x++)P(g,x,(x+o)%3===0?14:15,(x+o)%2?fc:fc2);
+  if(n[3])for(let y=0;y<16;y++)P(g,(y+o)%3===0?1:0,y,(y+o)%2?fc:fc2);
+  if(n[1])for(let y=0;y<16;y++)P(g,(y+o)%3===0?14:15,y,(y+o)%2?fc:fc2)}
+function house(g,col,x0,y0){RF(g,x0,y0+3,6,4,'#d8b27a');RF(g,x0,y0+6,6,1,'#946a38');RF(g,x0+2,y0+4,2,3,'#5a3518');
+  for(let i=0;i<4;i++)RF(g,x0-1+i,y0+3-i,8-2*i,1,i?col:shade(col,-.35));P(g,x0+3,y0-1,shade(col,.3))}
+function bell(g){stoneFloor(g,8);RF(g,3,1,10,2,'#6b4426');RF(g,3,1,1,14,'#6b4426');RF(g,12,1,1,14,'#6b4426');RF(g,4,1,8,1,'#8a5a32');
+  const b=['#7a4f1c','#b07a2a','#d9a441','#ffe08a'];for(let y=4;y<12;y++){const w=y<6?2:y<9?3:4;for(let x=8-w;x<8+w;x++)P(g,x,y,x<8-w+1?b[0]:x>8+w-2?b[1]:y<7?b[3]:b[2])}
+  RF(g,3,12,10,1,'#7a4f1c');P(g,7,12,'#3a2410');P(g,8,12,'#3a2410')}
+function coral(g){RF(g,0,0,16,16,'#5a2a4a');const r=rng(41),cs=['#e86f8f','#ff9eb0','#c94f74','#ffb36a'];
+  for(let i=0;i<10;i++){const x=r()*15|0,y=r()*15|0,c=cs[i%4];P(g,x,y,c);P(g,x+1,y,c);P(g,x,y+1,shade(c,-.3));P(g,x+1,y-1,shade(c,.3))}
+  for(let i=0;i<5;i++)P(g,r()*16|0,r()*16|0,'#3a1830')}
+function seabed(g,seed=51){RF(g,0,0,16,16,'#6f7d6c');speck(g,seed,18,['#5c6a5a','#869483','#5c6a5a'])}
+function kelp(g,f){seabed(g,53);const sw=[0,1,1,0][f%4];for(const kx of [3,8,12]){for(let y=4;y<16;y++){const x=kx+((y+sw+(kx%3))%4<2?0:1);P(g,x,y,y%3?'#3f8a45':'#2c6a33');if(y%4===1)P(g,x+1,y,'#5fb05a')}}}
+function ruinFloor(g,seed=61){stoneFloor(g,seed,'#5f7488','#46596b','#7690a6');speck(g,seed+3,5,['#4f8a6a','#5fa07a'])}
+function ruinWall(g){bricks(g,'#4a5f74','#2b3a4a','#6a86a0');speck(g,63,7,['#4f8a6a','#3d7055'])}
+function pillar(g){ruinFloor(g,65);RF(g,4,1,8,14,'#8aa0b6');RF(g,4,1,2,14,'#b0c4d8');RF(g,10,1,2,14,'#5f7488');RF(g,3,0,10,2,'#9db3c8');RF(g,3,14,10,2,'#5f7488');RF(g,3,0,10,1,C.ol);speck(g,66,4,['#4f8a6a'],[4,3,8,10])}
+function moonFloor(g,f){RF(g,0,0,16,16,'#b9c3d8');speck(g,71,10,['#9aa4bc','#d8e2f2']);const gl=['#e6f0ff','#ffffff','#e6f0ff','#cfdcf2'][f%4];P(g,5,6,gl);P(g,11,11,gl);P(g,12,3,'#dfe9fb');RF(g,0,15,16,1,'#9aa4bc')}
+function moonWall(g,f){bricks(g,'#6f7a98','#454e68','#9aa6c6');const gl=['#bfe6ff','#e8f8ff','#ffffff','#e8f8ff'][f%4];for(let y=2;y<14;y++)P(g,5+((y*3)%5),y,gl)}
+function stairs(g,down){RF(g,0,0,16,16,C.wall2);for(let i=0;i<4;i++){const y=down?i*4:12-i*4;RF(g,1,y,14,3,shade('#6e7482',down?-i*.18:-(3-i)*.18));RF(g,1,y,14,1,shade('#a3a9b6',down?-i*.2:-(3-i)*.2))}}
+function altar(g,f){stoneFloor(g,73);RF(g,2,5,12,9,'#5b6372');RF(g,2,5,12,1,'#a3a9b6');RF(g,3,13,10,2,'#3b414d');const gl=['#bfe6ff','#ffffff','#dff2ff','#ffffff'][f%4];RF(g,6,2,4,4,gl);P(g,7,1,gl);P(g,8,1,gl);RF(g,4,8,8,1,'#8fb0d8')}
+
+const LAND_DEFAULT=grass;
+function defTiles(){
+  const T=(ch,o)=>{TILE[ch]=o};
+  // anim: number of frames, tideDep: looks differ by tide
+  T('~',{paint:(g,f)=>water(g,f,1),anim:4,water:true,deep:true});
+  T(',',{paint:(g,f,t)=>t==='ebb'?wet(g,3):water(g,f,0),anim:4,tideDep:1,shallow:true});
+  T('z',{paint:(g,f,t)=>{if(t==='ebb'){wet(g,9);}else water(g,f,0);const r=rng(77);for(let i=0;i<4;i++){const x=1+(r()*12|0),y=1+(r()*12|0);RF(g,x,y,3,2,'#5d5a68');RF(g,x,y,2,1,'#8d8a98');if(t!=='ebb'){P(g,x-1,y+1,C.foam);P(g,x+3,y+1,C.foam)}}},anim:4,tideDep:1,reef:true});
+  T('.',{paint:g=>sand(g)});
+  T('"',{paint:g=>grass(g)});
+  T('p',{paint:g=>dirt(g)});
+  T('T',{paint:tree,solid:1});
+  T('Y',{paint:palm,solid:1});
+  T('^',{paint:g=>rock(g),solid:1});
+  T('A',{paint:g=>rock(g,sand),solid:1});
+  T('o',{paint:g=>{dirt(g,6);blob(g,8,9,5,['#4a4756','#6c6978','#918e9c','#c0bdc8'],C.ol)},solid:1});
+  T('#',{paint:g=>bricks(g),solid:1});
+  T('_',{paint:g=>stoneFloor(g)});
+  T('=',{paint:g=>planks(g)});
+  T('W',{paint:g=>{planks(g,C.plank,C.plank2,'#e0b678',true);RF(g,0,15,16,1,'#5a3a1e')},solid:1});
+  T('+',{paint:(g,f)=>{planks(g,C.plank,C.plank2,'#e0b678',true);RF(g,0,15,16,1,'#5a3a1e');RF(g,4,4,8,7,'#5a3a1e');RF(g,5,5,6,5,f%4<3?'#ffd77a':'#ffe9a8');RF(g,8,5,1,5,'#5a3a1e');RF(g,5,7,6,1,'#5a3a1e')},anim:4,solid:1});
+  T('D',{paint:g=>{planks(g,C.plank,C.plank2,'#e0b678',true);RF(g,3,3,10,13,'#5a3518');RF(g,4,4,8,12,'#7a4a24');RF(g,7,4,1,12,'#5a3518');P(g,10,10,'#ffd77a');RF(g,4,3,8,1,'#3a2210')}});
+  T('R',{paint:g=>{RF(g,0,0,16,16,'#b44a3a');for(let r=0;r<4;r++){const y=r*4;RF(g,0,y+3,16,1,'#7e2e24');for(let x=(r%2)*2;x<16;x+=4)RF(g,x,y,1,3,'#8a3329');RF(g,0,y,16,1,'#d56a55')}},solid:1});
+  T('r',{paint:g=>{RF(g,0,0,16,16,'#3f5fa8');for(let r=0;r<4;r++){const y=r*4;RF(g,0,y+3,16,1,'#22386e');for(let x=(r%2)*2;x<16;x+=4)RF(g,x,y,1,3,'#2c437c');RF(g,0,y,16,1,'#6283c8')}},solid:1});
+  T('d',{paint:(g,f)=>{water(g,f,0);planks(g,'#9a6b3d','#6b4423','#b9844f',true);RF(g,0,0,1,16,C.ol);RF(g,15,0,1,16,C.ol)},anim:4});
+  T('|',{paint:g=>{grass(g,13);RF(g,0,6,16,2,'#8a5a32');RF(g,0,11,16,2,'#8a5a32');RF(g,0,6,16,1,'#b07a48');for(const x of [2,13]){RF(g,x,4,2,11,'#6b4426');RF(g,x,4,1,11,'#9a6b3d')}},solid:1});
+  T('*',{paint:g=>{grass(g,17);const r=rng(19),cs=['#ff8fb0','#fff3a0','#ffffff','#b0a0ff'];for(let i=0;i<6;i++){const x=1+(r()*13|0),y=1+(r()*13|0);P(g,x,y,cs[i%4]);P(g,x+1,y+1,'#3f8530')}}});
+  T('L',{paint:(g,f)=>{dirt(g,27);RF(g,7,5,2,10,'#3a3440');RF(g,5,14,6,2,'#3a3440');RF(g,5,1,6,5,'#3a3440');RF(g,6,2,4,3,['#ffe08a','#fff2c0','#ffe08a','#ffd060'][f%4])},anim:4,solid:1});
+  T('B',{paint:bell,solid:1});
+  T('c',{paint:g=>{planks(g);RF(g,0,2,16,9,'#7e5530');RF(g,0,2,16,2,'#c48d55');RF(g,0,10,16,1,C.ol)},solid:1});
+  T('b',{paint:g=>{planks(g);RF(g,2,1,12,14,'#e8e0d0');RF(g,2,1,12,4,'#ffffff');RF(g,2,6,12,9,'#5a7ac0');RF(g,2,6,12,1,'#7a9ae0');RF(g,1,0,14,1,C.ol);RF(g,1,15,14,1,C.ol)},solid:1});
+  T('h',{paint:g=>{planks(g);RF(g,1,3,14,12,'#6b4426');RF(g,1,3,14,2,'#9a6b3d');for(let i=0;i<4;i++){RF(g,2+i*3,6,2,7,['#c94f4f','#4f7ac9','#5fa04f','#d9a441'][i])}},solid:1});
+  T('C',{paint:coral,solid:1});
+  T('k',{paint:kelp,anim:4});
+  T('s',{paint:g=>seabed(g)});
+  T('q',{paint:g=>ruinFloor(g)});
+  T('J',{paint:ruinWall,solid:1});
+  T('Q',{paint:pillar,solid:1});
+  T('P',{paint:(g,f,t)=>{if(t==='ebb'){stoneFloor(g,81,'#77808f','#5f6877','#8f98a6');RF(g,5,6,5,3,C.pud);P(g,6,6,C.pudHi)}else{RF(g,0,0,16,16,C.shal);water(g,f,0);RF(g,0,0,16,1,'#5f6877');RF(g,0,15,16,1,'#a3a9b6')}},anim:4,tideDep:1,pool:true});
+  T('F',{paint:(g,f,t)=>{if(t==='ebb'){RF(g,0,0,16,16,'#0b0d18');RF(g,0,0,16,2,'#2a2e3c');RF(g,2,11,12,3,'#3a2818');RF(g,2,11,12,1,'#5a3e24')}else{water(g,f,0);const b=f%2;RF(g,1,5+b,14,6,'#7a5230');RF(g,1,5+b,14,1,'#a8743f');RF(g,1,10+b,14,1,'#4a2e18');RF(g,0,6+b,1,4,'#4a2e18');RF(g,15,6+b,1,4,'#4a2e18');P(g,5,7+b,'#5a3a1f');P(g,10,8+b,'#5a3a1f')}},anim:4,tideDep:1,drift:true});
+  T('X',{paint:(g,f)=>{RF(g,0,0,16,16,'#0c1a3a');const r=rng(91);for(let i=0;i<3;i++){const y=r()*16|0,x=(r()*14|0)+[0,1,2,1][(f+i)%4];RF(g,x%14,y,3,1,'#1f3466')}},anim:4,solid:1});
+  T('m',{paint:moonFloor,anim:4});
+  T('M',{paint:moonWall,anim:4,solid:1});
+  T('S',{paint:g=>stairs(g,1)});
+  T('U',{paint:g=>stairs(g,0)});
+  T('a',{paint:altar,anim:4,solid:1});
+  T('v',{paint:g=>{grass(g,95);house(g,'#b44a3a',1,5);house(g,'#3f5fa8',8,8)}});
+  T('V',{paint:g=>{grass(g,97);RF(g,1,6,14,9,'#8c8f9c');RF(g,1,6,14,1,'#c0c4cf');for(let x=1;x<15;x+=3)RF(g,x,4,2,2,'#8c8f9c');RF(g,6,9,4,6,'#3a2a20');RF(g,2,1,3,6,'#a0a4b0');RF(g,11,1,3,6,'#a0a4b0');RF(g,2,0,3,1,'#3f5fa8');RF(g,11,0,3,1,'#3f5fa8')}});
+  T('n',{paint:g=>{rock(g);RF(g,5,9,6,6,'#0a0810');RF(g,6,8,4,1,'#0a0810')},solid:0});
+  T('i',{paint:(g,f)=>{water(g,f,0);const cs=['#8a2f55','#e86f8f','#ff9eb0'];for(let y=1;y<16;y++){const w=Math.max(1,Math.round(y/3));RF(g,8-w,y,w*2,1,cs[1]);P(g,8-w,y,cs[0]);P(g,8+w-1,y,cs[2])}P(g,8,0,'#fff');RF(g,7,8,2,3,'#3a1830')},anim:4});
+  T('u',{paint:(g,f,t)=>{if(t==='ebb'){wet(g,5);RF(g,2,3,3,12,'#7690a6');RF(g,11,3,3,12,'#7690a6');RF(g,2,2,12,3,'#8aa0b6');RF(g,5,5,6,10,'#101826');RF(g,7,7,2,2,['#bfe6ff','#ffffff'][f%2]);RF(g,2,2,12,1,C.ol)}else{water(g,f,0);RF(g,3,5,10,8,'#2a6aa8');RF(g,5,7,6,6,'#235d96')}},anim:4,tideDep:1});
+  T('l',{paint:(g,f)=>{rock(g);RF(g,6,3,4,12,'#f2f2f2');RF(g,6,6,4,2,'#c94f4f');RF(g,6,11,4,2,'#c94f4f');RF(g,6,3,1,12,'#ffffff');RF(g,9,3,1,12,'#b8b8c8');RF(g,5,1,6,2,'#3a3440');P(g,7,0,['#ffe08a','#3a3440'][f%2]);P(g,8,0,['#ffe08a','#3a3440'][f%2])},anim:4});
+  T('w',{paint:(g,f)=>{water(g,f,1);for(let a=0;a<28;a++){const ang=a*.42+f*.6,rad=a*.24;const x=8+Math.cos(ang)*rad,y=8+Math.sin(ang)*rad*.8;P(g,x|0,y|0,a%3?'#9ccff2':'#e8f6ff')}RF(g,7,7,2,2,'#081430')},anim:4});
+  T('K',{paint:g=>RF(g,0,0,16,16,'#000'),solid:1});
+  T('j',{paint:g=>{sand(g,99);RF(g,2,5,12,7,'#7a5230');RF(g,2,5,12,1,'#a8743f');RF(g,4,2,2,4,'#6b4426');RF(g,10,2,2,4,'#6b4426');RF(g,3,1,10,2,'#e8e0d0')}});// beached boat
+}
+defTiles();
+const tileCache=new Map();
+function tileImg(ch,frame,tide){const t=TILE[ch]||TILE['"'];const f=t.anim?frame%t.anim:0,td=t.tideDep?tide:'';
+  const key=ch+f+td;let c=tileCache.get(key);if(!c){c=mk(16,16);t.paint(c.getContext('2d'),f,tide);tileCache.set(key,c)}return c}
+
+/* ---------- people ---------- */
+const SPR={
+down:[
+"................",
+".....OOOOOO.....",
+"....OHHHHHHO....",
+"...OHHHHHHHHO...",
+"...OHHHHHHHhO...",
+"...OHSSSSSShO...",
+"...OSSeSSeSSO...",
+"...OSSeSSeSSO...",
+"....OSSSSSSO....",
+"....OTTAATTO....",
+"...OSTTTTTTSO...",
+"...OSTTTTTtSO...",
+"....OBBBBBBO....",
+"....OBBOOBBO....",
+"....OKKOOKKO....",
+"....OOO..OOO...."],
+up:[
+"................",
+".....OOOOOO.....",
+"....OHHHHHHO....",
+"...OHHHHHHHHO...",
+"...OHHHHHHHhO...",
+"...OHHHHHHHhO...",
+"...OHHHHHHHhO...",
+"...OhHHHHHHhO...",
+"....OhhhhhhO....",
+"....OTTTTTTO....",
+"...OSTTTTTTSO...",
+"...OSTTTTTtSO...",
+"....OBBBBBBO....",
+"....OBBOOBBO....",
+"....OKKOOKKO....",
+"....OOO..OOO...."],
+left:[
+"................",
+".....OOOOOO.....",
+"....OHHHHHHO....",
+"...OHHHHHHHHO...",
+"...OHHHHHHHhO...",
+"...OSSSHHHHhO...",
+"...OSeSSHHHhO...",
+"...OSeSSSHhhO...",
+"....OSSSSSOO....",
+".....OTTTTO.....",
+".....OTSTTO.....",
+".....OTSTtO.....",
+".....OBBBBO.....",
+".....OBOOBO.....",
+".....OKOOKO.....",
+".....OOOOOO....."]};
+const LEGS={
+down:[["....OBBBBBBO....","....OKKOOBBO....",".....OOOOKKO....",".........OO....."],["....OBBBBBBO....","....OBBOOKKO....","....OKKOOOO.....",".....OO........."]],
+up:[["....OBBBBBBO....","....OKKOOBBO....",".....OOOOKKO....",".........OO....."],["....OBBBBBBO....","....OBBOOKKO....","....OKKOOOO.....",".....OO........."]],
+left:[[".....OBBBBO.....","....OBBOOBBO....","....OKO..OKO....","....OO....OO...."],[".....OBBBBO.....",".....OBBBBO.....",".....OKKKKO.....",".....OOOOOO....."]]};
+function setc(g,x,y,ch){g[y]=g[y].slice(0,x)+ch+g[y].slice(x+1)}
+function styleGrid(dir,frame,st){
+  let g=SPR[dir].slice();
+  if(frame)LEGS[dir][frame-1].forEach((r,i)=>g[12+i]=r);
+  const has=k=>st.includes(k);
+  const map=(fn,y0=0,y1=15)=>{for(let y=y0;y<=y1;y++){let r='';for(let x=0;x<16;x++)r+=fn(g[y][x],x,y);g[y]=r}};
+  if(has('long')){
+    if(dir==='down'){for(let y=5;y<=11;y++){setc(g,3,y,'H');setc(g,12,y,'h');setc(g,2,y,'O');setc(g,13,y,'O')}setc(g,3,12,'O');setc(g,12,12,'O')}
+    if(dir==='up'){for(let y=8;y<=11;y++)for(let x=4;x<=11;x++)setc(g,x,y,x===11||y===11?'h':'H');for(let y=8;y<=11;y++){setc(g,3,y,'O');setc(g,12,y,'O')}setc(g,4,12,'O');setc(g,11,12,'O')}
+    if(dir==='left'){for(let y=8;y<=11;y++){setc(g,9,y,'H');setc(g,10,y,'h');setc(g,11,y,'O')}setc(g,10,12,'O')}}
+  if(has('pony')){if(dir==='left'){for(let y=4;y<=8;y++){setc(g,12,y,'H');setc(g,13,y,'O')}setc(g,12,9,'O')}if(dir==='up'){for(let y=8;y<=10;y++){setc(g,7,y,'H');setc(g,8,y,'h')}}}
+  if(has('bun')){g[0]="......OOOO......";g[1]=".....OHHHHO.....";if(dir!=='left')setc(g,4,2,'O'),setc(g,11,2,'O')}
+  if(has('bald')){map((c,x,y)=>c==='H'?'S':c==='h'?'s':c,2,dir==='up'?7:5);if(dir==='up')map((c)=>c==='H'?'S':c==='h'?'s':c,2,7)}
+  if(has('cap')){map((c)=>c==='H'||c==='h'?'A':c,1,3);if(dir==='down')g[4]="...OAAAAAAAAO...";if(dir==='left')g[4]="..OAAAAHHHHhO..."}
+  if(has('helm')){map((c)=>c==='H'||c==='h'?'A':c,1,4);if(dir==='down'){g[5]="...OAAAAAAAAO...";setc(g,3,6,'A');setc(g,12,6,'A')}if(dir==='left')g[5]="...OAAAAAAAAO..."}
+  if(has('hat')){g[0]=".....OOOOOO.....";g[1]="....OAAAAAAO....";g[2]="..OOAAAAAAAAOO..";g[3]="..OAAAAAAAAAAO..";g[4]="...OOOOOOOOOO..."}
+  if(has('hood')){map(c=>c==='H'?'T':c==='h'?'t':c,0,11)}
+  if(has('beard')){if(dir==='down'){g[8]="....OHHHHHHO....";setc(g,4,7,'H');setc(g,11,7,'H');g[9]="....OTHHHHTO...."}if(dir==='left'){g[8]="....OHHHHSOO....";setc(g,4,7,'H');setc(g,5,7,'H')}}
+  if(has('dress')){map(c=>c==='B'?'T':c==='b'?'t':c,12,13);if(dir!=='left'){g[12]="...OTTTTTTTTO...";g[13]="...OTTTTTTTtO..."}}
+  if(has('robe')){map(c=>c==='B'?'T':c==='K'?'t':c,12,14)}
+  return g}
+const sprCache=new Map();
+function personImg(look,dir,frame){
+  const flip=dir==='right';const d=flip?'left':dir;const key=look.id+d+frame+flip;
+  let c=sprCache.get(key);if(c)return c;c=mk(16,16);const g=c.getContext('2d');
+  const grid=styleGrid(d,frame,look.style||[]);
+  const pal={O:look.ol||'#1a1424',H:look.hair,h:shade(look.hair,-.3),S:look.skin,s:shade(look.skin,-.2),e:look.eye||'#1a1424',
+    T:look.top,t:shade(look.top,-.3),A:look.acc||shade(look.top,.35),B:look.bot||'#3a3f5a',b:shade(look.bot||'#3a3f5a',-.3),K:look.boot||'#3a2a22'};
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){const ch=grid[y][x];if(ch==='.')continue;const col=pal[ch];if(!col)continue;
+    g.fillStyle=col;g.fillRect(flip?15-x:x,y,1,1)}
+  sprCache.set(key,c);return c}
+const LOOKS={};
+function look(id,o){LOOKS[id]={id,...o};return LOOKS[id]}
+look('marin',{skin:'#f2c39b',hair:'#2f8f9a',top:'#e8963a',acc:'#ffe0a0',bot:'#2f3f6a',style:['pony']});
+look('pell',{skin:'#d9a07a',hair:'#4a3020',top:'#5f7f3f',acc:'#c8b070',bot:'#4a3a2a',style:['cap','beard']});
+look('ysolde',{skin:'#d6e6f4',hair:'#eef4ff',top:'#6aa0d8',acc:'#c8e4ff',bot:'#4a70a8',style:['long','dress'],ol:'#24304a'});
+look('corvane',{skin:'#e0b090',hair:'#a8acb8',top:'#283c6e',acc:'#e0b84a',bot:'#1e2a4a',style:['hat']});
+look('tilly',{skin:'#e8b894',hair:'#e8e8f0',top:'#7a4f8f',bot:'#5a3a6a',style:['bun','dress']});
+look('hask',{skin:'#d8a07a',hair:'#f0f0f0',top:'#7a5a3a',bot:'#5a4028',style:['bald','beard','robe']});
+look('fisher',{skin:'#d9a07a',hair:'#5a3a20',top:'#4f6fa0',bot:'#3a3a3a',style:['cap'],acc:'#d0d0d0'});
+look('fishwife',{skin:'#f0c0a0',hair:'#a04a2a',top:'#c86a5a',bot:'#6a3a3a',style:['long','dress']});
+look('kid',{skin:'#f2c39b',hair:'#e0b040',top:'#5fa04f',bot:'#3a5a8a'});
+look('merchant',{skin:'#e0b090',hair:'#2a2a2a',top:'#a04a8a',bot:'#3a2a4a',style:['cap'],acc:'#ffd77a'});
+look('innkeep',{skin:'#f0c0a0',hair:'#6a4a2a',top:'#e0e0e0',bot:'#6a5a4a',style:['bun','dress']});
+look('soldier',{skin:'#e0b090',hair:'#3a2a20',top:'#2f4a8a',acc:'#b8bcc8',bot:'#1e2a4a',style:['helm']});
+look('sailor',{skin:'#c88a60',hair:'#1a1a1a',top:'#e8e8f0',acc:'#2f4a8a',bot:'#2f4a8a',style:['cap']});
+look('scholar',{skin:'#f0c8a8',hair:'#8a8a8a',top:'#3a5a5a',bot:'#2a3a3a',style:['robe']});
+look('drowned1',{skin:'#c8dcec',hair:'#8fb0d0',top:'#5a8ab8',bot:'#3a5a88',ol:'#1e2c48'});
+look('drowned2',{skin:'#c8dcec',hair:'#d0e0f0',top:'#7a9ac8',bot:'#4a6a98',style:['long','dress'],ol:'#1e2c48'});
+look('drowned3',{skin:'#bcd2e6',hair:'#a0c0e0',top:'#4a7aa8',bot:'#2a4a78',style:['bald','beard','robe'],ol:'#1e2c48'});
+look('drownedkid',{skin:'#d0e2f0',hair:'#b0d0f0',top:'#6aa8c8',bot:'#3a6a98',ol:'#1e2c48'});
+look('cantor',{skin:'#c8dcec',hair:'#f0f8ff',top:'#3a5a98',acc:'#c8e4ff',bot:'#2a4a78',style:['long','robe'],ol:'#1e2c48'});
+look('lirien',{skin:'#d6e6f4',hair:'#e8d0a0',top:'#8aa8d8',bot:'#5a78b8',style:['long','dress'],ol:'#24304a'});
+look('mother',{skin:'#d6e6f4',hair:'#2f8f9a',top:'#9ab8e0',bot:'#6a88c0',style:['long','dress'],ol:'#24304a'});
+const GHOSTLY=new Set(['ysolde','drowned1','drowned2','drowned3','drownedkid','cantor','lirien','mother']);
+
+/* ---------- objects: chest, boat, sparkle ---------- */
+function chestImg(open){const c=mk(16,16),g=c.getContext('2d');RF(g,2,5,12,10,C.ol);RF(g,3,6,10,8,'#9a5a2a');RF(g,3,6,10,3,open?'#3a2010':'#c07a3a');RF(g,3,9,10,1,'#5a3418');RF(g,7,8,2,3,'#ffd77a');RF(g,3,13,10,1,'#6a3a18');if(open){RF(g,3,3,10,3,'#c07a3a');RF(g,2,2,12,1,C.ol);P(g,7,7,'#ffe9a8')}return c}
+ART.chest=[chestImg(0),chestImg(1)];
+function boatImg(dir,f){const c=mk(24,16),g=c.getContext('2d');const b=f%2;
+  if(dir==='up'||dir==='down'){RF(g,7,1+b,10,14,C.ol);RF(g,8,2+b,8,12,'#8a5a2e');RF(g,9,3+b,6,10,'#b07a42');RF(g,11,3+b,2,10,'#6b4426');
+    RF(g,6,6+b,12,1,'#e8e0d0');RF(g,7,5+b,10,1,'#ffffff');}
+  else{RF(g,1,8+b,22,6,C.ol);RF(g,2,9+b,20,4,'#8a5a2e');RF(g,2,9+b,20,1,'#b07a42');RF(g,3,12+b,18,1,'#6b4426');
+    RF(g,11,0+b,1,9,'#5a3a1f');for(let y=1;y<8;y++)RF(g,12,y+b,Math.min(8,9-y),1,y%3?'#f0ece0':'#d8d0c0');}
+  if(dir==='left'){const d=mk(24,16),dg=d.getContext('2d');dg.translate(24,0);dg.scale(-1,1);dg.drawImage(c,0,0);return d}
+  return c}
+ART.boat={};for(const d of ['up','down','left','right'])ART.boat[d]=[boatImg(d,0),boatImg(d,1)];
+
+/* ---------- monsters: shaded shapes turned into pixel art ---------- */
+const RAMPS={
+  crab:['#5a1a1a','#a8342a','#e0603a','#ffb07a'],iron:['#2a2a38','#4f5468','#8a90a8','#d0d6ea'],abyss:['#1a0f2e','#3f2468','#7a4ab0','#c79af0'],
+  eel:['#14304a','#2a6a7a','#4aa89a','#a8f0d0'],lanterneel:['#2a1a3a','#5a3a7a','#9a6ab8','#f0c0ff'],mooneel:['#2a3a5a','#6a7aa8','#b0c0e8','#ffffff'],
+  ghost:['#1a2a4a','#4a6a9a','#8ab0d8','#e8f4ff'],mourner:['#2a1a3a','#5a4a8a','#9a8ac8','#f0e8ff'],wraith:['#0a1a1a','#2a4a4a','#5a9a8a','#c8fff0'],
+  jelly:['#4a1a5a','#a04ab0','#e88ae0','#ffe0ff'],glow:['#1a4a3a','#3aa07a','#7ae8b0','#f0fff0'],storm:['#1a2a5a','#3a5ab8','#7aa0ff','#e0f0ff'],
+  gull:['#3a3a48','#8a8a98','#d0d0dc','#ffffff'],stormgull:['#1a1a2a','#3a3a5a','#6a6a9a','#b0b0e0'],
+  barnacle:['#2a3a2a','#4a6a4a','#7a9a6a','#c0d8a8'],golem:['#4a1a2a','#a03a5a','#e87a8a','#ffc0c8'],
+  chain:['#1a1a22','#3a3a48','#6a6a7a','#b0b0c0'],ironchain:['#2a1a12','#5a3a22','#9a6a3a','#e0b080'],
+  star:['#5a2a10','#b85a20','#f0a040','#fff0a0'],starspawn:['#1a1a4a','#3a3aa0','#7a7af0','#e0e0ff'],
+  skin:['#6a3a2a','#b87a5a','#e8b090','#ffe0c8'],navy:['#0a1028','#1e2a5a','#34509a','#6a8ad8'],gold:['#5a3a10','#a87a2a','#e8c050','#fff0b0'],
+  brass:['#3a2a10','#8a6a2a','#c8a050','#fff0c0'],glass:['#08101a','#1a3a5a','#4a8ab8','#c8f0ff'],moon:['#6a7898','#a8b4d0','#dce6f8','#ffffff'],
+  dark:['#06060c','#14141f','#262636','#404058'],kelp:['#0f2a14','#24582a','#3f8a3f','#8fd07a'],red:['#3a0808','#8a1818','#d83030','#ff8a7a'],
+  white:['#7a7a8a','#b0b0c0','#e0e0ea','#ffffff'],bone:['#5a5040','#9a8a6a','#d0c4a0','#fff8e0'],cloth:['#2a1a1a','#5a2a2a','#8a3a3a','#c86a5a']
+};
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function sculpt(w,h,parts,ol='#100a18'){
+  const c=mk(w,h),g=c.getContext('2d'),img=g.createImageData(w,h),D=img.data,own=new Int16Array(w*h).fill(-1);
+  const L=[-.5,-.68,.53];
+  const put=(i,col)=>{const [r,gg,b]=hex(col);D[i*4]=r;D[i*4+1]=gg;D[i*4+2]=b;D[i*4+3]=255};
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const px=x+.5,py=y+.5;
+    for(let k=parts.length-1;k>=0;k--){const p=parts[k];let n=null;
+      if(p.t==='e'){const dx=(px-p.x)/p.rx,dy=(py-p.y)/p.ry,d=dx*dx+dy*dy;if(d<=1&&(p.cut==null||py<=p.y+p.cut)&&(p.cutT==null||py>=p.y-p.cutT))n=[dx,dy,Math.sqrt(1-d)]}
+      else if(p.t==='c'){const ax=p.x2-p.x1,ay=p.y2-p.y1,l2=ax*ax+ay*ay||1;let t=((px-p.x1)*ax+(py-p.y1)*ay)/l2;t=Math.max(0,Math.min(1,t));
+        const cx=p.x1+ax*t,cy=p.y1+ay*t,r=p.r+(p.r2!=null?(p.r2-p.r)*t:0),dx=(px-cx)/r,dy=(py-cy)/r,d=dx*dx+dy*dy;if(d<=1)n=[dx,dy,Math.sqrt(1-d)]}
+      else if(p.t==='p'){let ins=false;const pts=p.pts;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const [xi,yi]=pts[i],[xj,yj]=pts[j];if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))ins=!ins}
+        if(ins){const y0=p.y0!=null?p.y0:Math.min(...pts.map(q=>q[1])),y1=p.y1!=null?p.y1:Math.max(...pts.map(q=>q[1]));const v=(py-y0)/(y1-y0||1);n=[p.nx||0,-.5+v*.9,.75]}}
+      if(n){own[y*w+x]=k;const i=y*w+x;
+        if(p.flat){put(i,p.flat);break}
+        const ramp=RAMPS[p.m]||p.m;let v=(n[0]*L[0]+n[1]*L[1]+n[2]*L[2])*(p.k||1)+(p.b||0);v=v*.62+.42;
+        v=v*(ramp.length)+(BAYER[(y%4)*4+x%4]/16-.5)*.9;const idx=Math.max(0,Math.min(ramp.length-1,Math.floor(v)));put(i,ramp[idx]);break}}}
+  // inner edges: a part drawn over another gets a dark rim against it; then an outline around the whole shape
+  const o2=new Int16Array(own);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=o2[y*w+x];if(k<0)continue;const p=parts[k];if(p.flat||p.noEdge)continue;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;const j=o2[yy*w+xx];
+      if(j>=0&&j<k&&!parts[j].flat){const ramp=RAMPS[p.m]||p.m;put(y*w+x,shade(ramp[0],-.25));break}}}
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(own[y*w+x]>=0)continue;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;if(own[yy*w+xx]>=0){put(y*w+x,ol);break}}}
+  g.putImageData(img,0,0);return c}
+const E=(x,y,rx,ry,m,o={})=>({t:'e',x,y,rx,ry,m,...o}),Cp=(x1,y1,x2,y2,r,m,o={})=>({t:'c',x1,y1,x2,y2,r,m,...o}),Pl=(pts,m,o={})=>({t:'p',pts,m,...o});
+const eye=(x,y,r=1.4,col='#fff4b0',pupil='#100a18')=>[E(x,y,r,r,null,{flat:col}),E(x+.3,y+.2,r*.5,r*.6,null,{flat:pupil})];
+const mirror=(parts,W)=>parts.concat(parts.filter(p=>!p.noMirror).map(p=>p.t==='e'?{...p,x:W-p.x}:p.t==='c'?{...p,x1:W-p.x1,x2:W-p.x2}:p.t==='p'?{...p,pts:p.pts.map(([x,y])=>[W-x,y])}:p));
+const MON={
+  crab(m){const legs=[];for(let i=0;i<3;i++)legs.push(Cp(8-i*1.5,15+i,2.5-i*.8,19+i*1.4,1.1,m));
+    const side=[...legs,Cp(8,13,4.5,9,1.6,m),E(4,7.5,4.2,3.6,m),Pl([[1.5,5],[4,6.2],[1,8]],'dark',{noEdge:1}),Cp(10,10,9.5,6,.8,m),E(9.5,5.6,1.6,1.6,null,{flat:'#fff4b0'}),E(9.6,5.8,.8,.9,null,{flat:'#100a18'})];
+    return sculpt(24,24,[...mirror(side,24).filter((p,i,a)=>p.flat?true:true),E(12,14.5,8.5,5.6,m)].sort((a,b)=>(a.flat?1:0)-(b.flat?1:0)))},
+  eel(m){const parts=[];for(let i=0;i<9;i++){const x=20-i*2.1,y=13+Math.sin(i*.9)*4.2;parts.push(E(x,y,3.4-i*.18,3.4-i*.18,m))}parts.reverse();
+    parts.push(Pl([[13,6],[17,9],[11,9]],m,{b:-.2}),E(21,11.5,4.6,3.8,m),Pl([[21,14],[25,13],[24,15.5]],'red',{noEdge:1}),...eye(22,10,1.2,'#fff4b0'));return sculpt(26,24,parts)},
+  ghost(m){return sculpt(24,26,[Cp(5,13,2,17,1.3,m),Cp(19,13,22,17,1.3,m),Pl([[4,10],[20,10],[21,22],[18,19],[15,23],[12,20],[9,23],[6,19],[3,22]],m),E(12,9,7.5,7.5,m),
+    E(9,9,1.8,2.4,null,{flat:'#0a0a18'}),E(15,9,1.8,2.4,null,{flat:'#0a0a18'}),E(9,9.5,.7,.8,null,{flat:'#bff6ff'}),E(15,9.5,.7,.8,null,{flat:'#bff6ff'}),E(12,13.5,1.4,1.8,null,{flat:'#0a0a18'})])},
+  jelly(m){const t=[];for(let i=0;i<5;i++){const x=6+i*3;t.push(Cp(x,12,x+(i%2?1.5:-1.5),17,.9,m,{r2:.6}),Cp(x+(i%2?1.5:-1.5),17,x,22,.6,m,{r2:.4}))}
+    return sculpt(24,24,[...t,E(12,11,9,8,m,{cut:1.5}),E(12,9,5,3.5,m,{b:.25}),...eye(9,9,1.1,'#ffffff'),...eye(15,9,1.1,'#ffffff')])},
+  gull(m){return sculpt(26,22,[Pl([[12,10],[1,4],[4,9],[2,12],[9,13]],m,{b:.1}),Pl([[14,10],[25,4],[22,9],[24,12],[17,13]],m,{b:.1}),Pl([[10,16],[8,21],[13,18],[18,21],[16,16]],'white'),
+    E(13,13,5.5,4.5,m),E(13,7.5,3.5,3.2,m),Pl([[12,9],[17,10],[12,11]],'star',{noEdge:1}),E(11.5,7,.9,.9,null,{flat:'#ff3030'}),Cp(11,17,10,20,.6,'star'),Cp(15,17,16,20,.6,'star')])},
+  knight(m){return sculpt(24,26,[Cp(9,18,8,24,2,m),Cp(15,18,16,24,2,m),Cp(6,10,3,18,2,m),Cp(18,10,21,18,2,m),E(12,14,7,6.5,m),E(12,6.5,4.6,4.4,m),
+    E(8,12,1.3,1.3,'white'),E(15,15,1.5,1.5,'white'),E(10,17,1.1,1.1,'white'),E(16,11,1,1,'white'),Pl([[9,6],[15,6],[15,7.6],[9,7.6]],null,{flat:'#0a0a18'}),E(10.5,6.8,.6,.6,null,{flat:'#7affd0'}),E(13.5,6.8,.6,.6,null,{flat:'#7affd0'})])},
+  chainer(m){const links=[];for(let i=0;i<3;i++)links.push(E(12,1.6+i*2.6,1.4,1.6,'chain',{b:.1}));
+    return sculpt(24,26,[...links,E(12,8.5,2.8,2.6,m),Cp(12,9,12,22,1.7,m),Cp(5,13,19,13,1.4,m),Cp(12,22,4,17,1.8,m,{r2:1.2}),Cp(12,22,20,17,1.8,m,{r2:1.2}),Pl([[2,15],[5,16],[3,19]],m),Pl([[22,15],[19,16],[21,19]],m),
+      E(12,15.5,2.6,2.6,'dark'),E(12,15.5,1.6,1.6,null,{flat:'#ff5a3a'}),E(12,15.2,.6,.6,null,{flat:'#fff0a0'})])},
+  star(m){const pts=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?4.2:11;pts.push([12+Math.cos(a)*r,13+Math.sin(a)*r])}
+    return sculpt(24,25,[Pl(pts,m,{b:.1}),E(12,13,4.5,4.5,m,{b:.2}),...eye(10.3,12,1.1,'#ffffff'),...eye(13.7,12,1.1,'#ffffff'),E(12,15,1.4,.7,null,{flat:'#3a0a0a'})])},
+  // bosses (48 px)
+  warden(){const m='crab',legs=[];for(let i=0;i<3;i++)legs.push(Cp(17-i*3,30+i*2,6-i*1.5,38+i*2.5,2.2,m));
+    const side=[...legs,Cp(16,24,8,16,3,m),E(7,12,8,6.5,m),Pl([[1,9],[7,11.5],[1,14]],'dark',{noEdge:1})];
+    return sculpt(48,46,[...mirror(side,48),E(24,28,16,11,m),Pl([[14,22],[34,22],[30,10],[24,7],[18,10]],'iron'),Pl([[18,16],[30,16],[30,18],[18,18]],null,{flat:'#0a0a18'}),
+      E(21,17,1.2,1,null,{flat:'#ff6a3a'}),E(27,17,1.2,1,null,{flat:'#ff6a3a'}),Cp(24,7,24,2,1,'gold'),E(24,30,6,3,m,{b:.3})])},
+  diver(){return sculpt(48,48,[Cp(17,34,15,46,4,'brass'),Cp(31,34,33,46,4,'brass'),E(15,46,5,2.2,'dark'),E(33,46,5,2.2,'dark'),
+    Cp(11,22,6,36,3.6,'brass'),Cp(37,22,42,36,3.6,'brass'),E(6,38,4,3.5,'iron'),E(42,38,4,3.5,'iron'),Cp(42,38,46,24,1.2,'iron'),
+    E(24,28,12,11,'brass'),Pl([[16,22],[32,22],[30,34],[18,34]],'iron',{b:-.1}),E(24,13,10.5,10,'brass'),E(24,14,6.5,6,'glass'),
+    E(21.5,13.5,1.5,1.5,null,{flat:'#7affd0'}),E(26.5,13.5,1.5,1.5,null,{flat:'#7affd0'}),E(14,13,2,2.5,'gold'),E(34,13,2,2.5,'gold'),E(24,4,2.5,2,'gold'),
+    Cp(33,20,40,6,1.3,'dark'),E(24,27,2.5,2.5,'gold')])},
+  grief(){const hands=[];for(let i=0;i<5;i++){const a=Math.PI*.15+i*Math.PI*.17;hands.push(Cp(24+Math.cos(a)*10,30,24+Math.cos(a)*19,30+Math.sin(a)*14,1.4,'ghost',{r2:1}))}
+    return sculpt(48,48,[...hands,...hands.map(p=>({...p,x1:48-p.x1,x2:48-p.x2})),Pl([[10,16],[38,16],[42,44],[36,40],[31,46],[24,41],[17,46],[12,40],[6,44]],'mourner'),E(24,15,11,11,'mourner'),
+      Pl([[13,12],[24,2],[35,12],[33,20],[15,20]],'dark',{b:-.3}),E(20,15,2,2.6,null,{flat:'#fff4b0'}),E(28,15,2,2.6,null,{flat:'#fff4b0'}),
+      Cp(24,22,24,27,.7,'gold'),Pl([[19,27],[29,27],[28,37],[20,37]],'gold'),E(24,32,3.2,3.6,null,{flat:'#fff4b0'}),E(24,32,1.8,2.2,null,{flat:'#ffffff'})])},
+  corvane(){return sculpt(40,48,[Cp(16,32,15,46,3,'navy'),Cp(24,32,25,46,3,'navy'),E(15,46,4,2,'dark'),E(25,46,4,2,'dark'),
+    Pl([[10,18],[30,18],[34,40],[6,40]],'navy'),Pl([[18,18],[22,18],[21,30],[19,30]],'white'),Cp(11,20,5,32,2.6,'navy'),Cp(29,20,34,30,2.6,'navy'),E(5,33,2.2,2.2,'skin'),E(34,31,2.2,2.2,'skin'),
+    Cp(35,30,39,6,1.1,'white',{r2:.8}),Cp(33,32,37,30,1.2,'gold'),E(20,12,5.5,6,'skin'),Pl([[10,8],[20,1],[30,8],[27,9],[13,9]],'navy'),Cp(12,8.5,28,8.5,1,'gold'),
+    E(18,12,.8,1,null,{flat:'#100a18'}),E(22,12,.8,1,null,{flat:'#100a18'}),Pl([[16,15],[24,15],[23,18],[17,18]],'white'),Cp(11,19,15,19,1.6,'gold'),Cp(25,19,29,19,1.6,'gold')])},
+  undertide(){const ch=[];for(let i=0;i<7;i++){const a=i*0.9;ch.push(Cp(30+Math.cos(a)*6,34+Math.sin(a)*4,30+Math.cos(a)*27,34+Math.sin(a)*17,1.5,'chain',{r2:1}))}
+    const ten=[];for(let i=0;i<4;i++){const x=8+i*15;ten.push(Cp(x,56,x+(i%2?6:-6),40,3.5,'abyss',{r2:1.5}))}
+    return sculpt(60,60,[...ten,...ch,E(30,44,22,13,'abyss'),Pl([[20,22],[40,22],[44,44],[16,44]],'navy'),Cp(21,24,10,38,3,'navy'),Cp(39,24,50,38,3,'navy'),
+      E(30,16,6,6.5,'skin'),Pl([[20,12],[30,4],[40,12],[37,13],[23,13]],'navy'),Cp(22,12.5,38,12.5,1,'gold'),E(27.5,16,1,1.2,null,{flat:'#7affd0'}),E(32.5,16,1,1.2,null,{flat:'#7affd0'}),
+      E(30,33,6,6,'moon',{b:.2}),E(30,33,3,3,null,{flat:'#ffffff'})])},
+};
+const monCache=new Map();
+function monImg(kind,ramp){const k=kind+'|'+ramp;let c=monCache.get(k);if(!c){c=MON[kind](ramp);monCache.set(k,c)}return c}
+
+/* ---------- tiny pixel digits for damage numbers ---------- */
+const GLYPH={'0':'111101101101111','1':'010110010010111','2':'111001111100111','3':'111001111001111','4':'101101111001001','5':'111100111001111','6':'111100111101111','7':'111001010010010','8':'111101111101111','9':'111101111001111',
+  'M':'101111111101101','I':'111010010010111','S':'111100111001111','+':'000010111010000','L':'100100100100111','V':'101101101101010','U':'101101101101111','P':'111101111100100','!':'010010010000010','Z':'111001010100111'};
+function drawNum(g,s,x,y,col,ol='#0a0a14'){s=String(s);const w=s.length*4-1;let cx=Math.round(x-w/2);
+  for(const ch of s){const gl=GLYPH[ch];if(gl){for(let pass=0;pass<2;pass++)for(let i=0;i<15;i++)if(gl[i]==='1'){const px=cx+i%3,py=y+(i/3|0);
+    if(pass===0){g.fillStyle=ol;g.fillRect(px-1,py-1,3,3)}else{g.fillStyle=col;g.fillRect(px,py,1,1)}}}cx+=4}}
+
+/* ---------- battle backdrops ---------- */
+function backdrop(kind,w,h){const c=mk(w,h),g=c.getContext('2d');const r=rng(kind.length*97);
+  const grad=(stops)=>{const gr=g.createLinearGradient(0,0,0,h);stops.forEach(([o,col])=>gr.addColorStop(o,col));g.fillStyle=gr;g.fillRect(0,0,w,h)};
+  const band=(y,hh,col)=>{g.fillStyle=col;g.fillRect(0,y,w,hh)};
+  const hy=Math.round(h*.34);h=Math.round(h);
+  if(kind==='beach'){grad([[0,'#0b1640'],[.4,'#2a3f80'],[.42,'#1d3f8e'],[.55,'#2f7cc6'],[.56,'#e6d39d'],[1,'#c9b27a']]);for(let i=0;i<40;i++){g.fillStyle=i%5?'#c8d8ff':'#fff';g.fillRect(r()*w|0,r()*hy*.8|0,1,1)}
+    for(let i=0;i<14;i++){g.fillStyle='#7fc0f0';g.fillRect(r()*w|0,hy+3+(r()*h*.12|0),4,1)}g.fillStyle='#f5e7bd';for(let i=0;i<30;i++)g.fillRect(r()*w|0,h*.58+r()*h*.42|0,1,1)}
+  else if(kind==='cave'){grad([[0,'#141824'],[.5,'#262c3c'],[.55,'#3b414d'],[1,'#585f6e']]);g.fillStyle='#0c0f18';for(let i=0;i<9;i++){const x=r()*w,ww=6+r()*12,hh=8+r()*24;g.beginPath();g.moveTo(x-ww/2,0);g.lineTo(x+ww/2,0);g.lineTo(x,hh);g.fill()}
+    for(let i=0;i<6;i++){g.fillStyle='#2f78c8';g.fillRect(r()*w|0,h*.7+r()*h*.25|0,10+r()*14|0,2)}}
+  else if(kind==='sea'){grad([[0,'#0b1640'],[.35,'#2a3f80'],[.36,'#17337a'],[1,'#2f7cc6']]);for(let i=0;i<40;i++){g.fillStyle='#c8d8ff';g.fillRect(r()*w|0,r()*h*.3|0,1,1)}
+    for(let y=hy;y<h;y+=4)for(let i=0;i<5;i++){g.fillStyle=y%8?'#4277c9':'#7fc0f0';g.fillRect(r()*w|0,y,3+r()*5|0,1)}}
+  else if(kind==='seabed'){grad([[0,'#06122e'],[.5,'#123060'],[.56,'#5a6a5a'],[1,'#8f9a80']]);for(let i=0;i<14;i++){g.fillStyle='rgba(180,220,255,.25)';g.fillRect(r()*w|0,0,1+(r()*3|0),h*.5)}
+    for(let i=0;i<8;i++){const x=r()*w|0;for(let y=0;y<16;y++){g.fillStyle=y%3?'#2c6a33':'#3f8a45';g.fillRect(x+(y%4<2?0:1),h*.56-y+8,1,1)}}}
+  else if(kind==='coral'){grad([[0,'#200a24'],[.5,'#3a1838'],[.56,'#5a2a4a'],[1,'#8a3b5e']]);for(let i=0;i<20;i++){const x=r()*w,y=h*.5+r()*h*.1;g.fillStyle=['#e86f8f','#ff9eb0','#ffb36a'][i%3];g.fillRect(x,y-r()*14,2,14)}}
+  else if(kind==='ruins'){grad([[0,'#081428'],[.5,'#1a3050'],[.56,'#46596b'],[1,'#5f7488']]);for(let i=0;i<5;i++){const x=10+i*34+r()*10;g.fillStyle='#2b3a4a';g.fillRect(x,h*.15,10,h*.4);g.fillStyle='#3d5068';g.fillRect(x,h*.15,3,h*.4)}
+    for(let i=0;i<10;i++){g.fillStyle='rgba(190,230,255,.15)';g.fillRect(r()*w|0,0,2,h*.55)}}
+  else if(kind==='light'){grad([[0,'#1a1430'],[.5,'#2a2440'],[.56,'#5b6372'],[1,'#7e889a']]);g.fillStyle='#3b414d';for(let x=0;x<w;x+=16){g.fillRect(x,0,1,h*.56)}g.fillStyle='rgba(255,230,150,.12)';g.beginPath();g.moveTo(w*.7,0);g.lineTo(w,0);g.lineTo(w*.4,h);g.lineTo(w*.1,h);g.fill()}
+  else if(kind==='moon'){grad([[0,'#05060c'],[.5,'#1a2040'],[.56,'#9aa4bc'],[1,'#dce6f8']]);g.fillStyle='rgba(220,240,255,.5)';g.beginPath();g.arc(w*.5,h*.2,h*.5,0,Math.PI*2);g.fill();g.fillStyle='#dce6f8';g.beginPath();g.arc(w*.5,h*.2,h*.42,0,Math.PI*2);g.fill();
+    g.strokeStyle='#454e68';g.lineWidth=2;for(let i=0;i<6;i++){g.beginPath();g.moveTo(w*.5,h*.2);g.lineTo(r()*w,h*.56);g.stroke()}}
+  else if(kind==='town'){grad([[0,'#0b1640'],[.5,'#2a3f80'],[.56,'#5aa042'],[1,'#468530']])}
+  return c}
+const bdCache=new Map();
+function backdropImg(kind,w,h){const k=kind+w+'x'+h;let c=bdCache.get(k);if(!c){c=backdrop(kind,w,h);bdCache.set(k,c)}return c}
+
+/* ===================== DATA: heroes, skills, items, gear, enemies ===================== */
+const HEROES={
+  marin:{name:'Marin',cls:'Tide-Diver',look:'marin',cmd:'Tide',wt:'knife',
+    base:{hp:52,mp:12,atk:12,def:8,mag:9,spd:11},grow:{hp:11,mp:2.6,atk:2.3,def:1.6,mag:1.9,spd:1.3},
+    learn:[[1,'turn'],[1,'undertow'],[3,'riptide'],[7,'shard'],[11,'maelstrom'],[1,'lanternheart']]},
+  pell:{name:'Pell',cls:'Harpooner',look:'pell',cmd:'Harpoon',wt:'harpoon',
+    base:{hp:74,mp:6,atk:15,def:11,mag:5,spd:8},grow:{hp:15,mp:1.3,atk:2.7,def:2,mag:.9,spd:1.05},
+    learn:[[1,'harpoon'],[1,'anchor'],[6,'grog'],[9,'broadside'],[15,'leviathan']]},
+  ysolde:{name:'Ysolde',cls:'Moon-Singer',look:'ysolde',cmd:'Hymn',wt:'bell',
+    base:{hp:42,mp:20,atk:7,def:7,mag:14,spd:10},grow:{hp:9.5,mp:3.6,atk:1.3,def:1.4,mag:2.5,spd:1.25},
+    learn:[[1,'mending'],[1,'pale'],[1,'lullaby'],[1,'clear'],[10,'chorus'],[12,'rekindle'],[1,'moonsong']]},
+};
+// el: water|moon|phys. pow multiplies the user's ATK (phys) or MAG (others). tgt: foe|foes|ally|allies|self|party
+const SKILLS={
+  turn:{name:'Turn Tide',mp:0,tgt:'none',desc:'Flip the battle tide. Flood favors water; at Ebb, drowned foes lose their armor.',fx:'tide'},
+  undertow:{name:'Undertow',mp:4,tgt:'foe',el:'water',kind:'phys',pow:1.75,desc:'A dragging strike. Water. Stronger at Flood.',fx:'water'},
+  riptide:{name:'Riptide',mp:5,tgt:'foes',el:'water',kind:'mag',pow:1.05,desc:'A wave over every foe. Water.',fx:'water'},
+  shard:{name:'Shard Light',mp:7,tgt:'foe',el:'moon',kind:'mag',pow:2.3,desc:'The lantern flares. Moon. Stronger at Ebb.',fx:'moon'},
+  maelstrom:{name:'Maelstrom',mp:14,tgt:'foes',el:'water',kind:'mag',pow:1.75,desc:'A whirlpool takes every foe. Water.',fx:'water'},
+  lanternheart:{name:'Lantern Heart',mp:22,tgt:'foes',el:'moon',kind:'mag',pow:2.5,desc:'All the moon\'s light at once. Moon.',fx:'moon'},
+  harpoon:{name:'Harpoon',mp:3,tgt:'foe',el:'phys',kind:'phys',pow:1.6,pierce:.5,desc:'Thrown hard. Ignores half of armor.',fx:'slash'},
+  anchor:{name:'Anchor Guard',mp:4,tgt:'none',desc:'Pell braces. The party takes 40% less damage this round.',fx:'guard',first:1},
+  grog:{name:'Grog',mp:5,tgt:'ally',kind:'heal',pct:.4,desc:'A swig from the flask. Restores 40% of one ally\'s HP.',fx:'heal'},
+  broadside:{name:'Broadside',mp:9,tgt:'foes',el:'phys',kind:'phys',pow:1.05,desc:'Swing the harpoon line through every foe.',fx:'slash'},
+  leviathan:{name:'Leviathan',mp:15,tgt:'foe',el:'phys',kind:'phys',pow:3.3,pierce:.5,desc:'A lunge that would stop a whale.',fx:'slash'},
+  mending:{name:'Mending',mp:4,tgt:'ally',kind:'heal',pow:2.2,base:18,desc:'A hymn that closes wounds. Heals one ally.',fx:'heal'},
+  pale:{name:'Pale Light',mp:5,tgt:'foes',el:'moon',kind:'mag',pow:.95,desc:'Cold moonlight on every foe. Moon.',fx:'moon'},
+  lullaby:{name:'Lullaby',mp:4,tgt:'foes',kind:'status',st:'sleep',chance:.6,desc:'Sing every foe to sleep (60%).',fx:'sleep'},
+  clear:{name:'Clearwater',mp:3,tgt:'ally',kind:'cure',desc:'Wash away poison and sleep.',fx:'heal'},
+  chorus:{name:'Chorus',mp:12,tgt:'allies',kind:'heal',pow:1.7,base:30,desc:'Heals the whole party.',fx:'heal'},
+  rekindle:{name:'Rekindle',mp:16,tgt:'ko',kind:'revive',pct:.5,desc:'Calls a fallen ally back with half HP.',fx:'heal'},
+  moonsong:{name:'Moonsong',mp:20,tgt:'foes',el:'moon',kind:'mag',pow:2.1,desc:'Her mother\'s hymn, sung as a weapon. Moon.',fx:'moon'},
+};
+const ITEMS={
+  tonic:{name:'Kelp Tonic',price:20,kind:'heal',amt:60,tgt:'ally',desc:'Restores 60 HP.'},
+  deeptonic:{name:'Deep Tonic',price:110,kind:'heal',amt:260,tgt:'ally',desc:'Restores 260 HP.'},
+  abysstonic:{name:'Abyss Tonic',price:420,kind:'heal',amt:9999,tgt:'ally',desc:'Restores all HP.'},
+  pearlwater:{name:'Pearl Water',price:90,kind:'mp',amt:30,tgt:'ally',desc:'Restores 30 MP.'},
+  moonsalt:{name:'Moon Salt',price:220,kind:'revive',pct:.4,tgt:'ko',desc:'Revives a fallen ally with 40% HP.'},
+  clearwater:{name:'Clearwater',price:25,kind:'cure',tgt:'ally',desc:'Cures poison and sleep.'},
+  tidebomb:{name:'Tide Bomb',price:140,kind:'dmg',amt:90,el:'water',tgt:'foes',desc:'Deals 90 water damage to every foe.',battle:1},
+  elixir:{name:'Tide Elixir',price:0,kind:'full',tgt:'ally',desc:'Restores all HP and MP.'},
+  // key items
+  lantern:{name:'Mother\'s Lantern',key:1,desc:'A shard of the fallen moon sits inside it.'},
+  commission:{name:'Admiralty Writ',key:1,desc:'Corvane\'s seal. "Bearer dives on the Admiralty\'s business."'},
+  drawing:{name:'Old Drawing',key:1,desc:'Two girls on a lighthouse stair. Names on the back: Marin, Ysolde.'},
+  hymnbox:{name:'Music Box',key:1,desc:'It plays the Tide-Hymn. Mother made it.'},
+};
+// gear: slot w (weapon), a (armor), c (charm). who: list of heroes allowed (weapons)
+const GEAR={
+  diverknife:{name:'Diver\'s Knife',slot:'w',who:['marin'],atk:4,price:0},
+  coraldirk:{name:'Coral Dirk',slot:'w',who:['marin'],atk:11,price:320},
+  pearlkris:{name:'Pearl Kris',slot:'w',who:['marin'],atk:20,mag:4,price:950},
+  tidecutter:{name:'Tidecutter',slot:'w',who:['marin'],atk:31,mag:8,price:2600},
+  moonblade:{name:'Moonshard Blade',slot:'w',who:['marin'],atk:44,mag:14,price:0},
+  oldharpoon:{name:'Old Harpoon',slot:'w',who:['pell'],atk:6,price:0},
+  ironharpoon:{name:'Iron Harpoon',slot:'w',who:['pell'],atk:14,price:380},
+  whaler:{name:'Whaler',slot:'w',who:['pell'],atk:24,price:1100},
+  leviathanspear:{name:'Leviathan Spear',slot:'w',who:['pell'],atk:35,price:0},
+  trident:{name:'Sea-King Trident',slot:'w',who:['pell'],atk:50,price:0},
+  drownedbell:{name:'Drowned Bell',slot:'w',who:['ysolde'],atk:3,mag:5,price:0},
+  choirbell:{name:'Choir Bell',slot:'w',who:['ysolde'],atk:6,mag:11,price:850},
+  moonbell:{name:'Moon Bell',slot:'w',who:['ysolde'],atk:9,mag:19,price:2200},
+  hymnal:{name:'Hymnal of the Deep',slot:'w',who:['ysolde'],atk:12,mag:30,price:0},
+  sailcloth:{name:'Sailcloth',slot:'a',def:3,price:0},
+  sharkskin:{name:'Sharkskin',slot:'a',def:7,price:180},
+  shellmail:{name:'Shell Mail',slot:'a',def:13,price:650},
+  coralplate:{name:'Coral Plate',slot:'a',def:21,price:1500},
+  abyssmail:{name:'Abyssal Mail',slot:'a',def:30,price:3400},
+  moonweave:{name:'Moonweave',slot:'a',def:38,mag:8,price:0},
+  luckyshell:{name:'Lucky Shell',slot:'c',spd:4,price:150},
+  saltcharm:{name:'Salt Charm',slot:'c',def:3,immune:'poison',price:400},
+  wakebead:{name:'Wake Bead',slot:'c',mag:3,immune:'sleep',price:400},
+  krakentooth:{name:'Kraken Tooth',slot:'c',atk:10,price:1800},
+  moonpearl:{name:'Moon Pearl',slot:'c',mag:12,mp:20,price:0},
+  gullfeather:{name:'Gull Feather',slot:'c',spd:10,price:0},
+};
+// enemies. tb = tidebound (drowned/sea things: stronger at Flood, armor halved at Ebb). weak: element taking x1.5
+const FOES={
+  rotgull:{name:'Rotgull',spr:['gull','gull'],hp:24,atk:10,def:3,mag:4,spd:13,exp:6,gold:5,acts:[['atk',3],['peck',1]],drop:['tonic',.12]},
+  brinecrab:{name:'Brine Crab',spr:['crab','crab'],hp:32,atk:11,def:8,mag:3,spd:6,exp:8,gold:7,tb:1,acts:[['atk',2],['pinch',1]],drop:['tonic',.15]},
+  jellysting:{name:'Jellysting',spr:['jelly','jelly'],hp:22,atk:8,def:4,mag:9,spd:9,exp:7,gold:6,tb:1,acts:[['atk',2],['sting',1]],drop:['clearwater',.2]},
+  wisp:{name:'Drowned Wisp',spr:['ghost','ghost'],hp:28,atk:7,def:5,mag:11,spd:10,exp:10,gold:4,tb:1,weak:'moon',acts:[['atk',1],['chill',2]],drop:['tonic',.15]},
+  gulper:{name:'Gulper',spr:['eel','eel'],hp:78,atk:19,def:10,mag:8,spd:14,exp:24,gold:16,tb:1,acts:[['atk',3],['bite',1]],drop:['tonic',.2]},
+  ironcrab:{name:'Iron Crab',spr:['crab','iron'],hp:96,atk:20,def:24,mag:5,spd:7,exp:28,gold:22,tb:1,acts:[['atk',2],['pinch',1],['shell',1]],drop:['deeptonic',.08]},
+  glowjelly:{name:'Glowjelly',spr:['jelly','glow'],hp:60,atk:15,def:8,mag:19,spd:11,exp:22,gold:15,tb:1,acts:[['atk',1],['shock',2]],drop:['pearlwater',.1]},
+  mourner:{name:'Pale Mourner',spr:['ghost','mourner'],hp:80,atk:14,def:10,mag:25,spd:12,exp:27,gold:12,tb:1,weak:'moon',acts:[['chill',2],['wail',1]],drop:['clearwater',.2]},
+  chainer:{name:'Chainer',spr:['chainer','chain'],hp:110,atk:27,def:20,mag:6,spd:9,exp:33,gold:26,acts:[['atk',2],['drag',1]],drop:['deeptonic',.1]},
+  barnacle:{name:'Barnacle Knight',spr:['knight','barnacle'],hp:130,atk:25,def:26,mag:8,spd:8,exp:36,gold:30,tb:1,acts:[['atk',3],['shell',1]],drop:['deeptonic',.1]},
+  stormgull:{name:'Stormgull',spr:['gull','stormgull'],hp:150,atk:36,def:18,mag:20,spd:26,exp:58,gold:32,acts:[['atk',2],['peck',1],['gale',1]],drop:['deeptonic',.15]},
+  lanterneel:{name:'Lantern Eel',spr:['eel','lanterneel'],hp:180,atk:39,def:22,mag:32,spd:20,exp:64,gold:36,tb:1,acts:[['atk',2],['lure',1],['bite',1]],drop:['pearlwater',.15]},
+  wraith:{name:'Wraith',spr:['ghost','wraith'],hp:170,atk:24,def:20,mag:37,spd:18,exp:68,gold:28,tb:1,weak:'moon',acts:[['chill',2],['wail',1],['drain',1]],drop:['moonsalt',.08]},
+  stormjelly:{name:'Stormjelly',spr:['jelly','storm'],hp:140,atk:22,def:16,mag:38,spd:16,exp:62,gold:30,tb:1,acts:[['shock',2],['storm',1]],drop:['pearlwater',.15]},
+  abysscrab:{name:'Abyss Crab',spr:['crab','abyss'],hp:330,atk:58,def:50,mag:10,spd:14,exp:125,gold:60,tb:1,acts:[['atk',2],['pinch',1],['shell',1]],drop:['abysstonic',.06]},
+  mooneel:{name:'Moon Eel',spr:['eel','mooneel'],hp:290,atk:60,def:36,mag:52,spd:28,exp:120,gold:58,tb:1,acts:[['atk',2],['bite',1],['lure',1]],drop:['pearlwater',.2]},
+  ironchainer:{name:'Iron Chainer',spr:['chainer','ironchain'],hp:370,atk:64,def:46,mag:10,spd:18,exp:135,gold:66,acts:[['atk',2],['drag',2]],drop:['deeptonic',.2]},
+  golem:{name:'Coral Golem',spr:['knight','golem'],hp:430,atk:60,def:58,mag:20,spd:12,exp:150,gold:70,tb:1,acts:[['atk',3],['quake',1]],drop:['abysstonic',.06]},
+  starspawn:{name:'Starspawn',spr:['star','starspawn'],hp:270,atk:40,def:34,mag:62,spd:24,exp:128,gold:62,acts:[['moonbeam',2],['atk',1]],drop:['moonsalt',.1]},
+  // bosses
+  warden:{name:'Brine Warden',spr:['warden',''],boss:1,hp:230,atk:15,def:12,mag:10,spd:8,exp:140,gold:160,tb:1,acts:[['atk',2],['crush',2],['tidalslam',2],['shell',1]],drop:['luckyshell',1]},
+  diver:{name:'Hollow Diver',spr:['diver',''],boss:1,hp:1150,atk:36,def:24,mag:26,spd:13,exp:700,gold:600,acts:[['atk',2],['pressure',2],['harpoongun',2],['seal',1]],drop:['wakebead',1]},
+  grief:{name:'The Grief',spr:['grief',''],boss:1,hp:2200,atk:42,def:28,mag:44,spd:20,exp:1800,gold:1000,tb:1,weak:'moon',acts:[['weeping',2],['forget',1],['smother',2],['chill',1]],drop:['moonpearl',1]},
+  corvane:{name:'Admiral Corvane',spr:['corvane',''],boss:1,hp:3000,atk:74,def:46,mag:50,spd:30,exp:0,gold:0,acts:[['atk',3],['volley',2],['rally',1],['cutlass',2]]},
+  undertide:{name:'The Undertide',spr:['undertide',''],boss:1,final:1,hp:4600,atk:70,def:50,mag:62,spd:24,exp:0,gold:0,tb:1,acts:[['drown',2],['chainlash',2],['undertow',2],['atk',1]]},
+};
+// enemy moves. pow on ATK (phys) or MAG; tgt one|all; extra effects
+const FMOVES={
+  atk:{name:'',kind:'phys',pow:1,tgt:'one'},
+  peck:{name:'Peck',kind:'phys',pow:1.35,tgt:'one'},
+  pinch:{name:'Pinch',kind:'phys',pow:1.45,tgt:'one'},
+  sting:{name:'Sting',kind:'phys',pow:.8,tgt:'one',st:'poison',chance:.5},
+  chill:{name:'Drowning Chill',kind:'mag',pow:1.3,tgt:'one',el:'water'},
+  bite:{name:'Bite',kind:'phys',pow:1.5,tgt:'one'},
+  shell:{name:'Shell Up',kind:'buff',tgt:'self'},
+  shock:{name:'Shock',kind:'mag',pow:.85,tgt:'all'},
+  wail:{name:'Wail',kind:'status',st:'sleep',chance:.4,tgt:'all'},
+  drag:{name:'Drag Under',kind:'phys',pow:1.6,tgt:'one',el:'water'},
+  gale:{name:'Gale',kind:'mag',pow:.9,tgt:'all'},
+  lure:{name:'Lure Light',kind:'status',st:'sleep',chance:.55,tgt:'one'},
+  drain:{name:'Soul Drain',kind:'mag',pow:1.2,tgt:'one',drain:1},
+  storm:{name:'Stormcall',kind:'mag',pow:1.1,tgt:'all',el:'water'},
+  quake:{name:'Reef Quake',kind:'phys',pow:.95,tgt:'all'},
+  moonbeam:{name:'Moonbeam',kind:'mag',pow:1.4,tgt:'one',el:'moon'},
+  crush:{name:'Claw Crush',kind:'phys',pow:1.6,tgt:'one'},
+  tidalslam:{name:'Tidal Slam',kind:'mag',pow:.9,tgt:'all',el:'water',flood:1},
+  pressure:{name:'Crushing Depth',kind:'mag',pow:1.05,tgt:'all',el:'water'},
+  harpoongun:{name:'Harpoon Gun',kind:'phys',pow:1.7,tgt:'one'},
+  seal:{name:'Seal Hatches',kind:'buff',tgt:'self'},
+  weeping:{name:'Weeping Light',kind:'mag',pow:1.0,tgt:'all',el:'moon'},
+  forget:{name:'Forget',kind:'mpdrain',tgt:'all'},
+  smother:{name:'Smother',kind:'mag',pow:1.75,tgt:'one',st:'sleep',chance:.35},
+  volley:{name:'Cannon Volley',kind:'phys',pow:.95,tgt:'all'},
+  rally:{name:'Rally',kind:'buff',tgt:'self',atk:1},
+  cutlass:{name:'Admiral\'s Cut',kind:'phys',pow:1.75,tgt:'one'},
+  drown:{name:'Drown the World',kind:'mag',pow:1.2,tgt:'all',el:'water',flood:1},
+  chainlash:{name:'Chain Lash',kind:'phys',pow:1.6,tgt:'one'},
+  undertow:{name:'Undertow',kind:'phys',pow:1.1,tgt:'all',el:'water'},
+};
+// encounter tables: [weight, [foe ids]]
+const GROUPS={
+  saltmere:[[3,['rotgull']],[3,['rotgull','rotgull']],[2,['brinecrab']],[2,['jellysting','rotgull']]],
+  steps:[[3,['brinecrab','jellysting']],[3,['wisp']],[2,['wisp','wisp']],[2,['brinecrab','brinecrab']],[1,['jellysting','jellysting','jellysting']]],
+  sea1:[[3,['gulper']],[2,['rotgull','rotgull','rotgull']],[2,['glowjelly','glowjelly']],[1,['ironcrab']]],
+  seabed1:[[3,['ironcrab','gulper']],[3,['mourner','mourner']],[2,['glowjelly','mourner']],[2,['gulper','gulper']]],
+  spire:[[3,['chainer','glowjelly']],[3,['barnacle']],[2,['chainer','chainer']],[2,['mourner','barnacle']],[1,['gulper','gulper','glowjelly']]],
+  sea2:[[3,['stormgull','stormgull']],[2,['lanterneel']],[2,['stormjelly','stormgull']]],
+  seabed2:[[3,['wraith','lanterneel']],[2,['stormjelly','stormjelly']],[2,['wraith','wraith']]],
+  light:[[3,['wraith','stormjelly']],[3,['lanterneel','wraith']],[2,['stormgull','stormgull','stormgull']],[2,['wraith','wraith','wraith']]],
+  sea3:[[3,['mooneel']],[2,['starspawn','starspawn']],[2,['ironchainer']]],
+  moonscar:[[3,['abysscrab','starspawn']],[3,['ironchainer','mooneel']],[2,['golem']],[2,['starspawn','starspawn','mooneel']],[1,['golem','ironchainer']]],
+};
+
+/* ===================== MAPS ===================== */
+// Tiles: ~ deep sea  , shallows (walkable at Ebb)  z reef  . sand  " grass  p path  T tree  Y palm  ^ A rock
+// # stone wall  _ stone floor  = wood floor  W plank wall  + window  D door  R r roofs  d dock  | fence  * flowers
+// L lamp  B bell  c counter  b bed  h shelf  C coral  k kelp  s seabed  q ruin floor  J ruin wall  Q pillar
+// P tidal pool (dry at Ebb)  F drift log (floats at Flood)  X abyss  m moon floor  M moon wall  S U stairs  a altar
+const WORLD_POS={saltmere:[8,37],steps:[14,33],gullwick:[8,8],nethra:[25,25],spire:[37,32],lighthouse:[36,9],moonscar:[23,13]};
+function genWorld(){
+  const W=46,H=46,m=[];for(let y=0;y<H;y++)m.push(Array(W).fill('~'));
+  const nz=(x,y,s)=>Math.sin(x*.9+s)*.5+Math.sin(y*1.1+s*1.7)*.5+Math.sin((x+y)*.55+s*.3)*.45;
+  const blob=(cx,cy,rx,ry,ch,s=0,amp=.2,only)=>{for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=((x-cx)/rx)**2+((y-cy)/ry)**2;if(d<1+nz(x,y,s)*amp&&(!only||only.includes(m[y][x])))m[y][x]=ch}};
+  const set=(x,y,ch)=>{if(x>=0&&y>=0&&x<W&&y<H)m[y][x]=ch};
+  const line=(x0,y0,x1,y1,ch,only)=>{const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));for(let i=0;i<=n;i++){const x=Math.round(x0+(x1-x0)*i/n),y=Math.round(y0+(y1-y0)*i/n);if(!only||only.includes(m[y][x]))set(x,y,ch)}};
+  // shallows
+  blob(10,36,7,6.5,',',1);blob(9,8,7.5,6.5,',',2);blob(25,24,8.5,7,',',3,.28);blob(37,32,5,5,',',4);blob(36,9,6.5,5.5,',',5);blob(13,22,3,3,',',12);
+  // land
+  blob(10,36,5.5,4.8,'.',7,.15);blob(10,36,4.3,3.6,'"',8,.15);
+  blob(9,8,6,4.8,'.',9,.15);blob(9,8,4.8,3.6,'"',10,.15);
+  blob(30,30,1.6,1.3,'.',13,0);blob(19,19,1.4,1.2,'.',14,0);blob(13,22,1.5,1.4,'.',15,0);set(13,22,'Y');
+  // little islets and sandbars scattered over the open sea
+  for(const [x,y,r,s] of [[41,20,2.4,30],[30,41,2.2,31],[3,23,2,32],[20,3,2.2,33],[43,42,1.8,34],[18,44,1.6,35],[28,6,1.6,36],[44,3,1.5,37],[2,44,1.6,38]]){blob(x,y,r+1.6,r+1.2,',',s,.25,['~']);blob(x,y,r,r*.8,'.',s+50,.2);if(r>2)blob(x,y,r*.45,r*.4,'"',s+90,0)}
+  for(const [x,y] of [[33,18],[16,12],[40,26],[6,28],[31,36],[12,44]]){set(x,y,'A');set(x+1,y,',');set(x-1,y,',');set(x,y+1,',');set(x,y-1,',')}
+  // reefs: a ring around Grey Rock, and a shoal north of the spire
+  for(let a=0;a<64;a++){const x=Math.round(36+Math.cos(a/64*Math.PI*2)*3.6),y=Math.round(9+Math.sin(a/64*Math.PI*2)*2.8);set(x,y,'z')}
+  blob(36,9,2.6,2,'.',16,0);blob(36,9,1.3,1,'^',17,0);
+  blob(37,32,2.2,2,'z',18,.1);
+  // scenery
+  const r=rng(1234);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(m[y][x]==='"'&&r()<.22)m[y][x]=r()<.8?'T':'^';else if(m[y][x]==='.'&&r()<.1)m[y][x]='Y'}
+  // Saltmere: village, path east to the Steps (on a rocky knoll)
+  blob(14,33,1.6,1.4,'^',19,0);line(8,37,14,34,'"',['T','^','.','Y']);line(9,36,13,34,'"',['T','^','Y']);
+  line(9,9,4,9,'"',['T','^']);line(8,8,12,10,'"',['T','^']);
+  for(const [k,[x,y]] of Object.entries(WORLD_POS)){const ch={saltmere:'v',steps:'n',gullwick:'V',nethra:'u',spire:'i',lighthouse:'l',moonscar:'w'}[k];set(x,y,ch)}
+  // clear around icons
+  for(const [x,y] of [[8,37],[8,8]])for(const [dx,dy] of [[0,1],[1,0],[-1,0],[0,-1]])if(['T','^','Y'].includes(m[y+dy][x+dx]))m[y+dy][x+dx]='"';
+  set(14,34,'"');set(13,34,'"');set(15,34,'"');
+  for(const [dx,dy] of [[0,1],[1,0],[-1,0],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]]){if(m[13+dy][23+dx]===',')m[13+dy][23+dx]='~'}
+  return m.map(r=>r.join(''))}
+
+const MAPS={
+world:{name:'The Drowned Sea',rows:genWorld(),border:'~',world:1,music:'sea',bg:'sea',
+  icons:{saltmere:'saltmere',steps:'steps',gullwick:'gullwick',nethra:'nethra',spire:'spire',lighthouse:'lighthouse',moonscar:'moonscar'}},
+
+saltmere:{name:'Saltmere',music:'town',border:'T',bg:'beach',rows:[
+"TTTTTTTTppTTTTTTTT",
+"T*\"\"\"\"\"\"pp\"\"\"\"\"\"*T",
+"T\"RRRRR\"pp\"rrrrr\"T",
+"T\"RRRRR\"pp\"rrrrr\"T",
+"T\"W+D+W\"pp\"W+D+W\"T",
+"T\"\"\"p\"\"\"pp\"\"\"p\"\"\"T",
+"TppppppppppppppppT",
+"T\"\"\"\"\"\"\"p\"B\"\"\"\"\"\"T",
+"T\"RRRRR\"pp\"cccc\"*T",
+"T\"RRRRR\"pp\"\"\"\"\"\"\"T",
+"T\"W+D+W\"pp\"\"Y\"\"\"\"T",
+"T\"\"\"p\"\"\"pp\"\"\"\"\"\"\"T",
+"T..pppppppppppp..T",
+"T....,,,,,,,,....T",
+"TY..,,,,..,,,,..YT",
+"T..,,,,.j.,,,,,..T",
+"~~,,,,,,,,,,,,,,~~",
+"~~~~~~~dd~~~~~~~~~",
+"~~~~~~~dd~~~~~~~~~"],
+  edge:{to:'world',x:8,y:37},
+  exits:[{x:4,y:4,to:'home',tx:4,ty:5,dir:'up'},{x:13,y:4,to:'hall',tx:5,ty:6,dir:'up'},{x:4,y:10,to:'inn',tx:5,ty:6,dir:'up'}],
+  npcs:[{id:'merchant',x:12,y:7,look:'merchant',dir:'down',talk:'shopSaltmere'},
+    {id:'fisher',x:12,y:12,look:'fisher',dir:'left',wander:1,talk:'saltFisher'},
+    {id:'fishwife',x:5,y:7,look:'fishwife',dir:'down',wander:1,talk:'saltWife'},
+    {id:'kid',x:15,y:10,look:'kid',dir:'left',wander:1,talk:'saltKid'}],
+  chests:[{id:'salt1',x:9,y:14,gold:150}],
+  inspect:[{x:10,y:7,talk:'saltBell'}],
+  tideLock:0},
+
+home:{name:'Marin\'s House',music:'town',border:'K',indoor:1,rows:[
+"WWWWWWWWWW",
+"W+WhhW+WWW",
+"W=====b==W",
+"W========W",
+"W==cc====W",
+"W========W",
+"WWWW==WWWW"],
+  edge:{to:'saltmere',x:4,y:5,dir:'down'},
+  npcs:[{id:'tilly',x:6,y:4,look:'tilly',dir:'left',talk:'tilly'}],
+  chests:[{id:'home1',x:8,y:2,item:'tonic',n:3}]},
+
+hall:{name:'Elder\'s Hall',music:'town',border:'K',indoor:1,rows:[
+"WWWWWWWWWWWW",
+"W+WhhWWhhW+W",
+"W==========W",
+"W===cccc===W",
+"W==========W",
+"W*========*W",
+"W==========W",
+"WWWWW==WWWWW"],
+  edge:{to:'saltmere',x:13,y:5,dir:'down'},
+  npcs:[{id:'hask',x:5,y:2,look:'hask',dir:'down',talk:'hask'},{id:'scholar1',x:9,y:5,look:'scholar',dir:'left',talk:'saltScholar'}]},
+
+inn:{name:'The Drowned Gull',music:'town',border:'K',indoor:1,rows:[
+"WWWWWWWWWWWW",
+"W+WWhhWW+WWW",
+"W=b=b======W",
+"W==========W",
+"W=====cccc=W",
+"W==========W",
+"W==========W",
+"WWWWW==WWWWW"],
+  edge:{to:'saltmere',x:4,y:11,dir:'down'},
+  npcs:[{id:'innkeep',x:8,y:3,look:'innkeep',dir:'down',talk:'innSaltmere'},{id:'drunk',x:2,y:5,look:'sailor',dir:'right',talk:'saltDrunk'}]},
+
+steps:{name:'The Old Steps',music:'dungeon',border:'#',bg:'cave',enc:'steps',rate:22,rows:[
+"#######__#######",
+"####________####",
+"###__________###",
+"###__________###",
+"####________####",
+"######____######",
+"#######__#######",
+"####_______#####",
+"####PPPPPPP#####",
+"####_______##_##",
+"####XXXFXXX#__##",
+"####_______P__##",
+"#####______#####",
+"#####XXFFXX#####",
+"#####XXFFXX#####",
+"#####______#####",
+"#####__##__#####",
+"####____#_____##",
+"#######_#_###_##",
+"#####___#___#_##",
+"#____#PPPPP#__##",
+"#_a__#PPPPP#__##",
+"#____#_____#__##",
+"##_###_____#####",
+"##_____________#",
+"######_______###",
+"######_______###",
+"#######_____####",
+"#######__#######",
+"#######__#######"],
+  edge:{to:'world',x:14,y:34},
+  exits:[{x:7,y:0,to:'seacave',tx:6,ty:6,dir:'up'},{x:8,y:0,to:'seacave',tx:7,ty:6,dir:'up'}],
+  npcs:[{id:'wardenObj',x:7,y:2,mon:['warden',''],talk:'wardenFight',cond:()=>!F('warden')},
+    {id:'wisp1',x:9,y:7,look:'drowned1',dir:'down',ghost:1,cond:()=>F('tidepower')&&!F('wispseen'),talk:'wispTalk'}],
+  chests:[{id:'steps1',x:13,y:9,item:'tonic',n:2},{id:'steps2',x:1,y:20,gear:'sharkskin'},{id:'steps3',x:14,y:24,item:'clearwater',n:2}],
+  inspect:[{x:2,y:21,talk:'altar'}],
+  triggers:[{x:7,y:4,w:2,h:1,run:'wardenFight',cond:()=>!F('warden')},{x:4,y:7,w:7,h:1,run:'wispTalk',cond:()=>F('tidepower')&&!F('wispseen')},{x:6,y:19,w:5,h:1,run:'poolHint',cond:()=>!F('tidepower')&&!F('poolhint')}]},
+
+seacave:{name:'Sea Cave',music:'dungeon',border:'^',bg:'cave',rows:[
+"^^^^^^^^^^^^^^",
+"^^~~~~~~~~~~^^",
+"^~~~~~~~~~~~~^",
+"^,,,,,,,,,,,,^",
+"^,,,,,,,,,,,,^",
+"^^....j.....^^",
+"^^^........^^^",
+"^^^^^^__^^^^^^"],
+  npcs:[{id:'pellObj',x:7,y:4,look:'pell',dir:'down',talk:'pellMeet',cond:()=>!F('pell')}],
+  edge:{to:'steps',x:7,y:1,dir:'down'},noSave:1,
+  triggers:[{x:6,y:5,w:3,h:1,run:'pellMeet',cond:()=>!F('pell')}]},
+
+gullwick:{name:'Gullwick',music:'town',border:'^',bg:'town',tideLock:1,rows:[
+"^^^^^^^^^^^^^^^^^^^^^^",
+"^^^^rrrrrrrrrrrrrr^^^^",
+"^^^^rrrrrrrrrrrrrr^^^^",
+"^^^^##+###DD###+##^^^^",
+"^TT\"\"L__________L\"\"TT^",
+"^T\"\"\"____________\"\"\"T^",
+"^\"rrrrr\"______\"rrrrr\"^",
+"^\"rrrrr\"__LL__\"rrrrr\"^",
+"^\"W+D+W\"______\"W+D+W\"^",
+"^\"\"\"_\"\"\"______\"\"\"_\"\"\"^",
+"^__________________^^^",
+"^\"\"cccc\"\"__________\"^",
+"^\"\"\"\"\"\"\"\"__\"ccc\"\"\"\"\"^",
+"^*\"T\"\"\"\"\"__\"\"\"\"\"\"T*\"^",
+"^......._____.........",
+"^.....dd.....dd.......",
+"~~~~~~dd~~~~~dd~~~~~~~",
+"~~~~~~dd~~~~~dd~~~~~~~"],
+  edge:{to:'world',x:8,y:8},
+  exits:[{x:10,y:3,to:'admiralty',tx:5,ty:8,dir:'up'},{x:11,y:3,to:'admiralty',tx:6,ty:8,dir:'up'},{x:4,y:8,to:'gullinn',tx:5,ty:6,dir:'up'},{x:17,y:8,to:'gullhouse',tx:4,ty:5,dir:'up'}],
+  npcs:[{id:'g_shop',x:4,y:10,look:'merchant',dir:'down',talk:'shopGullwick'},
+    {id:'g_arms',x:13,y:11,look:'fisher',dir:'down',talk:'armsGullwick'},
+    {id:'g_guard1',x:9,y:4,look:'soldier',dir:'down',talk:'gullGuard'},
+    {id:'g_guard2',x:12,y:4,look:'soldier',dir:'down',talk:'gullGuard'},
+    {id:'g_sailor',x:9,y:14,look:'sailor',dir:'left',wander:1,talk:'gullSailor'},
+    {id:'g_wife',x:16,y:5,look:'fishwife',dir:'down',wander:1,talk:'gullWife'},
+    {id:'g_scholar',x:3,y:5,look:'scholar',dir:'right',talk:'gullScholar'},
+    {id:'g_kid',x:14,y:14,look:'kid',dir:'up',wander:1,talk:'gullKid'}]},
+
+admiralty:{name:'The Admiralty',music:'town',border:'K',indoor:1,rows:[
+"############",
+"#+##hhhh##+#",
+"#__________#",
+"#__cccccc__#",
+"#__________#",
+"#L________L#",
+"#__________#",
+"#__________#",
+"#####__#####"],
+  edge:{to:'gullwick',x:10,y:4,dir:'down'},
+  npcs:[{id:'corvane',x:5,y:2,look:'corvane',dir:'down',talk:'corvane',cond:()=>!F('spire')},
+    {id:'adm_g1',x:2,y:6,look:'soldier',dir:'right',talk:'admGuard'},{id:'adm_g2',x:9,y:6,look:'soldier',dir:'left',talk:'admGuard'},
+    {id:'adm_clerk',x:8,y:2,look:'scholar',dir:'down',talk:'admClerk'}]},
+
+gullinn:{name:'The Iron Anchor',music:'town',border:'K',indoor:1,rows:[
+"WWWWWWWWWWWW",
+"W+WWhhWW+WWW",
+"W=b=b=b====W",
+"W==========W",
+"W=====cccc=W",
+"W==========W",
+"W==========W",
+"WWWWW==WWWWW"],
+  edge:{to:'gullwick',x:4,y:9,dir:'down'},
+  npcs:[{id:'g_innkeep',x:8,y:3,look:'innkeep',dir:'down',talk:'innGullwick'},{id:'g_old',x:2,y:5,look:'hask',dir:'right',talk:'gullOld'}]},
+
+gullhouse:{name:'Chart House',music:'town',border:'K',indoor:1,rows:[
+"WWWWWWWWWW",
+"W+WhhhhW+W",
+"W========W",
+"W==cc====W",
+"W========W",
+"W========W",
+"WWWW==WWWW"],
+  edge:{to:'gullwick',x:17,y:9,dir:'down'},
+  npcs:[{id:'cart',x:6,y:3,look:'scholar',dir:'left',talk:'cartographer'}],
+  chests:[{id:'gh1',x:8,y:2,item:'pearlwater',n:2}]},
+
+nethra:{name:'Nethra, the Drowned City',music:'nethra',border:'J',bg:'ruins',tideLock:1,rows:[
+"JJJJJJJJJJJJJJJJJJJJ",
+"JJJJJJJQqqqqQJJJJJJJ",
+"JJJJJJJqqqaqqJJJJJJJ",
+"JJJJJJJQqqqqQJJJJJJJ",
+"JkkCJJJJJqqJJJJJCkkJ",
+"JkqqqqqqqqqqqqqqqqkJ",
+"JqJJJqqqQqqQqqqJJJqJ",
+"JqJqJqqqqqqqqqqJqJqJ",
+"JqqqJqqkkqqkkqqJqqqJ",
+"JqJJJqqqqqqqqqqJJJqJ",
+"Jqqqqqqqq__qqqqqqqqJ",
+"JCqqqqqq_aa_qqqqqqCJ",
+"JCqqqqqq____qqqqqqCJ",
+"JqqqqqqqqqqqqqqqqqqJ",
+"JqJJJJqqqqqqqqJJJJqJ",
+"JqJqqJqqkqqkqqJqqJqJ",
+"JqJcccqqqqqqqqcccJqJ",
+"JqqqqqqqqqqqqqqqqqqJ",
+"JkkkqqqqqqqqqqqqkkkJ",
+"JJJJJJJJJqqJJJJJJJJJ",
+"sssssssssqqsssssssss"],
+  edge:{to:'world',x:25,y:25},
+  npcs:[{id:'ysoldeObj',x:9,y:13,look:'ysolde',dir:'down',ghost:1,talk:'ysoldeMeet',cond:()=>!F('ysolde')},
+    {id:'cantor',x:10,y:3,look:'cantor',dir:'down',ghost:1,talk:'cantor'},
+    {id:'n_shop',x:4,y:15,look:'drowned1',dir:'down',ghost:1,talk:'shopNethra'},
+    {id:'n_arms',x:15,y:15,look:'drowned3',dir:'down',ghost:1,talk:'armsNethra'},
+    {id:'n_inn',x:3,y:7,look:'drowned2',dir:'down',ghost:1,talk:'innNethra'},
+    {id:'n_kid',x:12,y:8,look:'drownedkid',dir:'left',ghost:1,wander:1,talk:'nethraKid'},
+    {id:'n_m1',x:6,y:17,look:'drowned2',dir:'up',ghost:1,wander:1,talk:'nethraFolk1'},
+    {id:'n_m2',x:16,y:10,look:'drowned1',dir:'left',ghost:1,wander:1,talk:'nethraFolk2'},
+    {id:'n_m3',x:14,y:10,look:'drowned3',dir:'down',ghost:1,talk:'nethraFolk3'}],
+  chests:[{id:'n1',x:16,y:7,item:'deeptonic',n:2},{id:'n2',x:2,y:4,gear:'saltcharm'}],
+  triggers:[{x:9,y:18,w:2,h:1,run:'nethraEnter',cond:()=>!F('nethra')}]},
+
+spire:{name:'The Coral Spire',music:'dungeon',border:'C',bg:'coral',enc:'spire',rate:20,rows:[
+"CCCCCCCCCCCCCCCC",
+"CCCCCkkkkkkCCCCC",
+"CCCCksssssskCCCC",
+"CCCkssssssssskCC",
+"CCCkssssssssskCC",
+"CCCCCsssssssCCCC",
+"CCCCCCCssCCCCCCC",
+"CCssssCssCssssCC",
+"CCsXXsCPPCsXXsCC",
+"CCsFFsCPPCsFFsCC",
+"CCssssssssssssCC",
+"CCCCCCCssCCCCCCC",
+"CsssssCssCsssssC",
+"CsXXXsCFFCsPPPsC",
+"CsXXXsCFFCsPPPsC",
+"CsssssCssCsssssC",
+"CCsCCCCssCCCCsCC",
+"CssssssssssssssC",
+"CCCCCCCssCCCCCCC",
+"CsssCXXFFXXCsssC",
+"CsssCXXFFXXCsssC",
+"CsssCXXFFXXCsssC",
+"CsssCssssssCsssC",
+"CCsCCCCssCCCCsCC",
+"CsssPPPPPPPPsssC",
+"CssssssssssssssC",
+"CssCCCCssCCCCssC",
+"CCCCCCCssCCCCCCC",
+"CCCCCCCssCCCCCCC"],
+  edge:{to:'world',x:37,y:32},
+  npcs:[{id:'diverObj',x:8,y:3,mon:['diver',''],talk:'diverFight',cond:()=>!F('spire')},
+    {id:'cap1',x:5,y:2,look:'drowned1',dir:'down',ghost:1,talk:'captive',cond:()=>!F('spire')},
+    {id:'cap2',x:10,y:2,look:'drowned2',dir:'down',ghost:1,talk:'captive',cond:()=>!F('spire')}],
+  chests:[{id:'sp1',x:2,y:7,gear:'ironharpoon'},{id:'sp2',x:1,y:19,item:'deeptonic',n:2},{id:'sp3',x:14,y:19,gear:'shellmail'},{id:'sp4',x:13,y:7,item:'pearlwater',n:2},{id:'sp5',x:1,y:13,gear:'coraldirk'},{id:'sp6',x:12,y:13,item:'tidebomb',n:2}],
+  triggers:[{x:7,y:5,w:3,h:1,run:'diverFight',cond:()=>!F('spire')}]},
+
+lh1:{name:'Grey Rock Light',music:'dungeon',border:'#',bg:'light',enc:'light',rate:20,rows:[
+"##############",
+"#__#__U__#___#",
+"#__#XXFXX#___#",
+"#__#XXFXX#___#",
+"#____________#",
+"#PPPPPPPPPPPP#",
+"#PPPPPPPPPPPP#",
+"#____________#",
+"#_XX______XX_#",
+"#____________#",
+"######__######",
+"######__######",
+"######__######"],
+  edge:{to:'world',x:36,y:9},
+  exits:[{x:6,y:1,to:'lh2',tx:4,ty:6,dir:'up'}],
+  chests:[{id:'lh1a',x:1,y:1,gear:'leviathanspear'},{id:'lh1b',x:12,y:1,item:'moonsalt',n:2},{id:'lh1c',x:1,y:8,gear:'choirbell'}],
+  triggers:[{x:6,y:9,w:2,h:1,run:'lhEnter',cond:()=>!F('lhenter')}]},
+lh2:{name:'Grey Rock Light: Stair',music:'dungeon',border:'#',bg:'light',enc:'light',rate:20,rows:[
+"##############",
+"#U_____#_____#",
+"#______#_____#",
+"#XXXFXX#__P__#",
+"#______#_____#",
+"#______F_____#",
+"#__S___#_____#",
+"##############"],
+  exits:[{x:3,y:6,to:'lh1',tx:6,ty:4,dir:'down'},{x:1,y:1,to:'lh3',tx:4,ty:5,dir:'up'}],
+  chests:[{id:'lh2a',x:12,y:1,item:'deeptonic',n:3},{id:'lh2b',x:12,y:6,gear:'coralplate'}],
+  inspect:[{x:7,y:1,talk:'lhMemory'}]},
+lh3:{name:'The Lamp Room',music:'sad',border:'#',bg:'light',rows:[
+"##########",
+"###____###",
+"##__aa__##",
+"#________#",
+"#________#",
+"#________#",
+"#___S____#",
+"##########"],
+  exits:[{x:4,y:6,to:'lh2',tx:2,ty:1,dir:'down'}],
+  npcs:[{id:'griefObj',x:4,y:3,mon:['grief',''],talk:'griefFight',cond:()=>!F('grief')}],
+  inspect:[{x:4,y:2,talk:'lamp'},{x:5,y:2,talk:'lamp'}],
+  triggers:[{x:1,y:4,w:8,h:1,run:'griefFight',cond:()=>!F('grief')}]},
+
+moonscar:{name:'The Moonscar',music:'dungeon',border:'M',bg:'moon',enc:'moonscar',rate:18,rows:[
+"MMMMMMMMMMMMMMMMMM",
+"MMMMMMMmmmmMMMMMMM",
+"MMMMMMMmmmmMMMMMMM",
+"MMMMMMMMmmMMMMMMMM",
+"MmmmMMMMmmMMMMmmmM",
+"MmmmPPmmmmmmPPmmmM",
+"MMMMMMMXFFXMMMMMMM",
+"MMMMMMMXFFXMMMMMMM",
+"MmmmmmmmmmmmmmmmmM",
+"MmMMMMMMPPMMMMMMmM",
+"MmmmFmMmmmmMmFmmmM",
+"MMMMMMMmmmmMMMMMMM",
+"MmmmmmXXFFXXmmmmmM",
+"MmMMMmXXFFXXmMMMmM",
+"MmmmmmmmmmmmmmmmmM",
+"MMMMMMMPPPPMMMMMMM",
+"MMMMMMMmmmmMMMMMMM",
+"MmmmmmmmmmmmmmmmmM",
+"MmMMMMMXFFXMMMMMmM",
+"MmMMMMMXFFXMMMMMmM",
+"MmmmmMMmmmmMMmmmmM",
+"MMMMMMMPPPPMMMMMMM",
+"MmmmmmmmmmmmmmmmmM",
+"MmMMMMMMmmMMMMMMmM",
+"MmmmmMMMmmMMMmmmmM",
+"MMMMMMMMmmMMMMMMMM",
+"MMMMMMMMmmMMMMMMMM"],
+  edge:{to:'world',x:23,y:13},
+  exits:[{x:8,y:1,to:'core',tx:7,ty:10,dir:'up'},{x:9,y:1,to:'core',tx:7,ty:10,dir:'up'}],
+  chests:[{id:'ms1',x:1,y:4,gear:'moonweave'},{id:'ms2',x:16,y:4,gear:'hymnal'},{id:'ms3',x:5,y:10,item:'elixir',n:1},{id:'ms4',x:12,y:10,gear:'abyssmail'},
+    {id:'ms5',x:1,y:20,item:'abysstonic',n:2},{id:'ms6',x:16,y:20,gear:'gullfeather'},{id:'ms7',x:1,y:24,item:'moonsalt',n:2},{id:'ms8',x:16,y:24,gear:'tidecutter'},
+    {id:'ms9',x:3,y:12,gear:'moonblade'},{id:'ms10',x:14,y:12,gear:'trident'}]},
+core:{name:'The Moon\'s Grave',music:'sad',border:'M',bg:'moon',rows:[
+"MMMMMMMMMMMMMMM",
+"MMMmmmmmmmmmMMM",
+"MMmmmmmmmmmmmMM",
+"MmmmmmmmmmmmmmM",
+"MmmmmmmmmmmmmmM",
+"MmmmmmmmmmmmmmM",
+"MmmmmmmmmmmmmmM",
+"MmmmmmmmmmmmmmM",
+"MMammmmmmmmmmMM",
+"MMMmmmmmmmmmMMM",
+"MMMMMMmmmMMMMMM",
+"MMMMMMMmMMMMMMM"],
+  under(g,cx,cy){const x=7.5*16-cx,y=2.6*16-cy,t=animT;const gr=g.createRadialGradient(x,y,4,x,y,60);gr.addColorStop(0,'rgba(240,248,255,.95)');gr.addColorStop(.5,'rgba(190,220,255,.35)');gr.addColorStop(1,'rgba(120,160,230,0)');
+    g.fillStyle=gr;g.fillRect(x-70,y-70,140,140);g.fillStyle='#eef4ff';g.beginPath();g.arc(x,y,26+Math.sin(t/40),0,Math.PI*2);g.fill();g.fillStyle='#d2dcee';g.beginPath();g.arc(x-9,y-6,6,0,Math.PI*2);g.arc(x+10,y+8,5,0,Math.PI*2);g.arc(x+6,y-12,3,0,Math.PI*2);g.fill();
+    if(!F('corvane')){g.strokeStyle='#3a3a48';g.lineWidth=2;for(const a of [-2.4,-1.9,-1.2,-.6]){g.beginPath();g.moveTo(x+Math.cos(a)*24,y-Math.sin(a)*24);g.lineTo(x+Math.cos(a)*90,y+70);g.stroke()}}},
+  npcs:[{id:'corvaneEnd',x:7,y:6,look:'corvane',dir:'up',talk:'finale',cond:()=>!F('corvane')}],
+  inspect:[{x:2,y:8,talk:'moonspring'}],
+  edge:{to:'moonscar',x:8,y:2,dir:'down'},
+  triggers:[{x:5,y:8,w:5,h:1,run:'finale',cond:()=>!F('corvane')}]},
+};
+// pad / trim rows so every map is a clean rectangle
+for(const [id,m] of Object.entries(MAPS)){m.id=id;m.h=m.rows.length;m.w=Math.max(...m.rows.map(r=>r.length));
+  m.rows=m.rows.map(r=>r.padEnd(m.w,m.border||'#'));m.npcs=m.npcs||[];m.chests=m.chests||[];m.exits=m.exits||[];m.inspect=m.inspect||[];m.triggers=m.triggers||[]}
+
+/* ===================== CORE: state, input, loop, field ===================== */
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),g=cv.getContext('2d'),UI=$('#ui'),APP=$('#app');
+const SAVE_KEY='drownedmoon-save-';
+let VW=160,VH=256;
+function resize(){const w=APP.clientWidth||300,h=APP.clientHeight||500;
+  if(w<=h){VW=160;VH=Math.max(144,Math.min(340,Math.round(160*h/w)))}else{VH=176;VW=Math.max(176,Math.min(360,Math.round(176*w/h)))}
+  cv.width=VW;cv.height=VH;g.imageSmoothingEnabled=false}
+addEventListener('resize',resize);resize();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const frames=n=>new Promise(r=>{let k=0;const f=()=>{if(++k>=n)r();else requestAnimationFrame(f)};requestAnimationFrame(f)});
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.random()*a.length|0];
+const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+
+/* ---------- saved state ---------- */
+let S=null;
+function newState(){return{party:['marin'],heroes:{marin:mkHero('marin',1)},gold:60,inv:{tonic:4},gear:{},keys:[],flags:{},
+  map:'home',x:3,y:3,dir:'down',tide:'flood',time:0,boat:0,steps:0}}
+function mkHero(id,lv){const h={id,lv,exp:expFor(lv),eq:{w:{marin:'diverknife',pell:'oldharpoon',ysolde:'drownedbell'}[id],a:'sailcloth',c:null},st:{}};
+  const s=stats(h);h.hp=s.hp;h.mp=s.mp;return h}
+const F=k=>!!(S&&S.flags[k]);
+const setF=(k,v=1)=>{S.flags[k]=v};
+function expFor(lv){return lv<=1?0:Math.round(11*Math.pow(lv-1,2.25)+16*(lv-1))}
+function stats(h){const H=HEROES[h.id],o={};for(const k in H.base)o[k]=Math.floor(H.base[k]+H.grow[k]*(h.lv-1));
+  o.atk+=0;for(const sl of ['w','a','c']){const it=GEAR[h.eq[sl]];if(!it)continue;for(const k of ['atk','def','mag','spd','hp','mp'])if(it[k])o[k]+=it[k]}
+  o.hp=Math.min(o.hp,9999);return o}
+function heroSkills(h){return HEROES[h.id].learn.filter(([lv])=>lv<=h.lv).map(([,s])=>s).filter(s=>s!=='lanternheart'||F('grief')).filter(s=>s!=='moonsong'||F('grief'))}
+function addItem(id,n=1){if(GEAR[id]){S.gear[id]=(S.gear[id]||0)+n}else if(ITEMS[id]&&ITEMS[id].key){if(!S.keys.includes(id))S.keys.push(id)}else{S.inv[id]=(S.inv[id]||0)+n;if(S.inv[id]<=0)delete S.inv[id]}}
+function itemName(id){return(ITEMS[id]||GEAR[id]||{name:id}).name}
+function partyHeroes(){return S.party.map(id=>S.heroes[id])}
+function healAll(){for(const h of partyHeroes()){const s=stats(h);h.hp=s.hp;h.mp=s.mp;h.st={}}}
+
+function saveGame(slot){S.saved=Date.now();try{localStorage.setItem(SAVE_KEY+slot,JSON.stringify(S));return true}catch(e){return false}}
+function loadSlot(slot){try{const v=localStorage.getItem(SAVE_KEY+slot);return v?JSON.parse(v):null}catch(e){return null}}
+function fmtTime(t){t=t|0;const h=t/3600|0,m=(t/60|0)%60;return h+':'+String(m).padStart(2,'0')}
+
+/* ---------- input ---------- */
+const HELD={};let dirOrder=[];
+const handlers=[]; // top-most gets presses: fn(btn,repeat)
+function pushInput(fn){handlers.push(fn);return()=>{const i=handlers.lastIndexOf(fn);if(i>=0)handlers.splice(i,1)}}
+let repTimer=null;
+function btn(b,down){
+  if(down){AU.unlock();if(HELD[b])return;HELD[b]=true;
+    if(DIRS[b]){dirOrder=dirOrder.filter(d=>d!==b);dirOrder.push(b)}
+    const h=handlers[handlers.length-1];if(h)h(b,false);
+    if(DIRS[b]){clearTimeout(repTimer);const rep=()=>{if(!HELD[b])return;const hh=handlers[handlers.length-1];if(hh)hh(b,true);repTimer=setTimeout(rep,85)};repTimer=setTimeout(rep,320)}}
+  else{HELD[b]=false;if(DIRS[b])dirOrder=dirOrder.filter(d=>d!==b)}}
+const heldDir=()=>dirOrder.length?dirOrder[dirOrder.length-1]:null;
+const KEYMAP={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',z:'a',Z:'a',x:'b',X:'b',Enter:'start',Shift:'select',' ':'a',Escape:'b',Backspace:'b',w:'up',a:'left',s:'down',d:'right'};
+addEventListener('keydown',e=>{const b=KEYMAP[e.key];if(b){e.preventDefault();btn(b,true)}});
+addEventListener('keyup',e=>{const b=KEYMAP[e.key];if(b){e.preventDefault();btn(b,false)}});
+// on-screen buttons when the game runs on its own on a touch screen
+(()=>{let inConsole=false;try{inConsole=window.parent!==window&&!!window.parent.ZIGAPLAY}catch(e){}
+  const touch='ontouchstart' in window||matchMedia('(pointer:coarse)').matches;if(inConsole||!touch)return;
+  document.body.classList.add('touch');const pad=$('#pad');const active=new Map();
+  const hit=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.dataset&&e.dataset.b?e:null};
+  const upd=(ev)=>{ev.preventDefault();const now=new Map();for(const t of ev.touches){const e=hit(t.clientX,t.clientY);if(e)now.set(e.dataset.b,e)}
+    for(const [b,e] of active)if(!now.has(b)){e.classList.remove('on');btn(b,false)}for(const [b,e] of now)if(!active.has(b)){e.classList.add('on');btn(b,true)}
+    active.clear();for(const [b,e] of now)active.set(b,e)};
+  for(const ev of ['touchstart','touchmove','touchend','touchcancel'])pad.addEventListener(ev,upd,{passive:false});
+  setTimeout(resize,0)})();
+window.ZPCart={title:'Tides of the Drowned Moon',input(b,d){btn(b,d)},home(){return MODE==='title'?true:'ask'}};
+
+/* ---------- fades & toasts ---------- */
+const fadeEl=$('#fade');
+async function fade(on,white=false,ms=350){fadeEl.classList.toggle('white',white);fadeEl.style.transitionDuration=ms+'ms';fadeEl.style.opacity=on?1:0;await sleep(ms+20)}
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function toast(text,ms=1500){const w=el('div','win toast',text);UI.appendChild(w);setTimeout(()=>w.remove(),ms)}
+function mapToast(name){const w=el('div','win mapname',name);UI.appendChild(w);setTimeout(()=>w.remove(),2700)}
+
+/* ---------- field ---------- */
+let MODE='boot';
+const FD={map:null,x:0,y:0,ox:0,oy:0,dir:'down',moving:0,walkF:0,npcs:[],busy:0,fx:[],shake:0,tideFx:0,stepCount:0,noEnc:0};
+let animT=0;
+function tileAt(m,x,y){if(x<0||y<0||x>=m.w||y>=m.h)return m.border;return m.rows[y][x]}
+function footOK(ch,tide){const t=TILE[ch];if(!t)return true;if(t.solid||t.deep)return false;
+  if(t.shallow||t.reef||t.pool)return tide==='ebb';if(t.drift)return tide!=='ebb';
+  if(ch==='u')return tide==='ebb';if(ch==='w'||ch==='i'&&false)return false;return true}
+function sailOK(ch,tide){return tide==='flood'&&['~',',','u','w'].includes(ch)}
+function onBoat(){const m=FD.map;return m.world&&!footOK(tileAt(m,FD.x,FD.y),S.tide)}
+function npcAt(x,y){return FD.npcs.find(n=>n.visible&&n.x===x&&n.y===y)}
+function chestAt(x,y){return FD.map.chests.find(c=>c.x===x&&c.y===y)}
+function canEnter(x,y){const m=FD.map;
+  if(x<0||y<0||x>=m.w||y>=m.h)return m.edge&&!m.world?'edge':null;
+  if(npcAt(x,y)||chestAt(x,y))return null;
+  const ch=tileAt(m,x,y);if(footOK(ch,S.tide))return'foot';
+  if(m.world&&S.boat&&sailOK(ch,S.tide))return'boat';return null}
+
+function loadMap(id,x,y,dir){const m=MAPS[id];FD.map=m;FD.foam=null;FD.x=x;FD.y=y;FD.ox=FD.oy=0;FD.moving=0;FD.dir=dir||FD.dir;
+  S.map=id;S.x=x;S.y=y;S.dir=FD.dir;
+  FD.npcs=m.npcs.map(n=>({...n,hx:n.x,hy:n.y,ox:0,oy:0,dir:n.dir||'down',wt:60+Math.random()*120,mv:0,visible:true}));
+  refreshNpcs();FD.stepCount=0;FD.noEnc=6}
+function refreshNpcs(){for(const n of FD.npcs)n.visible=!n.cond||n.cond()}
+function musicFor(m){if(m.world)return S.tide==='ebb'?'seabed':'sea';return m.music}
+async function goto(id,x,y,dir,{silent=false}={}){
+  FD.busy++;if(!silent){AU.play('door');await fade(1)}
+  loadMap(id,x,y,dir);AU.music(musicFor(FD.map));if(MODE==='field')saveGame(0);
+  if(!silent){await fade(0);if(!FD.map.indoor)mapToast(FD.map.name)}
+  FD.busy=Math.max(0,FD.busy-1);
+  await onArrive()}
+async function onArrive(){const m=FD.map;if(m.world)return;
+  const tr=m.triggers.find(t=>FD.x>=t.x&&FD.x<t.x+(t.w||1)&&FD.y>=t.y&&FD.y<t.y+(t.h||1)&&(!t.cond||t.cond()));if(tr&&tr.onArrive)await runScript(tr.run)}
+
+async function runScript(key,arg){const fn=STORY[key];if(!fn){console.warn('no script',key);return}
+  FD.busy++;try{await fn(arg)}catch(e){console.error(e)}finally{FD.busy=Math.max(0,FD.busy-1);refreshNpcs()}}
+
+function fieldUpdate(){
+  const m=FD.map;if(!m)return;
+  // npcs
+  for(const n of FD.npcs){if(!n.visible)continue;
+    if(n.mv){const sp=1;const [dx,dy]=DIRS[n.dir];n.mvp+=sp;n.ox=dx*(n.mvp-16);n.oy=dy*(n.mvp-16);n.frame=(n.mvp/8|0)%2+1;if(n.mvp>=16){n.mv=0;n.ox=n.oy=0;n.frame=0}}
+    else if(n.wander&&!FD.busy&&!uiOpen()){if(--n.wt<=0){n.wt=90+Math.random()*160;const d=pick(Object.keys(DIRS)),[dx,dy]=DIRS[d],tx=n.x+dx,ty=n.y+dy;n.dir=d;
+      if(Math.abs(tx-n.hx)<=2&&Math.abs(ty-n.hy)<=2&&footOK(tileAt(m,tx,ty),S.tide)&&!npcAt(tx,ty)&&!chestAt(tx,ty)&&!(tx===FD.x&&ty===FD.y)&&!(FD.moving&&tx===FD.tx&&ty===FD.ty)&&tx>=0&&ty>=0&&tx<m.w&&ty<m.h){n.x=tx;n.y=ty;n.mv=1;n.mvp=0;n.ox=-dx*16;n.oy=-dy*16}}}}
+  // player
+  if(FD.moving){const sp=FD.boatMove?4:2;FD.mp+=sp;const [dx,dy]=DIRS[FD.dir];FD.ox=dx*(FD.mp-16);FD.oy=dy*(FD.mp-16);
+    if(FD.mp%8===0)FD.walkF++;
+    if(FD.mp>=16){FD.moving=0;FD.ox=FD.oy=0;if(!FD.scripted)afterStep()}return}
+  if(FD.busy||uiOpen()||MODE!=='field')return;
+  const d=heldDir();if(d)tryMove(d)}
+function tryMove(d){FD.dir=d;const [dx,dy]=DIRS[d],tx=FD.x+dx,ty=FD.y+dy;const how=canEnter(tx,ty);
+  if(how==='edge'){leaveByEdge();return}
+  if(!how){return}
+  FD.px=FD.x;FD.py=FD.y;FD.boatMove=how==='boat';FD.tx=tx;FD.ty=ty;FD.x=tx;FD.y=ty;FD.moving=1;FD.mp=0;FD.ox=-dx*16;FD.oy=-dy*16}
+async function leaveByEdge(){const e=FD.map.edge;FD.busy++;
+  if(e.to==='world'){await goto('world',e.x,e.y,'down')}else await goto(e.to,e.x,e.y,e.dir||'down');FD.busy=Math.max(0,FD.busy-1)}
+async function afterStep(){
+  const m=FD.map;S.x=FD.x;S.y=FD.y;S.dir=FD.dir;S.steps++;
+  const ex=m.exits.find(e=>e.x===FD.x&&e.y===FD.y);
+  if(ex){FD.busy++;await goto(ex.to,ex.tx,ex.ty,ex.dir);FD.busy=Math.max(0,FD.busy-1);return}
+  if(m.world){const ch=tileAt(m,FD.x,FD.y);const icon=Object.entries(WORLD_POS).find(([k,[x,y]])=>x===FD.x&&y===FD.y);
+    if(icon){FD.busy++;await runScript('enter_'+icon[0]);FD.busy=Math.max(0,FD.busy-1);return}}
+  const tr=m.triggers.find(t=>FD.x>=t.x&&FD.x<t.x+(t.w||1)&&FD.y>=t.y&&FD.y<t.y+(t.h||1)&&(!t.cond||t.cond()));
+  if(tr){await runScript(tr.run);return}
+  // encounters
+  const grp=encGroup();if(grp){FD.stepCount++;if(FD.noEnc>0)FD.noEnc--;
+    else{const rate=m.world?(onBoat()?34:26):(m.rate||24);if(Math.random()<1/rate){await randomBattle(grp)}}}}
+function tier(){return F('grief')?3:F('spire')?2:1}
+function encGroup(){const m=FD.map;if(S.flags.noenc)return null;
+  if(m.world){const t=tier(),ch=tileAt(m,FD.x,FD.y);
+    if(['v','V','n','u','i','l','w'].includes(ch))return null;
+    if(onBoat())return['sea1','sea2','sea3'][t-1];
+    if(TILE[ch]&&(TILE[ch].shallow||TILE[ch].reef))return['seabed1','seabed2','sea3'][t-1];
+    if(FD.y>28&&FD.x<18)return t===1?'saltmere':'sea1';
+    return['saltmere','sea1','sea2'][t-1]}
+  return m.enc||null}
+function battleBg(){const m=FD.map;if(!m.world)return m.bg||'cave';const ch=tileAt(m,FD.x,FD.y);if(onBoat())return'sea';if(TILE[ch]&&(TILE[ch].shallow||TILE[ch].reef))return'seabed';return'beach'}
+async function randomBattle(grp){const tbl=GROUPS[grp];let tot=tbl.reduce((a,b)=>a+b[0],0),r=Math.random()*tot,ch=tbl[0][1];for(const [w,ids] of tbl){if((r-=w)<0){ch=ids;break}}
+  FD.busy++;const res=await startBattle(ch,{bg:battleBg()});FD.busy=Math.max(0,FD.busy-1);FD.noEnc=5;return res}
+
+// A button on the field
+async function interact(){
+  const [dx,dy]=DIRS[FD.dir];let tx=FD.x+dx,ty=FD.y+dy;const m=FD.map;
+  let n=npcAt(tx,ty);if(!n&&tileAt(m,tx,ty)==='c'){n=npcAt(tx+dx,ty+dy)}
+  if(n){if(!n.mon&&!n.fixed){n.dir={up:'down',down:'up',left:'right',right:'left'}[FD.dir]}await runScript(n.talk,n);return}
+  const c=chestAt(tx,ty);if(c){await openChest(c);return}
+  const ins=m.inspect.find(i=>i.x===tx&&i.y===ty);if(ins){await runScript(ins.talk,ins);return}
+}
+async function openChest(c){if(S.flags['ch_'+c.id]){return}
+  FD.busy++;AU.play('chest');setF('ch_'+c.id);
+  if(c.gold){S.gold+=c.gold;await say(null,`Found <span class="gold">${c.gold} pearls</span>.`)}
+  else{const id=c.item||c.gear;addItem(id,c.n||1);await say(null,`Found <span class="gold">${itemName(id)}</span>${c.n>1?' ×'+c.n:''}.`)}
+  FD.busy=Math.max(0,FD.busy-1)}
+
+/* ---------- tide ---------- */
+async function toggleTide(){
+  if(!F('tidepower')){return}
+  const m=FD.map,to=S.tide==='flood'?'ebb':'flood';
+  if(m.tideLock){AU.play('buzz');await say(null,'The lantern flickers. The sea won\'t answer it here.');return}
+  if(m.indoor){AU.play('buzz');return}
+  const ch=tileAt(m,FD.x,FD.y);
+  if(!footOK(ch,to)){
+    if(!(m.world&&S.boat&&sailOK(ch,to))){AU.play('buzz');
+      await say(null,to==='ebb'?(TILE[ch]&&TILE[ch].drift?'You\'re standing on a floating log. Draw the sea back now and you\'ll fall.':'The water here is too deep to draw back.'):(TILE[ch]&&TILE[ch].reef?'Flood the reef with you on it? The boat can\'t reach you here. Walk to open shallows first.':'If the sea comes back now, it will sweep you away.'));return}}
+  FD.busy++;AU.play('tide');FD.tideFx={t:0,to};
+  await frames(28);S.tide=to;FD.foam=null;refreshNpcs();await frames(28);FD.tideFx=0;
+  if(m.world)AU.music(musicFor(m));FD.busy=Math.max(0,FD.busy-1);
+  if(!F('tidetip2')&&to==='ebb'&&m.world){setF('tidetip2');await say(null,'At Ebb the shallows are dry ground. Walk them. Things sleep down here that the boat sails over.')}}
+
+/* ---------- drawing the field ---------- */
+function computeFoam(){const m=FD.map,t=S.tide,mask=new Uint8Array(m.w*m.h);
+  const isW=ch=>{const d=TILE[ch];if(!d)return false;if(d.deep)return true;if(d.shallow||d.reef)return t!=='ebb';return ch==='w'||ch==='d'||(ch==='u'&&t!=='ebb')||ch==='i'};
+  for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const ch=m.rows[y][x];if(!isW(ch)||ch==='d')continue;
+    const n=[[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dy])=>{const c2=tileAt(m,x+dx,y+dy);return!isW(c2)&&!(x+dx<0||y+dy<0||x+dx>=m.w||y+dy>=m.h)});
+    mask[y*m.w+x]=n[0]|n[1]<<1|n[2]<<2|n[3]<<3}
+  FD.foam=mask}
+const foamCache=new Map();
+function foamImg(bits,f){const k=bits*4+f;let c=foamCache.get(k);if(!c){c=mk(16,16);foamEdges(c.getContext('2d'),[bits&1,bits&2,bits&4,bits&8],f);foamCache.set(k,c)}return c}
+function camera(){const m=FD.map;const px=FD.x*16+FD.ox+8,py=FD.y*16+FD.oy+8;
+  let cx=px-VW/2,cy=py-VH/2+8;const mw=m.w*16,mh=m.h*16;
+  if(m.world){/* free scroll, border is sea */}
+  else{cx=mw<=VW?(mw-VW)/2:clamp(cx,0,mw-VW);cy=mh<=VH?(mh-VH)/2:clamp(cy,0,mh-VH)}
+  return[Math.round(cx),Math.round(cy)]}
+function drawField(){
+  const m=FD.map;if(!m)return;if(!FD.foam)computeFoam();
+  const [cx,cy]=camera();const af=(animT/16|0)%4;
+  g.fillStyle='#000';g.fillRect(0,0,VW,VH);
+  const x0=Math.floor(cx/16),y0=Math.floor(cy/16),x1=Math.ceil((cx+VW)/16),y1=Math.ceil((cy+VH)/16);
+  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const ch=tileAt(m,tx,ty);const sx=tx*16-cx,sy=ty*16-cy;
+    g.drawImage(tileImg(ch,af,S.tide),sx,sy);
+    if(tx>=0&&ty>=0&&tx<m.w&&ty<m.h){const fb=FD.foam[ty*m.w+tx];if(fb)g.drawImage(foamImg(fb,af%2),sx,sy)}}
+  if(m.under)m.under(g,cx,cy);
+  // sprites sorted by y
+  const list=[];
+  for(const c of m.chests)list.push({y:c.y*16,draw:()=>g.drawImage(ART.chest[F('ch_'+c.id)?1:0],c.x*16-cx,c.y*16-cy)});
+  for(const n of FD.npcs){if(!n.visible)continue;const nx=n.x*16+n.ox-cx,ny=n.y*16+n.oy-cy;
+    list.push({y:n.y*16+n.oy,draw:()=>{
+      if(n.mon){const im=monImg(n.mon[0],n.mon[1]);const bob=Math.sin(animT/20)*1.5;g.drawImage(im,Math.round(nx+8-im.width/2),Math.round(ny+16-im.height+bob))}
+      else if(n.big){g.save();g.globalAlpha=.95;g.drawImage(n.big,Math.round(nx+8-n.big.width/2),Math.round(ny+8-n.big.height/2));g.restore()}
+      else{const im=personImg(LOOKS[n.look],n.dir,n.mv?n.frame:0);if(n.ghost){g.save();g.globalAlpha=.72+Math.sin(animT/25+n.x)*.12;g.drawImage(im,nx,ny-1+Math.round(Math.sin(animT/30+n.y)));g.restore()}else g.drawImage(im,nx,ny-1)}}})}
+  const px=FD.x*16+FD.ox-cx,py=FD.y*16+FD.oy-cy;
+  if(!FD.hidePlayer)list.push({y:FD.y*16+FD.oy,draw:()=>{
+    if(onBoatDraw()){g.drawImage(ART.boat[FD.dir][(animT/20|0)%2],px-4,py)}
+    else{const look=LOOKS[S.party[0]];const wf=FD.moving?[1,0,2,0][FD.walkF%4]:0;
+      const im=personImg(look,FD.dir,wf);if(GHOSTLY.has(S.party[0])){g.save();g.globalAlpha=.85;g.drawImage(im,px,py-1);g.restore()}else g.drawImage(im,px,py-1)}}});
+  list.sort((a,b)=>a.y-b.y);for(const s of list)s.draw();
+  // tide wave sweep
+  if(FD.tideFx){const t=FD.tideFx;t.t++;const p=t.t/56;const y=Math.round((t.to==='ebb'?p:1-p)*VH*1.3-VH*.15);
+    g.fillStyle=t.to==='ebb'?'rgba(255,240,190,.18)':'rgba(120,190,255,.25)';g.fillRect(0,0,VW,VH);
+    g.fillStyle='rgba(230,246,255,.75)';for(let x=0;x<VW;x+=2)g.fillRect(x,y+Math.round(Math.sin(x/8+t.t/4)*3),2,2);
+    g.fillStyle='rgba(120,190,255,.35)';g.fillRect(0,t.to==='ebb'?0:y,VW,t.to==='ebb'?y:VH-y)}
+  if(m.world&&S.tide==='ebb'){g.fillStyle='rgba(20,30,70,.18)';g.fillRect(0,0,VW,VH)}
+  for(const f of FD.fx)f(g,cx,cy);
+}
+function onBoatDraw(){const m=FD.map;if(!m.world||!S.boat)return false;const ch=tileAt(m,FD.x,FD.y);
+  if(FD.moving&&FD.boatMove)return true;return!footOK(ch,S.tide)}
+
+/* ---------- main loop ---------- */
+let last=performance.now(),acc=0;
+function loop(t){requestAnimationFrame(loop);acc+=Math.min(100,t-last);last=t;
+  while(acc>=1000/60){acc-=1000/60;animT++;if(S&&MODE!=='title')S.time+=1/60;
+    if(MODE==='field')fieldUpdate();else if(MODE==='battle')battleUpdate();else if(MODE==='title')titleUpdate()}
+  if(MODE==='field'||MODE==='cut')drawField();else if(MODE==='battle')drawBattle();else if(MODE==='title')drawTitle();else if(MODE==='ending')drawEnding();else if(MODE==='black'){g.fillStyle='#000';g.fillRect(0,0,VW,VH)}}
+
+function fieldInput(b){if(MODE!=='field'||FD.busy||FD.moving||uiOpen())return;
+  if(b==='a')interact();else if(b==='start'){AU.play('ok');openMainMenu()}else if(b==='select')toggleTide()}
+
+/* ===================== UI: dialogue, lists, menus, shops ===================== */
+let uiCount=0;
+const uiOpen=()=>uiCount>0;
+function win(cls,html,style){const w=el('div','win '+(cls||''),html);if(style)Object.assign(w.style,style);UI.appendChild(w);return w}
+
+/* ---------- dialogue ---------- */
+let dlgEl=null,dlgKeep=0;
+function tokenize(html){const out=[];const re=/(<[^>]+>)|([^<])/g;let m;while((m=re.exec(html)))out.push(m[1]?{tag:m[1]}:{ch:m[2]});return out}
+function say(who,text,{keep=false,auto=0}={}){
+  uiCount++;clearTimeout(dlgT);
+  if(!dlgEl){dlgEl=win('dlg','')}dlgEl.dataset.live=1;
+  dlgEl.innerHTML=(who?`<div class="who">${who}</div>`:'')+'<div class="txt"></div>';
+  const txt=dlgEl.querySelector('.txt');const toks=tokenize(text);let shown=0,done=false,timer;
+  const total=toks.filter(t=>t.ch).length;
+  const render=n=>{let s='',c=0;for(const t of toks){if(t.tag)s+=t.tag;else{if(c>=n)break;s+=t.ch;c++}}txt.innerHTML=s};
+  return new Promise(res=>{
+    const finish=()=>{clearInterval(timer);done=true;render(total);if(!keep&&!auto)dlgEl.insertAdjacentHTML('beforeend','<div class="more"></div>');if(keep||auto){off();uiCount--;if(auto)setTimeout(()=>{closeDlg();res()},auto);else res()}};
+    timer=setInterval(()=>{shown+=2;if(shown%6===0&&who)AU.play('talk');render(shown);if(shown>=total)finish()},28);
+    const off=pushInput(b=>{if(b!=='a'&&b!=='b')return;if(!done){finish();return}
+      if(keep||auto)return;off();uiCount--;if(dlgEl)delete dlgEl.dataset.live;closeDlg();res()});
+  })}
+let dlgT=0;function closeDlg(){clearTimeout(dlgT);const d=dlgEl;dlgT=setTimeout(()=>{if(dlgEl===d&&d&&!d.dataset.live){d.remove();dlgEl=null}},40)}
+async function lines(arr){for(const [who,t] of arr)await say(who,t)}
+
+/* ---------- lists ---------- */
+// items: [{label, right, off, desc}] ; returns index or -1
+function listWin(items,{cls='',style={},title='',rows=8,start=0,cancel=true,onMove=null,keepOpen=false,hint=''}={}){
+  uiCount++;const w=win(cls,(title?`<h3>${title}</h3>`:'')+'<div class="list"></div>'+(hint?`<div class="small">${hint}</div>`:''),style);const L=w.querySelector('.list');
+  let i=clamp(start,0,Math.max(0,items.length-1)),top=0;
+  const draw=()=>{if(i<top)top=i;if(i>=top+rows)top=i-rows+1;L.innerHTML='';
+    items.slice(top,top+rows).forEach((it,k)=>{const o=el('div','opt'+(top+k===i?' sel':'')+(it.off?' off':''),`<span>${it.label}</span>${it.right!=null?`<span class="r">${it.right}</span>`:''}`);L.appendChild(o)});
+    if(items.length>rows)L.insertAdjacentHTML('beforeend',`<div class="small" style="text-align:right">${top>0?'▲':''} ${top+rows<items.length?'▼':''}</div>`);
+    if(onMove)onMove(i,items[i])};
+  draw();
+  const p=new Promise(res=>{const off=pushInput((b)=>{
+    if(!items.length){if(b==='b'||b==='a'){off();uiCount--;if(!keepOpen)w.remove();res(-1)}return}
+    if(b==='up'){i=(i-1+items.length)%items.length;AU.play('tick');draw()}
+    else if(b==='down'){i=(i+1)%items.length;AU.play('tick');draw()}
+    else if(b==='left'&&items.length>rows){i=Math.max(0,i-rows);AU.play('tick');draw()}
+    else if(b==='right'&&items.length>rows){i=Math.min(items.length-1,i+rows);AU.play('tick');draw()}
+    else if(b==='a'){if(items[i].off){AU.play('buzz');return}AU.play('ok');off();uiCount--;if(!keepOpen)w.remove();res(i)}
+    else if(b==='b'&&cancel){AU.play('back');off();uiCount--;if(!keepOpen)w.remove();res(-1)}})});
+  p.el=w;return p}
+async function ask(who,text,opts,{cancel=-1}={}){
+  await say(who,text,{keep:true});
+  const r=await listWin(opts.map(o=>({label:o})),{cls:'',style:{right:'.5rem',bottom:'6.4rem'},cancel:cancel>=0});
+  closeDlgForce();return r<0?cancel:r}
+function closeDlgForce(){if(dlgEl){dlgEl.remove();dlgEl=null}}
+
+/* ---------- small helpers ---------- */
+function heroCanvas(id,dir='down'){const c=mk(16,16);c.getContext('2d').drawImage(personImg(LOOKS[HEROES[id].look],dir,0),0,0);c.style.imageRendering='pixelated';return c}
+function bar(v,max,mp){return`<div class="bar${mp?' mp':''}"><i style="width:${max?clamp(v/max*100,0,100):0}%"></i></div>`}
+function heroCard(h,{sel=false}={}){const s=stats(h);const d=el('div','card'+(sel?' sel':''));d.appendChild(heroCanvas(h.id));
+  const st=h.hp<=0?'<span class="bad">KO</span>':h.st.poison?'<span class="bad">Poison</span>':'';
+  d.insertAdjacentHTML('beforeend',`<div><b>${HEROES[h.id].name}</b> <span class="small">Lv ${h.lv}</span> ${st}</div>
+    <div class="hpc" style="font-size:.8rem">HP ${h.hp}/${s.hp}${bar(h.hp,s.hp)}</div><div class="mpc" style="font-size:.8rem">MP ${h.mp}/${s.mp}${bar(h.mp,s.mp,1)}</div>`);return d}
+function pickHero({title='Who?',filter=null,style={left:'.4rem',right:'.4rem',top:'.4rem'}}={}){
+  const hs=partyHeroes();return listWin(hs.map(h=>{const s=stats(h);return{label:`${HEROES[h.id].name} <span class="small">Lv${h.lv}</span>`,right:`<span class="hpc">${h.hp}/${s.hp}</span> <span class="mpc">${h.mp}</span>`,off:filter&&!filter(h)}}),{title,style})}
+
+/* ---------- applying items & field skills ---------- */
+function applyHeal(h,kind,{amt,pct,mag}){const s=stats(h);
+  if(kind==='revive'){if(h.hp>0)return 0;h.hp=Math.max(1,Math.round(s.hp*pct));h.st={};return h.hp}
+  if(h.hp<=0)return 0;
+  if(kind==='heal'){const v=amt!=null?amt:Math.round(s.hp*pct);const before=h.hp;h.hp=Math.min(s.hp,h.hp+v);return h.hp-before}
+  if(kind==='mp'){const b=h.mp;h.mp=Math.min(s.mp,h.mp+amt);return h.mp-b}
+  if(kind==='cure'){h.st={};return 1}
+  if(kind==='full'){h.hp=s.hp;h.mp=s.mp;h.st={};return 1}return 0}
+function itemUsable(id,h){const it=ITEMS[id];if(it.kind==='revive')return h.hp<=0;if(h.hp<=0)return false;const s=stats(h);
+  if(it.kind==='heal')return h.hp<s.hp;if(it.kind==='mp')return h.mp<s.mp;if(it.kind==='cure')return!!(h.st.poison||h.st.sleep);if(it.kind==='full')return h.hp<s.hp||h.mp<s.mp;return false}
+
+/* ---------- the START menu ---------- */
+async function openMainMenu(){
+  uiCount++;let idx=0;
+  while(true){
+    const box=el('div','win mm');UI.appendChild(box);
+    const pw=el('div','win','');pw.style.position='relative';pw.style.display='flex';pw.style.flexDirection='column';pw.style.gap='.35rem';
+    partyHeroes().forEach(h=>pw.appendChild(heroCard(h)));box.appendChild(pw);
+    const info=el('div','win',`<div class="statgrid"><span>Pearls</span><span class="gold">${S.gold}</span><span>Time</span><span>${fmtTime(S.time)}</span><span>Tide</span><span>${F('tidepower')?(S.tide==='ebb'?'<span style="color:#fff1b8">Ebb</span>':'<span style="color:#9fd6ff">Flood</span>'):'—'}</span></div><div class="small" style="margin-top:.3rem">${FD.map.name}</div>`);
+    info.style.position='relative';
+    const row=el('div','');row.style.cssText='display:flex;gap:.35rem;align-items:flex-start';box.appendChild(row);
+    const cmds=['Items','Skills','Equip','Status','Save','Settings'];
+    const lw=listWin(cmds.map(c=>({label:c,off:c==='Save'&&!canSave()})),{start:idx,style:{position:'relative',flex:'1'}});
+    lw.el.remove();row.appendChild(lw.el);row.appendChild(info);
+    const tip=el('div','win small',F('tidepower')?'SELECT calls the tide. B closes.':'B closes.');tip.style.position='relative';box.appendChild(tip);
+    const c=await lw;box.remove();
+    if(c<0)break;idx=c;
+    if(c===0)await menuItems();else if(c===1)await menuSkills();else if(c===2)await menuEquip();else if(c===3)await menuStatus();else if(c===4)await menuSave();else if(c===5)await menuSettings();
+  }
+  uiCount--}
+function canSave(){return!!FD.map&&!FD.map.noSave}
+function screenBox(){const b=el('div','win mm');UI.appendChild(b);return b}
+async function menuItems(){
+  let idx=0;while(true){
+    const box=screenBox();const desc=el('div','win desc','');desc.style.position='relative';box.appendChild(desc);
+    const ids=Object.keys(S.inv).filter(k=>S.inv[k]>0);
+    const items=ids.map(id=>({label:ITEMS[id].name,right:'×'+S.inv[id],off:ITEMS[id].battle}));
+    S.keys.forEach(k=>items.push({label:'<span class="gold">'+ITEMS[k].name+'</span>',right:'key',off:true}));
+    if(!items.length)items.push({label:'(nothing)',off:true});
+    const lw=listWin(items,{title:'Items',start:idx,rows:10,style:{position:'relative'},onMove:(i)=>{const id=i<ids.length?ids[i]:S.keys[i-ids.length];desc.innerHTML=id&&ITEMS[id]?ITEMS[id].desc:''}});
+    lw.el.remove();box.appendChild(lw.el);const c=await lw;box.remove();
+    if(c<0||c>=ids.length)return;idx=c;const id=ids[c],it=ITEMS[id];
+    while(S.inv[id]>0){const t=await pickHero({title:it.name+' → who?',filter:h=>itemUsable(id,h)});if(t<0)break;
+      const h=partyHeroes()[t];applyHeal(h,it.kind,it);AU.play('heal');addItem(id,-1)}
+  }}
+async function menuSkills(){
+  while(true){const w=await pickHero({title:'Whose skills?'});if(w<0)return;const h=partyHeroes()[w];
+    while(true){const box=screenBox();const desc=el('div','win desc','');desc.style.position='relative';box.appendChild(desc);
+      const sk=heroSkills(h);const field=s=>['heal','cure','revive'].includes(SKILLS[s].kind);
+      const lw=listWin(sk.map(s=>({label:SKILLS[s].name,right:SKILLS[s].mp+' MP',off:!field(s)||h.mp<SKILLS[s].mp||h.hp<=0})),{title:HEROES[h.id].name+' — '+HEROES[h.id].cmd+` <span class="mpc">MP ${h.mp}</span>`,rows:9,style:{position:'relative'},onMove:i=>{desc.innerHTML=SKILLS[sk[i]].desc}});
+      lw.el.remove();box.appendChild(lw.el);const c=await lw;box.remove();if(c<0)break;
+      const s=SKILLS[sk[c]];
+      if(s.tgt==='allies'){h.mp-=s.mp;for(const t of partyHeroes())if(t.hp>0)applyHeal(t,'heal',{amt:Math.round(stats(h).mag*s.pow+s.base)});AU.play('heal');continue}
+      const t=await pickHero({title:s.name+' → who?',filter:x=>s.kind==='revive'?x.hp<=0:x.hp>0});if(t<0)continue;const tg=partyHeroes()[t];
+      h.mp-=s.mp;if(s.kind==='heal')applyHeal(tg,'heal',s.pct?{pct:s.pct}:{amt:Math.round(stats(h).mag*s.pow+s.base)});else if(s.kind==='cure')applyHeal(tg,'cure',{});else applyHeal(tg,'revive',{pct:s.pct});AU.play('heal')}}}
+const SLOTN={w:'Weapon',a:'Armor',c:'Charm'};
+function gearLine(id){const it=GEAR[id];if(!it)return'';return['atk','def','mag','spd','mp'].filter(k=>it[k]).map(k=>k.toUpperCase()+'+'+it[k]).join(' ')+(it.immune?' · no '+it.immune:'')}
+async function menuEquip(){
+  while(true){const w=await pickHero({title:'Equip whom?'});if(w<0)return;const h=partyHeroes()[w];let si=0;
+    while(true){const box=screenBox();const st=el('div','win','');st.style.position='relative';box.appendChild(st);
+      const showStats=(alt)=>{const a=stats(h);let b=null;if(alt!==undefined){const old=h.eq[alt.slot];h.eq[alt.slot]=alt.id;b=stats(h);h.eq[alt.slot]=old}
+        st.innerHTML=`<h3>${HEROES[h.id].name}</h3><div class="statgrid">`+['atk','def','mag','spd'].map(k=>`<span>${k.toUpperCase()}</span><span>${a[k]}${b&&b[k]!==a[k]?` → <span class="${b[k]>a[k]?'up':'down'}">${b[k]}</span>`:''}</span>`).join('')+'</div>'};
+      showStats();
+      const slots=['w','a','c'];
+      const lw=listWin(slots.map(s=>({label:`<span class="small">${SLOTN[s]}</span> ${h.eq[s]?GEAR[h.eq[s]].name:'—'}`})),{title:'Gear',start:si,style:{position:'relative'}});
+      lw.el.remove();box.appendChild(lw.el);const c=await lw;box.remove();if(c<0)break;si=c;const slot=slots[c];
+      const opts=Object.keys(S.gear).filter(id=>S.gear[id]>0&&GEAR[id].slot===slot&&(!GEAR[id].who||GEAR[id].who.includes(h.id)));
+      const box2=screenBox();const st2=el('div','win','');st2.style.position='relative';box2.appendChild(st2);
+      const items=opts.map(id=>({label:GEAR[id].name,right:'×'+S.gear[id]}));if(slot!=='w')items.push({label:'(remove)'});
+      const lw2=listWin(items,{title:SLOTN[slot],rows:8,style:{position:'relative'},onMove:(i)=>{const id=opts[i];const save=st;st2.innerHTML='';
+        const a=stats(h);const old=h.eq[slot];h.eq[slot]=id||null;const b=stats(h);h.eq[slot]=old;
+        st2.innerHTML=`<h3>${HEROES[h.id].name}</h3><div class="statgrid">`+['atk','def','mag','spd'].map(k=>`<span>${k.toUpperCase()}</span><span>${a[k]}${b[k]!==a[k]?` → <span class="${b[k]>a[k]?'up':'down'}">${b[k]}</span>`:''}</span>`).join('')+`</div><div class="small">${id?gearLine(id):''}</div>`}});
+      lw2.el.remove();box2.appendChild(lw2.el);const c2=await lw2;box2.remove();if(c2<0)continue;
+      const nid=opts[c2]||null;const old=h.eq[slot];if(old)addItem(old,1);if(nid)S.gear[nid]--;if(nid&&S.gear[nid]<=0)delete S.gear[nid];h.eq[slot]=nid;
+      const s=stats(h);h.hp=Math.min(h.hp,s.hp);h.mp=Math.min(h.mp,s.mp);AU.play('ok')}}}
+async function menuStatus(){const w=await pickHero({title:'Status'});if(w<0)return;const h=partyHeroes()[w];const s=stats(h),H=HEROES[h.id];
+  const box=screenBox();const d=el('div','win','');d.style.position='relative';box.appendChild(d);
+  d.appendChild(heroCard(h));d.insertAdjacentHTML('beforeend',`<div class="small" style="margin:.3rem 0">${H.cls}</div><div class="statgrid">
+    ${['atk','def','mag','spd'].map(k=>`<span>${k.toUpperCase()}</span><span>${s[k]}</span>`).join('')}
+    <span>EXP</span><span>${h.exp}</span><span>Next</span><span>${h.lv>=40?'—':expFor(h.lv+1)-h.exp}</span></div>
+    <div class="small" style="margin-top:.3rem">${['w','a','c'].map(k=>SLOTN[k]+': '+(h.eq[k]?GEAR[h.eq[k]].name:'—')).join('<br>')}</div>
+    <div class="small" style="margin-top:.3rem">${H.cmd}: ${heroSkills(h).map(x=>SKILLS[x].name).join(', ')}</div>`);
+  uiCount++;await new Promise(r=>{const off=pushInput(b=>{if(b==='a'||b==='b'){AU.play('back');off();r()}})});uiCount--;box.remove()}
+function slotLabel(i){const v=loadSlot(i);const nm=i?`Slot ${i}`:'Autosave';if(!v)return{label:`${nm} <span class="small">— empty</span>`};
+  const h=v.heroes[v.party[0]];return{label:`${nm} <span class="small">${(MAPS[v.map]||{}).name||''}</span>`,right:`Lv${h.lv} · ${fmtTime(v.time)}`}}
+async function menuSave(){const c=await listWin([1,2,3].map(slotLabel),{title:'Save to which slot?',style:{left:'.4rem',right:'.4rem',top:'.4rem'}});if(c<0)return;
+  if(loadSlot(c+1)){const y=await ask(null,'Write over this save?',['Yes','No'],{cancel:1});if(y!==0)return}
+  if(saveGame(c+1)){AU.play('chest');await say(null,'Saved.')}else await say(null,'Could not save here.')}
+async function menuSettings(){let i=0;while(true){const c=await listWin([{label:'Music',right:AU.musicOn?'On':'Off'},{label:'Sound',right:AU.sfxOn?'On':'Off'},{label:'Encounters',right:S.flags.noenc?'Off':'On'}],{title:'Settings',start:i,style:{left:'.4rem',right:'.4rem',top:'.4rem'},hint:'Encounters off is for exploring. You earn no EXP.'});if(c<0)return;i=c;
+  if(c===0)AU.setMusic(!AU.musicOn);if(c===1)AU.setSfx(!AU.sfxOn);if(c===2)S.flags.noenc=S.flags.noenc?0:1;storeSettings()}}
+function storeSettings(){try{localStorage.setItem('drownedmoon-settings',JSON.stringify({m:AU.musicOn,s:AU.sfxOn}))}catch(e){}}
+try{const st=JSON.parse(localStorage.getItem('drownedmoon-settings')||'null');if(st){AU.setMusic(st.m);AU.setSfx(st.s)}}catch(e){}
+
+/* ---------- shops & inns ---------- */
+async function shop(who,greet,stock){
+  await say(who,greet);
+  while(true){const c=await listWin([{label:'Buy'},{label:'Sell'},{label:'Leave'}],{style:{left:'.4rem',top:'.4rem'}});
+    if(c<0||c===2)break;
+    if(c===0){let idx=0;while(true){const box=screenBox();const desc=el('div','win desc','');desc.style.position='relative';box.appendChild(desc);
+        const gold=el('div','win',`Pearls <span class="gold">${S.gold}</span>`);gold.style.position='relative';box.appendChild(gold);
+        const it=id=>ITEMS[id]||GEAR[id];
+        const lw=listWin(stock.map(id=>({label:it(id).name,right:it(id).price,off:it(id).price>S.gold})),{title:'Buy',start:idx,rows:9,style:{position:'relative'},onMove:i=>{const id=stock[i];const x=it(id);
+          desc.innerHTML=ITEMS[id]?x.desc+` <span class="small">(have ${S.inv[id]||0})</span>`:`${gearLine(id)}<br><span class="small">${x.who?x.who.map(w=>HEROES[w].name).join(', '):'Anyone'} · have ${S.gear[id]||0}</span>`}});
+        lw.el.remove();box.appendChild(lw.el);const k=await lw;box.remove();if(k<0)break;idx=k;
+        const id=stock[k],x=it(id);let n=1;
+        if(ITEMS[id]){n=await qty(x.name,x.price);if(!n)continue}
+        S.gold-=x.price*n;addItem(id,n);AU.play('buy');
+        if(GEAR[id]){const who=(x.who||S.party).filter(w=>S.party.includes(w));if(who.length){const y=await ask(who.length===1?HEROES[who[0]].name:null,`Equip the ${x.name} now?`,['Yes','No'],{cancel:1});
+          if(y===0){let h=S.heroes[who[0]];if(who.length>1){const t=await pickHero({title:'Who wears it?'});if(t<0)continue;h=partyHeroes()[t]}const old=h.eq[x.slot];if(old)addItem(old,1);S.gear[id]--;if(!S.gear[id])delete S.gear[id];h.eq[x.slot]=id;AU.play('ok')}}}}}
+    if(c===1){while(true){const ids=Object.keys(S.inv).filter(k=>S.inv[k]>0&&ITEMS[k].price),gs=Object.keys(S.gear).filter(k=>S.gear[k]>0);
+        const all=[...ids.map(id=>({id,label:ITEMS[id].name,right:'×'+S.inv[id]+' · '+Math.floor(ITEMS[id].price/2)})),...gs.map(id=>({id,label:GEAR[id].name,right:'×'+S.gear[id]+' · '+Math.floor((GEAR[id].price||400)/2)}))];
+        const k=await listWin(all.length?all:[{label:'(nothing to sell)',off:true}],{title:`Sell <span class="gold" style="float:right">${S.gold}</span>`,rows:10,style:{left:'.4rem',right:'.4rem',top:'.4rem'}});if(k<0||!all.length)break;
+        const id=all[k].id;const pr=Math.floor((ITEMS[id]?ITEMS[id].price:(GEAR[id].price||400))/2);S.gold+=pr;addItem(id,-1);if(GEAR[id]&&S.gear[id]<=0)delete S.gear[id];AU.play('buy')}}
+  }
+  await say(who,'Come back while the tide holds.')}
+function qty(name,price){uiCount++;let n=1;const max=Math.max(1,Math.min(99,Math.floor(S.gold/price)));
+  const w=win('',`<h3>${name}</h3><div class="q"></div><div class="small">◀ ▶ ±1 · ▲ ▼ ±10</div>`,{left:'50%',top:'40%',transform:'translateX(-50%)'});
+  const draw=()=>{w.querySelector('.q').innerHTML=`× ${n} &nbsp; <span class="gold">${n*price}</span>`};draw();
+  return new Promise(res=>{const off=pushInput(b=>{if(b==='left')n=Math.max(1,n-1);else if(b==='right')n=Math.min(max,n+1);else if(b==='up')n=Math.min(max,n+10);else if(b==='down')n=Math.max(1,n-10);
+    else if(b==='a'){off();uiCount--;w.remove();res(n);return}else if(b==='b'){off();uiCount--;w.remove();res(0);return}AU.play('tick');draw()})})}
+async function inn(who,price){const c=await ask(who,`A bed for the night is ${price} pearls. Stay?`,['Stay','Leave'],{cancel:1});
+  if(c!==0)return false;if(S.gold<price){await say(who,'You\'re short a few pearls, love.');return false}
+  S.gold-=price;FD.busy++;await fade(1,false,600);healAll();AU.music('');AU.play('heal');await sleep(1200);AU.music(musicFor(FD.map));await fade(0,false,600);FD.busy=Math.max(0,FD.busy-1);
+  await say(who,'Rested and dry. Off you go.');return true}
+
+/* ===================== BATTLE ===================== */
+let B=null;
+const sceneH=()=>Math.round(VH*.74);
+function foeLayout(n,boss){const W=VW,H=sceneH();
+  if(boss)return[[W*.36,H*.86]];
+  const L={1:[[.36,.78]],2:[[.24,.62],[.48,.86]],3:[[.2,.56],[.46,.66],[.26,.92]],4:[[.18,.55],[.42,.55],[.24,.9],[.48,.9]]}[n]||[];
+  return L.map(([x,y])=>[W*x,H*y])}
+async function startBattle(ids,opt={}){
+  const prevMode=MODE;
+  // swirl in
+  AU.play('swirl');AU.music(opt.music||(opt.boss?(opt.final?'final':'boss'):'battle'));
+  await swirl();
+  const foes=ids.map((id,i)=>{const f=FOES[id];return{kind:'foe',id,name:f.name,def:f,hp:f.hp,max:f.hp,st:{},buf:{},fl:0,dead:false,alpha:1,img:monImg(f.spr[0],f.spr[1])}});
+  const counts={};foes.forEach(f=>{counts[f.name]=(counts[f.name]||0)+1});
+  const used={};foes.forEach(f=>{if(counts[f.name]>1){used[f.name]=(used[f.name]||0)+1;f.label=f.name+' '+'ABCD'[used[f.name]-1]}else f.label=f.name});
+  const lay=foeLayout(foes.length,opt.boss);foes.forEach((f,i)=>{f.x=lay[i][0];f.y=lay[i][1]});
+  const heroes=partyHeroes().map((h,i)=>({kind:'hero',h,id:h.id,name:HEROES[h.id].name,buf:{},fl:0,i}));
+  B={foes,heroes,tide:S.tide,tideIn:3,round:0,fx:[],nums:[],bg:opt.bg||'cave',opt,cursor:null,acting:null,msg:null,over:null,shake:0};
+  for(const h of partyHeroes())h.st={...h.st,sleep:0};
+  MODE='battle';await fadeQuick();
+  buildBattleUI();
+  if(opt.intro)await opt.intro();
+  await bmsg(opt.boss?`${foes[0].name} blocks the way!`:foes.length===1?`${foes[0].name} appears!`:`${foes[0].name} and ${foes.length-1} more appear!`,900);
+  let result=null;
+  while(!result){result=await battleRound()}
+  const out=await battleEnd(result);
+  teardownBattleUI();
+  if(out==='lose'){await gameOver();return'lose'}
+  MODE='field';AU.music(musicFor(FD.map));await fadeQuick(true);
+  return out}
+async function fadeQuick(rev){fadeEl.style.transitionDuration='0ms';fadeEl.classList.remove('white');fadeEl.style.opacity=1;await frames(2);fadeEl.style.transitionDuration='250ms';fadeEl.style.opacity=0;await sleep(260)}
+async function swirl(){FD.fx.push(swirlFx);swirlFx.t=0;await frames(42);FD.fx=FD.fx.filter(f=>f!==swirlFx)}
+function swirlFx(g){swirlFx.t++;const t=swirlFx.t,cs=10,cx=VW/2,cy=VH/2;
+  for(let y=0;y<VH;y+=cs)for(let x=0;x<VW;x+=cs){const a=Math.atan2(y-cy,x-cx),d=Math.hypot(x-cx,y-cy)/Math.hypot(cx,cy);const k=((a/Math.PI+1)/2+d*.6)%1;
+    if(k*30<t-8||t>36){g.fillStyle='#000';g.fillRect(x,y,cs,cs)}else if(k*30<t){g.fillStyle=t%4<2?'#fff':'#9fd6ff';g.fillRect(x,y,cs,cs)}}}
+
+/* ---------- battle UI ---------- */
+let BUI={};
+function buildBattleUI(){BUI.names=win('bnames','');BUI.party=win('bparty','');BUI.tide=win('tidebadge','');updateBattleUI()}
+function teardownBattleUI(){for(const k in BUI){if(BUI[k]&&BUI[k].remove)BUI[k].remove()}BUI={}}
+function updateBattleUI(){if(!B||!BUI.names)return;
+  const live=B.foes.filter(f=>!f.dead);const grp={};live.forEach(f=>grp[f.name]=(grp[f.name]||0)+1);
+  BUI.names.innerHTML=Object.entries(grp).map(([n,c])=>`<div>${n}${c>1?' ×'+c:''}</div>`).join('');
+  BUI.party.innerHTML=B.heroes.map(a=>{const h=a.h,s=stats(h);const st=h.hp<=0?'KO':h.st.sleep?'Zz':h.st.poison?'PSN':'';
+    return`<div class="prow${B.acting===a?' act':''}${h.hp<=0?' ko':''}"><div class="nm">${a.name}<span class="st">${st}</span></div><div class="nums"><span class="${h.hp<s.hp/4?'bad':'hpc'}">${h.hp}</span><span class="small">/${s.hp}</span> <span class="mpc">${h.mp}</span></div></div>`}).join('');
+  BUI.tide.className='win tidebadge '+B.tide;BUI.tide.innerHTML=(B.tide==='flood'?'≈ FLOOD':'◐ EBB')+` <span class="small">${B.tideIn}</span>`}
+async function bmsg(text,ms=700){if(BUI.msg)BUI.msg.remove();BUI.msg=win('bmsg',text);await sleep(ms);if(BUI.msg){BUI.msg.remove();BUI.msg=null}}
+function bmsgShow(text){if(BUI.msg)BUI.msg.remove();BUI.msg=win('bmsg',text)}
+function bmsgHide(){if(BUI.msg){BUI.msg.remove();BUI.msg=null}}
+
+/* ---------- stats in battle ---------- */
+function bst(a){if(a.kind==='hero'){const s=stats(a.h);return{...s,atk:s.atk*(a.buf.atk||1),def:s.def*(a.h.st.guard?1:1)}}
+  const f=a.def;let atk=f.atk,mag=f.mag,def=f.def;
+  if(f.tb&&B.tide==='flood'){atk*=1.2;mag*=1.2}
+  if(f.tb&&B.tide==='ebb')def*=.6;
+  if(a.buf.def)def*=1.6;if(a.buf.atk)atk*=1.3;
+  return{atk,mag,def,spd:f.spd}}
+const alive=a=>a.kind==='hero'?a.h.hp>0:!a.dead;
+const asleep=a=>a.kind==='hero'?a.h.st.sleep:a.st.sleep;
+function calcDmg(src,dst,{kind,pow=1,el,pierce=0}){
+  const A=bst(src),D=bst(dst);const a=kind==='phys'?A.atk:A.mag;let d=kind==='phys'?D.def*(1-pierce):(D.def*.45+(D.mag||0)*.35);
+  let v=1.5*a*a/(a+d+1)*pow;
+  if(el==='water')v*=B.tide==='flood'?1.35:.8;
+  if(el==='moon')v*=B.tide==='ebb'?1.35:.8;
+  if(dst.kind==='foe'&&dst.def.weak&&dst.def.weak===el)v*=1.5;
+  if(dst.kind==='foe'&&dst.def.final&&B.tide==='flood')v*=.45;
+  if(dst.kind==='hero'){if(dst.guard)v*=.5;if(B.anchor)v*=.6}
+  let crit=false;if(kind==='phys'&&Math.random()<.06){v*=1.5;crit=true}
+  v*=.9+Math.random()*.2;return{v:Math.max(1,Math.round(v)),crit}}
+
+/* ---------- one round ---------- */
+async function battleRound(){
+  B.round++;B.anchor=false;for(const a of B.heroes)a.guard=false;
+  // choose
+  const acts=[];let i=0;const hs=B.heroes;
+  while(i<hs.length){const a=hs[i];if(!alive(a)||asleep(a)){i++;continue}
+    B.acting=a;updateBattleUI();const c=await chooseCommand(a);B.acting=null;
+    if(c==='back'){let j=i-1;while(j>=0&&(!alive(hs[j])||asleep(hs[j])))j--;if(j>=0){acts.pop();i=j}continue}
+    if(c&&c.flee){updateBattleUI();if(await tryFlee())return'flee';acts.length=0;break}
+    acts.push(c);i++}
+  updateBattleUI();
+  for(const f of B.foes)if(!f.dead)acts.push(foeChoose(f));
+  for(const a of acts)a.ini=(a.first?1000:0)+bst(a.who).spd*(.75+Math.random()*.5);
+  acts.sort((x,y)=>y.ini-x.ini);
+  for(const act of acts){if(!alive(act.who))continue;
+    const r=checkEnd();if(r)return r;
+    if(asleep(act.who)){const wake=Math.random()<.35;if(wake){setSleep(act.who,0);await bmsg(`${act.who.name||act.who.label} wakes up!`,500)}else{await bmsg(`${act.who.kind==='foe'?act.who.label:act.who.name} is asleep...`,500);continue}}
+    await doAction(act);updateBattleUI();
+    const r2=checkEnd();if(r2)return r2}
+  // end of round
+  for(const a of [...B.heroes,...B.foes]){if(!alive(a))continue;const st=a.kind==='hero'?a.h.st:a.st;
+    if(st.poison){const mx=a.kind==='hero'?stats(a.h).hp:a.max;const d=Math.max(1,Math.round(mx*.07));hurt(a,d);pop(a,d,'#c87aff');AU.play('poison');await sleep(250)}}
+  for(const f of B.foes){if(f.buf.defT&&--f.buf.defT<=0)f.buf.def=0}
+  const r3=checkEnd();if(r3)return r3;
+  B.tideIn--;if(B.tideIn<=0){await flipTide(true)}
+  updateBattleUI();return null}
+async function flipTide(nat){B.tide=B.tide==='flood'?'ebb':'flood';B.tideIn=3;AU.play('tide');B.tideFx=1;updateBattleUI();
+  await bmsg(B.tide==='ebb'?(nat?'The tide turns. Ebb.':'The sea draws back! Ebb.'):(nat?'The tide turns. Flood.':'The sea comes roaring back! Flood.'),900)}
+function checkEnd(){if(B.foes.every(f=>f.dead))return'win';if(B.heroes.every(a=>!alive(a)))return'lose';return null}
+function setSleep(a,v){if(a.kind==='hero')a.h.st.sleep=v;else a.st.sleep=v}
+function hurt(a,d){if(a.kind==='hero'){a.h.hp=Math.max(0,a.h.hp-d);if(a.h.hp<=0){a.h.st={}}}else{a.hp=Math.max(0,a.hp-d);if(a.hp<=0&&!a.dead){a.dead=true;a.dying=1}}}
+function heal(a,v){if(a.kind==='hero'){const s=stats(a.h);const b=a.h.hp;a.h.hp=Math.min(s.hp,a.h.hp+v);return a.h.hp-b}else{const b=a.hp;a.hp=Math.min(a.max,a.hp+v);return a.hp-b}}
+
+/* ---------- choosing ---------- */
+async function chooseCommand(a){
+  const h=a.h,H=HEROES[h.id];
+  if(window.__DMAI){const r=window.__DMAI(a,B);if(r){await sleep(60);return r}}
+  while(true){
+    const items=[{label:'Attack'},{label:H.cmd},{label:'Item',off:!Object.keys(S.inv).some(k=>S.inv[k]>0)},{label:'Defend'},{label:'Flee',off:!!B.opt.boss||!!B.opt.noFlee}];
+    const c=await listWin(items,{cls:'bcmd',style:{left:'.3rem',bottom:'.3rem'},start:a.lastCmd||0,cancel:true});
+    if(c<0){if(a!==firstLiving())return'back';continue}
+    a.lastCmd=c;
+    if(c===0){const t=await pickTarget('foe');if(t)return{who:a,type:'attack',tgt:t};continue}
+    if(c===1){const sk=heroSkills(h);const r=await listWin(sk.map(s=>({label:SKILLS[s].name,right:SKILLS[s].mp,off:SKILLS[s].mp>h.mp})),{title:H.cmd+` <span class="mpc" style="float:right">MP ${h.mp}</span>`,rows:6,style:{left:'.3rem',right:'.3rem',bottom:'.3rem'},start:a.lastSk||0,
+        onMove:(i)=>{bmsgShow(`<span class="small">${SKILLS[sk[i]].desc}</span>`)}});bmsgHide();
+      if(r<0)continue;a.lastSk=r;const s=SKILLS[sk[r]];const t=await pickTarget(s.tgt);if(t)return{who:a,type:'skill',sk:sk[r],tgt:t,first:s.first};continue}
+    if(c===2){const ids=Object.keys(S.inv).filter(k=>S.inv[k]>0);const r=await listWin(ids.map(id=>({label:ITEMS[id].name,right:'×'+S.inv[id]})),{title:'Item',rows:6,style:{left:'.3rem',right:'.3rem',bottom:'.3rem'},onMove:i=>bmsgShow(`<span class="small">${ITEMS[ids[i]].desc}</span>`)});bmsgHide();
+      if(r<0)continue;const it=ITEMS[ids[r]];const t=await pickTarget(it.tgt);if(t)return{who:a,type:'item',item:ids[r],tgt:t};continue}
+    if(c===3)return{who:a,type:'defend',first:1};
+    if(c===4)return{flee:1}}}
+function firstLiving(){return B.heroes.find(x=>alive(x)&&!asleep(x))}
+function pickTarget(kind){
+  if(kind==='none'||kind==='self')return Promise.resolve({none:1});
+  let pool;if(kind==='foe'||kind==='foes')pool=B.foes.filter(f=>!f.dead);else if(kind==='ko')pool=B.heroes.filter(a=>!alive(a));else pool=B.heroes.filter(a=>alive(a));
+  if(!pool.length){AU.play('buzz');return Promise.resolve(null)}
+  const all=kind==='foes'||kind==='allies';let i=0;
+  if(kind==='ally'){const low=pool.reduce((m,a)=>a.h.hp/stats(a.h).hp<m.h.hp/stats(m.h).hp?a:m,pool[0]);i=pool.indexOf(low)}
+  uiCount++;B.cursor={list:all?pool:[pool[i]]};
+  const show=()=>{B.cursor={list:all?pool:[pool[i]]};const t=all?'All':pool[i].kind==='foe'?pool[i].label:pool[i].name;bmsgShow(t+(pool[i].kind==='foe'&&!all?` <span class="small">${hpWord(pool[i])}</span>`:''))};show();
+  return new Promise(res=>{const off=pushInput(b=>{
+    if(!all&&(b==='up'||b==='left')){i=(i-1+pool.length)%pool.length;AU.play('tick');show()}
+    else if(!all&&(b==='down'||b==='right')){i=(i+1)%pool.length;AU.play('tick');show()}
+    else if(b==='a'){AU.play('ok');off();uiCount--;B.cursor=null;bmsgHide();res(all?{all:pool[0].kind}:{one:pool[i]})}
+    else if(b==='b'){AU.play('back');off();uiCount--;B.cursor=null;bmsgHide();res(null)}})})}
+function hpWord(f){const r=f.hp/f.max;return r>.75?'unhurt':r>.4?'hurt':r>.15?'badly hurt':'nearly down'}
+
+/* ---------- foes decide ---------- */
+function foeChoose(f){const d=f.def;let pool=d.acts.filter(([m])=>!(FMOVES[m].flood&&B.tide!=='flood')).filter(([m])=>!(FMOVES[m].kind==='buff'&&f.buf.def&&m!=='rally')).filter(([m])=>!(m==='rally'&&f.buf.atk));
+  if(!pool.length)pool=[['atk',1]];let tot=pool.reduce((a,b)=>a+b[1],0),r=Math.random()*tot,m=pool[0][0];for(const [k,w] of pool){if((r-=w)<0){m=k;break}}
+  // the boss of the deep floods the world when it can
+  if(d.final&&B.tide==='flood'&&Math.random()<.4)m='drown';
+  return{who:f,type:'foe',move:m}}
+function randHero(){const l=B.heroes.filter(alive);
+  // Pell draws the eye: a little more likely to be targeted
+  const w=l.map(a=>a.id==='pell'?1.4:1);let t=w.reduce((x,y)=>x+y,0),r=Math.random()*t;for(let i=0;i<l.length;i++){if((r-=w[i])<0)return l[i]}return l[0]}
+
+/* ---------- doing things ---------- */
+function resolveTargets(act,fallbackKind){const t=act.tgt;if(!t||t.none)return[];
+  if(t.all)return t.all==='foe'?B.foes.filter(f=>!f.dead):B.heroes.filter(alive);
+  let one=t.one;if(one.kind==='foe'&&one.dead){one=B.foes.find(f=>!f.dead)}if(one&&one.kind==='hero'&&!alive(one)&&fallbackKind!=='ko'){one=B.heroes.find(alive)}return one?[one]:[]}
+async function doAction(act){const a=act.who;
+  if(act.type==='defend'){a.guard=true;await bmsg(`${a.name} braces.`,450);return}
+  if(act.type==='attack'){const [t]=resolveTargets(act);if(!t)return;await heroStep(a);await strike(a,t,{kind:'phys',pow:1},'slash');heroBack(a);return}
+  if(act.type==='skill'){const s=SKILLS[act.sk];if(a.h.mp<s.mp){await bmsg(`Not enough MP.`,500);return}a.h.mp-=s.mp;updateBattleUI();
+    await heroStep(a);bmsgShow(s.name);await sleep(350);
+    if(act.sk==='turn'){await bigFx('tide');await flipTide(false);bmsgHide();heroBack(a);return}
+    if(act.sk==='anchor'){B.anchor=true;await bigFx('guard');bmsgHide();heroBack(a);return}
+    const ts=resolveTargets(act,s.tgt);
+    if(s.kind==='phys'||s.kind==='mag'){if(ts.length>1)await bigFx(s.fx,ts);for(const t of ts){await strike(a,t,{kind:s.kind,pow:s.pow,el:s.el,pierce:s.pierce},ts.length>1?null:s.fx,true);await sleep(80)}}
+    else if(s.kind==='heal'){for(const t of ts){const v=s.pct?Math.round(stats(t.h).hp*s.pct):Math.round(bst(a).mag*s.pow+s.base*(1+Math.random()*.1));fxAt(t,'heal');AU.play('heal');const got=heal(t,v);pop(t,got,'#7dffb0')}await sleep(450)}
+    else if(s.kind==='cure'){for(const t of ts){t.h.st={};fxAt(t,'heal');AU.play('heal')}await sleep(400)}
+    else if(s.kind==='revive'){for(const t of ts){if(alive(t))continue;t.h.hp=Math.max(1,Math.round(stats(t.h).hp*s.pct));fxAt(t,'heal');AU.play('heal');pop(t,t.h.hp,'#7dffb0')}await sleep(450)}
+    else if(s.kind==='status'){AU.play('sleep');for(const t of ts){fxAt(t,'sleep');if(!t.def.boss&&Math.random()<s.chance){t.st.sleep=1;pop(t,'Zz','#ffb0e0')}else pop(t,'MISS','#ffffff')}await sleep(500)}
+    bmsgHide();heroBack(a);return}
+  if(act.type==='item'){const it=ITEMS[act.item];if(!S.inv[act.item]){return}addItem(act.item,-1);await heroStep(a);bmsgShow(it.name);await sleep(300);const ts=resolveTargets(act,it.tgt);
+    if(it.kind==='dmg'){await bigFx('water',ts);for(const t of ts){const v=Math.round(it.amt*(B.tide==='flood'?1.3:1)*(.9+Math.random()*.2));hurt(t,v);pop(t,v);t.fl=10;AU.play('hit')}await sleep(400)}
+    else for(const t of ts){if(it.kind==='revive'){if(alive(t))continue;t.h.hp=Math.max(1,Math.round(stats(t.h).hp*it.pct))}else if(it.kind==='full'){const s=stats(t.h);t.h.hp=s.hp;t.h.mp=s.mp;t.h.st={}}else if(it.kind==='cure')t.h.st={};else if(it.kind==='mp'){const s=stats(t.h);t.h.mp=Math.min(s.mp,t.h.mp+it.amt)}else{heal(t,it.amt)}
+      fxAt(t,'heal');AU.play('heal');pop(t,it.kind==='mp'?it.amt:it.kind==='cure'?'+':'+','#7dffb0')}
+    await sleep(350);bmsgHide();heroBack(a);return}
+  if(act.type==='foe'){const f=a,m=FMOVES[act.move];f.fl=-14;await sleep(260);
+    if(m.name)bmsgShow(m.name);
+    if(m.kind==='buff'){if(m.atk){f.buf.atk=1}else{f.buf.def=1;f.buf.defT=3}AU.play('ok');await sleep(500);bmsgHide();return}
+    if(m.kind==='mpdrain'){for(const t of B.heroes.filter(alive)){const d=Math.round(t.h.mp*.3);t.h.mp-=d;pop(t,d,'#8fd0ff')}AU.play('moon');await sleep(600);bmsgHide();return}
+    const ts=m.tgt==='all'?B.heroes.filter(alive):[randHero()];
+    if(m.kind==='status'){AU.play('sleep');for(const t of ts){fxAt(t,'sleep');const imm=gearImmune(t.h,m.st);if(!imm&&Math.random()<m.chance){t.h.st[m.st]=1;pop(t,m.st==='sleep'?'Zz':'PSN','#ffb0e0')}else pop(t,'MISS','#fff')}await sleep(550);bmsgHide();return}
+    if(ts.length>1)await bigFx(m.el==='water'?'water':m.el==='moon'?'moon':'slam',ts);
+    for(const t of ts){await strike(f,t,{kind:m.kind,pow:m.pow,el:m.el},ts.length>1?null:(m.kind==='mag'?(m.el==='moon'?'moon':'water'):'claw'),true);
+      if(m.st&&alive(t)&&!gearImmune(t.h,m.st)&&Math.random()<m.chance){t.h.st[m.st]=1;pop(t,m.st==='sleep'?'Zz':'PSN','#ffb0e0',8)}
+      if(m.drain){heal(f,Math.round(f.max*.06))}}
+    bmsgHide();return}}
+function gearImmune(h,st){return['w','a','c'].some(k=>h.eq[k]&&GEAR[h.eq[k]].immune===st)}
+async function strike(src,dst,o,fx,quiet){
+  if(o.kind==='phys'&&Math.random()<.04&&!(dst.kind==='foe'&&asleep(dst))){if(fx)fxAt(dst,fx);AU.play('miss');pop(dst,'MISS','#ffffff');await sleep(380);return}
+  if(fx)fxAt(dst,fx);if(fx)await sleep(o.el==='moon'?240:180);
+  const {v,crit}=calcDmg(src,dst,o);hurt(dst,v);
+  AU.play(crit?'crit':o.el==='water'&&!quiet?'water':'hit');if(o.el==='water'&&fx)AU.play('water');if(o.el==='moon')AU.play('moon');
+  dst.fl=12;if(dst.kind==='hero')B.shake=6;pop(dst,v,dst.kind==='hero'?'#ffffff':crit?'#ffe08a':'#ffffff');
+  if(asleep(dst)&&Math.random()<.5)setSleep(dst,0);
+  if(dst.kind==='foe'&&dst.dead)AU.play('die');
+  updateBattleUI();await sleep(crit?520:380)}
+async function heroStep(a){a.step=1;await sleep(160)}
+function heroBack(a){a.step=0}
+function pop(a,v,col='#fff',dy=0){const [x,y]=centerOf(a);B.nums.push({x,y:y-4+dy,v:String(v),col,t:0})}
+function centerOf(a){if(a.kind==='foe')return[a.x,a.y-a.img.height/2];const [x,y]=heroPos(a);return[x+8,y+8]}
+function heroPos(a){const H=sceneH(),n=B.heroes.length;const y0=H*.34,gap=Math.min(28,(H*.55)/Math.max(1,n));return[VW-30+a.i*3-(a.step?12:0),Math.round(y0+a.i*gap)]}
+function fxAt(a,kind){const [x,y]=centerOf(a);B.fx.push({kind,x,y,t:0,dur:kind==='heal'?30:22})}
+async function bigFx(kind,ts){B.fx.push({kind:'big'+kind,t:0,dur:36,ts});if(kind==='water')AU.play('water');if(kind==='moon')AU.play('moon');if(kind==='tide')AU.play('tide');await sleep(520)}
+
+/* ---------- fleeing, winning, losing ---------- */
+async function tryFlee(){const ps=B.heroes.filter(alive).reduce((s,a)=>s+bst(a).spd,0)/Math.max(1,B.heroes.filter(alive).length);
+  const fs=B.foes.filter(f=>!f.dead).reduce((s,f)=>s+f.def.spd,0)/Math.max(1,B.foes.filter(f=>!f.dead).length);
+  const ch=clamp(.55+(ps-fs)*.03,.25,.92);if(Math.random()<ch){AU.play('flee');await bmsg('You slip away!',700);return true}
+  await bmsg('Couldn\'t get away!',700);
+  for(const f of B.foes.filter(f=>!f.dead)){await doAction(foeChoose(f));updateBattleUI();if(checkEnd())break}
+  return false}
+async function battleEnd(res){
+  for(const h of partyHeroes()){h.st.sleep=0;h.st.poison=0}
+  if(res==='flee'){return'flee'}
+  if(res==='lose'){AU.music('');await bmsg('The sea closes over you...',1600);return'lose'}
+  // win
+  await sleep(500);AU.music('victory');
+  const exp=B.foes.reduce((s,f)=>s+f.def.exp,0),gold=B.foes.reduce((s,f)=>s+f.def.gold,0);
+  S.gold+=gold;const drops=[];for(const f of B.foes){const d=f.def.drop;if(d&&Math.random()<d[1]){addItem(d[0],1);drops.push(itemName(d[0]))}}
+  B.over=true;
+  const lines=[];if(exp)lines.push(`Gained <span class="gold">${exp} EXP</span> and <span class="gold">${gold} pearls</span>.`);
+  if(drops.length)lines.push(`Found ${drops.map(d=>`<span class="gold">${d}</span>`).join(', ')}.`);
+  const ups=[];
+  for(const a of B.heroes){if(!alive(a))continue;const h=a.h;h.exp+=exp;
+    while(h.lv<40&&h.exp>=expFor(h.lv+1)){const before=stats(h),oldSk=heroSkills(h);h.lv++;const after=stats(h);h.hp+=after.hp-before.hp;h.mp+=after.mp-before.mp;
+      ups.push(`${a.name} is now <span class="gold">level ${h.lv}</span>!`);for(const s of heroSkills(h))if(!oldSk.includes(s))ups.push(`${a.name} learned <span class="gold">${SKILLS[s].name}</span>!`)}}
+  for(const l of lines)await say(null,l);
+  if(ups.length){AU.play('level');for(const u of ups)await say(null,u)}
+  if(B.opt.boss)await sleep(100);
+  return'win'}
+async function gameOver(){teardownBattleUI();MODE='black';AU.music('sad');
+  const w=win('',`<div style="text-align:center;font-size:1.4rem;color:#bcd2ff;letter-spacing:.2em">THE SEA TAKES ALL</div><div class="small" style="text-align:center;margin-top:.6rem">Press A</div>`,{left:'10%',right:'10%',top:'38%'});
+  uiCount++;await new Promise(r=>{const off=pushInput(b=>{if(b==='a'||b==='start'){off();r()}})});uiCount--;w.remove();
+  toTitle();await new Promise(()=>{})}
+
+/* ---------- update & draw ---------- */
+function battleUpdate(){if(!B)return;for(const f of B.fx)f.t++;B.fx=B.fx.filter(f=>f.t<f.dur);for(const n of B.nums)n.t++;B.nums=B.nums.filter(n=>n.t<50);
+  for(const a of [...B.foes,...B.heroes]){if(a.fl>0)a.fl--;else if(a.fl<0)a.fl++}for(const f of B.foes)if(f.dying){f.dying++;if(f.dying>36)f.dying=0}if(B.shake>0)B.shake--;if(B.tideFx){B.tideFx++;if(B.tideFx>50)B.tideFx=0}}
+function drawBattle(){if(!B)return;const H=sceneH();g.fillStyle='#000';g.fillRect(0,0,VW,VH);
+  const sx=B.shake?(B.shake%2?2:-2):0;g.save();g.translate(sx,0);
+  g.drawImage(backdropImg(B.bg,VW,VH),0,0);
+  if(B.tide==='ebb'){g.fillStyle='rgba(255,236,170,.10)';g.fillRect(0,0,VW,VH)}else{g.fillStyle='rgba(40,110,220,.10)';g.fillRect(0,0,VW,VH)}
+  if(B.tideFx){const p=B.tideFx/50;g.fillStyle='rgba(200,235,255,.35)';const y=B.tide==='ebb'?H*p:H*(1-p);g.fillRect(0,y-3,VW,6)}
+  // foes
+  for(const f of B.foes){if(f.dead&&!f.dying)continue;const im=f.img;let x=Math.round(f.x-im.width/2),y=Math.round(f.y-im.height);
+    if(f.fl>0)x+=f.fl%4<2?2:-2;
+    if(f.def.boss&&!f.dead)y+=Math.round(Math.sin(animT/30)*1.5);
+    g.save();if(f.dying){const p=f.dying/36;g.globalAlpha=1-p;g.drawImage(im,0,0,im.width,im.height,x,y+im.height*p*.3,im.width,im.height*(1-p*.3))}
+    else{if(GHOSTLY_FOE(f))g.globalAlpha=.88;g.drawImage(im,x,y);
+      if(f.fl<0&&(-f.fl)%4<2){g.globalCompositeOperation='lighter';g.globalAlpha=.6;g.drawImage(im,x,y)}
+      if(f.fl>0&&f.fl%4<2){g.globalCompositeOperation='lighter';g.globalAlpha=.8;g.drawImage(im,x,y)}
+      if(f.st.sleep){drawNum(g,'Z',x+im.width-2,y-2+Math.round(Math.sin(animT/10)*2),'#ffb0e0')}}
+    g.restore()}
+  // heroes
+  for(const a of B.heroes){const [x,y]=heroPos(a);const h=a.h;const look=LOOKS[HEROES[h.id].look];g.save();if(GHOSTLY.has(h.id))g.globalAlpha=.88;
+    if(h.hp<=0){g.translate(x+8,y+12);g.rotate(-Math.PI/2);g.globalAlpha=.75;g.drawImage(personImg(look,'left',0),-8,-8);g.restore();continue}
+    let im=personImg(look,B.over?'down':'left',a.step?((animT/8|0)%2+1):0);let dx=0;if(a.fl>0)dx=a.fl%4<2?2:-2;
+    if(B.acting===a&&!a.step)dx-=Math.round(Math.abs(Math.sin(animT/10))*2);
+    g.drawImage(im,x+dx,y);if(a.fl>0&&a.fl%4<2){g.globalCompositeOperation='lighter';g.globalAlpha=.6;g.drawImage(im,x+dx,y)}
+    if(h.st.sleep)drawNum(g,'Z',x+14,y-2+Math.round(Math.sin(animT/10)*2),'#ffb0e0');
+    if(a.guard||B.anchor){g.globalCompositeOperation='source-over';g.globalAlpha=.5;g.strokeStyle='#9fd6ff';g.strokeRect(x-1.5,y-1.5,19,19)}
+    g.restore()}
+  // effects
+  for(const f of B.fx)drawFx(f);
+  // cursor
+  if(B.cursor&&(animT%30)<22)for(const t of B.cursor.list){let x,y;if(t.kind==='foe'){x=t.x;y=t.y-t.img.height-4}else{const p=heroPos(t);x=p[0]+8;y=p[1]-5}
+    g.fillStyle='#100a18';g.beginPath();g.moveTo(x-4,y-5);g.lineTo(x+4,y-5);g.lineTo(x,y+1);g.fill();g.fillStyle='#ffd77a';g.beginPath();g.moveTo(x-3,y-4);g.lineTo(x+3,y-4);g.lineTo(x,y);g.fill()}
+  for(const n of B.nums){const b=n.t<10?-Math.sin(n.t/10*Math.PI)*6:0;g.globalAlpha=n.t>40?(50-n.t)/10:1;drawNum(g,n.v,n.x,Math.round(n.y+b),n.col);g.globalAlpha=1}
+  g.restore()}
+const GHOSTLY_FOE=f=>['ghost','grief'].includes(f.def.spr[0]);
+function drawFx(f){const p=f.t/f.dur;
+  if(f.kind==='slash'||f.kind==='claw'){g.strokeStyle=f.kind==='claw'?'#ffb0a0':'#ffffff';g.lineWidth=1;const n=f.kind==='claw'?3:1;for(let i=0;i<n;i++){const o=(i-1)*4;const l=Math.min(1,p*2.5)*16;g.beginPath();g.moveTo(f.x-8+o,f.y-8);g.lineTo(f.x-8+o+l,f.y-8+l);g.stroke()}}
+  else if(f.kind==='water'){for(let i=0;i<10;i++){const a=i/10*Math.PI*2,r=p*14;g.fillStyle=i%2?'#7fc0f0':'#e8f6ff';g.fillRect(f.x+Math.cos(a)*r|0,f.y+Math.sin(a)*r-p*4|0,2,2)}}
+  else if(f.kind==='moon'){g.fillStyle='rgba(255,255,255,'+(1-p)+')';for(let i=0;i<6;i++){const a=i/6*Math.PI*2+p*2;g.fillRect(f.x+Math.cos(a)*10*p|0,f.y+Math.sin(a)*10*p|0,2,2)}g.fillRect(f.x-1,f.y-14+p*10|0,2,12)}
+  else if(f.kind==='heal'){for(let i=0;i<8;i++){g.fillStyle=i%2?'#a8ffcc':'#ffffff';g.fillRect(f.x-8+i*2,f.y+8-((p*30+i*7)%20)|0,1,2)}}
+  else if(f.kind==='sleep'){g.fillStyle='#ffb0e0';for(let i=0;i<3;i++)g.fillRect(f.x+i*4-4,f.y-p*12-i*3|0,2,2)}
+  else if(f.kind==='bigwater'){const H=sceneH();const x=VW*(1-p*1.4);g.fillStyle='rgba(80,160,240,.55)';g.beginPath();g.moveTo(x,H);for(let y=H;y>=H*.2;y-=4)g.lineTo(x+Math.sin(y/9+f.t/3)*6-(H-y)*.2,y);g.lineTo(x+60,H*.2);g.lineTo(x+60,H);g.fill();g.fillStyle='#e8f6ff';for(let y=H*.2;y<H;y+=6)g.fillRect(x+Math.sin(y/9+f.t/3)*6-(H-y)*.2|0,y|0,2,2)}
+  else if(f.kind==='bigmoon'){g.fillStyle=`rgba(230,245,255,${.5*(1-Math.abs(p-.5)*2)})`;g.fillRect(0,0,VW,sceneH());for(const t of f.ts||[]){const [x,y]=centerOf(t);g.fillStyle='#fff';g.fillRect(x-1,0,3,y*Math.min(1,p*2))}}
+  else if(f.kind==='bigheal'){}
+  else if(f.kind==='bigtide'){const H=sceneH();g.fillStyle=`rgba(160,210,255,${.4*(1-p)})`;g.fillRect(0,0,VW,H);g.strokeStyle='#e8f6ff';g.beginPath();for(let x=0;x<VW;x+=2)g.lineTo(x,H*(1-p)+Math.sin(x/8+f.t/2)*4);g.stroke()}
+  else if(f.kind==='bigguard'){for(const a of B.heroes){const [x,y]=heroPos(a);g.strokeStyle=`rgba(159,214,255,${1-p})`;g.strokeRect(x-2-p*4,y-2-p*4,20+p*8,20+p*8)}}
+  else if(f.kind==='bigslam'||f.kind==='bigslash'){g.fillStyle=`rgba(255,255,255,${.35*(1-p)})`;g.fillRect(0,0,VW,sceneH())}
+  else if(f.kind==='bigsleep'){}}
+
+/* ===================== STORY: scenes and conversations ===================== */
+const M='Marin',PE='Pell',YS='Ysolde',CO='Corvane';
+const npc=id=>FD.npcs.find(n=>n.id===id);
+function spawn(def){const n={hx:def.x,hy:def.y,ox:0,oy:0,dir:'down',wt:999,mv:0,visible:true,...def};FD.npcs.push(n);return n}
+function despawn(id){FD.npcs=FD.npcs.filter(n=>n.id!==id)}
+async function walkNpc(id,path){const n=npc(id);if(!n)return;for(const d of path){const [dx,dy]=DIRS[d];n.dir=d;n.x+=dx;n.y+=dy;n.mv=1;n.mvp=0;n.ox=-dx*16;n.oy=-dy*16;while(n.mv)await frames(1)}}
+async function walkMe(path){for(const d of path){const [dx,dy]=DIRS[d];FD.dir=d;FD.x+=dx;FD.y+=dy;FD.moving=1;FD.mp=0;FD.scripted=1;FD.boatMove=0;FD.ox=-dx*16;FD.oy=-dy*16;while(FD.moving)await frames(1)}FD.scripted=0;S.x=FD.x;S.y=FD.y}
+function face(id,d){if(id==='me')FD.dir=d;else{const n=npc(id);if(n)n.dir=d}}
+async function flash(){AU.play('bell');await fade(1,true,180);await fade(0,true,500)}
+async function getItem(id,n=1){addItem(id,n);AU.play('chest');await say(null,`Received <span class="gold">${itemName(id)}</span>${n>1?' ×'+n:''}.`)}
+async function join(id){const lv=Math.max(S.heroes.marin.lv,id==='pell'?3:7);S.heroes[id]=mkHero(id,lv);S.party.push(id);AU.play('level');await say(null,`<span class="gold">${HEROES[id].name}</span> joins the party!`)}
+function nearestWater(x,y){const m=MAPS.world;let best=null,bd=1e9;for(let yy=y-6;yy<=y+6;yy++)for(let xx=x-6;xx<=x+6;xx++){const ch=tileAt(m,xx,yy);if(sailOK(ch,'flood')&&ch!=='w'&&ch!=='u'){const d=Math.abs(xx-x)+Math.abs(yy-y);if(d<bd){bd=d;best=[xx,yy]}}}return best}
+async function boss(id,opt={}){const r=await startBattle([id],{boss:1,bg:opt.bg||FD.map.bg,...opt});return r==='win'}
+function pushBack(){FD.x=FD.px;FD.y=FD.py;S.x=FD.x;S.y=FD.y}
+
+const STORY={
+/* ---------- opening ---------- */
+async intro(){
+  MODE='black';AU.music('title');
+  const crawl=['Seven years ago, the moon fell into the sea.',
+    'It did not sink quietly. The tides ran wild, the low islands went under, and half the world\'s people were lost to the water.',
+    'No one remembers their faces now. The sea took the names, too.',
+    'Every night since, the tide has climbed a little higher.',
+    'And at low water, the fishers of Saltmere swear they see ghosts walking the seabed...'];
+  for(const t of crawl){const w=win('',`<div style="text-align:center;line-height:1.5">${t}</div>`,{left:'8%',right:'8%',top:'38%',background:'none',border:'0',boxShadow:'none'});w.style.opacity=0;w.style.transition='opacity .8s';
+    await frames(2);w.style.opacity=1;uiCount++;await Promise.race([sleep(3600),new Promise(r=>{const off=pushInput(b=>{if(b==='a'||b==='start'){off();r()}});setTimeout(off,3700)})]);uiCount--;w.style.opacity=0;await sleep(800);w.remove()}
+  loadMap('home',3,3,'down');FD.busy++;await fade(1,false,0);MODE='field';AU.music('town');await fade(0,false,900);
+  await say('Gran Tilly','Marin. Marin, wake up. The sea\'s at the door again.');
+  face('me','right');
+  await say(M,'...Higher than last night?');
+  await say('Gran Tilly','Past the bell-mark. Old Hask rang for you. He wants his best diver.');
+  await walkNpc('tilly',['left']);
+  await say('Gran Tilly','Here. Your mother\'s lantern. You\'re old enough now, and I\'m too old to be afraid of it.');
+  await getItem('lantern');
+  await say(M,'It\'s never been lit, Gran.');
+  await say('Gran Tilly','No. But it\'s never been cold, either. Go on. The Elder\'s Hall, across the lane.');
+  setF('lantern');await walkNpc('tilly',['right']);npc('tilly').dir='left';FD.busy=Math.max(0,FD.busy-1);
+  await say(null,'<span class="small">D-pad moves · A talks and checks · START opens the menu</span>');
+},
+tilly(){if(F('ysolde'))return lines([['Gran Tilly','Who\'s your friend, Marin? ...Pale as milk, that one. Pale as your mother was, at the end.']]);
+  if(F('pell'))return lines([['Gran Tilly','You\'ve got a boat now? With a salvager? Your mother would laugh herself silly.']]);
+  if(F('tidepower'))return lines([['Gran Tilly','The water went out of the lane an hour ago. All at once, like a breath. That was you. I know it was.']]);
+  return lines([['Gran Tilly','The Elder\'s Hall is the blue roof across the lane. Mind the puddles.']])},
+async hask(){
+  if(!F('hask')){
+    await lines([['Elder Hask','Marin. Good. Shut the door, the damp\'s getting into my knees.'],
+      ['Elder Hask','The bell in the Old Steps rang tonight. No hand pulled it. That bell has hung under this island since before Saltmere had a name.'],
+      ['Elder Hask','The Steps go down to the old sea floor. When the moon fell they flooded, and we sealed them. Now the tide climbs every night, and something down there is ringing.'],
+      ['Elder Hask','I want to know what. You dive deeper than anyone here, and that lantern is yours by right. Your mother went down those steps once.'],
+      [M,'My mother did? You never told me that.'],
+      ['Elder Hask','I never told anyone. Take the east path out of the village, past the palms. The Steps are on the rocks. Here, take these. And the seal-key.']]);
+    await getItem('tonic',3);setF('hask');await say(null,'The Old Steps are unsealed.');return}
+  if(F('grief'))return lines([['Elder Hask','You remember her now. Your sister. ...So do I. Ysolde. She used to sing on the hall steps. How did we all forget?']]);
+  if(F('pell'))return lines([['Elder Hask','A tide-caller, sailing with a salvager. Go carefully, child. Gullwick is north, and the Admiral likes to own things.']]);
+  if(F('warden'))return lines([['Elder Hask','The bell is quiet. Good. Now come home and tell me what you saw.']]);
+  return lines([['Elder Hask','The Steps are east, past the palms. Be careful down there.']])},
+saltScholar(){return lines([[ 'Tide-Reader',F('tidepower')?'You MOVED the tide? ...Pass me my quill. No. Pass me something stronger than my quill.':'The charts make no sense. The moon is in the sea, so the sea pulls toward it. Toward the middle. And every night, the middle gets heavier.']])},
+saltFisher(){return lines([['Fisher',F('tidepower')?'Low water at midnight, when it should be high. Was that you? Do it again on Thursdays.':'Three boats I\'ve lost to the high water this month. Three!']])},
+saltWife(){return lines([['Net-Mender','At low water I see them out on the flats. Pale folk, walking. They never come close. My mother says they\'re the drowned, looking for the ones they left.']])},
+saltKid(){return lines([['Kid','If you see a ghost you have to say its name, or it follows you home. But nobody knows their names. So... run?']])},
+saltDrunk(){return lines([['Old Sailor','The moon\'s down there, I tell you. I saw it glowing under the water once. Like a lamp left on in a cellar.']])},
+saltBell(){return lines([[null,'The village bell. The tide-mark is cut into its post. Three nights ago the sea passed it.']])},
+innSaltmere(){return inn('Innkeeper',10)},
+shopSaltmere(){return shop('Merchant','Tonics, charms, sharkskin! Everything a diver needs, and some things she doesn\'t.',['tonic','clearwater','pearlwater','sharkskin','luckyshell'])},
+
+/* ---------- world entrances ---------- */
+async enter_saltmere(){await goto('saltmere',8,1,'down')},
+async enter_steps(){if(!F('hask')){await say(M,'The Old Steps. Sealed with iron and salt. Elder Hask keeps the key.');pushBack();return}await goto('steps',7,28,'up')},
+async enter_gullwick(){
+  if(F('spire')&&!F('reveal')){await goto('gullwick',10,13,'down');await STORY.reveal();return}
+  await goto('gullwick',10,13,'up');
+  if(!F('gullwick')){setF('gullwick');await lines([[PE,'Gullwick. More cannons than fish. The Admiralty\'s the big house at the top.']])}},
+async enter_nethra(){
+  if(S.tide!=='ebb'){if(!F('nethrahint')){setF('nethrahint');await say(null,'Far below the hull, through the green water, you can see towers. At low water you could walk down there.')}return}
+  if(!F('commission')){await lines([[PE,'Ruins under the flats. Pretty. Not paying, though.'],[PE,'Gullwick first. The Admiral pays for this kind of thing, and I\'d like to be paid.']]);pushBack();return}
+  await goto('nethra',9,19,'up')},
+async enter_spire(){
+  if(!F('ysolde')){await say(null,'Coral has grown over the door, thick as a wall. When you touch it, it shivers, as if it\'s listening for something.');pushBack();return}
+  if(!F('spireopen')){setF('spireopen');await say(YS,'Let me.');await say(null,'Ysolde hums three low notes. The coral uncurls like fingers.')}
+  await goto('spire',8,27,'up')},
+async enter_lighthouse(){
+  if(!F('reveal')){await say(null,'Grey Rock Light. Dark for years, and the door is barred from inside.');await say(M,'...I know this door. I don\'t know how.');pushBack();return}
+  await goto('lh1',6,11,'up')},
+async enter_moonscar(){
+  if(!F('grief')){await say(null,'The whirlpool grabs the Gull\'s Debt and flings it back out.');await say(PE,'Not without a better idea!');pushBack();return}
+  if(!F('calm')){await say(YS,'Hold the boat steady. I remember it now.');AU.music('');AU.play('bell');await say(null,'Ysolde sings the Tide-Hymn. The whirlpool slows... and opens, like an eye.');setF('calm')}
+  await goto('moonscar',8,25,'up')},
+
+/* ---------- the Old Steps ---------- */
+poolHint(){setF('poolhint');return lines([[M,'Flooded to the roof. Too deep and too cold to swim, even for me.'],[M,'There\'s a passage to the west. Something down there is glowing.']])},
+async altar(){
+  if(F('tidepower'))return say(null,'The altar is dark now. Its light lives in the lantern.');
+  await say(null,'An old altar. A pale stone is set into it, the same kind as the shard in Mother\'s lantern.');
+  await say(null,'The lantern grows warm in your hands...');
+  await flash();
+  await say(null,'The shard wakes. You can feel the whole sea, as if it were on the end of a thread.');
+  await say(M,'I could pull it. I could pull the whole sea back.');
+  setF('tidepower');
+  await say(null,'<span class="gold">Marin can call the tide.</span> Press <b>SELECT</b> to switch between Flood and Ebb.');
+  await say(null,'Ebb drains pools and shallows so you can walk them. Flood floats drift logs into bridges, and lets boats sail.');
+  await say(null,'In battle, Marin\'s <span class="gold">Turn Tide</span> does the same. Drowned things are fierce at Flood and soft at Ebb.')},
+async wispTalk(){setF('wispseen');const n=npc('wisp1');if(!n)return;
+  face('wisp1','down');await say('Drowned Wisp','...!');
+  await say('Drowned Wisp','A Pale One! A Pale One in the Steps! Run, run!');
+  await walkNpc('wisp1',['up','up']);despawn('wisp1');
+  await say(M,'A ghost. And it was afraid of me?')},
+async wardenFight(){
+  if(F('warden'))return;
+  await say(null,'Something huge shifts in front of the bell. Barnacled armor. Claws like anchors.');
+  await say(M,'It\'s guarding the bell. Or the bell is guarding it.');
+  if(!await boss('warden',{bg:'cave'}))return;
+  setF('warden');refreshNpcs();
+  await say(null,'The Warden sinks into the dark water. Beyond the bell, a tunnel climbs toward the sound of surf.')},
+
+/* ---------- Pell ---------- */
+async pellMeet(){if(F('pell'))return;
+  face('me','down');
+  await lines([['???','Oi! Lantern! Over here!'],
+    ['Salvager','Saw your light coming up the tunnel. Saw the sea go out, too, back in the Steps. Did you do that?'],
+    [M,'...Yes.'],
+    ['Salvager','Then you are the most valuable person I have ever met. Pell. Pell Varga. Salvager, harpooner, and owner of the Gull\'s Debt.'],
+    [PE,'I owe money to everyone who owns a gull. But the Admiral in Gullwick pays good coin to anyone who\'ll dive the ghost-flats.'],
+    [PE,'With your trick, we\'d clean up. Half and half.'],
+    [M,'I need to know why the tide keeps rising. And who rang that bell.'],
+    [PE,'Then come to Gullwick. If anyone knows what the sea\'s up to, it\'s Corvane. Man\'s been staring at it for seven years.']]);
+  await join('pell');S.boat=1;setF('pell');despawn('pellObj');
+  await fade(1,false,500);
+  const w=nearestWater(...WORLD_POS.steps)||[16,33];S.tide='flood';loadMap('world',w[0],w[1],'up');AU.music('sea');await fade(0,false,500);
+  await lines([[PE,'Gullwick is north, across open water. When we\'re at sea, the boat goes where the water goes.'],
+    [null,'<span class="small">Sail at Flood. Ebb only works over shallows and dry land; the deep sea won\'t draw back.</span>']])},
+
+/* ---------- Gullwick ---------- */
+gullGuard(){return lines([['Guard',F('commission')?'The Admiral\'s business is the sea\'s business.':'The Admiral sees no one. ...Saltmere, you say? With a lantern that\'s lit? Go in. Quickly.']])},
+gullSailor(){return lines([['Sailor','Corvane hasn\'t slept since the Fall. They say he walks out on the flats every low water and just... looks.']])},
+gullWife(){return lines([['Townswoman','The tide was in my kitchen this morning. I made soup. You have to keep your spirits up.']])},
+gullScholar(){return lines([['Scholar','There are two tides now. The one the sea makes, and the one the moon makes from underneath. The moon\'s tide is winning.']])},
+gullKid(){return lines([['Kid','The Admiral\'s ship has a chain on it as thick as a man! I bet it\'s for pulling something up out of the sea.']])},
+gullOld(){return lines([['Old Keeper',F('grief')?'The Light is burning on Grey Rock! I\'d forgotten how it looked. I\'d forgotten a lot of things.':'Grey Rock Light went dark the night the moon fell. The family that kept it... I forget. Funny. I knew them well.']])},
+cartographer(){if(F('reveal'))return lines([['Cartographer','Grey Rock is north-east. A reef rings it, so no boat gets in. You\'d have to walk the reef at low water. Mad, but you\'re that kind.']]);
+  if(F('nethra'))return lines([['Cartographer','The Coral Spire is south-east, past the shallows. Reef all around it. No boat gets close. Low water, maybe.']]);
+  return lines([['Cartographer','Every chart I draw is wrong by morning. The Great Shallows east of here are a city at low water. I\'ve seen the towers.']])},
+innGullwick(){return inn('Innkeeper',30)},
+shopGullwick(){return shop('Quartermaster','Navy surplus. Don\'t ask where it fell off.',['tonic','deeptonic','pearlwater','clearwater','moonsalt','tidebomb'])},
+armsGullwick(){return shop('Armorer','Blades, harpoons, mail. Iron sinks, but it sinks slower than you.',['coraldirk','ironharpoon','shellmail','saltcharm','wakebead','luckyshell'])},
+admGuard(){return lines([['Guard','Stand straight in the Admiralty.']])},
+admClerk(){return lines([['Clerk','The Admiral orders chain. Miles of it. Every month. I don\'t ask what for.']])},
+async corvane(){
+  if(F('commission'))return lines([[CO,'The shallows are east. At low water, find their heart and tell me where it beats.']]);
+  await lines([[CO,'So. Hask\'s girl from Saltmere. And her lantern is lit.'],
+    [CO,'I am Corvane, Admiral of what\'s left of the fleet. Seven years I\'ve watched the sea climb our walls.'],
+    [CO,'My scholars say the drowned, the ghosts on the shallows, are hauling the moon deeper, and the tide follows it up our streets.'],
+    [CO,'East of here, under the Great Shallows, lies a city. At low water you can see its towers, but no one can reach it. Except, perhaps, someone who carries low water in a lamp.'],
+    [M,'You want me to go down there.'],
+    [CO,'I want to know what moves them. Take my writ. My sailors will let you pass. And five hundred pearls for the trouble.'],
+    [PE,'Make it six hundred and I\'ll stop eyeing your silverware.'],
+    [CO,'...Six hundred.']]);
+  await getItem('commission');S.gold+=600;AU.play('buy');await say(null,'Received <span class="gold">600 pearls</span>.');setF('commission');
+  await say(CO,'Go at low water, over the shallows. When you find their heart, come back and tell me where it beats.')},
+async reveal(){
+  FD.busy++;
+  spawn({id:'cv',x:10,y:15,look:'corvane',dir:'up'});spawn({id:'s1',x:8,y:15,look:'soldier',dir:'up'});spawn({id:'s2',x:12,y:15,look:'soldier',dir:'up'});
+  AU.music('sad');
+  await lines([[CO,'You found the Spire. And my diver.'],
+    [CO,'I told you to find where their heart beats. You\'ve done better than that. You\'ve shown me the way to it.'],
+    [M,'You\'re dragging the moon down. The tide is rising because of you.'],
+    [CO,'Yes.'],
+    [CO,'My wife Lirien drowned the night the moon fell. For seven years, every low water, I\'ve walked out on the flats and seen her. And she screams, and runs from me, as if I were the ghost.'],
+    [CO,'There is no Above and no Below. There\'s only the water between us. When the tide covers every island, there will be no more Pale Ones. Only the drowned. All of us, together.'],
+    [YS,'You\'d drown the whole world to stand next to her?'],
+    [CO,'I\'d drown it to end the haunting. The moon lies in the Moonscar, under the great whirlpool. My chains are already on it. One more night of hauling.'],
+    [CO,'Don\'t follow. The whirlpool only opens for Admiralty iron.']]);
+  await Promise.all([walkNpc('cv',['down','down','down']),walkNpc('s1',['down','down','down']),walkNpc('s2',['down','down','down'])]);
+  despawn('cv');despawn('s1');despawn('s2');
+  await lines([[PE,'We are definitely following.'],
+    [YS,'The whirlpool... My mother sang a hymn that could calm deep water. The Tide-Hymn. I can\'t remember it. I remember a lighthouse. And stairs.'],
+    [M,'Grey Rock Light. North-east, inside the reef. My family kept it, before the Fall.'],
+    [YS,'...So did mine.'],
+    [PE,'Well. That\'s not ominous at all.']]);
+  setF('reveal');AU.music('town');FD.busy=Math.max(0,FD.busy-1)},
+
+/* ---------- Nethra ---------- */
+async nethraEnter(){setF('nethra');
+  await lines([['Drowned Folk','A Pale One! Two of them!'],['Drowned Folk','Hide the children! Don\'t look at their eyes!'],[PE,'...Are we the ghosts here?'],[M,'They\'re scared of us.']])},
+async ysoldeMeet(){
+  await lines([['Drowned Girl','You\'re Pale Ones. You came down from the Above.'],
+    ['Drowned Girl','But you\'re breathing. And your shadows fall the right way.'],
+    [M,'We\'re not ghosts. We\'re from Saltmere, up on the islands.'],
+    ['Drowned Girl','Up is where the dead go. When the moon fell, half of us were taken up into the Pale. My mother said they walk the dry places and can\'t come home.'],
+    ['Drowned Girl','My sister was one of them. I can\'t remember her face.'],
+    [M,'...'],
+    ['Drowned Girl','I\'m Ysolde. I sang in the choir, before the Chainers came.'],
+    [M,'Chainers?'],
+    [YS,'Iron things on long chains. They come from the Coral Spire and drag our people away, out toward the deep. The Cantor says it\'s the Pale, taking more of us.'],
+    [PE,'Iron things on chains. That doesn\'t sound like any ghost I know.'],
+    [YS,'If you\'re really alive, help me find where they take us. The Spire\'s coral only opens for a hymn, and I know it. It\'s south-east, past the reef.']]);
+  await join('ysolde');setF('ysolde');despawn('ysoldeObj');
+  await say(null,'<span class="small">Ysolde is one of the Drowned. Her Hymns heal, and her moon-songs hurt drowned things most at Ebb.</span>')},
+cantor(){if(F('grief'))return lines([['Cantor','Sisters. Of course. Half of every house went up, and half stayed. We were all one city once.']]);
+  if(F('spire'))return lines([['Cantor','You brought our people home. I was wrong about the Pale. Or about which of us is pale.']]);
+  if(F('ysolde'))return lines([['Cantor','Ysolde trusts you. Then so must I. The Spire waits south-east, ringed by reef. Walk it at low water.']]);
+  return lines([['Cantor','Pale One. You should not be here. The tide is not yours to walk.']])},
+shopNethra(){const st=['deeptonic','pearlwater','moonsalt','clearwater','tidebomb'];if(F('spire'))st.push('abysstonic');return shop('Shell-Trader','You pay in pearls? Strange. Up there, pearls are money? Down here they\'re just... pearls. Fine.',st)},
+armsNethra(){const st=['pearlkris','whaler','choirbell','coralplate'];if(F('spire'))st.push('krakentooth');if(F('grief'))st.push('tidecutter','moonbell','abyssmail');return shop('Smith','Drowned steel. Never rusts. Never quite dries.',st)},
+innNethra(){return inn('Pool-Keeper',40)},
+nethraKid(){return lines([['Drowned Child',F('ysolde')?'Ysolde says you\'re not cold. Can I touch your hand? ...Oh! It\'s warm!':'Are you a ghost? Say something ghosty.']])},
+nethraFolk1(){return lines([['Drowned Woman','The moon is our lamp. It lies in the deep and lights the city. But every night it sinks further, and the light gets dimmer.']])},
+nethraFolk2(){return lines([['Drowned Man','Sometimes we hear your bells through the water. We always thought they were your funerals.']])},
+nethraFolk3(){return lines([['Old Drowned',F('spire')?'My neighbor\'s boy came home. He says the Chainers were made by the Pale. By the living. ...Hm.':'Chains in the night. Clank, clank. My neighbor\'s boy was taken. Iron doesn\'t drown, they say.']])},
+
+/* ---------- the Coral Spire ---------- */
+captive(){return lines([['Captive','Ysolde? Is that you? Get us out of these chains!']])},
+async diverFight(){
+  if(F('spire'))return;
+  await lines([[YS,'There! Our people!'],[null,'A huge brass diving suit turns toward you. Its helmet glass glows green.'],
+    [PE,'That\'s no ghost. That\'s a diving suit. Admiralty make. I\'ve seen them in the Gullwick yards.']]);
+  if(!await boss('diver',{bg:'coral'}))return;
+  setF('spire');refreshNpcs();
+  spawn({id:'c1',x:5,y:2,look:'drowned1',dir:'down',ghost:1});spawn({id:'c2',x:11,y:2,look:'drowned2',dir:'down',ghost:1});
+  await lines([[null,'The suit splits open. It\'s empty. Only water, and a brass plate: PROPERTY OF THE ADMIRALTY, GULLWICK.'],
+    ['Freed Captive','Ysolde! The chains... they weren\'t dragging us. We were only in the way. They\'re dragging something else, down into the deep.'],
+    [YS,'...The moon. They\'re pulling the moon down.'],
+    [M,'Corvane.'],
+    [PE,'Six hundred pearls. I should have asked for a thousand.'],
+    ['Freed Captive','We\'ll swim home to Nethra. Thank you, Pale Ones. Thank you.']]);
+  despawn('c1');despawn('c2');
+  await say(null,'<span class="small">Back to Gullwick, to face the Admiral.</span>')},
+
+/* ---------- Grey Rock Light ---------- */
+lhEnter(){setF('lhenter');return lines([[M,'I\'ve been here. I\'ve been inside.'],[YS,'So have I. There\'s a stair that creaks on the seventh step.'],[M,'...It\'s the ninth.'],[YS,'Seventh, if you\'re small.']])},
+lhMemory(){return lines([[null,'Pencil marks on the wall, measuring two children. M. Y. M. Y.'],[null,'The marks stop at the same height. Seven years ago.']])},
+lamp(){return lines([[null,F('grief')?'The lamp burns. Somewhere out on the dark water, ships can see it.':'The great lamp is cold and dark.']])},
+async griefFight(){
+  if(F('grief'))return;
+  await lines([[null,'Something huddles over the dead lamp. A shape made of everything the sea took.'],
+    ['The Grief','...forget... forget... it hurts less...'],
+    [YS,'It\'s eating memories. Ours. Everyone\'s.'],[M,'Then it\'s been eating mine for seven years.']]);
+  if(!await boss('grief',{bg:'light'}))return;
+  setF('grief');refreshNpcs();AU.music('sad');
+  await lines([[null,'The Grief comes apart like fog. Things drift out of it: names, faces, a song.']]);
+  await getItem('drawing');
+  await lines([[M,'...Ysolde.'],
+    [YS,'Marin. You always took the ninth step. You said the seventh was mine.'],
+    [M,'How did I forget you? How did I forget my own sister?'],
+    [YS,'The Fall didn\'t just sink the moon. It split us. Half of every family went up and half went down, and the sea took the names so we\'d stop looking.']]);
+  await getItem('hymnbox');
+  await lines([[null,'The music box plays a slow tune. Ysolde sings along without thinking.'],
+    [YS,'The Tide-Hymn. I remember it now. All of it.'],
+    [null,'Marin holds up the lantern. The great lamp catches its light and blazes.']]);
+  await flash();
+  await lines([[null,'Grey Rock Light burns again.'],
+    [null,'<span class="gold">Ysolde</span> learned <span class="gold">Moonsong</span>. <span class="gold">Marin</span> learned <span class="gold">Lantern Heart</span>.'],
+    [PE,'Hate to break up the reunion. But the moon\'s still being dragged into a hole.'],
+    [M,'The whirlpool. Let\'s go.']]);
+  AU.music('dungeon')},
+
+async moonspring(){await say(null,'A pool of pale light. Where it touches you, wounds close and weariness lifts.');healAll();AU.play('heal');await say(null,'The party is fully restored.')},
+/* ---------- the end ---------- */
+async finale(){
+  if(F('corvane'))return;
+  FD.busy++;
+  await lines([[CO,'You came. Of course you came. Hask\'s girl, with her mother\'s lantern.'],
+    [CO,'Look at it. The moon. It isn\'t dead. It\'s dreaming. Every name the sea took is in there.'],
+    [M,'Then let it go, Corvane. Let it rise.'],
+    [CO,'If it rises, she stays a ghost to me forever. No.']]);
+  face('corvaneEnd','down');
+  if(!await boss('corvane',{bg:'moon'})){FD.busy=Math.max(0,FD.busy-1);return}
+  await lines([[CO,'Not... yet.'],[null,'Corvane grabs the great chain with both hands. It coils around his arms, his chest, his throat.'],
+    [CO,'If I can\'t pull it down with my hands, I\'ll pull it down with all of me!']]);
+  await flash();
+  for(const h of partyHeroes()){if(h.hp<=0)h.hp=1}healAll();AU.play('heal');
+  await say(null,'Behind you, the moon stirs in its sleep. Its light pours over the party, and every wound closes.');
+  await say(YS,'It\'s helping us. Marin, it knows we\'re here.');
+  if(!await boss('undertide',{bg:'moon',final:1})){FD.busy=Math.max(0,FD.busy-1);return}
+  setF('corvane');despawn('corvaneEnd');
+  spawn({id:'cvd',x:7,y:6,look:'corvane',dir:'down'});spawn({id:'lir',x:8,y:5,look:'lirien',dir:'down',ghost:1});
+  AU.music('sad');
+  await lines([[null,'The chains fall away. Corvane lies on the pale stone. Beside him, a drowned woman kneels.'],
+    ['Lirien','Corvane. You were never the ghost. Neither was I.'],
+    [CO,'Lirien... I can see your face.'],
+    [null,'He doesn\'t say anything else.'],
+    [YS,'Marin. The lantern.'],
+    [M,'Together, then.'],
+    [PE,'One more heave. Grab the line!']]);
+  AU.play('tide');await flash();await flash();
+  FD.busy=Math.max(0,FD.busy-1);await ending()},
+};
+
+async function ending(){
+  setF('cleared');try{localStorage.setItem('drownedmoon-cleared','1')}catch(e){}
+  await fade(1,true,900);MODE='ending';endT=0;AU.music('ending');await fade(0,true,1500);
+  const txt=['The moon rose out of the Moonscar at dawn, streaming seawater, and hung in the sky where it belonged.',
+    'The tide went out, and kept going out, until the shallows were shores again.',
+    'On the new beaches, the people of the islands and the people of Nethra met, and found they could see each other plainly.',
+    'Not ghosts. Just families, each missing half of itself.',
+    'The names came back slowly. Then all at once.',
+    'Pell bought a second boat and named it the Six Hundred Pearls.',
+    'Grey Rock Light burns every night now. Two sisters keep it.'];
+  for(const t of txt){const w=win('',`<div style="text-align:center;line-height:1.5">${t}</div>`,{left:'8%',right:'8%',bottom:'14%',background:'rgba(4,8,24,.55)'});w.style.opacity=0;w.style.transition='opacity 1s';await frames(2);w.style.opacity=1;await sleep(4200);w.style.opacity=0;await sleep(1000);w.remove()}
+  const w=win('',`<div style="text-align:center"><div style="font-size:1.6rem;color:#fff;letter-spacing:.15em">THE END</div><div class="gold" style="margin-top:.4rem">Tides of the Drowned Moon</div><div class="small" style="margin-top:.8rem">Thank you for playing.<br>Press A</div></div>`,{left:'10%',right:'10%',top:'34%',background:'rgba(4,8,24,.55)'});
+  uiCount++;await new Promise(r=>{const off=pushInput(b=>{if(b==='a'||b==='start'){off();r()}})});uiCount--;w.remove();
+  toTitle();await new Promise(()=>{})}
+let endT=0;
+function drawEnding(){endT++;const H=VH,W=VW;const p=Math.min(1,endT/900);
+  const sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,mix('#0b1640','#f0a868',p*.7));sky.addColorStop(.6,mix('#2a3f80','#ffd9a0',p*.8));sky.addColorStop(.6001,mix('#17337a','#3a78c8',p));sky.addColorStop(1,mix('#0c1a3a','#2a5a98',p));
+  g.fillStyle=sky;g.fillRect(0,0,W,H);
+  const my=H*.62-p*H*.42,r=22;g.fillStyle='rgba(255,255,255,.25)';g.beginPath();g.arc(W/2,my,r+6,0,Math.PI*2);g.fill();g.fillStyle='#f4f8ff';g.beginPath();g.arc(W/2,my,r,0,Math.PI*2);g.fill();
+  g.fillStyle='#d6deec';g.beginPath();g.arc(W/2-7,my-4,5,0,Math.PI*2);g.arc(W/2+8,my+6,4,0,Math.PI*2);g.fill();
+  g.fillStyle=mix('#17337a','#3a78c8',p);g.fillRect(0,H*.6,W,H*.4);
+  for(let i=0;i<40;i++){const y=H*.6+(i*7%(H*.4)),x=(i*53+endT*.3)%W;g.fillStyle='rgba(230,246,255,.5)';g.fillRect(x|0,y|0,4,1)}
+  g.fillStyle='rgba(255,255,255,.35)';for(let y=H*.6;y<H;y+=3)g.fillRect(W/2-6+Math.sin(y+endT/10)*3,y,12,1)}
+
+/* ===================== TITLE & BOOT ===================== */
+let titleEl=null;
+function titleUpdate(){}
+function drawTitle(){const W=VW,H=VH,t=animT;const hz=Math.round(H*.58);
+  const sky=g.createLinearGradient(0,0,0,hz);sky.addColorStop(0,'#03061a');sky.addColorStop(1,'#1a2a5e');g.fillStyle=sky;g.fillRect(0,0,W,hz);
+  const r=rng(7);for(let i=0;i<70;i++){const x=r()*W|0,y=r()*hz*.95|0,tw=(Math.sin(t/20+i)+1)/2;g.fillStyle=tw>.7?'#ffffff':tw>.3?'#9fb4e8':'#3a4a80';g.fillRect(x,y,1,1)}
+  // Grey Rock and its light
+  g.fillStyle='#0a0e22';g.beginPath();g.moveTo(W*.72,hz);g.lineTo(W*.78,hz-10);g.lineTo(W*.9,hz-12);g.lineTo(W*.97,hz);g.fill();
+  g.fillRect(W*.83|0,hz-30,5,20);g.fillStyle=(t%120)<60?'#ffe08a':'#7a6a3a';g.fillRect(W*.83|0,hz-33,5,3);
+  const sea=g.createLinearGradient(0,hz,0,H);sea.addColorStop(0,'#10245a');sea.addColorStop(1,'#030818');g.fillStyle=sea;g.fillRect(0,hz,W,H-hz);
+  // the drowned moon glowing under the water
+  const mx=W*.42,my=hz+(H-hz)*.55,gr=g.createRadialGradient(mx,my,2,mx,my,70);gr.addColorStop(0,'rgba(220,240,255,.85)');gr.addColorStop(.25,'rgba(160,210,255,.45)');gr.addColorStop(1,'rgba(40,80,160,0)');
+  g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);g.fillStyle='rgba(235,245,255,.9)';g.beginPath();g.ellipse(mx,my,18,13,0,0,Math.PI*2);g.fill();
+  for(let y=hz+2;y<H;y+=3){const n=8;for(let i=0;i<n;i++){const x=((i*41+y*7+t*(y>my?.2:.35))%(W+20))-10;g.fillStyle=Math.abs(x-mx)<24&&y<my?'rgba(230,246,255,.7)':'rgba(120,170,240,.35)';g.fillRect(x|0,y,5,1)}}
+  g.fillStyle='rgba(230,246,255,.5)';for(let x=0;x<W;x+=2)g.fillRect(x,hz+Math.round(Math.sin(x/9+t/18)),2,1)}
+async function toTitle(){
+  for(const k in BUI){if(BUI[k]&&BUI[k].remove)BUI[k].remove()}BUI={};
+  UI.innerHTML='';dlgEl=null;handlers.length=0;handlers.push(fieldInput);uiCount=0;FD.busy=0;FD.fx=[];FD.map=null;B=null;
+  MODE='title';AU.music('title');fadeEl.style.opacity=0;
+  titleEl=el('div','',`<div class="logo"><small>TIDES OF THE</small><b>DROWNED MOON</b><em>~ a tide-calling tale ~</em></div><div class="press">PRESS START</div><div class="foot">A ZigaPlay cartridge</div>`);titleEl.id='title';UI.appendChild(titleEl);
+  uiCount++;await new Promise(r=>{const off=pushInput(b=>{if(b==='a'||b==='start'){AU.unlock();AU.play('ok');off();r()}})});uiCount--;
+  titleEl.querySelector('.press').remove();
+  while(true){const has=[0,1,2,3].some(i=>loadSlot(i));
+    const c=await listWin([{label:'New Game'},{label:'Continue',off:!has},{label:'Settings'}],{style:{left:'50%',transform:'translateX(-50%)',bottom:'18%',minWidth:'9rem'},start:has?1:0,cancel:false});
+    if(c===0){titleEl.remove();await newGame();return}
+    if(c===1){const ids=[0,1,2,3].filter(i=>loadSlot(i));const best=ids.reduce((b,i)=>(loadSlot(i).saved||0)>(loadSlot(b).saved||0)?i:b,ids[0]);
+      const s=await listWin(ids.map(i=>slotLabel(i)),{title:'Continue',start:ids.indexOf(best),style:{left:'.4rem',right:'.4rem',bottom:'14%'}});if(s<0)continue;
+      titleEl.remove();await continueGame(loadSlot(ids[s]));return}
+    if(c===2){const tmp=S;S=S||newState();await menuSettings();S=tmp}}}
+async function newGame(){S=newState();await fade(1,false,500);await runScript('intro')}
+async function continueGame(data){S=data;await fade(1,false,400);MODE='field';loadMap(S.map,S.x,S.y,S.dir);AU.music(musicFor(FD.map));await fade(0,false,500);mapToast(FD.map.name)}
+handlers.push(fieldInput);
+requestAnimationFrame(loop);
+// a hook for tests
+window.__DM={get S(){return S},set S(v){S=v},FD,MAPS,TILE,tileImg,personImg,LOOKS,monImg,ART,backdropImg,drawNum,btn,goto,loadMap,startBattle,STORY,runScript,newState,mkHero,toTitle,get MODE(){return MODE},set MODE(v){MODE=v},get B(){return B},toggleTide,healAll,SKILLS,ITEMS,partyHeroes,addItem,setF,F,stats,expFor,FOES,HEROES,join};
+toTitle();
+window.__DM.start=async(data)=>{UI.innerHTML='';dlgEl=null;handlers.length=0;handlers.push(fieldInput);uiCount=0;FD.busy=0;fadeEl.style.opacity=0;S=data;MODE='field';loadMap(S.map,S.x,S.y,S.dir);AU.music(musicFor(FD.map))};
+
+})();
+</script>
+</body></html>
