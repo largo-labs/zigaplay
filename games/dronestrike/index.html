@@ -8,7 +8,7 @@
 <style>
 /* Drone Strike: a drone-unit strategy game for the ZigaPlay.
    Everything looks like a rugged military tablet: olive panels, amber text, thin rules and corner brackets.
-   Battles draw a tactical map on a canvas, with a small thermal drone feed for the strikes. */
+   Battles draw a tactical map on a canvas, where each group of drones flies across in launch order. */
 :root{color-scheme:dark;
   --bg:#060a06;--panel:#0d140c;--panel2:#121d10;--line:#2b3f25;--line2:#46653a;
   --amber:#ffb627;--amber2:#b9821a;--text:#eadfbd;--dim:#8d9878;--green:#93e46c;--cyan:#5fd8ff;--red:#ff5545;--orange:#ff8a3a;
@@ -52,6 +52,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidde
 .desc{font-size:.9rem;color:#cfc6a4;min-height:2.6em}
 .tag{display:inline-block;padding:0 .25rem;border:1px solid currentColor;font-size:.8rem;line-height:1.1;margin-left:.2rem}
 .stamp{font-family:var(--head);font-size:1.6rem;letter-spacing:.14em;text-align:center;padding:.2rem;border:3px solid currentColor;transform:rotate(-4deg);margin:.4rem auto;width:max-content}
+.coach{border:1px solid var(--amber);color:var(--amber);font-size:.85rem;padding:.12rem .3rem;line-height:1.1;flex:0 0 auto}
+.row.moving{background:#13303a;border-color:var(--cyan);color:var(--cyan)}
 .hint{font-size:.78rem;color:var(--dim);text-align:center;flex:0 0 auto}
 .scroll{overflow:hidden;position:relative}
 canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
@@ -70,10 +72,6 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 /* battle */
 .mapbox{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--line2);background:#081108}
 .mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.feed{position:absolute;right:.3rem;top:.3rem;width:42%;aspect-ratio:3/2;border:1px solid var(--green);background:#000;display:none}
-.feed canvas{width:100%;height:100%}
-.feed span{position:absolute;left:.2rem;top:.05rem;font-size:.7rem;color:var(--green);text-shadow:0 0 2px #000}
-.feed.on{display:block}
 .log{font-size:.88rem;line-height:1.1;height:100%;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
 .log div{white-space:normal}
 /* portraits */
@@ -193,27 +191,27 @@ const CATS={inf:'Infantry',armor:'Armor',arty:'Artillery',logi:'Logistics',struc
 // exp: expendable (used up when it strikes). Reusable drones strike every wave they survive and come home after.
 const DRONES={
   fpv:{name:'FPV Kamikaze',short:'FPV',cost:2,slots:1,range:1,eva:.15,jr:0,exp:1,
-    atk:{inf:6,armor:5,arty:6,logi:6,struct:1,aa:3,ew:5,naval:1},desc:'Cheap, fast and one-way. Strong on troops and trucks. Jamming knocks it out of the sky.'},
+    atk:{inf:6,armor:5,arty:6,logi:6,struct:1,aa:3,ew:5,naval:1},desc:'A cheap racing drone with a bomb strapped on. It hits troops, trucks and guns well, but jamming can cut its radio link.'},
   recon:{name:'Recon Wing',short:'RCN',cost:6,slots:1,range:2,eva:.4,jr:.25,exp:0,recon:1,atk:{},
-    desc:'Finds hidden targets and guides every strike in its wave: +10% accuracy each, up to +30%. Comes home.'},
+    desc:'An unarmed scout plane. It reveals hidden targets and makes every strike after it in the same wave 10% more accurate.',plural:'Recon Wings'},
   decoy:{name:'Decoy Swarm',short:'DCY',cost:1,slots:1,range:2,eva:0,jr:1,exp:1,decoy:1,atk:{},
-    desc:'Foam wings and a radar reflector. Air defense wastes its shots on decoys first.'},
+    desc:'A cheap fake drone. Anti-aircraft fire and enemy drones go after it, so send decoys ahead of your real drones.',plural:'Decoy Swarms'},
   hexa:{name:'Hexa Bomber',short:'HEX',cost:7,slots:1,range:0,eva:.05,jr:.15,exp:0,
-    atk:{inf:6,armor:2,arty:4,logi:3,struct:2,aa:2,ew:3},desc:'Drops grenades, flies home, does it again next wave. Slow and loud: easy prey for guns.'},
+    atk:{inf:6,armor:2,arty:4,logi:3,struct:2,aa:2,ew:3},desc:'A six-rotor bomber that drops grenades and flies home to strike again next wave. It is slow, so guns hit it easily.'},
   loiter:{name:'Loitering Munition',short:'LM',cost:12,slots:1,range:2,eva:.25,jr:.3,exp:1,
-    atk:{armor:15,arty:14,logi:8,aa:9,ew:9,inf:3,struct:6,naval:7},desc:'Circles until it finds armor, then dives. The tank killer.'},
+    atk:{armor:15,arty:14,logi:8,aa:9,ew:9,inf:3,struct:6,naval:7},desc:'A guided bomb that circles the target area and dives on armor. Your best tank killer.',plural:'Loitering Munitions'},
   intercept:{name:'Interceptor',short:'INT',cost:5,slots:1,range:2,eva:.3,jr:.3,exp:0,interceptor:1,atk:{},
-    desc:'Hunts enemy drones before they reach your wave. Useless against ground targets.'},
+    desc:'A hunter of enemy drones. Send it early so it clears the sky for the drones behind it.'},
   hunter:{name:'Radar Hunter',short:'RH',cost:14,slots:1,range:2,eva:.35,jr:.6,exp:1,hunter:1,
-    atk:{aa:24,ew:20,struct:2},desc:'Rides enemy radar beams home. Kills air defense and jammers, and strikes them first.'},
+    atk:{aa:24,ew:20,struct:2},desc:'It homes in on radar. It destroys anti-air sites and jammers before they can fire on its group.'},
   longr:{name:'Long-Range Wing',short:'LRW',cost:22,slots:2,range:2,eva:.2,jr:.35,exp:1,
-    atk:{struct:24,logi:16,arty:12,aa:10,ew:10,armor:8,naval:12,inf:4},desc:'A one-way plane with a big warhead. Reaches depots, bridges and command posts deep behind the lines.'},
+    atk:{struct:24,logi:16,arty:12,aa:10,ew:10,armor:8,naval:18,inf:4},desc:'A one-way plane with a heavy warhead. It reaches depots, bridges and headquarters deep behind the lines.',plural:'Long-Range Wings'},
   fiber:{name:'Fiber-Optic FPV',short:'FOF',cost:3,slots:1,range:1,eva:.15,jr:1,exp:1,
-    atk:{inf:7,armor:6,arty:7,logi:7,struct:1,aa:4,ew:6,naval:1},desc:'Steered down a hair-thin cable. Jamming cannot touch it. Short range.'},
+    atk:{inf:7,armor:6,arty:7,logi:7,struct:1,aa:4,ew:6,naval:1},desc:'An FPV steered through a thin cable instead of radio, so jamming cannot stop it.'},
   naval:{name:'Sea Drone',short:'SEA',cost:18,slots:2,range:1,eva:.3,jr:.4,exp:1,
-    atk:{naval:34,struct:6,arty:6},desc:'A jet-ski full of explosives. Built to sink ships.'},
+    atk:{naval:34,struct:6,arty:6},desc:'A fast boat packed with explosives, built to sink ships.'},
   ucav:{name:'Heavy UCAV',short:'UCV',cost:60,slots:3,range:2,eva:.55,jr:.6,exp:0,
-    atk:{inf:8,armor:13,arty:13,logi:10,struct:15,aa:12,ew:10,naval:11},desc:'A real warplane with no pilot. Hits anything, anywhere, and usually comes home.'},
+    atk:{inf:8,armor:13,arty:13,logi:10,struct:15,aa:12,ew:10,naval:11},desc:'A pilotless warplane. It hits almost anything, anywhere, and usually flies home.'},
 };
 const DRONE_ORDER=['fpv','fiber','hexa','loiter','recon','decoy','intercept','hunter','longr','naval','ucav'];
 // enemy units. depth: 0 front, 1 near rear, 2 deep. shots/acc: air defense. jam: jamming strength. spawn: enemy drones each wave
@@ -229,12 +227,12 @@ const UNITS={
   depot:{name:'Ammo Depot',cat:'struct',hp:28,depth:2,val:10},
   bridge:{name:'Bridge',cat:'struct',hp:34,depth:2,val:10},
   cp:{name:'Command Post',cat:'struct',hp:26,depth:2,val:12},
-  aagun:{name:'AA Gun',cat:'aa',hp:9,depth:0,val:4,shots:2,acc:.35},
-  sam:{name:'SAM Site',cat:'aa',hp:16,depth:1,val:8,shots:3,acc:.5},
+  aagun:{name:'AA Gun',cat:'aa',hp:9,depth:0,val:4,shots:2,acc:.3},
+  sam:{name:'SAM Site',cat:'aa',hp:16,depth:1,val:8,shots:3,acc:.45},
   ew:{name:'Jammer Truck',cat:'ew',hp:10,depth:1,val:6,jam:.18},
   hive:{name:'Drone Launch Site',cat:'struct',hp:16,depth:1,val:7,spawn:2},
   boat:{name:'Patrol Boat',cat:'naval',hp:16,depth:1,val:6,shots:1,acc:.3},
-  lship:{name:'Landing Ship',cat:'naval',hp:34,depth:1,val:12},
+  lship:{name:'Landing Ship',cat:'naval',hp:30,depth:1,val:12},
   coastal:{name:'Coastal Battery',cat:'arty',hp:20,depth:1,val:8},
   hq:{name:'Field Headquarters',cat:'struct',hp:36,depth:2,val:20},
 };
@@ -249,6 +247,7 @@ const RESEARCH=[
   {id:'intercept',tier:1,cost:40,name:'Interceptor',unlock:'intercept',desc:'Unlocks the Interceptor, for drone-on-drone fights.'},
   {id:'hunter',tier:1,cost:60,name:'Radar Hunter',unlock:'hunter',desc:'Unlocks the Radar Hunter, an air-defense killer.'},
   {id:'longr',tier:1,cost:70,name:'Long-Range Wing',unlock:'longr',desc:'Unlocks the Long-Range Wing for deep strikes.'},
+  {id:'crew2',tier:1,cost:60,name:'Field Launch Teams',desc:'+3 launch slots.'},
   {id:'thermal',tier:1,cost:50,name:'Thermal Optics',desc:'+10% accuracy for every strike.'},
   {id:'workshop',tier:1,cost:60,name:'Garage Workshop',desc:'Drones cost 20% less.'},
   {id:'recovery',tier:1,cost:50,name:'Recovery Teams',desc:'40% of reusable drones shot down are found and repaired.'},
@@ -256,11 +255,11 @@ const RESEARCH=[
   {id:'naval',tier:2,cost:60,name:'Sea Drone',unlock:'naval',desc:'Unlocks the Sea Drone, a ship killer.'},
   {id:'pay2',tier:2,cost:80,name:'Tandem Warheads',desc:'Another +15% damage for every drone.'},
   {id:'auto',tier:2,cost:80,name:'Terminal Autonomy',desc:'Drones finish their dive on their own: another 25% jamming resistance.'},
-  {id:'crew2',tier:2,cost:70,name:'Field Launch Teams',desc:'+2 launch slots.'},
   {id:'intel',tier:2,cost:50,name:'Signals Intelligence',desc:'Briefings show every enemy unit, hidden or not.'},
   {id:'ucav',tier:3,cost:150,name:'Heavy UCAV',unlock:'ucav',desc:'Unlocks the Heavy UCAV.'},
   {id:'pay3',tier:3,cost:120,name:'Thermobaric Fill',desc:'Another +20% damage for every drone.'},
-  {id:'crew3',tier:3,cost:110,name:'Second Airfield',desc:'+3 launch slots.'},
+  {id:'crew3',tier:2,cost:90,name:'Second Airfield',desc:'+3 launch slots.'},
+  {id:'crew4',tier:3,cost:120,name:'Highway Launch Strips',desc:'+4 launch slots.'},
 ];
 const RANKS=[['Lieutenant',0],['Captain',20],['Major',48],['Lt. Colonel',85],['Colonel',130]];
 // enemy generals, one per campaign
@@ -276,7 +275,7 @@ const GENERALS=[
   {id:'kessan',name:'Adm. Yuri Kessan',nick:'"The Tide"',front:'The Southern Coast',look:{skin:'#d8a888',hat:'naval',hatc:'#1e2a4a',mous:0,hair:'#b8b8c0',scar:0,beard:1},
     doc:'Commands the fleet. He means to land troops on your coast behind the lines.',
     quote:'"The sea does not care how brave you are."',
-    missions:['naval','coastal','convoy','naval','finalsea'],aa:1,ew:1,dr:0,hide:.15},
+    missions:['naval','coastal','convoy','naval','finalsea'],aa:1,ew:0,dr:0,hide:.1},
   {id:'okhrin',name:'Marshal Pavel Okhrin',nick:'"The Umbrella"',front:'The Eastern Hills',look:{skin:'#c8946c',hat:'cap',hatc:'#4a2a2a',mous:1,hair:'#6a6a6a',scar:0},
     doc:'Air defense and drone swarms. He has studied you, and he has built an umbrella.',
     quote:'"Nothing flies over my men. Nothing."',
@@ -305,11 +304,9 @@ const NAME_A=['Night','Iron','Steel','Silent','Black','Red','Grey','Wild','Storm
 const NAME_B=['Wasps','Hornets','Kestrels','Owls','Ravens','Foxes','Magpies','Swifts','Bees','Herons','Falcons','Crows','Lynxes','Moths','Jackdaws','Martens'];
 const NAME_C=['Unit','Squadron','Company','Detachment','Wing'];
 const STORY={
-  intro:['Varna is a small country. Farms, forests, three rivers and one stubborn capital.',
-    'Its neighbor, the Dominion of Korgath, is forty times larger. At dawn, its columns crossed the border.',
-    'Our army is brave, and our guns are slowing them down. But slowing them is not stopping them.',
-    'Command has scraped together a drone unit: volunteers, garage workshops, and whatever we can build or buy.',
-    'You command it. It may be the only thing that can win this war.'],
+  intro:['The Dominion of Korgath has invaded Varna, your small country.',
+    'Our army can slow their tanks, but it cannot stop them.',
+    'Varna\'s best hope is a new drone unit, and you command it.'],
   co:'Gen. Ana Morel',
 };
 const CO_LINES={
@@ -356,64 +353,61 @@ function frontLine(g,W,H,t){const y=x=>H*(FRONT_Y+Math.sin(x/W*9+1)*.012+Math.si
 function baseIcon(g,W,H){const x=W*.5,y=H*.92,s=W*.035;g.strokeStyle=COL.friend;g.lineWidth=1.5;g.strokeRect(x-s*1.6,y-s*.8,s*3.2,s*1.6);
   g.beginPath();g.moveTo(x-s,y+s*.4);g.lineTo(x,y-s*.5);g.lineTo(x+s,y+s*.4);g.stroke();g.fillStyle=COL.friend;g.font=`${Math.round(W*.032)}px VT323, monospace`;g.textAlign='center';g.fillText('LAUNCH SITE',x,y+s*1.9);g.textAlign='left'}
 
-/* ---------- hostile unit symbol: a diamond with a sign for its kind ---------- */
-function unitSymbol(g,u,x,y,s,{focus=false,flash=0,t=0}={}){
-  g.save();g.translate(x,y);
-  if(u.hidden){g.strokeStyle='rgba(255,85,69,.7)';g.setLineDash([3,3]);g.lineWidth=1.5;g.beginPath();g.moveTo(0,-s);g.lineTo(s,0);g.lineTo(0,s);g.lineTo(-s,0);g.closePath();g.stroke();g.setLineDash([]);
-    g.fillStyle='rgba(255,85,69,.8)';g.font=`${Math.round(s*1.2)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('?',0,1);g.restore();return}
-  const col=u.dead?COL.dead:flash>0?'#ffffff':COL.enemy;
-  g.fillStyle=u.dead?'rgba(60,60,50,.6)':'rgba(255,85,69,.16)';g.strokeStyle=col;g.lineWidth=u.prim?2:1.3;
-  g.beginPath();g.moveTo(0,-s);g.lineTo(s,0);g.lineTo(0,s);g.lineTo(-s,0);g.closePath();g.fill();g.stroke();
-  g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1.2;const q=s*.42;
-  switch(u.cat){
-    case'inf':g.beginPath();g.moveTo(-q,-q);g.lineTo(q,q);g.moveTo(q,-q);g.lineTo(-q,q);g.stroke();break;
-    case'armor':g.beginPath();g.ellipse(0,0,q*1.2,q*.6,0,0,7);g.stroke();break;
-    case'arty':g.beginPath();g.arc(0,0,q*.45,0,7);g.fill();break;
-    case'logi':g.beginPath();g.moveTo(-q,q*.2);g.lineTo(q,q*.2);g.stroke();g.beginPath();g.arc(-q*.6,q*.55,q*.3,0,7);g.arc(q*.6,q*.55,q*.3,0,7);g.fill();break;
-    case'struct':g.strokeRect(-q*.8,-q*.6,q*1.6,q*1.2);g.beginPath();g.moveTo(-q*.8,-q*.6);g.lineTo(0,-q*1.1);g.lineTo(q*.8,-q*.6);g.stroke();break;
-    case'aa':g.beginPath();g.arc(0,q*.4,q*.9,Math.PI,0);g.stroke();g.beginPath();g.moveTo(0,q*.4);g.lineTo(q*.5,-q*.6);g.stroke();break;
-    case'ew':g.beginPath();g.moveTo(-q,q*.5);g.lineTo(-q*.3,-q*.5);g.lineTo(q*.3,q*.5);g.lineTo(q,-q*.5);g.stroke();break;
-    case'naval':g.beginPath();g.moveTo(-q,-q*.1);g.lineTo(q,-q*.1);g.lineTo(q*.6,q*.5);g.lineTo(-q*.6,q*.5);g.closePath();g.stroke();break}
-  if(u.dead){g.strokeStyle='#8d9878';g.lineWidth=1.5;g.beginPath();g.moveTo(-s*.8,-s*.8);g.lineTo(s*.8,s*.8);g.moveTo(s*.8,-s*.8);g.lineTo(-s*.8,s*.8);g.stroke()}
-  else{const w=s*1.8,f=Math.max(0,u.hp/u.max);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(-w/2,s+3,w,3);g.fillStyle=f>.5?'#93e46c':f>.25?'#ffb627':'#ff5545';g.fillRect(-w/2,s+3,w*f,3)}
-  if(u.prim&&!u.dead){g.fillStyle=COL.amber;g.font=`${Math.round(s*.9)}px VT323, monospace`;g.textAlign='center';g.fillText('★',s*.95,-s*.55)}
-  if(focus){const b=s*1.45+Math.sin(t/5)*1.5;g.strokeStyle=COL.amber;g.lineWidth=2;for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(sx*b,sy*b*.55);g.lineTo(sx*b,sy*b);g.lineTo(sx*b*.55,sy*b);g.stroke()}}
-  g.restore()}
-// a friendly drone on the map: a small cyan arrow
-function droneMark(g,x,y,ang,s,col=COL.friend){g.save();g.translate(x,y);g.rotate(ang);g.fillStyle=col;g.beginPath();g.moveTo(s,0);g.lineTo(-s*.7,s*.6);g.lineTo(-s*.35,0);g.lineTo(-s*.7,-s*.6);g.closePath();g.fill();g.restore()}
-
-/* ---------- the drone camera: a little thermal picture of the target ---------- */
-const FW=96,FH=64;
-function feedTarget(g,type,cx,cy,k,hot){const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(cx+x*k),Math.round(cy+y*k),Math.max(1,Math.round(w*k)),Math.max(1,Math.round(h*k)))};
-  const H=hot,M='#b8b8b8',D='#707070';
+/* ---------- enemy units: small top-down pictures, so a tank looks like a tank ---------- */
+const HOST={body:'#d0503c',dark:'#5e1a12',lite:'#ffa48a',line:'#1c0804'},DEAD={body:'#55544c',dark:'#2c2b27',lite:'#76746a',line:'#121210'};
+function unitArt(g,type,s,P){
+  // side-view silhouettes: x to the right, ground at y=+0.62
+  const poly=(pts,c)=>{g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x*s,y*s):g.moveTo(x*s,y*s));g.closePath();g.fillStyle=c;g.fill()};
+  const rect=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x*s,y*s,w*s,h*s)};
+  const circ=(x,y,r,c)=>{g.beginPath();g.arc(x*s,y*s,r*s,0,7);g.fillStyle=c;g.fill()};
+  const line=(x1,y1,x2,y2,w,c)=>{g.strokeStyle=c;g.lineWidth=Math.max(1.5,w*s);g.lineCap='round';g.beginPath();g.moveTo(x1*s,y1*s);g.lineTo(x2*s,y2*s);g.stroke();g.lineCap='butt'};
+  const wheels=(xs,r=.17)=>xs.forEach(x=>{circ(x,.45,r+.05,P.line);circ(x,.45,r,P.dark);circ(x,.45,r*.4,P.lite)});
+  const cab=(x0)=>{poly([[x0,.32],[x0,-.25],[x0+.28,-.25],[x0+.42,.0],[x0+.42,.32]],P.body);poly([[x0+.06,-.18],[x0+.26,-.18],[x0+.36,.0],[x0+.06,.0]],P.lite)};
+  // a dark outline: draw everything once in the outline colour, slightly bigger, by stroking the shapes afterwards is costly, so shapes get a drop line under them
   switch(type){
-    case'tank':R(-7,-4,14,8,M);R(-6,-5,12,1,D);R(-6,4,12,1,D);R(-2,-2,5,4,H);R(3,-.5,7,1,M);R(-7,-3,2,6,H);break;
-    case'apc':R(-7,-3,14,6,M);R(-7,-3,3,6,H);R(2,-2,3,4,D);break;
-    case'truck':case'fuel':R(-8,-2.5,4,5,H);R(-4,-3,12,6,type==='fuel'?'#d8d8d8':M);if(type==='fuel')R(-3,-1,10,2,'#f0f0f0');break;
-    case'arty':case'coastal':R(-5,-3,10,6,M);R(-1,-1,10,2,H);R(-6,-4,3,8,D);break;
-    case'mlrs':R(-8,-2.5,4,5,H);R(-4,-3,12,6,M);for(let i=0;i<4;i++)R(-3+i*3,-2,2,4,D);break;
-    case'aagun':R(-4,-4,8,8,M);R(0,-1,7,1,H);R(0,1,7,1,H);R(-2,-2,4,4,H);break;
-    case'sam':R(-6,-4,12,8,M);for(let i=0;i<3;i++)R(-5+i*4,-3,3,6,'#d0d0d0');R(-7,-5,2,2,H);break;
-    case'ew':R(-8,-2.5,4,5,H);R(-4,-3,12,6,M);g.strokeStyle=H;g.beginPath();g.arc(cx+2*k,cy,3*k,0,7);g.stroke();break;
-    case'squad':for(let i=0;i<5;i++)R(-6+i*3,-1+((i*7)%3)-1,1.6,1.6,H);break;
-    case'trench':for(let i=0;i<8;i++)R(-10+i*2.6,(i%2?1:-1)*1.2,2.6,1.4,D);for(let i=0;i<4;i++)R(-8+i*5,-.5,1.4,1.4,H);break;
-    case'depot':case'cp':case'hq':R(-9,-6,18,12,D);R(-8,-5,16,10,M);R(-3,-2,6,4,H);if(type==='hq'){R(7,-9,1,5,H)}break;
-    case'bridge':R(-12,-6,24,12,'#202020');R(-12,-2,24,4,M);R(-12,-2,24,1,'#d0d0d0');break;
-    case'hive':R(-8,-5,16,10,D);for(let i=0;i<4;i++){R(-6+i*4,-1,3,1,H);R(-5+i*4,-2,1,3,H)}break;
-    case'boat':R(-8,-2,14,4,M);R(6,-1,3,2,M);R(-4,-1,4,2,H);break;
-    case'lship':R(-12,-4,22,8,M);R(10,-2,3,4,M);R(-10,-2,6,4,H);R(0,-3,8,6,D);break;
-    default:R(-4,-4,8,8,H)}}
-function drawFeed(c,type,t,seed,{boom=false,sea=false}={}){const g=c.getContext('2d');const r=srng(seed);
-  // ground: dark grey noise, cooler water if at sea
-  g.fillStyle=sea?'#0e0e10':'#1c1c1c';g.fillRect(0,0,FW,FH);const k=1.4+t*2.6;const ox=FW/2,oy=FH/2;
-  for(let i=0;i<260;i++){const x=(r()-.5)*FW*1.5,y=(r()-.5)*FH*1.5;g.fillStyle=r()<.5?'#262626':'#141414';g.fillRect(Math.round(ox+x*k*.6),Math.round(oy+y*k*.6),Math.ceil(k),Math.ceil(k))}
-  if(!sea){g.fillStyle='#2c2c2c';g.fillRect(0,Math.round(oy+6*k*.6),FW,Math.ceil(3*k))}
-  const wob=(1-t)*3;feedTarget(g,type,ox+Math.sin(t*20)*wob,oy+Math.cos(t*17)*wob,k*.9,'#ffffff');
-  // crosshair and frame
-  g.strokeStyle='rgba(147,228,108,.9)';g.lineWidth=1;g.beginPath();g.moveTo(ox-14,oy+.5);g.lineTo(ox-5,oy+.5);g.moveTo(ox+5,oy+.5);g.lineTo(ox+14,oy+.5);g.moveTo(ox+.5,oy-12);g.lineTo(ox+.5,oy-4);g.moveTo(ox+.5,oy+4);g.lineTo(ox+.5,oy+12);g.stroke();
-  for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(ox+sx*20,oy+sy*10);g.lineTo(ox+sx*24,oy+sy*10);g.lineTo(ox+sx*24,oy+sy*6);g.stroke()}
-  if(boom){const p=Math.min(1,(t-.82)/.18);if(p>0){g.fillStyle=`rgba(255,255,255,${1-p*.4})`;g.fillRect(0,0,FW,FH);if(p>.4){for(let i=0;i<500;i++){g.fillStyle=r()<.5?'#fff':'#000';g.fillRect(r()*FW|0,r()*FH|0,2,1)}}}}
-  g.fillStyle='rgba(0,0,0,.25)';for(let y=0;y<FH;y+=2)g.fillRect(0,y,FW,1)}
+    case'tank':poly([[-1,.3],[-.85,.62],[.85,.62],[1,.3]],P.line);poly([[-.95,.3],[-.82,.56],[.82,.56],[.95,.3]],P.dark);[-.6,-.3,0,.3,.6].forEach(x=>circ(x,.43,.11,P.lite));
+      poly([[-.95,.3],[-.85,-.02],[.9,-.02],[.98,.3]],P.body);poly([[-.45,-.02],[-.38,-.32],[.25,-.32],[.38,-.02]],P.body);rect(-.38,-.32,.6,.08,P.lite);line(.3,-.18,1.12,-.24,.13,P.line);line(.3,-.18,1.1,-.24,.07,P.lite);break;
+    case'apc':poly([[-.95,.35],[-.95,-.25],[.55,-.25],[.95,.05],[.95,.35]],P.body);rect(-.95,-.25,1.5,.1,P.lite);rect(-.2,-.42,.3,.17,P.dark);line(.1,-.35,.55,-.38,.07,P.line);wheels([-.65,-.2,.25,.65],.15);break;
+    case'truck':rect(-.95,-.45,1.35,.77,P.body);rect(-.95,-.45,1.35,.1,P.lite);for(let i=0;i<3;i++)rect(-.82+i*.42,-.33,.04,.62,P.dark);cab(.45);wheels([-.65,-.25,.7]);break;
+    case'fuel':g.beginPath();g.roundRect(-.95*s,-.35*s,1.35*s,.62*s,.3*s);g.fillStyle=P.lite;g.fill();rect(-.95,.15,1.35,.08,P.dark);cab(.45);wheels([-.65,-.25,.7]);break;
+    case'arty':line(-.2,.3,-1,.62,.1,P.dark);poly([[-.35,.3],[-.25,-.15],[.25,-.15],[.35,.3]],P.body);line(0,-.05,.95,-.8,.16,P.line);line(0,-.05,.93,-.78,.09,P.lite);circ(0,.4,.25,P.line);circ(0,.4,.2,P.dark);circ(0,.4,.08,P.lite);break;
+    case'coastal':poly([[-1,.62],[-.85,-.1],[.6,-.1],[.8,.62]],P.dark);rect(-.85,-.1,1.45,.1,P.lite);line(0,-.25,1.05,-.6,.16,P.line);line(0,-.25,1.03,-.58,.09,P.lite);poly([[-.35,-.1],[-.25,-.4],[.25,-.4],[.35,-.1]],P.body);break;
+    case'mlrs':poly([[-.9,-.05],[-.75,-.6],[.35,-.25],[.25,.2]],P.body);for(let i=0;i<3;i++)for(let j=0;j<2;j++)circ(-.62+i*.28+j*.07,-.44+i*.09+j*.2,.07,P.line);rect(-.95,.05,1.4,.27,P.dark);cab(.45);wheels([-.65,-.25,.7]);break;
+    case'aagun':poly([[-.8,.6],[-.6,.1],[.6,.1],[.8,.6]],P.dark);poly([[-.4,.1],[-.3,-.25],[.3,-.25],[.4,.1]],P.body);line(-.1,-.2,.55,-.95,.11,P.line);line(.12,-.2,.77,-.95,.11,P.line);line(-.1,-.2,.53,-.93,.06,P.lite);line(.12,-.2,.75,-.93,.06,P.lite);break;
+    case'sam':rect(-.95,.0,1.4,.32,P.dark);cab(.45);wheels([-.65,-.25,.7]);for(const o of [0,.22]){line(-.85,.0-o*.3,.25,-.75-o,.16,P.line);line(-.83,-.01-o*.3,.22,-.74-o,.1,P.body);circ(.24,-.75-o,.07,P.lite)}break;
+    case'ew':rect(-.95,-.2,1.35,.52,P.body);cab(.45);wheels([-.65,-.25,.7]);line(-.3,-.2,-.3,-.85,.06,P.line);g.beginPath();g.ellipse(-.3*s,-.75*s,.42*s,.18*s,-.4,0,7);g.fillStyle=P.lite;g.fill();g.strokeStyle=P.line;g.lineWidth=1;g.stroke();circ(-.3,-.75,.06,P.dark);break;
+    case'squad':for(const x of [-.6,0,.6]){circ(x,-.45,.17,P.line);circ(x,-.45,.13,P.body);poly([[x-.15,-.3],[x+.15,-.3],[x+.13,.2],[x-.13,.2]],P.body);line(x-.07,.2,x-.12,.6,.1,P.dark);line(x+.07,.2,x+.12,.6,.1,P.dark);line(x+.05,-.15,x+.38,-.42,.06,P.line)}break;
+    case'trench':rect(-1,.3,2,.32,P.dark);for(let i=0;i<6;i++){g.beginPath();g.roundRect((-1+i*.34)*s,.05*s,.32*s,.27*s,.08*s);g.fillStyle=i%2?P.body:P.lite;g.fill()}
+      for(const x of [-.55,.15,.7]){circ(x,-.02,.14,P.line);circ(x,-.02,.11,P.dark)}break;
+    case'depot':for(const [x,y] of [[-.9,.0],[-.35,.0],[.2,.0],[-.62,-.55],[-.07,-.55]]){rect(x-.02,y-.02,.54,.58,P.line);rect(x,y,.5,.54,P.body);line(x,y,x+.5,y+.54,.04,P.dark);line(x+.5,y,x,y+.54,.04,P.dark)}
+      g.beginPath();g.roundRect(.75*s,-.1*s,.25*s,.7*s,.06*s);g.fillStyle=P.lite;g.fill();break;
+    case'bridge':rect(-1.05,.35,2.1,.27,'#1c4a5e');g.beginPath();g.moveTo(-1.05*s,-.1*s);g.quadraticCurveTo(0,-.6*s,1.05*s,-.1*s);g.lineTo(1.05*s,.05*s);g.quadraticCurveTo(0,-.42*s,-1.05*s,.05*s);g.closePath();g.fillStyle=P.body;g.fill();
+      rect(-1.05,-.2,2.1,.1,P.lite);for(const x of [-.6,0,.6])rect(x-.05,-.15,.1,.5,P.dark);break;
+    case'cp':poly([[-.85,.6],[0,-.4],[.85,.6]],P.body);poly([[-.2,.6],[0,.15],[.2,.6]],P.dark);line(.5,.6,.5,-.95,.06,P.line);poly([[.5,-.95],[.95,-.85],[.5,-.72]],P.lite);break;
+    case'hq':rect(-.95,-.4,1.9,1.02,P.line);rect(-.9,-.35,1.8,.95,P.body);rect(-.9,-.35,1.8,.12,P.lite);for(const x of [-.65,-.25,.25,.65])rect(x-.1,-.1,.2,.22,P.dark);rect(-.15,.25,.3,.35,P.dark);
+      line(0,-.35,0,-1.05,.06,P.line);poly([[0,-1.05],[.5,-.93],[0,-.8]],P.lite);break;
+    case'hive':rect(-.9,.2,1.8,.42,P.dark);for(const x of [-.55,0,.55]){line(x,.2,x,-.05,.06,P.line);circ(x,-.25,.08,P.lite);line(x-.25,-.25,x+.25,-.25,.06,P.body);circ(x-.25,-.25,.07,P.line);circ(x+.25,-.25,.07,P.line)}break;
+    case'boat':poly([[-1,-.05],[.85,-.05],[1.05,-.3],[.9,.35],[-.85,.35]],P.body);rect(-.95,.25,1.85,.1,P.dark);poly([[-.45,-.05],[-.35,-.5],[.15,-.5],[.25,-.05]],P.lite);line(.4,-.12,.85,-.2,.07,P.line);line(-.1,-.5,-.1,-.85,.04,P.line);break;
+    case'lship':poly([[-1.1,-.1],[1.0,-.1],[1.15,-.35],[1.0,.45],[-1.0,.45]],P.body);rect(-1.05,.33,2.05,.12,P.dark);poly([[-.85,-.1],[-.75,-.75],[-.2,-.75],[-.1,-.1]],P.lite);rect(-.65,-.62,.32,.12,P.dark);line(-.5,-.75,-.5,-1.05,.04,P.line);
+      rect(.1,-.3,.8,.2,P.dark);break;
+    default:circ(0,0,.6,P.body)}}
+function unitSymbol(g,u,x,y,s,{focus=false,flash=0,t=0}={}){
+  g.save();g.translate(Math.round(x),Math.round(y));
+  if(u.hidden){g.strokeStyle='rgba(255,85,69,.75)';g.setLineDash([3,3]);g.lineWidth=1.5;g.beginPath();g.arc(0,0,s*.8,0,7);g.stroke();g.setLineDash([]);
+    g.fillStyle='rgba(255,85,69,.9)';g.font=`${Math.round(s*1.1)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('?',0,1);g.restore();return}
+  // a soft shadow pad under the unit so it reads on any terrain
+  g.fillStyle=u.dead?'rgba(0,0,0,.25)':'rgba(255,85,69,.12)';g.beginPath();g.arc(0,0,s*1.15,0,7);g.fill();
+  const P=u.dead?DEAD:flash>0&&flash%4<2?{body:'#ffffff',dark:'#ffd0c0',lite:'#ffffff',line:'#ffffff'}:HOST;
+  unitArt(g,u.type,s,P);
+  if(u.dead){g.fillStyle='rgba(30,30,28,.6)';g.beginPath();g.arc(s*.1,-s*.3,s*.45,0,7);g.arc(-s*.25,-s*.55,s*.3,0,7);g.fill()}
+  else{const w=s*1.9,f=Math.max(0,u.hp/u.max);g.fillStyle='rgba(0,0,0,.7)';g.fillRect(-w/2,s*1.2,w,3);g.fillStyle=f>.5?'#93e46c':f>.25?'#ffb627':'#ff5545';g.fillRect(-w/2,s*1.2,w*f,3)}
+  if(u.prim&&!u.dead){g.fillStyle='#ffb627';g.font=`${Math.round(s*1.05)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('★',s*1.05,-s*.95)}
+  if(focus){const b=s*1.45+Math.sin(t/5)*1.5;g.strokeStyle='#ffb627';g.lineWidth=2;for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(sx*b,sy*b*.55);g.lineTo(sx*b,sy*b);g.lineTo(sx*b*.55,sy*b);g.stroke()}}
+  g.restore()}
+// a friendly drone on the map, drawn with its own silhouette and turned to its heading
+const dronePics=new Map();
+function droneMark(g,x,y,ang,s,type='fpv',col){const k=type+(col||'');let c=dronePics.get(k);if(!c){c=droneIcon(type,16,col);dronePics.set(k,c)}
+  g.save();g.translate(x,y);g.rotate(ang+Math.PI/2);g.drawImage(c,-s,-s,s*2,s*2);g.restore()}
 
 /* ---------- portraits of the generals: small pixel busts in green phosphor ---------- */
 function portrait(look,{tint=true,w=32,h=40}={}){const c=mk(w,h),g=c.getContext('2d');const R=(x,y,ww,hh,col)=>{g.fillStyle=col;g.fillRect(x,y,ww,hh)};
@@ -440,7 +434,7 @@ function shade(c,k){const n=parseInt(c.slice(1),16);const f=v=>Math.max(0,Math.m
 const CO_LOOK={skin:'#d8a888',hat:'beret',hatc:'#2f4a3a',mous:0,hair:'#5a3a2a',scar:0};
 
 /* ---------- small drone icons for lists ---------- */
-function droneIcon(d,s=16){const c=mk(s,s),g=c.getContext('2d');g.strokeStyle='#5fd8ff';g.fillStyle='#5fd8ff';g.lineWidth=1;const m=s/2;
+function droneIcon(d,s=16,col='#5fd8ff'){const c=mk(s,s),g=c.getContext('2d');g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1;const m=s/2;
   const quad=()=>{for(const [x,y] of [[3,3],[s-4,3],[3,s-4],[s-4,s-4]]){g.beginPath();g.arc(x+.5,y+.5,2.2,0,7);g.stroke()}g.beginPath();g.moveTo(3,3);g.lineTo(s-4,s-4);g.moveTo(s-4,3);g.lineTo(3,s-4);g.stroke();g.fillRect(m-2,m-2,4,4)};
   const plane=(span,len)=>{g.fillRect(m-.5,m-len,2,len*2);g.fillRect(m-span,m-1,span*2,2);g.fillRect(m-span*.45,m+len-3,span*.9,2)};
   switch(d){case'fpv':case'fiber':quad();if(d==='fiber'){g.strokeStyle='#ffb627';g.beginPath();g.moveTo(m,m);g.quadraticCurveTo(s,s*.8,s,s);g.stroke()}break;
@@ -462,11 +456,11 @@ const has=id=>!!(S&&S.research[id]);
 const unlocked=d=>d==='fpv'||d==='recon'||RESEARCH.some(r=>r.unlock===d&&has(r.id));
 function rankIdx(p=S.prestige){let r=0;RANKS.forEach(([,need],i)=>{if(p>=need)r=i});return r}
 const rankName=()=>RANKS[rankIdx()][0];
-function slots(){return 10+(has('crew1')?2:0)+(has('crew2')?2:0)+(has('crew3')?3:0)}
+function slots(){return 10+(has('crew1')?2:0)+(has('crew2')?3:0)+(has('crew3')?3:0)+(has('crew4')?4:0)}
 function costOf(d){return Math.max(1,Math.round(DRONES[d].cost*(has('workshop')?.8:1)))}
 function jamRes(d){const b=DRONES[d].jr;return b>=1?1:Math.min(.95,b+(has('hop')?.25:0)+(has('auto')?.25:0))}
 function dmgMult(){return 1+(has('pay1')?.15:0)+(has('pay2')?.15:0)+(has('pay3')?.2:0)}
-function baseAcc(){return .72+(has('thermal')?.1:0)}
+function baseAcc(){return .8+(has('thermal')?.1:0)}
 const general=()=>GENERALS[S.camp];
 
 /* ---------- missions ---------- */
@@ -480,16 +474,16 @@ function adaptation(){const g=general();const src=g.adaptive?S.usageAll:S.usage;
   if((s.recon||0)>.15*k){out.hide=.15;out.notes.push('They are camouflaging more of their units.')}
   return out}
 function genMission(){const g=general(),key=g.missions[S.battle],R=MISSIONS[key];const c=S.camp,b=S.battle;
-  const ad=adaptation();const hpk=1+c*.12+b*.03;const units=[];
+  const ad=adaptation();const hpk=1+c*.07+b*.02;const units=[];
   const add=(type,prim,dep)=>{const U=UNITS[type];units.push({type,name:U.name,cat:U.cat,depth:dep!=null?dep:U.depth,max:Math.round(U.hp*hpk),hp:0,val:U.val,prim,shots:U.shots||0,acc:U.acc||0,jam:U.jam||0,spawn:U.spawn||0,hidden:false,dead:false})};
-  const extra=Math.floor((c+b)/4);
+  const extra=Math.floor((c+b)/5);
   R.prim.forEach(([t,n,dep],i)=>{const e=i===0?Math.floor(extra/2):i===1&&n>1?Math.ceil(extra/2):0;for(let k=0;k<n+e;k++)add(t,1,dep)});
   R.esc.forEach(([t,n])=>{for(let k=0;k<n;k++)add(t,0)});
   const sea=['naval','coastal','finalsea'].includes(key);
   for(let i=0;i<g.aa-1+(c>=2&&b>=2?1:0);i++)add(c>=2&&i%2===0?'sam':'aagun',0);
-  for(let i=0;i<g.ew;i++)if(i===0||b>=2)add('ew',0);
+  for(let i=0;i<Math.min(g.ew,b>=3?2:1);i++)add('ew',0);
   if(g.dr&&b>=1)add('hive',0);
-  for(let i=0;i<ad.ew;i++)add('ew',0);for(let i=0;i<ad.aagun;i++)add('aagun',0);for(let i=0;i<ad.sam;i++)add('sam',0);
+  for(let i=0;i<Math.min(1,ad.ew);i++)add('ew',0);for(let i=0;i<ad.aagun;i++)add('aagun',0);for(let i=0;i<ad.sam;i++)add('sam',0);
   if(!sea&&b>=1&&rnd()<.6)add(pick(['squad','truck','apc']),0);
   units.forEach(u=>{u.hp=u.max;u.hidden=!has('intel')&&rnd()<(g.hide+ad.hide)*(u.prim?.5:1)});
   // positions: depth rows from the front line (low) to the deep rear (high); the sea runs down the right edge
@@ -507,52 +501,50 @@ function fit(d,m){const D=DRONES[d];if(D.recon)return m.units.some(u=>u.hidden)?
   let bp=0,be=0;for(const u of m.units){if(u.dead||u.depth>D.range)continue;const a=D.atk[u.cat]||0;if(!a)continue;if(u.prim)bp=Math.max(bp,a/u.max);else be=Math.max(be,a/u.max)}
   const t=threat(m);let v=Math.max(bp>=.9?3:bp>=.45?2:bp>0?1:0,Math.min(be>=.6?2:be>0?1:0,D.hunter?2:1));if(v&&!D.exp&&t.aaL>=3&&D.eva<.3)v--;if(v&&jamRes(d)<.3&&t.ewL>=2)v--;return v}
 
-/* ---------- one wave ---------- */
-function resolveWave(B,launch,focus){
-  const m=B.m,ev=[];const ds=[];let id=0;
-  for(const [t,n] of Object.entries(launch))for(let i=0;i<n;i++)ds.push({t,D:DRONES[t],id:id++,fate:null,target:null});
-  const live=()=>ds.filter(d=>!d.fate);const L=u=>!u.dead;
-  // 1. jamming
-  const jam=Math.min(.7,m.units.filter(L).reduce((s,u)=>s+u.jam,0)+m.genEw*.05);
-  if(jam>0)for(const d of ds){if(d.D.decoy)continue;if(rnd()<jam*(1-jamRes(d.t))){d.fate='jam';ev.push({k:'jam',d})}}
-  // 2. drone fights
-  let E=Math.round(m.units.filter(L).reduce((s,u)=>s+u.spawn,0)+m.genDr*1.5+(m.genDr?rnd()*1.5:0));B.enemyDr=E;
-  for(const d of live().filter(d=>d.D.interceptor)){for(let k=0;k<2&&E>0;k++)if(rnd()<.8){E--;ev.push({k:'intercept',d})}}
-  for(let i=0;i<E;i++){const pool=live().filter(d=>!d.D.interceptor);const v=pool.length?pick(pool):pick(live()||[]);if(!v)break;if(rnd()<.45*(1-v.D.eva*.5)){v.fate='drone';ev.push({k:'dronekill',d:v})}}
-  const accB=baseAcc(),mult=dmgMult();
-  const strike=(d,u)=>{const a=(d.D.atk[u.cat]||0)*mult*(.85+rnd()*.3);const hit=rnd()<accB+B.recon;const dmg=Math.max(1,Math.round(a*(hit?1:.3)));
-    u.hp-=dmg;d.target=u;S.stats.strikes++;const kill=u.hp<=0&&!u.dead;if(kill){u.dead=true;u.hp=0;S.stats.kills++}ev.push({k:'strike',d,u,dmg,kill,hit});if(d.D.exp)d.fate='spent'};
-  const pickTarget=(d,list)=>{let best=null,bs=0;for(const u of list){if(u.dead||u.hidden||u.depth>d.D.range)continue;const a=d.D.atk[u.cat]||0;if(!a)continue;
-      const left=u.hp-(u.pend||0);let s=a*(u.prim?1.4:1)*(u===focus?4:1)*(left>0?1:.08)*(d.D.hunter&&(u.cat==='aa'||u.cat==='ew')?5:1);if(s>bs){bs=s;best=u}}return best};
-  // 3. recon reveals before anything is aimed
-  const rc=live().filter(d=>d.D.recon).length;B.recon=Math.min(.3,rc*.1);
-  if(rc&&m.units.some(u=>u.hidden&&!u.dead)){m.units.forEach(u=>{if(u.hidden){u.hidden=false;ev.push({k:'reveal',u})}})}
-  // 4. radar hunters strike the air defense before it fires
-  m.units.forEach(u=>u.pend=0);
-  for(const d of live().filter(d=>d.D.hunter)){const u=pickTarget(d,m.units.filter(u=>u.cat==='aa'||u.cat==='ew'));if(u){u.pend+=d.D.atk[u.cat]*mult;strike(d,u)}}
-  // 5. air defense fires
-  for(const u of m.units.filter(u=>L(u)&&u.shots&&!u.hidden)){const acc=u.acc*(1+B.alert*.15);for(let s=0;s<u.shots;s++){const pool=live();if(!pool.length)break;
-      const w=pool.map(d=>d.D.decoy?4*m.decoyEff:1),tot=w.reduce((a,b)=>a+b,0);let r=rnd()*tot,v=pool[0];for(let i=0;i<pool.length;i++){if((r-=w[i])<0){v=pool[i];break}}
-      if(v.D.decoy){if(rnd()<.9){v.fate='decoy';ev.push({k:'decoy',d:v,u})}else ev.push({k:'miss',u,d:v})}
-      else if(rnd()<acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',u,d:v})}}
-  // hidden air defense also fires, once found or not
-  for(const u of m.units.filter(u=>L(u)&&u.shots&&u.hidden)){for(let s=0;s<u.shots;s++){const pool=live().filter(d=>!d.D.decoy);if(!pool.length)break;const v=pick(pool);if(rnd()<u.acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}}}
-  // 6. the strike
-  m.units.forEach(u=>u.pend=0);
-  const strikers=live().filter(d=>!d.D.recon&&!d.D.decoy&&!d.D.interceptor&&!(d.D.hunter&&d.fate));
-  strikers.sort((a,b)=>(b.D.atk.armor||0)-(a.D.atk.armor||0));
-  for(const d of strikers){const u=pickTarget(d,m.units);if(!u){d.idle=true;continue}u.pend+=(d.D.atk[u.cat]||0)*mult*.9;strike(d,u)}
-  // decoys that were not shot are spent anyway
-  for(const d of ds)if(d.D.decoy&&!d.fate)d.fate='spent';
-  // bookkeeping
-  for(const d of ds){S.usage[d.t]=(S.usage[d.t]||0)+1;S.usageAll[d.t]=(S.usageAll[d.t]||0)+1;B.avail[d.t]-=1;
-    if(!d.fate){B.avail[d.t]+=1}
-    else if(d.fate==='spent'){B.spent[d.t]=(B.spent[d.t]||0)+1;S.stats.spent++}
-    else{B.lost[d.t]=(B.lost[d.t]||0)+1;S.stats.lost++}}
-  S.stats.sorties++;B.alert++;B.wave++;
-  return{ds,ev,jam}}
-function score(m){const p=m.units.filter(u=>u.prim);const tot=p.reduce((s,u)=>s+u.max,0);const done=p.reduce((s,u)=>s+(u.max-Math.max(0,u.hp)),0);return tot?done/tot:0}
-function tierOf(sc){return sc>=.9?0:sc>=.6?1:sc>=.3?2:3}
+/* ---------- one wave: groups fly in the order the player set ----------
+   Each air defense site has a limited amount of fire per wave, so whatever flies first draws it. Enemy drones
+   attack the first groups they meet. Recon reveals hidden targets for its own group and every group after it,
+   and radar hunters dive on air defense before the rest of their group passes over it. */
+const DEFAULT_ORDER=['decoy','intercept','hunter','recon','loiter','longr','ucav','naval','hexa','fpv','fiber'];
+function resolveWave(B,groups,focus){
+  const m=B.m,out=[];const L=u=>!u.dead;const accB=baseAcc(),mult=dmgMult();let nid=0;
+  const jam=Math.min(.55,m.units.filter(L).reduce((s,u)=>s+u.jam,0)+m.genEw*.05);
+  let E=Math.round(m.units.filter(L).reduce((s,u)=>s+u.spawn,0)+m.genDr*1.5+(m.genDr?rnd()*1.5:0));
+  // ammunition: each gun or missile site can engage about two groups' worth this wave
+  for(const u of m.units)u.ammo=u.shots*2;
+  for(const [t,n] of groups){if(!n)continue;const D=DRONES[t];const ds=[];for(let i=0;i<n;i++)ds.push({t,D,id:nid++,fate:null,target:null});
+    const ev=[];const live=()=>ds.filter(d=>!d.fate);
+    // jamming cuts some radio links before they arrive
+    if(jam>0&&!D.decoy)for(const d of ds)if(rnd()<jam*(1-jamRes(t))){d.fate='jam';ev.push({k:'jam',d})}
+    // interceptors clear enemy drones; the rest of the enemy drones attack this group
+    if(D.interceptor)for(const d of live()){for(let k=0;k<2&&E>0;k++)if(rnd()<.8){E--;ev.push({k:'intercept',d})}}
+    else{let tries=Math.min(E,live().length);while(tries-->0&&E>0){const v=pick(live());if(!v)break;E--;if(rnd()<(D.decoy?.8:.45*(1-D.eva*.5))){v.fate=D.decoy?'decoy':'drone';ev.push({k:'dronekill',d:v})}}}
+    // recon finds what is hidden
+    if(D.recon&&live().length){const found=m.units.filter(u=>u.hidden&&!u.dead);found.forEach(u=>{u.hidden=false});if(found.length)ev.push({k:'reveal',units:found})}
+    B.recon=Math.max(B.recon||0,Math.min(.3,live().filter(d=>d.D.recon).length*.1));
+    const strike=(d,u)=>{const a=(d.D.atk[u.cat]||0)*mult*(.85+rnd()*.3);const hit=rnd()<accB+B.recon;const dmg=Math.max(1,Math.round(a*(hit?1:.3)));
+      u.hp-=dmg;d.target=u;S.stats.strikes++;const kill=u.hp<=0&&!u.dead;if(kill){u.dead=true;u.hp=0;S.stats.kills++}ev.push({k:'strike',d,u,dmg,kill,hit});if(d.D.exp)d.fate='spent'};
+    const pickTarget=(d,list)=>{let best=null,bs=0;for(const u of list){if(u.dead||u.hidden||u.depth>d.D.range)continue;const a=d.D.atk[u.cat]||0;if(!a)continue;
+        const left=u.hp-(u.pend||0);const s=a*(u.prim?1.4:1)*(u===focus?4:1)*(left>0?1:.08);if(s>bs){bs=s;best=u}}return best};
+    m.units.forEach(u=>u.pend=0);
+    // radar hunters strike air defense before it can fire on their group
+    if(D.hunter)for(const d of live()){const u=pickTarget(d,m.units.filter(u=>u.cat==='aa'||u.cat==='ew'));if(u){u.pend+=d.D.atk[u.cat]*mult;strike(d,u)}}
+    // air defense fires at the group as it passes
+    for(const u of m.units.filter(u=>L(u)&&u.shots&&u.ammo>0)){if(D.decoy&&m.decoyEff<1&&rnd()>m.decoyEff)continue;
+      u.hidden=false;const acc=u.acc*(1+B.alert*.15);const n2=Math.min(u.ammo,u.shots);for(let k=0;k<n2;k++){const pool=live();if(!pool.length)break;u.ammo--;const v=pick(pool);
+        if(D.decoy){if(rnd()<.85){v.fate='decoy';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',d:v,u})}
+        else if(rnd()<acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',d:v,u})}}
+    // the strike
+    if(!D.recon&&!D.decoy&&!D.interceptor){m.units.forEach(u=>u.pend=0);for(const d of live()){if(d.D.hunter)continue;const u=pickTarget(d,m.units);if(!u){d.idle=true;continue}u.pend+=(d.D.atk[u.cat]||0)*mult*.9;strike(d,u)}
+      if(D.hunter)for(const d of live()){const u=pickTarget(d,m.units);if(u)strike(d,u);else d.idle=true}}
+    for(const d of ds)if(d.D.decoy&&!d.fate)d.fate='spent';
+    for(const d of ds){S.usage[t]=(S.usage[t]||0)+1;S.usageAll[t]=(S.usageAll[t]||0)+1;B.avail[t]-=1;
+      if(!d.fate)B.avail[t]+=1;else if(d.fate==='spent'){B.spent[t]=(B.spent[t]||0)+1;S.stats.spent++}else{B.lost[t]=(B.lost[t]||0)+1;S.stats.lost++}}
+    out.push({t,ds,ev})}
+  S.stats.sorties++;B.alert++;B.wave++;B.enemyDr=E;
+  return out}
+function score(m){const p=m.units.filter(u=>u.prim);if(!p.length)return 0;const dead=p.filter(u=>u.dead).length;const dmg=p.filter(u=>!u.dead).reduce((s,u)=>s+(1-u.hp/u.max),0);return Math.min(1,(dead+dmg*.25)/p.length)}
+function tierOf(sc){return sc>=.999?0:sc>=.5?1:sc>=.2?2:3}
 const TIERS=[{name:'DECISIVE',col:'grn',funds:1.3,pres:10,front:2},{name:'SUCCESS',col:'amb',funds:1,pres:6,front:1},{name:'PARTIAL',col:'amb',funds:.6,pres:3,front:0},{name:'FAILED',col:'red',funds:.45,pres:0,front:-1}];
 function finishBattle(B){const m=B.m,sc=score(m),ti=tierOf(sc),T=TIERS[ti];
   // everything still in the sortie goes home
@@ -648,7 +640,7 @@ try{const st=JSON.parse(localStorage.getItem(SET)||'null');if(st){AU.setMusic(st
 const meter=(n,max=3,cls='on')=>`<span class="meter">${Array.from({length:max},(_,i)=>`<i class="${i<n?cls:''}"></i>`).join('')}</span>`;
 const fitBars=n=>`<span class="meter">${[0,1,2].map(i=>`<i class="${i<n?(n>=3?'grn':'on'):''}"></i>`).join('')}</span>`;
 function frontBar(){const need=CAMP_NEED,max=Math.max(need+2,5);let h='';for(let i=0;i<max;i++)h+=`<i class="${i<S.front?'us':''}"></i>`;
-  return`<div class="front">${S.front<0?`<span class="red small">${S.front}</span>`:''}${h}</div><div class="small dim" style="margin-top:.1rem">Front: ${S.front} of ${need} needed to hold · battle ${Math.min(S.battle+1,5)}/5</div>`}
+  return`<div class="front">${S.front<0?`<span class="red small">${S.front}</span>`:''}${h}</div><div class="small dim" style="margin-top:.1rem">Front points: ${S.front} of ${need}. Battle ${Math.min(S.battle+1,5)} of 5.</div>`}
 function header(s,title){const b=el('div','bar',`<b>${esc(title)}</b><span>${money(S.funds)} · ★${S.prestige}</span>`);s.el.appendChild(b);return b}
 
 /* ---------- title ---------- */
@@ -691,7 +683,7 @@ function nameScreen(){const s=screen('name');header2(s,'NAME YOUR UNIT');
   const nm=row(s,list,'',{l:()=>{ni=(ni-1+names.length)%names.length;draw();AU.play('tick')},r:()=>{ni++;if(ni>=names.length)names.push(genName());draw();AU.play('tick')}});
   row(s,list,'EDIT LETTERS',{a:()=>editName(cur(),v=>{names[ni]=v;draw()})});
   row(s,list,'CONFIRM',{cls:'btn',a:async()=>{S=newState(cur());S.checkpoint=null;save();await go(campaignIntro)}});
-  const draw=()=>{big.textContent=cur();nm.el.innerHTML=`<span>◀ Suggest another ▶</span><span class="r">${ni+1}</span>`;sub.textContent='◀ ▶ cycles names · A on Edit to change letters'};draw();
+  const draw=()=>{big.textContent=cur();nm.el.innerHTML=`<span>◀ Suggest another ▶</span><span class="r">${ni+1}</span>`;sub.textContent='Press ◀ or ▶ for another name, or choose Edit Letters to write your own.'};draw();
   s.back=()=>go(titleScreen);show(s)}
 function editName(v,done){const CH=" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'\".&";let a=(v.toUpperCase()+' '.repeat(20)).slice(0,20).split('');let c=0;
   const o=overlay(`<h3>EDIT CALLSIGN</h3><div class="ed" style="font-size:1.35rem;letter-spacing:.06em;white-space:pre;color:var(--amber)"></div><div class="small dim">▲▼ letter · ◀▶ move · A done · B cancel</div>`);const ed=o.querySelector('.ed');
@@ -699,36 +691,6 @@ function editName(v,done){const CH=" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'\".&"
   const L={key(b){if(b==='left'){c=Math.max(0,c-1)}else if(b==='right'){c=Math.min(19,c+1)}else if(b==='up'||b==='down'){const i=CH.indexOf(a[c]);a[c]=CH[(i+(b==='up'?1:-1)+CH.length)%CH.length]}
       else if(b==='a'||b==='start'){const out=a.join('').trim().replace(/\s+/g,' ');layers.splice(layers.indexOf(L),1);o.remove();if(out)done(out);AU.play('ok');return}
       else if(b==='b'){layers.splice(layers.indexOf(L),1);o.remove();AU.play('back');return}AU.play('tick');draw()}};layers.push(L)}
-
-/* ---------- a new front ---------- */
-async function campaignIntro(){const g=general();S.checkpoint=null;S.checkpoint=JSON.stringify(S);save();
-  const s=screen('dossier');header2(s,`FRONT ${S.camp+1} OF 5 · ${g.front.toUpperCase()}`);
-  const p=el('div','panel');p.innerHTML='<h3>ENEMY COMMANDER</h3>';const r=el('div','');r.style.cssText='display:flex;gap:.5rem';const pc=portrait(g.look);pc.className='port px';pc.style.width='5rem';pc.style.height='6.25rem';r.appendChild(pc);
-  r.appendChild(el('div','',`<div class="amb" style="font-size:1.15rem">${esc(g.name)}</div><div class="red">${esc(g.nick)}</div><div class="desc" style="margin-top:.2rem">${esc(g.doc)}</div>`));p.appendChild(r);s.el.appendChild(p);
-  const q=el('div','panel',`<div class="msg" style="font-size:1rem">${esc(g.quote)}</div>`);s.el.appendChild(q);
-  const hint=el('div','panel small',`Win enough battles here to hold the front: ${CAMP_NEED} front points over five battles. Decisive wins give 2, wins give 1, failures cost 1.`);s.el.appendChild(hint);
-  s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);row(s,list,'TO HEADQUARTERS',{cls:'btn',a:()=>go(hq)});show(s);AU.music('tension');
-  if(S.camp===0){await msg(`${S.unit}. Good name. You'll need it.`,{who:STORY.co,port:portrait(CO_LOOK)});await msg('Brask\'s tanks are rolling across the northern plains. Start with what you have: FPVs and a pair of recon planes. Research will get you more.',{who:STORY.co,port:portrait(CO_LOOK)})}
-  else await msg(['','The Silence is coming. Vorst jams everything. Think about what flies without a radio.','Kessan\'s fleet is off the southern coast. Ships need something that swims, or something that reaches far.','Okhrin has built an umbrella of guns and drones. You\'ll need to tear holes in it before anything gets through.','This is the last front. Dravik himself. He has studied everything you\'ve done. Surprise him.'][S.camp],{who:STORY.co,port:portrait(CO_LOOK)})}
-
-/* ---------- headquarters ---------- */
-function hq(){const s=screen('hq');const g=general();
-  s.el.appendChild(el('div','bar',`<b>${esc(S.unit.toUpperCase())}</b><span>${rankName()}</span>`));
-  const res=el('div','panel',`<div style="display:flex;justify-content:space-between"><span>FUNDS <span class="amb">${money(S.funds)}</span></span><span>PRESTIGE <span class="amb">★${S.prestige}</span></span><span>SLOTS <span class="amb">${slots()}</span></span></div>`);s.el.appendChild(res);
-  const nxt=RANKS[rankIdx()+1];if(nxt)res.appendChild(el('div','small dim',`Next rank ${nxt[0]} at ★${nxt[1]} · unlocks research tier ${rankIdx()+2} and more aid`));
-  const cp=el('div','panel');cp.innerHTML=`<h3>FRONT ${S.camp+1}/5 · ${esc(g.front.toUpperCase())}</h3>`;const r=el('div','');r.style.cssText='display:flex;gap:.45rem;align-items:center';const pc=portrait(g.look);pc.className='port px';r.appendChild(pc);
-  r.appendChild(el('div','',`<div class="amb">${esc(g.name)}</div><div class="red small">${esc(g.nick)}</div><div style="margin-top:.25rem">${frontBar()}</div>`));r.lastChild.style.flex='1';cp.appendChild(r);s.el.appendChild(cp);
-  const stockTot=Object.values(S.stock).reduce((a,b)=>a+b,0);
-  const list=el('div','list');s.el.appendChild(list);
-  row(s,list,`NEXT MISSION <span class="r">▶</span>`,{cls:'big',a:()=>{if(!stockTot){toast('No drones in stock. Visit the hangar.');return}go(briefing)}});
-  row(s,list,`HANGAR <span class="r">${stockTot} drones</span>`,{a:()=>go(hangar)});
-  const can=RESEARCH.filter(x=>!has(x.id)&&x.tier<=rankIdx()&&x.cost<=S.funds).length;
-  row(s,list,`RESEARCH <span class="r">${can?`<span class="amb">${can} ready</span>`:''}</span>`,{a:()=>go(research)});
-  row(s,list,'RECORDS',{a:()=>go(records)});
-  row(s,list,'SETTINGS',{a:()=>settingsScreen(hq)});
-  row(s,list,'QUIT TO TITLE',{a:()=>{save();go(titleScreen)}});
-  s.el.appendChild(el('div','grow'));s.el.appendChild(el('div','hint','Progress saves after every battle and purchase'));
-  s.back=()=>{};show(s,{keep:true});AU.music('hq');save()}
 
 /* ---------- hangar: buy drones ---------- */
 function hangar(){const s=screen('hangar');header(s,'HANGAR');
@@ -743,9 +705,9 @@ function hangar(){const s=screen('hangar');header(s,'HANGAR');
     buy.el.innerHTML=`PLACE ORDER <span class="amb">${money(tot())}</span>&nbsp;of ${money(S.funds)}`};upd();
   s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):'◀ ▶ adds or removes drones from the order.'};
   s.back=()=>go(hq);show(s)}
-function droneInfo(d){const D=DRONES[d];const best=Object.entries(D.atk).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c])=>CATS[c]).join(', ');
-  return`<span class="amb">${D.name}</span> ${D.exp?'<span class="tag">ONE-WAY</span>':'<span class="tag grn">REUSABLE</span>'}${D.slots>1?`<span class="tag">${D.slots} SLOTS</span>`:''}<br>${D.desc}<br><span class="dim">Range ${['front','near rear','deep'][D.range]} · dodge ${Math.round(D.eva*100)}% · anti-jam ${Math.round(jamRes(d)*100)}%${best?' · best vs '+best:''}</span>`}
-
+function droneInfo(d){const D=DRONES[d];const best=Object.entries(D.atk).sort((a,b)=>b[1]-a[1]).filter(([,v])=>v>=6).slice(0,3).map(([c])=>CATS[c].toLowerCase());
+  const reach=['the front line','the front line and the rear','anywhere, even the deep rear'][D.range];
+  return`<span class="amb">${D.name}</span> <span class="tag">${D.exp?'ONE-WAY':'COMES HOME'}</span>${D.slots>1?`<span class="tag">${D.slots} SLOTS</span>`:''}<br>${D.desc}<br><span class="dim">Reaches ${reach}.${best.length?` Best against ${best.join(', ').replace(/, ([^,]*)$/,' and $1')}.`:''}</span>`}
 /* ---------- research ---------- */
 function research(){const s=screen('research');header(s,'RESEARCH');
   const box=el('div','panel grow scroll');const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
@@ -755,45 +717,97 @@ function research(){const s=screen('research');header(s,'RESEARCH');
         a:async()=>{S.funds-=r.cost;S.research[r.id]=1;AU.play('research');if(r.unlock){S.stock[r.unlock]=(S.stock[r.unlock]||0)+(DRONES[r.unlock].cost<10?4:1);toast(`${r.name} unlocked · prototypes delivered`)}else toast(`${r.name} complete`);save();research()}})}}
   row(s,list,'BACK',{cls:'btn',a:()=>go(hq)});
   s.onFocus=it=>{desc.innerHTML=it.r?`<span class="amb">${it.r.name}</span> · ${money(it.r.cost)}<br>${it.r.desc}`+(it.r.unlock?`<br><span class="dim">${DRONES[it.r.unlock].desc}</span>`:''):`Funds ${money(S.funds)}`};
-  s.back=()=>go(hq);show(s,{keep:true})}
+  s.back=()=>go(hq);show(s,{keep:true});if(S.camp===0&&S.battle===1&&!has('decoy'))coach(s,'Decoy Swarm is in tier 1. Select it and press A to research it.')}
 
 /* ---------- records ---------- */
 function records(){const s=screen('records');header(s,'RECORDS');const st=S.stats;
-  const p=el('div','panel',`<h3>${esc(S.unit.toUpperCase())}</h3><div class="small">Rank ${rankName()} · battles ${st.battles} (won ${st.wins}) · strikes ${st.strikes} · targets destroyed ${st.kills}<br>Drones expended ${st.spent} · drones lost ${st.lost}</div>`);s.el.appendChild(p);
-  const ad=adaptation();const a=el('div','panel',`<h3>ENEMY ADAPTATION</h3><div class="small">${ad.notes.length?ad.notes.map(esc).join('<br>'):'The enemy has not adapted to your tactics yet. Lean too hard on one drone and they will.'}</div>`);s.el.appendChild(a);
+  const p=el('div','panel',`<h3>${esc(S.unit.toUpperCase())}</h3><div class="small">Rank: ${rankName()}. Battles fought: ${st.battles}, won: ${st.wins}.<br>Targets destroyed: ${st.kills}. Drones used up: ${st.spent}. Drones lost: ${st.lost}.</div>`);s.el.appendChild(p);
+  const ad=adaptation();const a=el('div','panel',`<h3>HOW THE ENEMY IS ADAPTING</h3><div class="small">${ad.notes.length?ad.notes.map(esc).join('<br>'):'The enemy has not adapted yet. If you rely too much on one drone, they will.'}</div>`);s.el.appendChild(a);
   const box=el('div','panel grow scroll');box.innerHTML='<h3>DRONE CODEX</h3>';const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
   for(const d of DRONE_ORDER){const u=unlocked(d);const it=row(s,list,`<span>${u?DRONES[d].name:'??? (not researched)'}</span><span class="r">${u?money(costOf(d)):''}</span>`,{d:u?d:null});if(u)it.el.prepend(droneIcon(d,14))}
   row(s,list,'BACK',{cls:'btn',a:()=>go(hq)});s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):''};s.back=()=>go(hq);show(s)}
 
+/* ---------- tutorial prompts: one short line on top of a screen, gone once you do it ---------- */
+const tutorial=()=>!S.seen.tutDone&&S.camp===0&&S.battle===0;
+function coach(s,text){let c=s.el.querySelector('.coach');if(!text){if(c)c.remove();return}if(!c){c=el('div','coach','');s.el.insertBefore(c,s.el.children[1]||null)}c.textContent=text}
+function unitPic(type,px=28){const c=mk(px*2,px*2);const g=c.getContext('2d');unitSymbol(g,{type,cat:UNITS[type].cat,hp:1,max:1,prim:0},px,px,px*.62);c.style.cssText=`width:${px}px;height:${px}px;flex:0 0 auto`;return c}
+const FIT=[['No use','dim'],['Poor','dim'],['OK','amb'],['Good','grn']];
+
+/* ---------- a new front ---------- */
+async function campaignIntro(){const g=general();S.checkpoint=null;S.checkpoint=JSON.stringify(S);save();
+  const s=screen('dossier');header2(s,`FRONT ${S.camp+1} OF 5: ${g.front.toUpperCase()}`);
+  const p=el('div','panel');p.innerHTML='<h3>ENEMY COMMANDER</h3>';const r=el('div','');r.style.cssText='display:flex;gap:.5rem';const pc=portrait(g.look);pc.className='port px';pc.style.width='5rem';pc.style.height='6.25rem';r.appendChild(pc);
+  r.appendChild(el('div','',`<div class="amb" style="font-size:1.15rem">${esc(g.name)}</div><div class="red">${esc(g.nick)}</div><div class="desc" style="margin-top:.2rem">${esc(g.doc)}</div>`));p.appendChild(r);
+  p.appendChild(el('div','msg',`<div style="margin-top:.4rem">${esc(g.quote)}</div>`));s.el.appendChild(p);
+  s.el.appendChild(el('div','panel small',`To hold this front, earn ${CAMP_NEED} points over five battles. A win earns 1 point, a decisive win earns 2, and a failed mission costs 1.`));
+  s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);row(s,list,'TO HEADQUARTERS',{cls:'btn',a:()=>go(hq)});show(s);AU.music('tension');
+  const co=t=>msg(t,{who:STORY.co,port:portrait(CO_LOOK)});
+  if(S.camp===2&&!S.seen.seaGift){S.seen.seaGift=1;S.research.naval=1;S.stock.naval=(S.stock.naval||0)+4;save()}
+  await co(['Brask\'s tanks are crossing the northern plains. We have FPV drones and two recon planes. Let\'s put them to work.',
+    'Vorst jams radio signals, and most drones fly by radio. Research ways around her jamming.',
+    'Kessan is bringing a fleet to the southern coast. Our allies have sent Sea Drone plans and four prototypes. They are in your hangar.',
+    'Okhrin has guns and drones everywhere. Break his air defense before anything else gets through.',
+    'This is the last front: Dravik himself. He has studied everything you have done, so mix it up.'][S.camp])}
+
+/* ---------- headquarters ---------- */
+function hq(){const s=screen('hq');const g=general();
+  s.el.appendChild(el('div','bar',`<b>${esc(S.unit.toUpperCase())}</b><span>${rankName()}</span>`));
+  const res=el('div','panel',`<div style="display:flex;justify-content:space-between"><span>Funds <span class="amb">${money(S.funds)}</span></span><span>Prestige <span class="amb">★${S.prestige}</span></span><span>Launch slots <span class="amb">${slots()}</span></span></div>`);s.el.appendChild(res);
+  const nxt=RANKS[rankIdx()+1];if(nxt)res.appendChild(el('div','small dim',`Reach ★${nxt[1]} prestige for promotion to ${nxt[0]}. Each promotion opens more research.`));
+  const cp=el('div','panel');cp.innerHTML=`<h3>FRONT ${S.camp+1} OF 5: ${esc(g.front.toUpperCase())}</h3>`;const r=el('div','');r.style.cssText='display:flex;gap:.45rem;align-items:center';const pc=portrait(g.look);pc.className='port px';r.appendChild(pc);
+  r.appendChild(el('div','',`<div class="amb">${esc(g.name)}</div><div class="red small">${esc(g.nick)}</div><div style="margin-top:.25rem">${frontBar()}</div>`));r.lastChild.style.flex='1';cp.appendChild(r);s.el.appendChild(cp);
+  const stockTot=Object.values(S.stock).reduce((a,b)=>a+b,0);
+  const list=el('div','list');s.el.appendChild(list);
+  row(s,list,`NEXT MISSION <span class="r">▶</span>`,{cls:'big',a:()=>{if(!stockTot){toast('You have no drones. Buy some in the Hangar.');return}go(briefing)}});
+  row(s,list,`HANGAR <span class="r">${stockTot} drones in stock</span>`,{a:()=>go(hangar)});
+  const can=RESEARCH.filter(x=>!has(x.id)&&x.tier<=rankIdx()&&x.cost<=S.funds).length;
+  row(s,list,`RESEARCH <span class="r">${can?`<span class="amb">${can} affordable</span>`:''}</span>`,{a:()=>go(research)});
+  row(s,list,'RECORDS',{a:()=>go(records)});
+  row(s,list,'SETTINGS',{a:()=>settingsScreen(hq)});
+  row(s,list,'QUIT TO TITLE',{a:()=>{save();go(titleScreen)}});
+  s.el.appendChild(el('div','grow'));s.el.appendChild(el('div','hint','The game saves after every battle and purchase.'));
+  s.back=()=>{};show(s,{keep:true});AU.music('hq');save();
+  if(tutorial())coach(s,'Choose Next Mission to see your first target.');
+  else if(S.camp===0&&S.battle===1&&!S.seen.tip2){S.seen.tip2=1;coach(s,'You earned funds. Research Decoy Swarm before the next mission: it protects your drones from anti-aircraft guns.')}}
+
 /* ---------- briefing ---------- */
 function briefing(){if(!S.mission){S.mission=genMission();save()}const m=S.mission,g=general();const s=screen('brief');
-  s.el.appendChild(el('div','bar',`<b>BATTLE ${S.battle+1}/5</b><span class="red">${esc(g.nick)}</span>`));
-  s.el.appendChild(el('div','panel',`<h3>${esc(m.name.toUpperCase())}${m.final?' · <span class="red">DECISIVE</span>':''}</h3><div class="desc">${esc(m.brief)}</div>`));
-  const tp=el('div','panel grow scroll');tp.innerHTML='<h3>KNOWN TARGETS</h3>';const grp={};
+  s.el.appendChild(el('div','bar',`<b>BATTLE ${S.battle+1} OF 5</b><span class="red">${esc(g.name)}</span>`));
+  s.el.appendChild(el('div','panel',`<h3>${esc(m.name.toUpperCase())}${m.final?' · <span class="red">FINAL BATTLE</span>':''}</h3><div class="desc">${esc(m.brief)}</div>`));
+  const tp=el('div','panel grow scroll');tp.innerHTML='<h3>WHAT INTEL CAN SEE</h3>';const grp={};
   for(const u of m.units){const k=u.hidden?'?':u.type+(u.prim?'*':'');(grp[k]=grp[k]||{u,n:0}).n++}
-  for(const [k,{u,n}] of Object.entries(grp)){const name=k==='?'?'<span class="red">Unknown contact</span>':`${u.prim?'<span class="amb">★</span> ':''}${u.name}`;
-    tp.appendChild(el('div','row',`<span>${name} ×${n}</span><span class="r">${k==='?'?'—':CATS[u.cat]+' · '+['front','rear','deep'][u.depth]}</span>`))}
+  const ents=Object.entries(grp).sort((a,b)=>(b[1].u.prim?1:0)-(a[1].u.prim?1:0)||(a[0]==='?'?1:0)-(b[0]==='?'?1:0));
+  for(const [k,{u,n}] of ents){const r=el('div','row','');r.style.gap='.35rem';
+    if(k==='?'){r.innerHTML=`<span class="red" style="width:28px;text-align:center">?</span><span style="flex:1">${n} hidden ${plural(n,'unit')}. Recon can find ${n===1?'it':'them'}.</span>`}
+    else{r.appendChild(unitPic(u.type));r.insertAdjacentHTML('beforeend',`<span style="flex:1">${u.prim?'<span class="amb">★</span> ':''}${n>1?n+' × ':''}${u.name}</span><span class="r small">${['front line','rear','deep rear'][u.depth]}</span>`)}
+    tp.appendChild(r)}
   s.el.appendChild(tp);
-  const t=threat(m);s.el.appendChild(el('div','panel small',`<h3>THREATS</h3>Air defense ${meter(t.aaL,3,'red')} &nbsp; Jamming ${meter(t.ewL,3,'red')} &nbsp; Enemy drones ${meter(t.drL,3,'red')}`+(m.notes.length?`<div class="amb" style="margin-top:.2rem">INTEL: ${m.notes.map(esc).join(' ')}</div>`:'')+`${m.units.some(u=>u.prim&&u.depth===2)?'<div class="amb" style="margin-top:.15rem">Deep targets: only long-range drones can reach them.</div>':''}<div class="dim" style="margin-top:.15rem">Reward ${money(m.reward)} · ★ marks objectives</div>`));
-  const list=el('div','list');s.el.appendChild(list);row(s,list,'PLAN THE STRIKE ▶',{cls:'btn',a:()=>go(loadout)});row(s,list,'BACK TO HQ',{cls:'btn',a:()=>go(hq)});
-  s.back=()=>go(hq);show(s);AU.music('tension')}
+  const t=threat(m);s.el.appendChild(el('div','panel small',`Air defense: <span class="${t.aaL>1?'red':''}">${LEVEL[t.aaL]}</span> · Jamming: <span class="${t.ewL>1?'red':''}">${LEVEL[t.ewL]}</span> · Enemy drones: <span class="${t.drL>1?'red':''}">${LEVEL[t.drL]}</span>`+
+    (m.notes.length?`<div class="amb" style="margin-top:.2rem">${m.notes.map(esc).join(' ')}</div>`:'')+
+    (m.units.some(u=>u.prim&&u.depth===2)?'<div class="amb" style="margin-top:.2rem">Some targets are in the deep rear. Only long-range drones can reach them.</div>':'')+
+    `<div class="dim" style="margin-top:.15rem">Destroy the targets marked ★. Mission pay: ${money(m.reward)}.</div>`));
+  const list=el('div','list');s.el.appendChild(list);row(s,list,'CHOOSE DRONES ▶',{cls:'btn',a:()=>go(loadout)});row(s,list,'BACK TO HQ',{cls:'btn',a:()=>go(hq)});
+  s.back=()=>go(hq);show(s);AU.music('tension');
+  if(tutorial())coach(s,'★ marks the targets you must destroy. Here they are tanks and armored carriers.')}
 
 /* ---------- loadout ---------- */
 function loadout(){const m=S.mission;const s=screen('loadout');const bar=el('div','bar','');s.el.appendChild(bar);
-  const box=el('div','panel grow scroll');box.innerHTML='<h3>DRONE · FIT · TAKE</h3>';const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
+  const box=el('div','panel grow scroll');box.innerHTML='<h3>DRONE · FIT FOR THIS MISSION · NUMBER</h3>';const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
   const types=DRONE_ORDER.filter(d=>unlocked(d)&&(S.stock[d]||0)>0);const take={};const used=()=>Object.entries(take).reduce((a,[d,n])=>a+n*DRONES[d].slots,0);
-  const prev=S.lastLoad||{};types.forEach(d=>{take[d]=0});
+  const tut=tutorial();types.forEach(d=>{take[d]=0});
   const apply=src=>{types.forEach(d=>take[d]=0);for(const d of types){let n=Math.min(src[d]||0,S.stock[d]||0);while(n>0&&used()+DRONES[d].slots>slots())n--;take[d]=n}};
-  if(Object.keys(prev).length)apply(prev);else apply(suggest(m,types));
-  const rows=types.map(d=>{const it=row(s,list,'',{d,l:()=>{if(take[d]>0){take[d]--;upd();AU.play('tick')}},r:()=>{if(take[d]>=S.stock[d]||used()+DRONES[d].slots>slots()){AU.play('buzz');return}take[d]++;upd();AU.play('tick')}});return it});
-  const go1=row(s,list,'LAUNCH ▶',{cls:'btn',a:()=>{if(!used()){toast('Choose at least one drone');return}S.lastLoad={...take};const ld={};for(const d in take)if(take[d])ld[d]=take[d];for(const d in ld)S.stock[d]-=ld[d];S.loadout=ld;save();go(startBattle)}});
-  row(s,list,'SUGGEST A LOADOUT',{a:()=>{apply(suggest(m,types));upd();toast('Suggested by your staff')}});
+  if(!tut){if(S.lastLoad&&Object.keys(S.lastLoad).length)apply(S.lastLoad);else apply(suggest(m,types))}
+  const step=()=>{if(!tut)return;coach(s,(take.fpv||0)<6?'Press ▶ to load FPV drones. They are cheap, one-way attack drones.':!(take.recon>0)?'Now go down to Recon and add one. It finds hidden targets and flies home.':'Good. Choose Launch to start the mission.')};
+  const rows=types.map(d=>row(s,list,'',{d,l:()=>{if(take[d]>0){take[d]--;upd();AU.play('tick');step()}},r:()=>{if(take[d]>=S.stock[d]||used()+DRONES[d].slots>slots()){AU.play('buzz');toast(take[d]>=S.stock[d]?'That is all of them in stock':'Every launch slot is full');return}take[d]++;upd();AU.play('tick');step()}}));
+  row(s,list,'LAUNCH ▶',{cls:'btn',a:()=>{if(!used()){toast('Load at least one drone');return}S.lastLoad={...take};const ld={};for(const d in take)if(take[d])ld[d]=take[d];for(const d in ld)S.stock[d]-=ld[d];S.loadout=ld;save();go(startBattle)}});
+  row(s,list,'LET MY STAFF CHOOSE',{a:()=>{apply(suggest(m,types));upd();step()}});
   row(s,list,'BACK',{cls:'btn',a:()=>go(briefing)});
-  const upd=()=>{bar.innerHTML=`<b>LOADOUT</b><span>SLOTS ${used()}/${slots()}</span>`;rows.forEach(it=>{const d=it.d;it.el.innerHTML='';it.el.appendChild(droneIcon(d,14));
-      it.el.insertAdjacentHTML('beforeend',`<span style="flex:1">${DRONES[d].short} <span class="dim small">${DRONES[d].name}</span></span>${fitBars(fit(d,m))}<span class="qty"><i>◀</i><b>${take[d]}</b><i>▶</i></span><span class="r small">/${S.stock[d]}</span>`)})};upd();
-  s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):'Green bars: how well a drone fits this mission, from what intel can see.'};
-  s.select=()=>{apply(suggest(m,types));upd();toast('Suggested by your staff')};
-  s.back=()=>go(briefing);show(s)}
+  const upd=()=>{bar.innerHTML=`<b>CHOOSE DRONES</b><span>Launch slots used: ${used()} of ${slots()}</span>`;rows.forEach(it=>{const d=it.d;const f=FIT[fit(d,m)];it.el.innerHTML='';it.el.appendChild(droneIcon(d,14));
+      it.el.insertAdjacentHTML('beforeend',`<span style="flex:1">${DRONES[d].name}</span><span class="${f[1]} small" style="width:3.3rem">${f[0]}</span><span class="qty"><i>◀</i><b>${take[d]}</b><i>▶</i></span><span class="r small">of ${S.stock[d]}</span>`)})};upd();
+  s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):'Fit shows how useful each drone is against the targets intel can see.'};
+  s.select=()=>{apply(suggest(m,types));upd()};
+  s.back=()=>go(briefing);show(s);step()}
+
 function suggest(m,types,stock=S.stock){const out={};let left=slots();const t=threat(m);const want=(d,n)=>{n=Math.min(n,stock[d]||0);while(n>0&&n*DRONES[d].slots>left)n--;if(n>0){out[d]=(out[d]||0)+n;left-=n*DRONES[d].slots}};
   if(types.includes('recon'))want('recon',m.units.some(u=>u.hidden)?2:1);
   if(t.aaL>=2&&types.includes('hunter'))want('hunter',2);if(t.aaL>=1&&types.includes('decoy'))want('decoy',t.aaL+1);
@@ -804,19 +818,27 @@ function suggest(m,types,stock=S.stock){const out={};let left=slots();const t=th
 
 /* ---------- debrief ---------- */
 async function debrief(B,R){const s=screen('debrief');const T=TIERS[R.ti];const m=B.m;
-  s.el.appendChild(el('div','bar',`<b>AFTER-ACTION REPORT</b><span>${esc(m.name)}</span>`));
-  const st=el('div',`stamp ${T.col}`,T.name);s.el.appendChild(st);
+  s.el.appendChild(el('div','bar',`<b>MISSION RESULTS</b><span>${esc(m.name)}</span>`));
+  s.el.appendChild(el('div',`stamp ${T.col}`,T.name));
   const p=m.units.filter(u=>u.prim);const pd=p.filter(u=>u.dead).length;
-  s.el.appendChild(el('div','panel',`<h3>RESULT</h3>Objectives ${Math.round(R.sc*100)}% · ${pd}/${p.length} destroyed<br>Other targets destroyed ${m.units.filter(u=>!u.prim&&u.dead).length}<br>
-    <span class="dim">Drones expended ${Object.values(B.spent).reduce((a,b)=>a+b,0)} · lost ${Object.values(B.lost).reduce((a,b)=>a+b,0)}${R.recovered?` · recovered ${R.recovered}`:''}</span>`));
-  s.el.appendChild(el('div','panel',`<h3>REWARDS</h3>Funds <span class="amb">+${money(R.funds)}</span> <span class="dim">(budget ${money(R.budget)}${R.aid?`, aid ${money(R.aid)}`:''})</span><br>Prestige <span class="amb">+★${R.pres}</span>${R.eff?' <span class="grn">efficient strike</span>':''}<br>Front <span class="${T.front>0?'grn':T.front<0?'red':''}">${T.front>0?'+':''}${T.front}</span><div style="margin-top:.2rem">${frontBar()}</div>`));
+  const tg=el('div','panel');tg.innerHTML=`<h3>OBJECTIVES: ${pd} OF ${p.length} DESTROYED</h3>`;
+  for(const u of p){const r=el('div','row','');r.style.cssText='gap:.35rem;min-height:1.2rem;padding:.02rem .2rem';r.appendChild(unitPic(u.type,22));
+    r.insertAdjacentHTML('beforeend',`<span style="flex:1">${esc(u.name)}</span>${u.dead?'<span class="grn">destroyed</span>':`<span class="red">${Math.round(u.hp/u.max*100)}% left</span>`}`);tg.appendChild(r)}
+  const other=m.units.filter(u=>!u.prim&&u.dead);if(other.length)tg.appendChild(el('div','small dim',`Also destroyed: ${other.map(u=>esc(u.name)).join(', ')}.`));
+  s.el.appendChild(tg);
+  const fmt=o=>Object.entries(o).filter(([,n])=>n).map(([t,n])=>`${n} ${dname(t,n)}`).join(', ');
+  const used=fmt(B.spent),lost=fmt(B.lost),home=fmt(B.avail);
+  s.el.appendChild(el('div','panel small',`<h3>DRONES</h3>${used?`<div>Used up: ${used}.</div>`:''}${lost?`<div class="red">Lost: ${lost}.</div>`:''}${home?`<div class="dim">Back in stock: ${home}.</div>`:''}${R.recovered?`<div class="grn">Recovery teams brought back ${R.recovered} damaged drones.</div>`:''}`));
+  const fr=T.front>0?`The front moves +${T.front}.`:T.front<0?'The front slips back 1.':'The front holds where it was.';
+  s.el.appendChild(el('div','panel',`<h3>REWARDS</h3><div>Funds +<span class="amb">${money(R.funds)}</span> <span class="small dim">(mission ${money(R.funds-R.budget-R.aid)}, war budget ${money(R.budget)}${R.aid?`, foreign aid ${money(R.aid)}`:''})</span></div>
+    <div>Prestige +<span class="amb">★${R.pres}</span>${R.eff?' <span class="small grn">(bonus for losing few drones)</span>':''}</div><div>${fr} You have ${Math.max(0,S.front)} of the ${CAMP_NEED} points needed.</div>`));
   const before=rankIdx(S.prestige-R.pres),after=rankIdx();
   s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);
   row(s,list,'CONTINUE ▶',{cls:'btn',a:()=>afterBattle(R,before,after)});show(s);
-  AU.music('debrief');AU.play(R.ti<=1?'win':'lose');AU.play('stamp')}
+  AU.music('debrief');AU.play('stamp')}
 async function afterBattle(R,before,after){
   await msg(pick(R.ti<=1?CO_LINES.win:CO_LINES.lose),{who:STORY.co,port:portrait(CO_LOOK)});
-  if(after>before){AU.play('research');await msg(`Promotion: you are now ${RANKS[after][0]}. Research tier ${after+1} is open, and foreign aid grows with your reputation.`,{who:STORY.co,port:portrait(CO_LOOK)})}
+  if(after>before){AU.play('research');await msg(`You have been promoted to ${RANKS[after][0]}. New research is open, and foreign aid will grow.`,{who:STORY.co,port:portrait(CO_LOOK)})}
   if(campaignOver()){if(S.front>=CAMP_NEED)await campaignWon();else await campaignLost();return}
   save();go(hq)}
 async function campaignWon(){const g=general();AU.play('win');
@@ -839,123 +861,183 @@ async function ending(){S.won=1;save();const s=screen('end');s.el.appendChild(el
 function victoryScreen(){const s=screen('end');s.el.appendChild(el('div','grow'));const p=el('div','panel',`<div class="stamp grn">VICTORY</div><div style="text-align:center">${esc(S.unit)}<br><span class="dim">${rankName()} · ${S.stats.battles} battles · ${S.stats.kills} targets destroyed</span></div>`);s.el.appendChild(p);
   s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);row(s,list,'TO TITLE',{cls:'btn',a:()=>go(titleScreen)});show(s);AU.music('debrief')}
 
-/* ===================== BATTLE: plan a wave, watch it fly ===================== */
+/* ===================== BATTLE: plan a wave, then watch it fly across the map ===================== */
 let B=null,bRaf=0;
-function startBattle(){const m=S.mission;B={m,wave:1,maxWave:3,alert:0,avail:{...S.loadout},lost:{},spent:{},recon:0,focus:null,anim:null,log:[],plan:{}};
+const LEVEL=['none','light','heavy','very heavy'];
+function startBattle(){const m=S.mission;
+  let order=DEFAULT_ORDER.filter(d=>S.loadout[d]>0);
+  // in the first mission Recon starts at the back, so the player learns to move it up
+  if(!S.seen.tutDone&&S.camp===0&&S.battle===0&&order[0]==='recon')order=[...order.slice(1),'recon'];
+  B={m,wave:1,maxWave:3,alert:0,avail:{...S.loadout},lost:{},spent:{},recon:0,focus:null,order,plan:{},anim:null,fx:[],tracers:[],pops:[],raiders:[]};
+  for(const u of m.units){u.vhp=u.hp;u.vdead=u.dead;u.vhidden=u.hidden}
   battleScreen();AU.music('battle');AU.play('radio')}
-function battleScreen(){const s=screen('battle');const m=B.m;
+function battleScreen(){const s=screen('battle');
   const bar=el('div','bar','');s.el.appendChild(bar);
-  const mb=el('div','mapbox');const cv=el('canvas');mb.appendChild(cv);const feed=el('div','feed');const fc=mk(FW,FH);fc.className='px';feed.appendChild(fc);const fl=el('span','','');feed.appendChild(fl);mb.appendChild(feed);s.el.appendChild(mb);
-  const panel=el('div','panel');panel.style.cssText='flex:0 0 auto;height:11.2rem;overflow:hidden';s.el.appendChild(panel);
-  B.ui={bar,cv,feed,fc,fl,panel,s};
-  s.leave=()=>cancelAnimationFrame(bRaf);
-  s.back=()=>{};
+  const mb=el('div','mapbox');const cv=el('canvas');mb.appendChild(cv);s.el.appendChild(mb);
+  const panel=el('div','panel');panel.style.cssText='flex:0 0 auto;height:12.4rem;overflow:hidden;display:flex;flex-direction:column;gap:.15rem';s.el.appendChild(panel);
+  B.ui={bar,cv,panel,s};s.leave=()=>cancelAnimationFrame(bRaf);s.back=()=>{};
   show(s);planWave();
   const loop=t=>{if(SCR!==s)return;drawBattle(t);bRaf=requestAnimationFrame(loop)};bRaf=requestAnimationFrame(loop)}
 const availTot=()=>Object.values(B.avail).reduce((a,b)=>a+b,0);
-function targetsList(){return B.m.units.filter(u=>!u.dead&&!u.hidden)}
-function defaultPlan(){const wl=B.maxWave-B.wave+1;const p={};for(const [d,n] of Object.entries(B.avail)){if(!n)continue;const D=DRONES[d];
-    p[d]=(D.recon||D.hunter||D.interceptor)?n:wl<=1?n:Math.ceil(n/wl)}return p}
-function planWave(){const {s,panel,bar}=B.ui;s.items=[];panel.innerHTML='';s.busy=false;
-  bar.innerHTML=`<b>${esc(B.m.name.toUpperCase())}</b><span>WAVE ${B.wave}/${B.maxWave}${B.alert?` · <span class="red">ALERT ${B.alert}</span>`:''}</span>`;
-  B.plan=defaultPlan();const t=threat(B.m);
-  panel.appendChild(el('div','small',`<span class="dim">AA</span> ${meter(t.aaL,3,'red')} <span class="dim">JAM</span> ${meter(t.ewL,3,'red')} <span class="dim">DRONES</span> ${meter(t.drL,3,'red')} <span class="dim">· obj ${Math.round(score(B.m)*100)}%</span>`));
-  const box=el('div','scroll');box.style.cssText='height:5.1rem;margin:.15rem 0';const list=el('div','list');box.appendChild(list);panel.appendChild(box);const list2=el('div','list');panel.appendChild(list2);
-  const types=DRONE_ORDER.filter(d=>B.avail[d]>0);
-  const rows=types.map(d=>row(s,list,'',{d,l:()=>{if(B.plan[d]>0){B.plan[d]--;upd();AU.play('tick')}},r:()=>{if(B.plan[d]<B.avail[d]){B.plan[d]++;upd();AU.play('tick')}else AU.play('buzz')}}));
+const plural=(n,one,many)=>n===1?one:(many||one+'s');
+const dname=(t,n)=>n===1?DRONES[t].name:DRONES[t].plural||DRONES[t].name+'s';
+
+/* ---------- planning a wave ---------- */
+function defaultPlan(){const wl=B.maxWave-B.wave+1;const p={};for(const d of B.order){const n=B.avail[d]||0;const D=DRONES[d];
+    p[d]=(D.recon||D.hunter||D.interceptor||D.decoy)?n:wl<=1?n:Math.ceil(n*.6)}return p}
+function planWave(keepFocus){const {s,panel,bar}=B.ui;s.items=[];panel.innerHTML='';s.busy=false;
+  B.order=B.order.filter(d=>B.avail[d]>0);
+  bar.innerHTML=`<b>${esc(B.m.name.toUpperCase())}</b><span>WAVE ${B.wave} OF ${B.maxWave}</span>`;
+  if(!keepFocus)B.plan=defaultPlan();
+  const t=threat(B.m);
+  panel.appendChild(el('div','small dim',`Air defense: <span class="${t.aaL>1?'red':''}">${LEVEL[t.aaL]}</span> · Jamming: <span class="${t.ewL>1?'red':''}">${LEVEL[t.ewL]}</span> · Enemy drones: <span class="${t.drL>1?'red':''}">${LEVEL[t.drL]}</span>`));
+  const coach=el('div','coach','');panel.appendChild(coach);B.ui.coach=coach;
+  const box=el('div','scroll');box.style.cssText='flex:1 1 auto;min-height:0';const list=el('div','list');box.appendChild(list);panel.appendChild(box);const list2=el('div','list');panel.appendChild(list2);
+  let moving=null;
+  const rows=B.order.map(d=>row(s,list,'',{d,
+    l:()=>{if(moving)return;if(B.plan[d]>0){B.plan[d]--;upd();AU.play('tick');coachCheck()}},
+    r:()=>{if(moving)return;if(B.plan[d]<B.avail[d]){B.plan[d]++;upd();AU.play('tick');coachCheck()}else AU.play('buzz')},
+    a:()=>{moving=moving?null:d;upd()}}));
   const tg=row(s,list2,'',{l:()=>cycleFocus(-1),r:()=>cycleFocus(1),a:()=>cycleFocus(1)});
   const launch=row(s,list2,'',{cls:'btn',a:()=>launchWave()});
-  row(s,list2,'END MISSION · BRING DRONES HOME',{cls:'btn',a:async()=>{const c=await choose('End the mission now? Drones still in the air come home, and you are scored on what has been hit so far.',['End mission','Keep fighting'],{cancel:1});if(c===0)endBattle()}});
-  function cycleFocus(dir){const L=targetsList();const opts=[null,...L];let i=opts.indexOf(B.focus);i=(i+dir+opts.length)%opts.length;B.focus=opts[i];upd();AU.play('tick')}
-  const upd=()=>{rows.forEach(it=>{const d=it.d;it.el.innerHTML='';it.el.appendChild(droneIcon(d,13));it.el.insertAdjacentHTML('beforeend',`<span style="flex:1">${DRONES[d].short} <span class="dim small">${DRONES[d].exp?'one-way':'returns'}</span></span><span class="qty"><i>◀</i><b>${B.plan[d]}</b><i>▶</i></span><span class="r small">/${B.avail[d]}</span>`)});
-    tg.el.innerHTML=`<span>TARGET</span><span class="qty"><i>◀</i><b style="min-width:auto">${B.focus&&!B.focus.dead?esc(B.focus.name):'Best available'}</b><i>▶</i></span>`;
-    const n=Object.values(B.plan).reduce((a,b)=>a+b,0);launch.el.innerHTML=`LAUNCH WAVE ${B.wave} · ${n} DRONES`};
-  if(B.focus&&B.focus.dead)B.focus=null;upd();setFocus(s,Math.max(0,rows.length?0:0),true);
-  s.start=()=>launchWave();
-  if(B.wave===1&&!S.seen.battleTip){S.seen.battleTip=1;setTimeout(()=>msg('Each mission is three waves. Choose how many of each drone fly in this wave with ◀ ▶. Recon and decoys work best early. Anything you hold back can fly later, and a wave that wins early saves drones.',{who:STORY.co,port:portrait(CO_LOOK)}),300)}}
-async function launchWave(){const s=B.ui.s;const n=Object.values(B.plan).reduce((a,b)=>a+b,0);if(!n){toast('Choose drones for this wave');return}if(s.busy)return;s.busy=true;
-  const launch={};for(const [d,c] of Object.entries(B.plan))if(c)launch[d]=c;
+  row(s,list2,'END MISSION',{cls:'btn',a:async()=>{const c=await choose('End the mission now? Drones still at the launch site stay in your stock, and you are scored on what has been destroyed so far.',['End mission','Keep fighting'],{cancel:1});if(c===0)endBattle('ended')}});
+  function cycleFocus(dir){const L=B.m.units.filter(u=>!u.dead&&!u.hidden);const opts=[null,...L];let i=opts.indexOf(B.focus);i=(i+dir+opts.length)%opts.length;B.focus=opts[i];upd();AU.play('tick')}
+  // moving a row changes the launch order
+  s.key=(b,rep)=>{if(moving&&(b==='up'||b==='down')){const i=B.order.indexOf(moving),j=i+(b==='up'?-1:1);if(j<0||j>=B.order.length){AU.play('buzz');return}
+      B.order.splice(i,1);B.order.splice(j,0,moving);AU.play('tick');const keep=moving;planWave(true);const s2=B.ui.s;const k=s2.items.findIndex(it=>it.d===keep);setFocus(s2,k,true);s2.items[k].a();return}
+    if(moving&&b==='b'){moving=null;upd();return}navKey(s,b,rep)};
+  const upd=()=>{rows.forEach((it,i)=>{const d=it.d;it.el.innerHTML='';it.el.classList.toggle('moving',moving===d);
+      it.el.insertAdjacentHTML('beforeend',`<span class="dim" style="width:1.1rem">${i+1}</span>`);it.el.appendChild(droneIcon(d,13));
+      it.el.insertAdjacentHTML('beforeend',moving===d?`<span style="flex:1">${DRONES[d].name}</span><span>▲▼ move · A done</span>`:
+        `<span style="flex:1">${DRONES[d].name}</span><span class="qty"><i>◀</i><b>${B.plan[d]}</b><i>▶</i></span><span class="r small">of ${B.avail[d]}</span>`)});
+    tg.el.innerHTML=`<span>Aim first at</span><span class="qty"><i>◀</i><b style="min-width:auto">${B.focus&&!B.focus.dead?esc(B.focus.name):'Best target'}</b><i>▶</i></span>`;
+    const n=Object.values(B.plan).reduce((a,b)=>a+b,0);launch.el.innerHTML=`LAUNCH WAVE ${B.wave} (${n} ${plural(n,'drone')})`};
+  if(B.focus&&B.focus.dead)B.focus=null;upd();
+  setFocus(s,0,true);s.start=()=>launchWave();
+  coachCheck()}
+function coachSay(text){const c=B.ui&&B.ui.coach;if(!c)return;c.innerHTML=text?esc(text):'';c.style.display=text?'':'none'}
+function coachCheck(){if(S.seen.tutDone||S.camp>0||S.battle>0){coachSay('');return}
+  if(B.wave===1){if(B.order[0]!=='recon')coachSay('Recon should fly first so it can find hidden targets. Press A on Recon, then ▲ to move it up.');
+    else coachSay('Drones fly in this order. Press START or choose Launch to send the wave.')}
+  else coachSay('Send the rest of your FPVs. Use ▶ to raise their number, then launch.')}
+
+/* ---------- a wave in the air ---------- */
+async function launchWave(){const s=B.ui.s;const n=Object.values(B.plan).reduce((a,b)=>a+b,0);if(!n){toast('Choose some drones for this wave');return}if(s.busy)return;s.busy=true;
+  const groups=B.order.filter(d=>B.plan[d]>0).map(d=>[d,B.plan[d]]);
   const focus=B.focus&&!B.focus.dead?B.focus:null;
-  // snapshot positions before the wave changes anything
-  const res=resolveWave(B,launch,focus);
-  B.ui.panel.innerHTML='';const log=el('div','log');B.ui.panel.appendChild(log);B.ui.log=log;
-  AU.play('launch');setTimeout(()=>AU.play('buzzfly'),250);
+  for(const u of B.m.units){u.vhp=u.hp;u.vdead=u.dead;u.vhidden=u.hidden}
+  const before=B.m.units.map(u=>({u,hp:u.hp,dead:u.dead}));
+  const res=resolveWave(B,groups,focus);
+  B.ui.panel.innerHTML='';const log=el('div','log');B.ui.panel.appendChild(log);B.ui.log=log;B.ui.panel.appendChild(el('div','hint','Hold A to speed up'));
+  AU.play('launch');
   await animateWave(res);
-  // wave summary
-  const c=k=>res.ev.filter(e=>e.k===k).length;const strikes=res.ev.filter(e=>e.k==='strike');
-  addLog(`<span class="amb">WAVE ${B.wave-1}:</span> ${res.ds.length} up · ${c('jam')} jammed · ${c('aa')+c('dronekill')} shot down · ${strikes.length} hits · <span class="grn">${strikes.filter(e=>e.kill).length} destroyed</span>`);
-  await sleep(900);
+  for(const u of B.m.units){u.vhp=u.hp;u.vdead=u.dead;u.vhidden=u.hidden}
+  await waveReport(res,before);
   const allPrim=B.m.units.filter(u=>u.prim).every(u=>u.dead);
-  if(allPrim){addLog('<span class="grn">All objectives destroyed.</span>');await sleep(800);return endBattle()}
-  if(B.wave>B.maxWave||!availTot()){addLog(B.wave>B.maxWave?'The enemy has dispersed. Time to come home.':'No drones left to send.');await sleep(900);return endBattle()}
+  if(allPrim)return endBattle('won');
+  if(B.wave>B.maxWave)return endBattle('time');
+  if(!availTot())return endBattle('empty');
   planWave()}
 function addLog(h){if(!B.ui.log)return;B.ui.log.appendChild(el('div','',h));while(B.ui.log.children.length>7)B.ui.log.firstChild.remove()}
-function endBattle(){const R=finishBattle(B);S.battle++;S.mission=null;S.loadout=null;save();const b=B;go(()=>debrief(b,R))}
-
-/* ---------- the wave, animated ---------- */
-function animateWave(res){return new Promise(done=>{const ds=res.ds;const T0=performance.now();const dur=3600;
-  const base=[.5,.93];const sprites=ds.map((d,i)=>{const n=ds.length;const sx=.5+(i-(n-1)/2)*Math.min(.04,.6/n);
-    let dest=d.target?[d.target.x,d.target.y]:d.D.recon?[.2+Math.random()*.6,.25+Math.random()*.3]:d.D.interceptor?[.3+Math.random()*.4,.62]:[.3+Math.random()*.4,.45];
-    const t0=i/n*.35;let end=null;const f=d.fate;
-    if(f==='jam')end={t:.55+Math.random()*.4,p:.25+Math.random()*.2,how:'jam'};
-    else if(f==='drone')end={t:.9+Math.random()*.3,p:.45+Math.random()*.15,how:'drone'};
-    else if(f==='aa'||f==='decoy')end={t:1.25+Math.random()*.4,p:.7+Math.random()*.15,how:'aa'};
-    else if(f==='spent')end={t:1.55+i/n*.5,p:1,how:'hit'};
-    return{d,sx,dest,t0,end,ret:!f||f===null}});
-  B.anim={sprites,T0,dur,res,fx:[],shots:[],done:false};
-  // events with times
-  const timeline=[];
-  for(const sp of sprites){const e=sp.end;if(!e)continue;
-    if(e.how==='jam')timeline.push([e.t,()=>{AU.play('jam');addLog(`<span class="red">${sp.d.D.short} lost to jamming</span>`)}]);
-    if(e.how==='drone')timeline.push([e.t,()=>{AU.play('zap');addLog(`<span class="red">${sp.d.D.short} downed by enemy drone</span>`)}]);
-    if(e.how==='aa')timeline.push([e.t-.25,()=>AU.play('aa')]);}
-  const ints=res.ev.filter(e=>e.k==='intercept').length;if(ints)timeline.push([.8,()=>{AU.play('zap');addLog(`<span class="cyn">Interceptors downed ${ints} enemy drone${ints>1?'s':''}</span>`)}]);
-  if(res.ev.some(e=>e.k==='reveal'))timeline.push([.7,()=>{AU.play('radio');addLog('<span class="cyn">Recon found hidden targets</span>')}]);
-  // strikes: by the drone that made them
-  const strikes=res.ev.filter(e=>e.k==='strike');strikes.forEach((e,i)=>{const sp=sprites.find(s=>s.d===e.d);const t=sp&&sp.end?sp.end.t:1.7+i*.05;
-    timeline.push([t,()=>{B.anim.fx.push({x:e.u.x,y:e.u.y,t:performance.now(),big:e.kill});AU.play(e.kill?'boom':'smallboom');e.u.flash=12;if(e.kill)addLog(`<span class="grn">${e.u.name} destroyed</span>`)}])});
-  // the featured strike on the drone camera
-  const star=strikes.find(e=>e.kill&&e.u.prim)||strikes.find(e=>e.kill)||strikes[0];
-  if(star){const sp=sprites.find(s=>s.d===star.d);const ti=sp&&sp.end?sp.end.t:1.7;B.anim.feed={e:star,t0:ti-1.15,t1:ti+.25,boom:!!star.d.D.exp};}
-  timeline.sort((a,b)=>a[0]-b[0]);let ti=0;
-  // A skips ahead
-  const L={key(b){if(b==='a'||b==='start'){B.anim.skip=true}}};layers.push(L);
-  const tick=()=>{const t=(performance.now()-T0)/1000*(B.anim.skip?4:1);if(B.anim.skip&&!B.anim.skipT){B.anim.skipT=performance.now();B.anim.skipBase=(performance.now()-T0)/1000}
-    const tt=B.anim.skip?B.anim.skipBase+(performance.now()-B.anim.skipT)/1000*4:t;B.anim.now=tt;
-    while(ti<timeline.length&&timeline[ti][0]<=tt){timeline[ti][1]();ti++}
-    if(tt>=dur/1000){while(ti<timeline.length){timeline[ti][1]();ti++}layers.splice(layers.indexOf(L),1);B.anim.done=true;B.ui.feed.classList.remove('on');B.anim=null;done();return}
+// one plain sentence or two for what a group did
+function groupStory(g){const t=g.t,ev=g.ev,ds=g.ds,n=ds.length,D=DRONES[t];const out=[];
+  const cnt=k=>ev.filter(e=>e.k===k).length;const jam=ds.filter(d=>d.fate==='jam').length,shot=ds.filter(d=>d.fate==='aa').length,dk=ds.filter(d=>d.fate==='drone').length;
+  if(D.decoy){const drew=ev.filter(e=>e.k==='aa'||e.k==='miss').length+cnt('dronekill');out.push(drew?`The decoys drew ${drew} ${plural(drew,'shot')} away from your drones.`:'Nothing fired at the decoys.');return out}
+  if(D.interceptor){const k=cnt('intercept');out.push(k?`Interceptors shot down ${k} enemy ${plural(k,'drone')}.`:'Interceptors found no enemy drones.')}
+  if(D.recon){const r=ev.find(e=>e.k==='reveal');out.push(r?`Recon spotted ${r.units.length} hidden ${plural(r.units.length,'target')}.`:'Recon found nothing hidden.')}
+  const hits={};for(const e of ev.filter(e=>e.k==='strike')){const k=e.u.name+'|'+(e.u.x);(hits[k]=hits[k]||{u:e.u,n:0,kill:false}).n++;if(e.kill)hits[k].kill=true}
+  for(const h of Object.values(hits))out.push(`<span class="${h.kill?'grn':''}">${h.n} ${dname(t,h.n)} hit the ${esc(h.u.name)}${h.kill?' and destroyed it':''}.</span>`);
+  const idle=ds.filter(d=>d.idle&&!d.fate).length;if(idle)out.push(`${idle} ${dname(t,idle)} found no target in range and turned back.`);
+  if(shot)out.push(`<span class="red">${shot} ${dname(t,shot)} ${shot===1?'was':'were'} shot down.</span>`);
+  if(jam)out.push(`<span class="red">${jam} ${dname(t,jam)} lost ${jam===1?'its':'their'} signal to jamming.</span>`);
+  if(dk)out.push(`<span class="red">Enemy drones brought down ${dk} ${dname(t,dk)}.</span>`);
+  return out}
+function animateWave(res){return new Promise(done=>{
+  const GAP=2.5,CROSS=3.0;const ys=B.m.units.filter(u=>!u.dead).map(u=>u.y);const lane=Math.max(.12,Math.min(.62,(ys.length?Math.min(...ys):.5)-.09));let t0=performance.now(),vt=0,last=t0;const timeline=[];
+  res.forEach((g,gi)=>{const start=gi*GAP;const n=g.ds.length;
+    timeline.push([start,()=>{AU.play('buzzfly');addLog(`<span class="cyn">${n} ${dname(g.t,n).toUpperCase()} INBOUND</span>`)}]);
+    g.ds.forEach((d,i)=>{d.start=start+i*.12;d.dy=((i%5)-2)*.022;d.end=null;
+      const xAt=x=>d.start+CROSS*((x+.05)/1.1);
+      if(d.fate==='jam'){d.end={t:d.start+.4+Math.random()*.5,how:'jam'}}
+      else if(d.fate==='drone'||(d.fate==='decoy'&&!g.ev.some(e=>e.k==='aa'&&e.d===d))){const tt=d.start+.6+Math.random()*.6;d.end={t:tt,how:'drone'};B.raidersQ=(B.raidersQ||[]);timeline.push([tt-.5,()=>B.raiders.push({d,t:performance.now()})])}
+      else if(d.fate==='aa'||d.fate==='decoy'){const e=g.ev.find(e=>e.k==='aa'&&e.d===d);const tt=Math.max(d.start+.3,xAt(e.u.x)-.05);d.end={t:tt,how:'aa',u:e.u};timeline.push([tt-.35,()=>{e.u.vhidden=false;B.tracers.push({u:e.u,d,t:performance.now(),hit:true});AU.play('aa')}])}
+      if(d.target){const tt=Math.max(d.start+.3,xAt(d.target.x)-.2);d.dive={t:tt,u:d.target};
+        const e=g.ev.find(e=>e.k==='strike'&&e.d===d);timeline.push([tt+.45,()=>{const u=e.u;u.vhp=Math.max(0,u.vhp-e.dmg);if(e.kill){u.vdead=true;u.vhp=0}u.flash=12;
+          B.fx.push({x:u.x,y:u.y,t:performance.now(),big:e.kill});B.pops.push({x:u.x,y:u.y,text:e.kill?'DESTROYED':'-'+e.dmg,t:performance.now(),col:e.kill?'#93e46c':'#ffd27a'});AU.play(e.kill?'boom':'smallboom')}]);
+        if(d.D.exp)d.end={t:tt+.45,how:'hit'}}});
+    for(const e of g.ev.filter(e=>e.k==='miss')){const d=e.d;const tt=d.start+CROSS*((e.u.x+.05)/1.1)-.3;timeline.push([tt,()=>{e.u.vhidden=false;B.tracers.push({u:e.u,d,t:performance.now(),hit:false});AU.play('aa')}])}
+    const rv=g.ev.find(e=>e.k==='reveal');if(rv)for(const u of rv.units){timeline.push([start+CROSS*((u.x+.05)/1.1),()=>{u.vhidden=false;B.pops.push({x:u.x,y:u.y,text:'SPOTTED',t:performance.now(),col:'#5fd8ff'});AU.play('radio')}])}
+    const ints=g.ev.filter(e=>e.k==='intercept').length;if(ints)timeline.push([start+.9,()=>{AU.play('zap');for(let k=0;k<ints;k++)B.fx.push({x:.3+Math.random()*.4,y:.3+Math.random()*.2,t:performance.now(),air:true})}]);
+    for(const d of g.ds)if(d.end&&d.end.how==='jam')timeline.push([d.end.t,()=>AU.play('jam')]);
+    timeline.push([start+CROSS+.2,()=>{for(const line of groupStory(g))addLog(line)}])});
+  timeline.sort((a,b)=>a[0]-b[0]);const total=(res.length-1)*GAP+CROSS+1;let ti=0;
+  const A={res,lane,CROSS,now:0},myB=B;B.anim=A;
+  const tick=()=>{if(B!==myB){done();return}const now=performance.now();vt+=(now-last)/1000*(HELD.a||HELD.start?3:1);last=now;A.now=vt;
+    while(ti<timeline.length&&timeline[ti][0]<=vt){timeline[ti][1]();ti++}
+    if(vt>=total){while(ti<timeline.length){timeline[ti][1]();ti++}B.anim=null;done();return}
     requestAnimationFrame(tick)};requestAnimationFrame(tick)})}
 
+/* ---------- the report after each wave: it stays until you press A ---------- */
+function waveReport(res,before){const destroyed=[],damaged=[];for(const b of before){if(!b.dead&&b.u.dead)destroyed.push(b.u);else if(!b.u.dead&&b.u.hp<b.hp)damaged.push(b.u)}
+  const lostBy={};for(const g of res)for(const d of g.ds){if(d.fate&&d.fate!=='spent'){const why=d.fate==='jam'?'jammed':d.fate==='drone'?'downed by drones':d.fate==='decoy'?'used up':'shot down';const k=d.t+'|'+why;lostBy[k]=(lostBy[k]||0)+1}}
+  const back={};for(const g of res)for(const d of g.ds)if(!d.fate)back[d.t]=(back[d.t]||0)+1;
+  const prim=B.m.units.filter(u=>u.prim),pd=prim.filter(u=>u.dead).length;
+  const L=[];L.push(`<h3>WAVE ${B.wave-1} REPORT</h3>`);
+  L.push(destroyed.length?`<div class="grn">Destroyed: ${destroyed.map(u=>esc(u.name)).join(', ')}.</div>`:'<div>Nothing was destroyed this wave.</div>');
+  if(damaged.length)L.push(`<div>Damaged: ${damaged.map(u=>`${esc(u.name)} (${Math.round(u.hp/u.max*100)}% left)`).join(', ')}.</div>`);
+  const ls=Object.entries(lostBy).map(([k,n])=>{const [t,why]=k.split('|');return`${n} ${dname(t,n)} ${why}`});
+  L.push(ls.length?`<div class="red">Lost: ${ls.join(', ')}.</div>`:'<div>No drones were lost.</div>');
+  const bk=Object.entries(back).map(([t,n])=>`${n} ${dname(t,n)}`);if(bk.length)L.push(`<div class="dim">Back at base and ready to fly again: ${bk.join(', ')}.</div>`);
+  L.push(`<div class="amb" style="margin-top:.25rem">Objectives destroyed: ${pd} of ${prim.length}.</div>`);
+  return report(L.join(''))}
+function report(html,btnText='CONTINUE'){return new Promise(res=>{const o=overlay(`<div class="msg" style="font-size:1rem;line-height:1.2">${html}</div><div class="list" style="margin-top:.45rem"><div class="row btn focus">${btnText}</div></div>`);
+  AU.play('radio');const L={key(b){if(b!=='a'&&b!=='start')return;AU.play('ok');layers.splice(layers.indexOf(L),1);o.remove();res()}};setTimeout(()=>layers.push(L),250)})}
+async function endBattle(why){const m=B.m;const prim=m.units.filter(u=>u.prim),pd=prim.filter(u=>u.dead).length;
+  const head={won:'ALL OBJECTIVES DESTROYED',time:'THE ENEMY HAS PULLED BACK',empty:'NO DRONES LEFT TO SEND',ended:'MISSION ENDED'}[why];
+  const body={won:`Every target marked ★ is destroyed. The enemy is falling back from this sector.`,
+    time:`Three waves have flown and the enemy has scattered under cover. ${pd} of ${prim.length} objectives were destroyed.`,
+    empty:`Every drone you brought is spent. ${pd} of ${prim.length} objectives were destroyed.`,
+    ended:`You called the drones home. ${pd} of ${prim.length} objectives were destroyed.`}[why];
+  AU.play(why==='won'?'win':'alarm');
+  await report(`<h3 class="${why==='won'?'grn':'amb'}" style="font-size:1rem">${head}</h3><div>${body}</div>`,'SEE THE RESULTS');
+  const R=finishBattle(B);S.battle++;S.mission=null;S.loadout=null;if(S.camp===0&&S.battle===1)S.seen.tutDone=1;save();const b=B;go(()=>debrief(b,R))}
+
 /* ---------- drawing ---------- */
-function drawBattle(t){const {cv,feed,fc,fl}=B.ui;const dpr=Math.min(2,window.devicePixelRatio||1);const W=Math.round(cv.clientWidth*dpr),H=Math.round(cv.clientHeight*dpr);if(!W||!H)return;
+function drawBattle(t){const {cv}=B.ui;const dpr=Math.min(2,window.devicePixelRatio||1);const W=Math.round(cv.clientWidth*dpr),H=Math.round(cv.clientHeight*dpr);if(!W||!H)return;
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}const g=cv.getContext('2d');
   g.drawImage(terrain(B.m,W,H),0,0);frontLine(g,W,H,t);baseIcon(g,W,H);
-  const s=Math.max(7,W*.035);
-  for(const u of B.m.units){if(u.flash)u.flash--;unitSymbol(g,u,u.x*W,u.y*H,s,{focus:u===B.focus&&!B.anim,flash:u.flash||0,t:t/16})}
+  const s=Math.max(9,Math.min(W,H*1.2)*.052);const now=performance.now();
+  for(const u of B.m.units){if(u.flash)u.flash--;const vu={...u,hidden:u.vhidden,dead:u.vdead,hp:u.vhp};unitSymbol(g,vu,u.x*W,u.y*H,s,{focus:u===B.focus&&!B.anim&&!u.dead,flash:u.flash||0,t:t/16})}
   const A=B.anim;
-  if(A){const tt=A.now||0;
-    for(const sp of A.sprites){let p=(tt-sp.t0)/1.3;if(p<0)continue;let x0=sp.sx,y0=.93,[x1,y1]=sp.dest;let alpha=1,fall=0;
-      if(sp.end){const pe=sp.end.p;const te=sp.end.t;if(tt>=te){if(sp.end.how==='hit')continue;fall=Math.min(1,(tt-te)/.6);if(fall>=1)continue;p=pe}else p=Math.min(pe,p)}
-      else{if(p>1){const back=(tt-sp.t0-1.3)/1.3;if(back>1)continue;p=1-back*.999}}
-      p=Math.max(0,Math.min(1,p));const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;let x=x0+(x1-x0)*e,y=y0+(y1-y0)*e;
-      if(sp.d.D.recon&&!sp.end&&p>.6){x+=Math.sin(tt*3+sp.sx*9)*.04}
-      y+=fall*.06;const ang=Math.atan2((y1-y0),(x1-x0))+(fall?fall*6:0);
-      g.globalAlpha=1-fall;droneMark(g,x*W,y*H,ang,Math.max(3.5,W*.014),fall?'#ff8a3a':sp.d.D.decoy?'rgba(95,216,255,.55)':'#5fd8ff');g.globalAlpha=1;
-      // tracer from the gun that killed it
-      if(sp.end&&sp.end.how==='aa'&&tt>sp.end.t-.35&&tt<sp.end.t+.05){const gun=A.res.ev.find(e=>(e.k==='aa'||e.k==='decoy')&&e.d===sp.d);if(gun&&gun.u){g.strokeStyle='rgba(255,170,80,.9)';g.lineWidth=1.5;g.setLineDash([3,4]);g.beginPath();g.moveTo(gun.u.x*W,gun.u.y*H);g.lineTo(x*W,y*H);g.stroke();g.setLineDash([])}}
-      if(sp.end&&sp.end.how==='drone'&&tt>sp.end.t-.3&&tt<sp.end.t){droneMark(g,(x+.05)*W,(y-.04)*H,2.4,Math.max(3,W*.012),'#ff5545')}}
-    // AA misses: random flak bursts while drones are over the target area
-    if(tt>.9&&tt<2.2&&Math.random()<.25){const gun=A.res.ev.filter(e=>e.k==='miss')[Math.random()*20|0];if(gun&&gun.u){g.fillStyle='rgba(255,200,120,.8)';g.fillRect((gun.u.x+(Math.random()-.5)*.12)*W,(gun.u.y+.05+Math.random()*.1)*H,2,2)}}
-    // explosions
-    const now=performance.now();A.fx=A.fx.filter(f=>now-f.t<900);for(const f of A.fx){const p=(now-f.t)/900;const r=(f.big?W*.07:W*.035)*(.3+p);g.strokeStyle=`rgba(255,${180-p*120|0},60,${1-p})`;g.lineWidth=2;g.beginPath();g.arc(f.x*W,f.y*H,r,0,7);g.stroke();
-      g.fillStyle=`rgba(255,230,160,${(1-p)*.6})`;g.beginPath();g.arc(f.x*W,f.y*H,r*.5,0,7);g.fill()}
-    // the drone camera
-    const F=A.feed;if(F&&tt>=F.t0&&tt<=F.t1+.5){feed.classList.add('on');const p=Math.min(1,(tt-F.t0)/(F.t1-F.t0));
-      drawFeed(fc,F.e.u.type,p*.98,B.m.seed+(F.e.u.x*1000|0),{boom:true,sea:F.e.u.cat==='naval'});fl.textContent=`${F.e.d.D.short}-${String(F.e.d.id+1).padStart(2,'0')} · ${F.e.u.name.toUpperCase()}`}
-    else feed.classList.remove('on')}}
+  if(A){const vt=A.now,ds=Math.max(5,s*.75);
+    for(const g2 of A.res)for(const d of g2.ds){const p=(vt-d.start)/A.CROSS;if(p<0)continue;
+      let x=-.05+1.1*p,y=A.lane+d.dy,ang=0,alpha=1,col=null;
+      if(d.end&&vt>=d.end.t){if(d.end.how==='hit')continue;const f=(vt-d.end.t)/.7;if(f>=1)continue;
+        const pe=(d.end.t-d.start)/A.CROSS;x=-.05+1.1*pe;y+=f*.07;ang=f*5;alpha=1-f;col='#ff8a3a';
+        if(d.end.how==='aa'&&f<.05)B.fx.push({x,y,t:now,air:true})}
+      else if(d.dive&&vt>=d.dive.t){const f=Math.min(1,(vt-d.dive.t)/.45);const pe=(d.dive.t-d.start)/A.CROSS;const x0=-.05+1.1*pe,y0=A.lane+d.dy;
+        x=x0+(d.dive.u.x-x0)*f;y=y0+(d.dive.u.y-y0)*f*f;ang=Math.atan2(d.dive.u.y-y0,d.dive.u.x-x0);
+        if(!d.D.exp&&f>=1){const back=(vt-d.dive.t-.45)/.8;if(back>1)continue;x=d.dive.u.x+back*.3;y=d.dive.u.y+(A.lane-d.dive.u.y)*back;ang=-.5}}
+      if(p>1.02&&!(d.dive&&vt>=d.dive.t))continue;
+      g.globalAlpha=alpha*(d.D.decoy?.7:1);droneMark(g,x*W,y*H,ang,ds,d.t,col||undefined);g.globalAlpha=1;d.px=x;d.py=y}
+    // the group's name rides above it
+    for(const g2 of A.res){const d=g2.ds[0];const p=(vt-d.start)/A.CROSS;if(p<0||p>1)continue;g.fillStyle='rgba(95,216,255,.85)';g.font=`${Math.round(s*.85)}px VT323, monospace`;g.textAlign='left';
+      g.fillText(`${g2.ds.length} ${DRONES[g2.t].short}`,(-.05+1.1*p)*W-s,(A.lane-.06)*H)}
+    // tracers from air defense
+    B.tracers=B.tracers.filter(tr=>now-tr.t<380);for(const tr of B.tracers){const d=tr.d;if(d.px==null)continue;const k=(now-tr.t)/380;
+      g.strokeStyle=`rgba(255,190,90,${1-k})`;g.lineWidth=2;g.setLineDash([4,5]);g.lineDashOffset=-k*40;g.beginPath();g.moveTo(tr.u.x*W,tr.u.y*H);
+      g.lineTo((d.px+(tr.hit?0:.04))*W,(d.py+(tr.hit?0:-.03))*H);g.stroke();g.setLineDash([])}
+    // enemy drones closing in
+    B.raiders=B.raiders.filter(r=>now-r.t<600);for(const r of B.raiders){const d=r.d;if(d.px==null)continue;const k=(now-r.t)/600;droneMark(g,(d.px+.18*(1-k))*W,(d.py-.15*(1-k))*H,2.3,ds*.9,'fpv','#ff5545')}}
+  // explosions and numbers
+  B.fx=B.fx.filter(f=>now-f.t<900);for(const f of B.fx){const p=(now-f.t)/900;const r=(f.air?s*.6:f.big?s*1.8:s*1.1)*(.3+p);g.strokeStyle=`rgba(255,${180-p*120|0},60,${1-p})`;g.lineWidth=2;g.beginPath();g.arc(f.x*W,f.y*H,r,0,7);g.stroke();
+    g.fillStyle=`rgba(255,230,160,${(1-p)*.6})`;g.beginPath();g.arc(f.x*W,f.y*H,r*.5,0,7);g.fill()}
+  B.pops=B.pops.filter(p=>now-p.t<1400);for(const p of B.pops){const k=(now-p.t)/1400;g.globalAlpha=1-k*k;g.fillStyle=p.col;g.font=`${Math.round(s*1.05)}px VT323, monospace`;g.textAlign='center';
+    g.fillStyle='#000';g.fillText(p.text,p.x*W+1,p.y*H-s*1.6-k*s*1.5+1);g.fillStyle=p.col;g.fillText(p.text,p.x*W,p.y*H-s*1.6-k*s*1.5);g.globalAlpha=1}
+  g.textAlign='left'}
 
 /* ===================== BOOT ===================== */
-window.__DS={terrain,frontLine,unitSymbol,droneMark,get S(){return S},set S(v){S=v},get B(){return B},btn,newState,genMission,resolveWave,finishBattle,score,threat,fit,DRONES,UNITS,GENERALS,MISSIONS,RESEARCH,hq,briefing,loadout,startBattle,titleScreen,go,save,portrait,drawFeed,droneIcon,suggest,defaultPlan,adaptation,has,slots,costOf,unlocked,rankIdx,DRONE_ORDER,CAMP_NEED,TIERS,get SCR(){return SCR}};
+window.__DS={terrain,frontLine,unitSymbol,droneMark,get S(){return S},set S(v){S=v},get B(){return B},btn,newState,genMission,resolveWave,finishBattle,score,threat,fit,DRONES,UNITS,GENERALS,MISSIONS,RESEARCH,hq,briefing,loadout,startBattle,titleScreen,go,save,portrait,droneIcon,suggest,defaultPlan,adaptation,has,slots,costOf,unlocked,rankIdx,DRONE_ORDER,CAMP_NEED,TIERS,get SCR(){return SCR}};
 titleScreen();
 
 })();
