@@ -1,7 +1,7 @@
 /* ---------- main: sizing, input and the loop ---------- */
 const field=document.getElementById('field');
 function resize(){const w=field.clientWidth,h=field.clientHeight;if(!w||!h)return;
-  const nw=clamp(Math.round(H*w/h/2)*2,240,400);if(nw!==W){W=nw;cv.width=W;cv.height=H;ctx.imageSmoothingEnabled=false;nightCv=null;if(B)clampCam()}
+  const nw=clamp(Math.round(H*w/h/2)*2,200,400);if(nw!==W){W=nw;cv.width=W;cv.height=H;ctx.imageSmoothingEnabled=false;nightCv=null;if(B)clampCam()}
   const s=Math.min(w/W,h/H);const cw=Math.floor(W*s),ch=Math.floor(H*s);
   const l=Math.floor((w-cw)/2),t=Math.floor((h-ch)/2);for(const e of[cv,UI]){e.style.left=l+'px';e.style.top=t+'px';e.style.width=cw+'px';e.style.height=ch+'px'}
   document.documentElement.style.setProperty('--u',(ch/H)+'px')}

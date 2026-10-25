@@ -25,7 +25,7 @@ function startDeploy(idx){
   const items=[{k:'leader',tile:null}];let id=1;
   for(const w of WORDER){let n=G.folk[w]||0;while(n>0){const k=Math.min(4,n);items.push({k:'squad',w,n:k,id:id++,tile:null});n-=k}}
   for(const t of TORDER)for(let i=0;i<(G.traps[t]||0);i++)items.push({k:'trap',t,tile:null});
-  DEP={items,sel:0,cur:[0,0],zone,nogo,tf,zf,threat:new Set(threat),trapPath};
+  DEP={items,sel:0,carry:null,cur:[0,0],zone,nogo,tf,zf,threat:new Set(threat),trapPath};
   autoPlace();const L=items[0];DEP.cur=L.tile.slice();B.cam.x=L.tile[0]*TS-W/2;B.cam.y=L.tile[1]*TS-H/2;clampCam();
 }
 function occupied(tile,kind,except){return DEP.items.some(it=>it!==except&&it.tile&&it.tile[0]===tile[0]&&it.tile[1]===tile[1]&&((kind==='trap')===(it.k==='trap')))}
@@ -52,14 +52,17 @@ function autoPlace(){
     if(spot>=0){used.add(spot);it.tile=[spot%MW,(spot/MW)|0]}}
   for(const it of items)if(!it.tile&&!(it.t==='barricade'&&!defend)){for(const i of zl)if(validSpot(it,[i%MW,(i/MW)|0])){it.tile=[i%MW,(i/MW)|0];break}}
 }
+function itemAt(tile,skip){return DEP.items.find(x=>x!==skip&&x.tile&&x.tile[0]===tile[0]&&x.tile[1]===tile[1]&&x.k!=='trap')||DEP.items.find(x=>x!==skip&&x.tile&&x.tile[0]===tile[0]&&x.tile[1]===tile[1])}
+function deployPrompt(){if(DEP.carry)return validSpot(DEP.carry,DEP.cur)?'{A} Put down':'Can\'t go here';const h=itemAt(DEP.cur);if(h)return '{A} Pick up';const it=DEP.items[DEP.sel];if(!it.tile)return '{A} Place';return '{B} Next piece'}
 function deployBtn(b){
-  const it=DEP.items[DEP.sel];
   if(b==='up'||b==='down'||b==='left'||b==='right'){const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b];DEP.cur[0]=clamp(DEP.cur[0]+d[0],0,MW-1);DEP.cur[1]=clamp(DEP.cur[1]+d[1],0,MH-1);AU.sfx('tick');return}
-  if(b==='a'){const here=DEP.items.findIndex(x=>x!==it&&x.tile&&x.tile[0]===DEP.cur[0]&&x.tile[1]===DEP.cur[1]&&(x.k==='trap')===(it.k==='trap'));
-    if(here>=0){DEP.sel=here;AU.sfx('pick');return}
-    if(validSpot(it,DEP.cur)){it.tile=DEP.cur.slice();AU.sfx('pick')}else{AU.sfx('no');DEP.warn={t:1.4,s:it.k==='trap'?'Too close to the enemy to set a trap there.':'Your folk must start inside the green area.'}}return}
-  if(b==='select'||b==='b'){const n=DEP.items.length;DEP.sel=(DEP.sel+(b==='b'?n-1:1))%n;const s=DEP.items[DEP.sel];if(s.tile)DEP.cur=s.tile.slice();AU.sfx('tick');return}
-  if(b==='start'){beginFight(DEP.items);DEP=null;UIX.battleHud();return}
+  if(b==='a'){
+    if(DEP.carry){const it=DEP.carry;if(validSpot(it,DEP.cur)){it.tile=DEP.cur.slice();DEP.carry=null;AU.sfx('pick')}else{AU.sfx('no');DEP.warn={t:1.2,s:it.k==='trap'?'Too close to the enemy':'Keep folk in the green'}}return}
+    const h=itemAt(DEP.cur);if(h){DEP.carry=h;DEP.sel=DEP.items.indexOf(h);AU.sfx('pick');return}
+    const it=DEP.items[DEP.sel];if(!it.tile&&validSpot(it,DEP.cur)){it.tile=DEP.cur.slice();AU.sfx('pick')}else AU.sfx('no');return}
+  if(b==='b'||b==='select'){if(DEP.carry){DEP.carry=null;AU.sfx('tick');return}
+    const n=DEP.items.length;DEP.sel=(DEP.sel+1)%n;const s2=DEP.items[DEP.sel];if(s2.tile)DEP.cur=s2.tile.slice();AU.sfx('tick');return}
+  if(b==='start'){DEP.carry=null;G.seen.deploy=1;beginFight(DEP.items);DEP=null;UIX.battleHud();return}
 }
 function updateDeploy(dt){if(!DEP)return;if(DEP.warn){DEP.warn.t-=dt;if(DEP.warn.t<=0)DEP.warn=null}
   const tx=DEP.cur[0]*TS+8-W/2,ty=DEP.cur[1]*TS+8-H/2+12;B.cam.x=lerp(B.cam.x,tx,Math.min(1,dt*8));B.cam.y=lerp(B.cam.y,ty,Math.min(1,dt*8));clampCam()}
@@ -69,7 +72,7 @@ function drawDeploy(t){
   // deployment area and no-trap ground
   g.globalAlpha=.22+.06*Math.sin(t*3);for(const i of DEP.zone)P(g,'#60ff60',(i%MW)*TS,((i/MW)|0)*TS,TS,TS);g.globalAlpha=1;
   const it=DEP.items[DEP.sel];
-  if(it.k==='trap'){g.globalAlpha=.18;for(const i of DEP.nogo)P(g,'#ff3020',(i%MW)*TS,((i/MW)|0)*TS,TS,TS);g.globalAlpha=1}
+  if(DEP.carry&&DEP.carry.k==='trap'){g.globalAlpha=.18;for(const i of DEP.nogo)P(g,'#ff3020',(i%MW)*TS,((i/MW)|0)*TS,TS,TS);g.globalAlpha=1}
   if(B.hold){const h=B.hold;g.globalAlpha=.35;P(g,'#ffd040',h.x*TS,h.y*TS,h.w*TS,h.h*TS);g.globalAlpha=1}
   if(B.spec.goal==='exit'){const[ex,ey]=B.spec.exit;g.globalAlpha=.4;P(g,'#ff4030',ex*TS-8,ey*TS-4,24,24);g.globalAlpha=1}
   if(B.obj)drawObjective(g,B.obj,t);
@@ -81,14 +84,15 @@ function drawDeploy(t){
   for(const k of Object.keys(B.spec.spawns||{})){const[x,y]=B.spec.spawns[k];const px=x*TS+8,py=y*TS+8,b=(t*4|0)%2;
     g.fillStyle='#ff3020';g.globalAlpha=.85;g.beginPath();g.arc(px,py,6+b,0,7);g.fill();g.globalAlpha=1;digits(g,'!',px+1,py-2,'#fff')}
   // your things
-  const sorted=DEP.items.filter(x=>x.tile).slice().sort((a,b)=>a.tile[1]-b.tile[1]);
-  for(const x of sorted){const px=x.tile[0]*TS+8,py=x.tile[1]*TS+8;const isSel=x===it;
-    if(isSel){g.globalAlpha=.5+.5*Math.sin(t*10);g.strokeStyle='#ffe060';g.strokeRect(x.tile[0]*TS+.5,x.tile[1]*TS+.5,TS-1,TS-1);g.globalAlpha=1}
-    if(x.k==='trap'){drawTrap(g,{kind:x.t,x:px,y:py+2,tx:x.tile[0],ty:x.tile[1],hp:1,max:1},t,true)}
+  const at=x=>x===DEP.carry?DEP.cur:x.tile;
+  const sorted=DEP.items.filter(x=>x.tile).slice().sort((a,b)=>at(a)[1]-at(b)[1]);
+  for(const x of sorted){const T2=at(x),px=T2[0]*TS+8,py=T2[1]*TS+8-(x===DEP.carry?3:0);const isSel=x===it&&!DEP.carry;
+    if(isSel){g.globalAlpha=.5+.5*Math.sin(t*10);g.strokeStyle='#ffe060';g.strokeRect(T2[0]*TS+.5,T2[1]*TS+.5,TS-1,TS-1);g.globalAlpha=1}
+    if(x.k==='trap'){drawTrap(g,{kind:x.t,x:px,y:py+2,tx:T2[0],ty:T2[1],hp:1,max:1},t,true)}
     else if(x.k==='leader'){drawPerson(g,px,py+4,Object.assign({},LEADER_LOOK,{wpn:G.flags.blade?'blade':'cudgel'}),{face:B.spec.face==='left'?-1:1,walk:0,t});P(g,'#ffd040',px-1,py-11,3,2)}
     else{const offs=[[-4,-2],[4,-2],[-4,5],[4,5]];for(let i=0;i<x.n;i++){drawPerson(g,px+offs[i][0],py+offs[i][1]+3,{skin:SKINS[(x.id+i)%4],hair:HAIRS[(x.id*3+i)%7],tunic:PEASANT_TUNICS[(x.id+i*3)%8],trim:'#3a2a14',hat:'',wpn:x.w},{face:B.spec.face==='left'?-1:1,walk:0,t})}}}
   // cursor
-  const[qx,qy]=DEP.cur;const ok=validSpot(it,DEP.cur)||(it.tile&&it.tile[0]===qx&&it.tile[1]===qy);const b2=(t*6|0)%2;
+  const[qx,qy]=DEP.cur;const ok=DEP.carry?validSpot(DEP.carry,DEP.cur):true;const b2=(t*6|0)%2;
   g.strokeStyle=ok?'#ffffff':'#ff4030';g.lineWidth=1;const X=qx*TS,Y=qy*TS;
   for(const[ax,ay,sx,sy]of[[X,Y,1,1],[X+TS,Y,-1,1],[X,Y+TS,1,-1],[X+TS,Y+TS,-1,-1]]){P(g,ok?'#fff':'#ff4030',ax+(sx<0?-1:0)-b2*sx,ay+(sy<0?-1:0)-b2*sy,4*sx||1,1);P(g,ok?'#fff':'#ff4030',ax+(sx<0?-1:0)-b2*sx,ay+(sy<0?-1:0)-b2*sy,1,4*sy||1)}
   g.restore();

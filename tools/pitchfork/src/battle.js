@@ -24,7 +24,7 @@ function newBattle(idx){
   const spec=BATTLES[idx],m=buildMap(spec);renderMapCache(m);
   B={idx,spec,m,units:[],proj:[],fx:[],traps:[],decals:[],state:'deploy',time:0,order:'hold',cam:{x:0,y:0},shake:0,kills:0,plunder:0,escaped:0,
     fire:new Float32Array(MW*MH),fireT:0,F:{},fieldT:{},waves:(spec.waves||[]).map(w=>Object.assign({done:false},w)),queue:[],leader:null,boss:null,
-    night:!!spec.night,obj:null,cart:null,hold:null,fallen:{},usedTraps:{},deployedFolk:0,endT:0,banner:null,slow:1,militiaT:12,summonT:12,msg:null};
+    night:!!spec.night||false,obj:null,coachQ:[],coach:null,did:{moved:0,swings:0,rolled:0},cards:[],card:null,introT:0,cart:null,hold:null,fallen:{},usedTraps:{},deployedFolk:0,endT:0,banner:null,slow:1,militiaT:12,summonT:12,msg:null};
   if(spec.protect){const p=spec.protect;B.obj={x:p.x,y:p.y,w:p.w,h:p.h,hp:p.hp,max:p.hp,name:p.name,sprite:p.sprite,flash:0,burn:0}}
   if(spec.hold){const h=spec.hold;B.hold={x:h.x,y:h.y,w:h.w,h:h.h,need:h.need,prog:0}}
   if(spec.cart){const s=spec.start,e=spec.end;const f=flowField(m,[e[1]*MW+e[0]]);const path=[];let px=s[0]*TS+8,py=s[1]*TS+8;path.push({x:px,y:py});
@@ -46,9 +46,32 @@ function beginFight(items){
   if(spec.boss){const b=spawnFoe(spec.boss.t,spec.boss.x*TS+8,spec.boss.y*TS+8,'idle');B.boss=b}
   for(const u of B.units)if(u.side==='e'&&u.d.boss&&!B.boss)B.boss=u;
   if(spec.boss===undefined){const c=B.units.find(u=>u.kind==='champion');if(c)B.mini=c}
-  B.state='fight';B.time=0;B.banner={text:objectiveText(),t:2.4};AU.sfx('horn');AU.play(spec.boss?'boss':'battle');
+  B.state='fight';B.time=0;B.banner={text:(spec.win==='survive'?'Guard '+spec.protect.name.replace(/^The /,'the '):goalShort(spec))+'!',t:2};AU.sfx('horn');AU.play(spec.boss?'boss':'battle');
   refreshFields(true);
 }
+/* coaching: one short tip at a time, each one shown once ever */
+function coach(id,text,o={}){if(G.seen[id]||(B.coach&&B.coach.id===id)||B.coachQ.some(c=>c.id===id))return;B.coachQ.push({id,text,T:o.T||3.5,until:o.until||null,t:0})}
+function updateCoach(dt){
+  if(!B.coach&&B.coachQ.length){B.coach=B.coachQ.shift();G.seen[B.coach.id]=1}
+  const c=B.coach;if(c){c.t+=dt;if((c.until&&c.t>1&&c.until())||(!c.until&&c.t>c.T)||c.t>14)B.coach=null}
+  if(!B.card&&B.cards.length){B.card=B.cards.shift();B.card.t=0}
+  if(B.card){B.card.t+=dt;if(B.card.t>(B.card.boss?2.6:3))B.card=null}}
+function lessons(){
+  const L=B.leader,s=B.spec,foes=B.units.filter(u=>u.alive&&u.side==='e');
+  if(B.idx===0){coach('move','{PAD} Move Wat',{until:()=>B.did.moved>0.6});
+    if(G.seen.move&&foes.some(e=>dist(e,L)<60))coach('strike','{A} Strike!',{until:()=>B.did.swings>=3});
+    if(B.time>7&&B.order==='hold'&&foes.some(e=>e.state==='fight'))coach('order','{SEL} Shout CHARGE!',{until:()=>B.order!=='hold'})}
+  if(L.hp<L.max*.7)coach('roll','{B} Roll away from danger',{until:()=>B.did.rolled});
+  if(s.win==='escort'&&B.time>1)coach('cart','The cart only rolls when you\'re near');
+  if(s.win==='hold'&&B.time>1)coach('hold','Stand in the gold square');
+  if(B.night&&B.time>1)coach('night','Darkness: foes can\'t see far');
+  if(B.m.gate&&B.m.gate.hp>0&&B.time>6&&B.order!=='charge')coach('gate','{SEL} CHARGE to break the gate',{until:()=>B.order==='charge'});
+  for(const tr of B.traps)if(tr.kind==='hay'&&!tr.used&&dist(tr,L)<90&&foes.some(e=>dist(e,tr)<45))coach('hay','{A} Strike the hay to light it!',{until:()=>tr.used});
+  // meet each kind of foe once, and each boss with a title card
+  const cx=B.cam.x,cy=B.cam.y;
+  for(const e of foes){if(e.x<cx||e.y<cy||e.x>cx+W||e.y>cy+H)continue;const k='foe_'+e.kind;
+    if(e.d.boss){if(e.state!=='idle'&&!B.introDone){B.introDone=1;B.cards.push({boss:1,kind:e.kind});B.slow=.35;B.slowT=1.6}}
+    else if(!G.seen[k]&&!B.cards.some(c=>c.kind===e.kind)){G.seen[k]=1;B.cards.push({kind:e.kind})}}}
 function addTrap(kind,x,y,tile){const tr={kind,x,y,tx:tile[0],ty:tile[1],used:false,t:0};
   if(kind==='barricade'){tr.hp=160;tr.max=160;const i=tile[1]*MW+tile[0];B.m.breakable.set(i,tr);tr.tiles=[i];recomputeSolid(B.m,B.spec)}
   B.traps.push(tr);return tr}
@@ -112,7 +135,7 @@ function sight(){return B.night?48:88}
 /* ---------- damage ---------- */
 function dmgOf(a,t){let b=a.d.dmg;if(a.isLeader)b=a.d.dmg*(a.combo>=3?1.6:1);
   if(a.side==='p'&&!a.isLeader&&B.leader&&B.leader.alive&&dist(a,B.leader)<B.leader.aura)b*=1.3;
-  if(a.hidden){b*=2;if(!a.ambushed){a.ambushed=true;fxText(a.x,a.y-18,'AMBUSH!','#ffe060',1)}}
+  if(a.hidden){b*=2;if(!a.ambushed){a.ambushed=true;fxText(a.x,a.y-18,'AMBUSH!','#ffe060',1);coach('ambush','Ambush! Hidden folk hit twice as hard')}}
   if(a.d.antiMount&&t.d&&t.d.mount)b*=a.d.antiMount;
   // nobles shrug off peasant blows: it takes Wat to bring one down
   if(t.d&&t.d.boss&&a.side==='p'&&!a.isLeader)b*=.4;
@@ -134,8 +157,8 @@ function strike(src,t,dm,kb=1.2){
 function kill(u,src){if(!u.alive)return;u.alive=false;u.hp=0;
   B.decals.push({x:u.x,y:u.y,kind:u.d.dog?'dog':u.d.mount?'horse':'body',side:u.side,look:u.look,face:u.face,big:u.d.big,t:0});if(B.decals.length>160)B.decals.shift();
   AU.sfx('die');
-  if(u.side==='e'){B.kills++;B.plunder+=u.d.boss?20:1;if(u===B.boss){B.bossDead=true;B.shake=8;B.slow=.25;setTimeout(()=>{if(B)B.slow=1},900)}}
-  else{if(u.isLeader){lose('You have fallen. The rebellion dies with you.')}else if(!u.temp){B.fallen[u.kind]=(B.fallen[u.kind]||0)+1}}}
+  if(u.side==='e'){B.kills++;B.plunder+=u.d.boss?20:1;if(u===B.boss){B.bossDead=true;B.shake=8;B.slow=.25;B.slowT=.9}}
+  else{if(u.isLeader){lose('Wat has fallen.')}else if(!u.temp){B.fallen[u.kind]=(B.fallen[u.kind]||0)+1}}}
 
 /* ---------- attacks ---------- */
 function attack(u,t){
@@ -157,7 +180,7 @@ function landProj(p){
   let best=null,bd=8;for(const v of B.units){if(!v.alive||v.side===p.side)continue;const d=Math.hypot(v.x-p.tx,v.y-6-p.ty+6);if(d<bd+v.r){bd=d;best=v}}
   if(best)strike(p.src,best,p.dmg,.6);
   if(p.kind==='stone'||p.kind==='arrow'||p.kind==='bolt'){if(!best)fxBit(p.tx,p.ty,'#8a8478')}}
-function damageObj(dm){const o=B.obj;if(!o)return;o.hp-=dm;o.flash=.1;fxNum((o.x+o.w/2)*TS,o.y*TS,Math.round(dm),'#ffb040');if(o.hp<=0){o.hp=0;lose(o.name+' has been destroyed.')}}
+function damageObj(dm){const o=B.obj;if(!o)return;o.hp-=dm;o.flash=.1;fxNum((o.x+o.w/2)*TS,o.y*TS,Math.round(dm),'#ffb040');if(o.hp<=0){o.hp=0;lose(o.name+' was destroyed.')}}
 function distToRect(u,o){const rx=o.x*TS,ry=o.y*TS,rw=o.w*TS,rh=o.h*TS;const dx=Math.max(rx-u.x,0,u.x-(rx+rw)),dy=Math.max(ry-u.y,0,u.y-(ry+rh));return Math.hypot(dx,dy)}
 
 /* ---------- fire ---------- */
@@ -175,7 +198,7 @@ function updateFire(dt){const m=B.m,f=B.fire;B.fireT+=dt;const spread=B.fireT>.4
     if(f[i]<=0){f[i]=0;if(TILE_FLAM[m.t[y][x]]){m.t[y][x]='x';redrawTile(m,x,y)}}}
   if(!any)return;
   for(const u of B.units){if(!u.alive)continue;const i=tileIdx(u.x,u.y);if(f[i]>0){u.burnAcc=(u.burnAcc||0)+12*dt*(u.isLeader?.8:1);if(u.burnAcc>=4){const d=Math.round(u.burnAcc);u.burnAcc=0;
-    if(!(u.isLeader&&u.roll>0)){u.hp-=d;u.hitT=.1;u.lastHurt=B.time;fxNum(u.x,u.y-14,d,'#ff9030');if(u.isLeader)B.shake=Math.max(B.shake,2);if(u.side==='e'&&!u.d.boss){u.fear=Math.max(u.fear,.6);u.fearFrom={x:(i%MW)*TS+8,y:((i/MW)|0)*TS+8}}if(u.hp<=0)kill(u,null)}}}}}
+    if(!(u.isLeader&&u.roll>0)){u.hp-=d;u.hitT=.1;u.lastHurt=B.time;fxNum(u.x,u.y-14,d,'#ff9030');if(u.isLeader){B.shake=Math.max(B.shake,2);coach('fire','Careful! Fire burns your side too')}if(u.side==='e'&&!u.d.boss){u.fear=Math.max(u.fear,.6);u.fearFrom={x:(i%MW)*TS+8,y:((i/MW)|0)*TS+8}}if(u.hp<=0)kill(u,null)}}}}}
 
 /* ---------- traps ---------- */
 function updateTraps(dt){for(const tr of B.traps){if(tr.used)continue;tr.t+=dt;
@@ -183,7 +206,7 @@ function updateTraps(dt){for(const tr of B.traps){if(tr.used)continue;tr.t+=dt;
   if(tr.kind==='hay'||tr.kind==='barricade')continue;
   const rad=tr.kind==='hive'?16:tr.kind==='deadfall'?10:7;
   const v=B.units.find(u=>u.alive&&u.side==='e'&&Math.hypot(u.x-tr.x,u.y-tr.y)<rad+u.r*.5);if(!v)continue;
-  tr.used=true;B.usedTraps[tr.kind]=(B.usedTraps[tr.kind]||0)+1;
+  tr.used=true;B.usedTraps[tr.kind]=(B.usedTraps[tr.kind]||0)+1;coach('trap','Your trap got one!');
   if(tr.kind==='pit'){const dm=v.d.boss?24:v.d.mount?60:40;strike(null,v,dm);v.stun=3;v.x=tr.x;v.y=tr.y;AU.sfx('trap');B.shake=2;fxText(tr.x,tr.y-18,'PIT!','#ffe060',.9)}
   else if(tr.kind==='snare'){v.root=v.d.boss?2:6;AU.sfx('trap');fxText(tr.x,tr.y-18,'SNARED!','#ffe060',.9);alert(v)}
   else if(tr.kind==='hive'){B.fx.push({kind:'swarm',x:tr.x,y:tr.y,t:0,T:6});AU.sfx('buzz');fxText(tr.x,tr.y-18,'BEES!','#ffe060',.9)}
@@ -194,7 +217,7 @@ function updateTraps(dt){for(const tr of B.traps){if(tr.used)continue;tr.t+=dt;
 function updatePeasant(u,dt){
   const L=B.leader;if(u.flee>0){u.flee-=dt;const e=nearestFoe(u,80);if(e){const dx=u.x-e.x,dy=u.y-e.y,d=Math.hypot(dx,dy)||1;stepToward(u,u.x+dx/d*20,u.y+dy/d*20,dt,1.15)}return}
   const inAura=L&&L.alive&&dist(u,L)<L.aura;
-  if(!inAura&&u.hp<u.max*.3&&u.fleeCd<=0&&!u.temp&&nearestFoe(u,40)){u.flee=2.5;u.fleeCd=9;fxText(u.x,u.y-16,'!','#80c0ff',.6);return}
+  if(!inAura&&u.hp<u.max*.3&&u.fleeCd<=0&&!u.temp&&nearestFoe(u,40)){u.flee=2.5;u.fleeCd=9;coach('flee','Scared folk run. Stay close to them!');fxText(u.x,u.y-16,'!','#80c0ff',.6);return}
   const ord=B.order,R=u.d.range,ranged=!!u.d.ranged,rng2=ranged&&B.night?R*.75:R;
   u.retarget-=dt;
   if(u.retarget<=0||u.target&&!u.target.alive){u.retarget=.3;
@@ -230,13 +253,13 @@ function updateFoe(u,dt){
   if(u.retarget<=0||u.target&&!u.target.alive){u.retarget=.35;
     const range=u.state==='fight'?150:S;
     let v=nearestFoe(u,range,p=>visibleTo(u,p));
-    if(u.d.boss&&B.leader&&B.leader.alive&&dist(u,B.leader)<170)v=B.leader;
+    if(u===B.boss&&B.leader&&B.leader.alive&&dist(u,B.leader)<170)v=B.leader;
     u.target=v;if(v&&u.state==='march')alert(u)}
   const t=u.target;
   // goal pressure: protect/escort/exit battles pull foes toward the goal unless a fight is right next to them
   const goalFirst=(B.spec.goal==='exit'&&u.state==='march')||(B.cart&&!B.cart.done&&(!t||dist(u,t)>40))||(B.obj&&(!t||dist(u,t)>48)&&u.state!=='fight');
   if(t&&t.alive&&!goalFirst){const d=dist(u,t)-t.r;
-    if(u.d.charge&&u.chargeCd<=0&&d>28&&d<120&&clearLine(u.x,u.y,t.x,t.y)){u.charging=1.1;const dd=Math.hypot(t.x-u.x,t.y-u.y)||1;u.cdir={x:(t.x-u.x)/dd,y:(t.y-u.y)/dd};u.chargeHit=new Set();u.chargeCd=3.6;fxText(u.x,u.y-20,'!','#ffb040',.5)}
+    if(u.d.charge&&u.chargeCd<=0&&d>28&&d<120&&clearLine(u.x,u.y,t.x,t.y)){u.charging=1.1;const dd=Math.hypot(t.x-u.x,t.y-u.y)||1;u.cdir={x:(t.x-u.x)/dd,y:(t.y-u.y)/dd};u.chargeHit=new Set();u.chargeCd=3.6;coach('charge','Riders charge in lines. {B} Roll aside!');fxText(u.x,u.y-20,'!','#ffb040',.5)}
     if(u.charging>0){doCharge(u,dt);return}
     if(d<=u.d.range){if(u.cd<=0)attack(u,t);return}
     navigate(u,t.x,t.y,B.F.players,dt);return}
@@ -247,7 +270,7 @@ function updateFoe(u,dt){
   if(B.cart&&!B.cart.done){const c=B.cart,d=Math.hypot(c.x-u.x,c.y-u.y);if(d<=u.d.range+10){if(u.cd<=0){u.cd=u.d.cd;u.atkT=.25;u.face=c.x>u.x?1:-1;if(u.d.ranged)shoot(u,c.x,c.y-6,u.d.ranged,u.d.dmg);else{c.hp-=u.d.dmg;c.flash=.1;fxNum(c.x,c.y-18,u.d.dmg,'#ffb040');AU.sfx('gate')}}return}
     navigate(u,c.x,c.y,B.F.goal,dt);return}
   if(B.spec.goal==='exit'){const ex=B.spec.exit[0]*TS+8,ey=B.spec.exit[1]*TS+8;if(Math.hypot(ex-u.x,ey-u.y)<14){u.alive=false;u.escaped=true;B.escaped++;fxText(ex-20,ey-10,'GOT THROUGH','#ff6040',1.2);
-      if(B.escaped>=B.spec.exitLimit)lose('The column got through. Ashby burns.');return}
+      if(B.escaped>=B.spec.exitLimit)lose('Too many got through.');return}
     navigate(u,ex,ey,B.F.goal,dt);return}
   if(B.F.players)navigate(u,u.x,u.y,B.F.players,dt);
 }
@@ -290,11 +313,11 @@ function wavesLeft(){return B.waves.some(w=>!w.done)||B.queue.length>0}
 const HELD={up:0,down:0,left:0,right:0,a:0,b:0,start:0,select:0};
 function leaderInput(b){const L=B.leader;if(!L||!L.alive||B.state!=='fight')return;
   if(b==='a')leaderSwing(L);
-  else if(b==='b'){if(L.rollCd<=0){const dx=(HELD.right?1:0)-(HELD.left?1:0),dy=(HELD.down?1:0)-(HELD.up?1:0);const d=Math.hypot(dx,dy);L.rollDir=d?{x:dx/d,y:dy/d}:{x:L.aim.x,y:L.aim.y};L.roll=.26;L.rollCd=.6;AU.sfx('roll')}}
+  else if(b==='b'){if(L.rollCd<=0){const dx=(HELD.right?1:0)-(HELD.left?1:0),dy=(HELD.down?1:0)-(HELD.up?1:0);const d=Math.hypot(dx,dy);L.rollDir=d?{x:dx/d,y:dy/d}:{x:L.aim.x,y:L.aim.y};L.roll=.26;L.rollCd=.6;B.did.rolled=1;AU.sfx('roll')}}
   else if(b==='select'){const i=(ORDERS.indexOf(B.order)+1)%ORDERS.length;setOrder(ORDERS[i])}}
 function setOrder(o){B.order=o;for(const u of B.units)if(u.side==='p'&&!u.isLeader){u.retarget=0;if(o==='hold'){u.home={x:u.x,y:u.y}}}
   B.banner={text:ORDER_NAME[o],t:1,order:1};AU.sfx('shout');fxRing(B.leader.x,B.leader.y,B.leader.aura,'#ffe080')}
-function leaderSwing(L){if(L.cd>0)return;L.cd=.3;L.atkT=.2;L.comboT=.7;L.combo=L.combo>=3?1:L.combo+1;AU.sfx('swing');
+function leaderSwing(L){if(L.cd>0)return;B.did.swings++;L.cd=.3;L.atkT=.2;L.comboT=.7;L.combo=L.combo>=3?1:L.combo+1;AU.sfx('swing');
   const R=L.d.range;let hitAny=false;
   // aim at the nearest foe in reach, so the swing goes where it is needed
   let near=null,nd=R+8;for(const v of B.units){if(!v.alive||v.side==='p')continue;const d=dist(L,v)-v.r;if(d<nd){nd=d;near=v}}
@@ -312,20 +335,20 @@ function updateLeader(L,dt){
   if(L.roll>0){L.roll-=dt;moveBy(L,L.rollDir.x*175*dt,L.rollDir.y*175*dt);L.walk+=dt*5;if(Math.abs(L.rollDir.x)>.1)L.face=L.rollDir.x>0?1:-1;return}
   if(L.stun>0){L.stun-=dt;return}
   const dx=(HELD.right?1:0)-(HELD.left?1:0),dy=(HELD.down?1:0)-(HELD.up?1:0);
-  if(dx||dy){const d=Math.hypot(dx,dy);L.aim={x:dx/d,y:dy/d};if(dx)L.face=dx;const s=speedOf(L)*dt;moveBy(L,dx/d*s,dy/d*s);L.walk+=dt*2.6}
+  if(dx||dy){B.did.moved+=dt;const d=Math.hypot(dx,dy);L.aim={x:dx/d,y:dy/d};if(dx)L.face=dx;const s=speedOf(L)*dt;moveBy(L,dx/d*s,dy/d*s);L.walk+=dt*2.6}
   if(HELD.a&&L.cd<=0&&L.heldA>.3)leaderSwing(L);L.heldA=HELD.a?(L.heldA||0)+dt:0;
 }
 
 /* ---------- the main step ---------- */
 function updateBattle(dt){
-  if(!B)return;dt*=B.slow;
+  if(!B)return;if(B.slowT>0){B.slowT-=dt;if(B.slowT<=0)B.slow=1}dt*=B.slow;
   for(const f of B.fx)f.t+=dt;B.fx=B.fx.filter(f=>f.t<f.T);
   for(const d of B.decals)d.t+=dt;
   if(B.banner){B.banner.t-=dt;if(B.banner.t<=0)B.banner=null}
   B.shake=Math.max(0,B.shake-dt*14);
   if(B.state==='deploy')return;
   if(B.state!=='fight'){B.endT+=dt;for(const u of B.units)if(u.alive&&u.side==='e'&&B.state==='won'){u.fear=1;u.fearFrom=B.leader}animOnly(dt);return}
-  B.time+=dt;
+  B.time+=dt;updateCoach(dt/Math.max(B.slow,.35));lessons();
   updateWaves(dt);refreshFields(false);
   for(const u of B.units){if(!u.alive)continue;u.cd-=dt;u.atkT-=dt;u.hitT-=dt;u.slow-=dt;u.root-=dt;u.fleeCd-=dt;u.chargeCd-=dt;
     // hidden in wheat or brush until they strike
@@ -354,21 +377,21 @@ function updateBattle(dt){
 function animOnly(dt){for(const u of B.units){if(!u.alive)continue;u.atkT-=dt;u.hitT-=dt;if(u.fear>0&&u.side==='e'){u.fear-=dt*.2;const f=u.fearFrom||B.leader;const dx=u.x-f.x,dy=u.y-f.y,d=Math.hypot(dx,dy)||1;stepToward(u,u.x+dx/d*20,u.y+dy/d*20,dt,1.2)}}
   for(const p of B.proj){p.t+=dt;if(p.t>=p.T)p.done=true}B.proj=B.proj.filter(p=>!p.done);
   for(let i=0;i<B.fire.length;i++)if(B.fire[i]>0)B.fire[i]=Math.max(0,B.fire[i]-dt)}
-function updateCart(dt){const c=B.cart;c.flash-=dt;if(c.done)return;if(c.hp<=0){lose('The cart has been destroyed.');return}
+function updateCart(dt){const c=B.cart;c.flash-=dt;if(c.done)return;if(c.hp<=0){lose('The cart was destroyed.');return}
   const near=B.units.some(u=>u.alive&&u.side==='p'&&Math.hypot(u.x-c.x,u.y-c.y)<60);const blocked=B.units.some(u=>u.alive&&u.side==='e'&&Math.hypot(u.x-c.x,u.y-c.y)<18);
   c.moving=near&&!blocked;c.why=!near?'The cart waits for you':blocked?'Foes block the cart!':'';if(!c.moving)return;
   const p=c.path[c.pi];if(!p){c.done=true;return}const dx=p.x-c.x,dy=p.y-c.y,d=Math.hypot(dx,dy);const s=c.speed*dt;
   if(d<=s){c.x=p.x;c.y=p.y;c.pi++;if(c.pi>=c.path.length)c.done=true}else{c.x+=dx/d*s;c.y+=dy/d*s}}
 function checkEnd(){if(B.state!=='fight')return;const s=B.spec;
   const folk=B.units.some(u=>u.alive&&u.side==='p'&&!u.isLeader&&!u.temp);
-  if(B.deployedFolk>0&&!folk){lose('Your whole band has fallen.');return}
+  if(B.deployedFolk>0&&!folk){lose('Your whole band fell.');return}
   const foes=B.units.some(u=>u.alive&&u.side==='e');
   if(s.win==='rout'&&!foes&&!wavesLeft())win();
   else if(s.win==='survive'&&B.time>=s.time)win();
   else if(s.win==='boss'&&B.bossDead)win();
   else if(s.win==='hold'&&B.hold.prog>=B.hold.need)win();
   else if(s.win==='escort'&&B.cart.done)win()}
-function win(){if(B.state!=='fight')return;B.state='won';B.endT=0;B.banner={text:'VICTORY!',t:2.5,big:1};AU.stop();AU.sfx('win');B.slow=.4;setTimeout(()=>{if(B)B.slow=1},700)}
+function win(){if(B.state!=='fight')return;B.state='won';B.endT=0;B.banner={text:'VICTORY!',t:2.5,big:1};AU.stop();AU.sfx('win');B.slow=.4;B.slowT=.7}
 function lose(why){if(B.state!=='fight')return;B.state='lost';B.endT=0;B.loseWhy=why;B.banner={text:'DEFEAT',t:2.5,big:1,bad:1};AU.stop();AU.sfx('lose')}
 function clampCam(){B.cam.x=clamp(B.cam.x,0,MW*TS-W);B.cam.y=clamp(B.cam.y,0,MH*TS-H)}
 
@@ -410,6 +433,7 @@ function drawBattle(t){
   for(const p of B.proj)drawProj(g,p,t);
   for(const f of B.fx)drawFx(g,f,t);
   if(B.leader&&B.leader.alive&&B.state==='fight'){const L=B.leader;g.globalAlpha=.18;g.strokeStyle='#ffe080';g.setLineDash([2,4]);g.beginPath();g.arc(L.x,L.y-3,L.aura,0,7);g.stroke();g.setLineDash([]);g.globalAlpha=1}
+  if(B.leader&&B.state==='fight')for(const tr of B.traps)if(tr.kind==='hay'&&!tr.used&&dist(tr,B.leader)<26){const bx=Math.round(tr.x),by=Math.round(tr.y)-17+((t*4|0)%2);disc(g,'#000',bx,by,5);disc(g,'#c83020',bx,by,4);P(g,'#fff',bx-1,by-2,3,1);P(g,'#fff',bx-2,by-1,1,4);P(g,'#fff',bx+2,by-1,1,4);P(g,'#fff',bx-1,by,3,1)}
   g.restore();
   if(B.night)drawNight(g,cx,cy,t);
   drawEdgeMarks(g,cx,cy,t);
