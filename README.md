@@ -7,8 +7,9 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 146 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
-| **Drowned Moon** | *Tides of the Drowned Moon*, a 16-bit style RPG. The moon fell into the sea; Marin can pull the tide out and let it back in, to sail, walk the seabed and solve dungeons. A party of three, turn-based battles, four dungeons and six bosses. | D-pad move · A talk/confirm · B back · START menu · SELECT turn the tide |
+| **Strike at Night** | A 16-bit style RPG. Lift was a tech worker in 2026 until a car hit him; he wakes up as a farm boy in Larkfield, is framed for his new parents' murder, and lives as a bandit with a price on his head. Beat strong foes to take their power as new forms. Prologue and two chapters. | D-pad move · A talk/confirm · B back · START menu · SELECT change form |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
+| **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 
 ## Lynties in 3D
 
@@ -19,14 +20,19 @@ Lynties draws its world in 3D: a little diorama seen from behind and above, with
 - `tools/lynties-3d/src/w3d.js` is the 3D world. `tools/lynties-3d/build.py` adds it to the game to make the cartridge: `python3 tools/lynties-3d/build.py tools/lynties-3d/lynties-2d.html games/lynties/index.html`.
 - If WebGL or three.js can't load, the cartridge falls back to the pixel-art world.
 
-## Drowned Moon
+## Strike at Night
 
-*Tides of the Drowned Moon*: seven years ago the moon fell into the sea and split the world. The islanders and the Drowned on the seabed each think the others are ghosts. Marin's lantern holds a shard of the moon, so she can turn the tide.
+The cartridge with the id `drownedmoon` now holds *Strike at Night*, built on the same engine that used to run *Tides of the Drowned Moon*.
 
-- **The tide is the main mechanic.** At Flood you sail and drift logs float into bridges. At Ebb the shallows and tidal pools are dry ground, and sunken places open. SELECT turns it, on the map and in dungeons.
-- **Battles are turn-based, for a party of three** (Marin, Pell the harpooner, Ysolde the moon-singer). The battle tide turns every three rounds, and Marin's *Turn Tide* flips it: water skills hit harder at Flood, moon skills at Ebb, and drowned foes lose their armor at Ebb.
-- Towns with shops and inns, gear for each hero, three save slots (in this browser), chiptune music and an ending.
-- The game is built from `tools/drownedmoon/src/` (art, maps, story, battle and so on, all in code): `python3 tools/drownedmoon/build.py` writes `games/drownedmoon/index.html`. `tools/drownedmoon/make-cart.js` redraws its label.
+- **The story.** October 2026: Lift walks out of the office at 11:48 PM and steps into a crosswalk. He wakes up in Larkfield as a sixteen-year-old farm boy who is also called Lift, and the hero creator is the face he sees in a basin of water. After one quiet day with his new family, a hooded man kills his parents, says "So you made it", and leaves the knife at his feet. Three months later Lift lives with the Crows, a bandit gang in the Thornwood.
+  - *Prologue:* the city street, the day in Larkfield, the night of the knife and the escape.
+  - *Chapter 1, Wanted:* the Crows, Jun the thief, the Baron's tax wagon, and Garrick the Hound.
+  - *Chapter 2, Greyford:* Moss the woodcutter, the Baron's road, a scent only Hound Form can follow, the tollhouse and Sir Kell.
+- **Forms.** When Lift beats a strong enemy he takes its power as a form, which changes his clothes, his special, his Limit ult and which way his stats lean: Drifter (Whirlwind, *Hard Reset*), Hound Form (Hunt, *Pack Run*) and Iron Form (Iron Wall, *Anvil*). Change forms from the Forms menu or with SELECT on the map, never in battle. A form is also a disguise: the Greyford gate guard knows your face.
+- **The bounty.** The Wanted Poster in Items shows Lift's face and his bounty, which climbs from 300 to 3,000 coins with a new line for each thing he's wanted for.
+- **Battles** are turn-based for up to three: a base attack earns 1 CP for the party, each hero's special costs 2 CP, and tapping a full Limit bar unleashes that hero's ult. Losing offers *Try again* at full health.
+- Saves made in the older stories still load and play those stories; they're marked *Old story* in the save list.
+- The game is built from `tools/drownedmoon/src/` (art, maps, story and battle, all in code; the new story's files start with `r_`): `python3 tools/drownedmoon/build.py` writes `games/drownedmoon/index.html`. `tools/drownedmoon/make-cart.js` redraws its label from the game's own art.
 - Played on its own on a phone, the game shows its own touch buttons.
 
 ## Drone Strike
@@ -38,6 +44,17 @@ The Dominion of Korgath has invaded the small Republic of Varna. You name and co
 - **Eleven drones**, from cheap FPVs to the Heavy UCAV, each strong against different targets: troops, armor, artillery, supply lines, buildings, air defense, jammers and ships. Some are one-way; others come home if they survive.
 - **Funds** buy drones and research; **prestige** raises your rank, which opens research tiers and foreign aid. Enemy generals adapt when you lean too hard on one drone.
 - The game is built from `tools/dronestrike/src/`: `python3 tools/dronestrike/build.py` writes `games/dronestrike/index.html`, and `tools/dronestrike/make-cart.js` redraws its label.
+
+## Pitchfork Rising
+
+A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. Twelve battles in four acts take the revolt from the village manor, past the Earl's sheriff and the Earl himself, to the king's palace yard, and then you choose what replaces the crown.
+
+- **Learning by playing:** there is no manual. The first battle starts within seconds, and short tips appear one at a time as each thing becomes useful (move, strike, shout orders, roll, light the hay). New weapons, traps and plans arrive one or two at a time after each victory, each on its own card, and camp grows a new button when there is something new to use.
+- **Before each battle (camp):** spend plunder to arm unarmed folk (pitchforks, slings, scythes, flails, bows, firebrands, pikes, crossbows), buy traps (stake pits, snares, caltrops, hay & pitch, beehives, deadfalls, barricades), pick one scheme (spike the ale, ring the bell, spread rumours, night attack and more) and improve Wat.
+- **Deployment:** squads start in the green area; traps can go anywhere that isn't right on top of the enemy. Everything is placed for you to start with, so START is always ready.
+- **Battle:** you play Wat on the field. A strikes, B rolls, SELECT shouts HOLD / CHARGE / FOLLOW ME to every squad. Folk hidden in wheat or brush strike for double damage; folk near Wat hit harder and never run; fire spreads through wheat; pikes break cavalry charges; nobles only really fear Wat's own blade.
+- **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
+- Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
 
 ## Playing it
 
@@ -61,8 +78,9 @@ app/                        the built offline edition (made by tools/build-offli
 tools/build-offline.py      builds the offline edition: python3 tools/build-offline.py . OUT
 tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
 tools/lynties-3d/           the Lynties game, its 3D world and the script that builds the cartridge
-tools/drownedmoon/          Drowned Moon's source (src/*.js) and its build script
+tools/drownedmoon/          Strike at Night's source (src/*.js), its build script and label maker
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
+tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 ```
 
 ## How the console works
@@ -73,6 +91,10 @@ tools/dronestrike/          Drone Strike's source (src/*.js), its build script a
 - **Game options in `CARTS`:**
   - `stick:true` puts a round control stick in place of the D-pad.
   - `wide:true` gives the game the console's sideways shape. If the phone is upright, the console turns itself a quarter turn.
+  - `face4:true` gives the game four face buttons in a diamond (A, B, C, D).
+  - `skin:'<id>'` names the console skin the game wears when the player picks *Match the game*.
+- **Home screen and Library:** the shelf shows the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
+- **Skins:** SELECT on the shelf opens the skin picker. Some skins move (aurora, galaxy and others), and each game can bring its own.
 - **Inside the console:** games detect it with `window.parent.ZIGAPLAY`, and each one still runs fine on its own. Every game prefixes its `localStorage` keys with its own id, because they all share one origin.
 
 The full contract is the comment above `CARTS` in `index.html`.

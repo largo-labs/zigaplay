@@ -3628,6 +3628,10 @@ const P={x:20,y:0,fx:20,fy:0,t:1,dir:'up',moving:false,step:0};
    There is no slot limit: each save has its own id. A deleted save leaves a small "deleted" marker
    behind so an old copy on another device can't bring it back. */
 const CLOUD={state:'checking',db:null,uid:null,docs:{},out:{},writing:{},timer:0,warned:false,failAt:0,init:false};
+/* Inside the ZigaPlay the console writes the saves to the account itself (ZIGAPLAY.cloud): a game's own reach
+   to window.claude from inside the console's frame never got through, so saves stayed on the phone only. The
+   documents are the same ones as before: data/users/<id>/lynties/saves/slot<id>. */
+const ZPC=ZP&&ZP.cloud&&typeof ZP.cloud.list==='function'&&typeof ZP.cloud.save==='function'?ZP.cloud:null;
 const validSave=v=>v&&Array.isArray(v.team)&&v.team.length?v:null;
 const newSlotId=()=>Date.now().toString(36)+Math.floor(rnd()*46656).toString(36);
 function localSlot(n){try{return validSave(JSON.parse(localStorage.getItem(slotKey(n))||'null'))}catch(e){return null}}
@@ -3653,10 +3657,14 @@ function writeSave(){if(!S||!S.flags.starter||!CM)return;S.pos={map:CM.id,x:P.x,
   if(CLOUD.state==='off'&&CLOUD.failAt&&!CLOUD.init&&Date.now()-CLOUD.failAt>15000)cloudInit()}
 function deleteSlot(id){const t=Date.now();try{localStorage.removeItem(slotKey(id));localStorage.setItem(tombKey(id),String(t))}catch(e){}
   if(CLOUD.docs[id])CLOUD.docs[id]={deleted:true,savedAt:t};
-  if(CLOUD.state==='on'){CLOUD.out[id]={tomb:true,savedAt:t};cloudWrite(id)}}
+  if(CLOUD.state==='on'||ZPC){CLOUD.out[id]={tomb:true,savedAt:t};cloudWrite(id)}}
 function cloudOff(msg){CLOUD.state='off';if(!CLOUD.warned){CLOUD.warned=true;toast(msg||'Account backup stopped working. Progress is saved in this browser for now.')}}
 /* one write at a time per save; a save made while one is in flight goes out right after it */
 async function cloudWrite(n){
+  if(ZPC){const body=CLOUD.out[n];if(!body)return true;delete CLOUD.out[n];
+    const doc=body.tomb?{deleted:true,savedAt:body.savedAt}:{json:body.json,savedAt:body.savedAt};
+    try{ZPC.save('lynties',body.tomb?'':body.json,body.tomb?{deleted:true,savedAt:body.savedAt}:{savedAt:body.savedAt},'slot'+n)}catch(e){CLOUD.out[n]=body;return false}
+    CLOUD.docs[n]=doc;return true}
   if(CLOUD.state!=='on')return false;
   if(CLOUD.writing[n])return CLOUD.writing[n];
   if(!CLOUD.out[n])return true;
@@ -3672,9 +3680,27 @@ async function cloudWrite(n){
   CLOUD.writing[n]=p;const ok=await p;CLOUD.writing[n]=null;
   if(ok&&CLOUD.out[n])return cloudWrite(n);
   return ok}
-function cloudFlush(){clearTimeout(CLOUD.timer);const ids=new Set([...Object.keys(CLOUD.out),String(SLOT)]);return Promise.race([Promise.all([...ids].map(cloudWrite)).then(r=>r.every(Boolean)),sleep(10000).then(()=>false)])}
+function cloudFlush(){clearTimeout(CLOUD.timer);
+  if(ZPC){for(const n of Object.keys(CLOUD.out))cloudWrite(n);return Promise.race([Promise.resolve(ZPC.flush('lynties')).then(ok=>!!ok&&ZPC.status('lynties','slot'+SLOT).state==='on').catch(()=>false),sleep(10000).then(()=>false)])}
+  const ids=new Set([...Object.keys(CLOUD.out),String(SLOT)]);return Promise.race([Promise.all([...ids].map(cloudWrite)).then(r=>r.every(Boolean)),sleep(10000).then(()=>false)])}
 const saveCol=uid=>ZP?`data/users/${uid}/lynties/saves`:'data/users/'+uid;
+/* the console's list of every Lynties save in the account; the title stops waiting for it after 8 seconds and
+   picks the saves up whenever they arrive */
+let zpcList=null;
+async function cloudInitZP(){
+  if(CLOUD.init)return;CLOUD.init=true;CLOUD.state='checking';
+  if(!zpcList)zpcList=Promise.resolve(ZPC.list('lynties')).catch(()=>null);
+  const r=await Promise.race([zpcList,sleep(8000).then(()=>'late')]);
+  if(r==='late'){CLOUD.state='off';CLOUD.failAt=Date.now();CLOUD.init=false;cloudReady();
+    zpcList.then(r2=>{zpcList=null;if(r2&&r2.ok){CLOUD.init=false;cloudInitZP()}});return}
+  zpcList=null;
+  if(!r||!r.ok){CLOUD.state='off';CLOUD.failAt=Date.now();CLOUD.init=false;cloudReady();return}
+  for(const d of r.docs){const m=/^slot([A-Za-z0-9]+)$/.exec(d.id);if(!m)continue;
+    if(d.deleted)CLOUD.docs[m[1]]={deleted:true,savedAt:+d.savedAt||0};else if(typeof d.json==='string'&&d.json)CLOUD.docs[m[1]]={json:d.json,savedAt:+d.savedAt||0}}
+  CLOUD.state='on';CLOUD.failAt=0;CLOUD.init=false;
+  cloudReady();await cloudReconcile()}
 async function cloudInit(){
+  if(ZPC)return cloudInitZP();
   const C=ZP?ZP.claude:window.claude;
   if(!C||typeof C.use!=='function'){CLOUD.state='off';cloudReady();return}
   if(CLOUD.init)return;CLOUD.init=true;CLOUD.state='checking';
@@ -3692,6 +3718,8 @@ async function cloudInit(){
   CLOUD.init=false;
   cloudReady();
   if(CLOUD.state!=='on')return;
+  await cloudReconcile()}
+async function cloudReconcile(){
   // bring the two copies in line: back up newer browser saves and deletions, refresh the browser copy from newer backups
   for(const n of allSlotIds()){const c=CLOUD.docs[n],l=localSlot(n),T=localTomb(n);
     if(CLOUD.out[n]){await cloudWrite(n);continue}
