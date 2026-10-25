@@ -2339,6 +2339,225 @@ const ART={
   b.angry(28,10,1,R);b.angry(32,10,-1,R);
   b.rim(L,[M],[[0,-1]])},
 };
+/* twenty more Lynties: six new lines (otters, frogs, hedgehogs, penguins, moths and raccoons) and two loners */
+Object.assign(ART,{
+  /* ---- otters: water / frost ---- */
+  ottwick(b){const B='#a0703e',BD='#6e4a26',BL='#c99a62',C='#f2dcb4',K='#2a1a10',S='#9aa4b4';
+    b.horn(14,33,6,36,2,29,5,B,1.6);b.horn(12,33,7,35,4,31,2.4,BD,1);
+    b.ell(16,36,3.4,2,BD);b.ell(23,36.5,3.2,2,BD);
+    b.ell(19,27,7.5,9,B);b.ell(21,28,4.2,6.5,C,0,true);
+    b.ell(23,15,7.2,6.2,B);b.ell(22,13,5,3,BL,0,true);
+    b.ell(18.5,10,1.8,1.8,BD);b.ell(26,9.5,1.8,1.8,BD);
+    b.ell(27.2,17,3.6,3,C,0);b.ell(29.6,15.4,1.5,1.1,K,0);b.line(27,19.4,29,19.2,BD,1);
+    b.eye(24.5,13.5,1.9);b.px(29,17,BD);b.px(30.5,17.4,'#d8c4a0');
+    b.ell(25,24,3.4,2.8,S);b.px(24,23,'#e4ecf6');b.px(25,23,'#c9d2dc');
+    b.ell(21.5,23.5,2.2,1.8,B);b.ell(28,24.5,1.8,1.6,B);
+    b.rim(BL,[B],[[0,-1]])},
+  rapidotter(b){const B='#8a5a30',BD='#5a3a1c',BL='#b8844a',C='#ecd2a6',K='#24160a',W='#7fd0f0',WL='#d8f4ff';
+    for(const[x,w]of[[2,5],[10,6],[20,7],[31,6]])b.ell(x+w/2,36,w/2+1,1.2,W,0);
+    b.horn(8,25,3,24,0,30,5.5,B,1.4);
+    b.ell(11,30.5,3,2.4,BD);b.ell(27,31,3,2.2,BD);
+    b.ell(18,24,12.5,6.4,B);b.ell(19,27.5,10,2.6,C,0,true);
+    b.ell(31,19,6.4,5.4,B);b.ell(30,17,4.4,2.6,BL,0,true);b.ell(28.5,14.2,1.7,1.7,BD);
+    b.ell(34.6,21,3.4,2.6,C,0);b.ell(36.8,19.4,1.3,1,K,0);
+    b.eye(33,17.5,1.8);b.px(36,21.6,BD);b.line(34,23.3,36,23,BD,1);
+    b.ell(13,31.5,2.4,1.6,B);b.ell(25,32,2.4,1.6,B);
+    for(const[x,y]of[[4,33],[1,31],[14,34],[24,34],[36,33]])b.px(x,y,WL);b.plus(37,32,WL);
+    b.rim(BL,[B],[[0,-1]])},
+  cascadmiral(b){const B='#6e4424',BD='#4a2c14',BL='#9a6a3a',C='#e8cc9c',K='#1e1208',G='#3a8a4a',GL='#7ad08a',R='#ff7a5c',RL='#ffc0a8',N='#24305a',Y='#f1c66b';
+    b.horn(12,31,3,31,2,22,5,B,2);b.horn(11,31,5,30,3,24,2,BD,1);
+    b.line(33,3,31,38,R,2);b.line(34,3,32,37,RL,1);for(const dx of[-2,0,2])b.line(33+dx,4,33+dx*1.4,0,R,1);b.line(31,4,35,4,R,1);
+    b.ell(14.5,37,3.6,1.8,BD);b.ell(23,37,3.6,1.8,BD);
+    b.ell(18,25,9.5,11.5,B);b.ell(20,27,5.5,8.5,C,0,true);
+    b.line(11,15,26,35,G,3);for(let k=0;k<5;k++)b.px(13+k*3,18+k*4,GL);b.line(26,35,24,38,G,1);b.line(27,34,29,37,G,1);
+    b.ell(29.5,21,3,5.5,B);b.ell(31,25.5,2.2,2,BD);
+    b.ell(22,11.5,7.2,6.2,B);b.ell(27.5,13.5,3.8,2.8,C,0);b.ell(30.2,11.6,1.4,1,K,0);b.line(26.5,15.8,29.5,15.4,BD,1);
+    b.angry(22,8.5,1,'#ffe27a');b.px(28.5,13.4,BD);
+    b.poly([[13,7],[17,2],[22,0.5],[27,2],[31,7],[22,5.5]],N);b.line(14,6.5,30,6.5,Y,1);b.ell(22,3,1.3,1.3,Y,0);
+    for(const[x,y]of[[3,10],[6,4],[37,20],[38,30]])b.plus(x,y,'#bfeaff');
+    b.rim(BL,[B],[[0,-1]])},
+  /* ---- frogs: leaf / water ---- */
+  lilypip(b){const G='#6cc25a',GD='#3f8f3a',GL='#a8e08a',C='#f3f7d8',P='#4aa84a',PD='#2f7a34',F='#ff9ac0',K='#1f3418';
+    b.ell(12.5,33,4.6,3.4,G);b.ell(10,36.5,3.4,1.4,GD);
+    b.ell(20,30,9.5,6.5,G);b.ell(22,32.5,6,3.2,C,0,true);
+    b.ell(24,24,8,6,G);b.ell(23,22,6,3,GL,0,true);
+    b.ell(27.5,35.5,2.4,2.4,G);b.ell(29,37.5,2.8,1.2,GD);
+    b.ell(19.5,19.5,3.4,3.4,G);b.ell(27,19,3.4,3.4,G);b.eye(19.5,19.5,2.2);b.eye(27,19,2.2);
+    b.line(25,27,31,26,GD,1);b.ell(30,24.5,1.4,1,F,0);
+    b.ell(23,14.5,11,2.8,P);b.ell(23,13.8,9,1.6,'#6cd06a',0,true);b.poly([[23,14.5],[34.5,12],[34.5,17]],null);
+    for(const t of[-.6,-.2,.25,.7])b.line(23,14.5,23+Math.cos(Math.PI+t)*9,14.5+Math.sin(Math.PI+t)*2.2,PD,1,true);
+    b.ell(17,12.2,2,1.4,F,0);b.px(17,12,'#ffe27a');
+    b.rim(GL,[G],[[0,-1]])},
+  croakbloom(b){const G='#4fae4a',GD='#2f7a34',GL='#8fd47a',C='#eef5cf',P1='#ff8ab0',P2='#ffd1e0',Y='#ffd84a',K='#1f3418',W='#5cc44e';
+    b.ell(20,38,16,1.6,W,0);
+    b.ell(9.5,32,6,4.5,G);b.ell(7,36.5,4.4,1.5,GD);
+    b.ell(18,28,12,8,G);for(const[x,y]of[[12,23],[17,21],[10,28],[15,26]])b.ell(x,y,1.4,1.1,GD,0,true);
+    b.ell(26,21.5,8,6.2,G);b.ell(25,19,6,3,GL,0,true);
+    b.ell(23,15.5,3.2,3.2,G);b.ell(29.5,15.5,3.2,3.2,G);b.eye(23,15.5,2.1);b.eye(29.5,15.5,2.1);
+    b.line(27,25.6,34,24.4,GD,1);
+    for(let k=0;k<5;k++){const a=k*Math.PI*2/5-Math.PI/2,x=31+Math.cos(a)*3.6,y=29.5+Math.sin(a)*3.6;b.ell(x,y,2.4,2.4,k%2?P2:P1)}b.ell(31,29.5,1.7,1.7,Y,0);
+    b.ell(26.5,35,2.6,2.6,G);b.ell(28,37,3,1.2,GD);
+    b.rim(GL,[G],[[0,-1]])},
+  lotitan(b){const G='#4a8a4a',GD='#2a5a30',GL='#7ab86a',C='#e6e0b8',P1='#ff9ac0',P2='#ffe0ec',Y='#ffd84a',L='#5cc44e',LD='#2f7a34',W='#5ab8e8',K='#16240e';
+    b.ell(20,38.5,19,1.4,W,0);
+    b.ell(7,33,6,5,G);b.ell(5,37.2,5,1.6,GD);
+    b.ell(19,27,17,10.5,G);b.ell(22,32,12,4,C,0,true);
+    for(const[x,y]of[[8,26],[13,22],[11,31],[19,21],[16,28]])b.ell(x,y,1.6,1.2,GD,0,true);
+    b.ell(31,25,7.5,6.5,G);b.ell(30.5,30,5.5,2.4,C,0,true);
+    b.ell(29,18.5,3,3,G);b.ell(35.5,19.5,3,3,G);b.eye(29,18.5,2);b.eye(35.5,19.5,2);
+    b.line(31,28,38.5,26.5,GD,1);
+    b.ell(32,35,3,3,G);b.ell(34,37.6,3.5,1.2,GD);
+    for(const[x,y,w]of[[7,16,5],[15,13.5,6],[27,14,4.5]]){b.ell(x,y+1.5,w,1.6,L,0);b.line(x-w+1,y+1.5,x+w-1,y+1.5,LD,1,true)}
+    for(const[x,y,s]of[[11,12,1],[20,10,1.25],[25,12.5,.9]]){b.tri(x-3*s,y+2,x-1*s,y+2,x-2.6*s,y-2*s,P1);b.tri(x+3*s,y+2,x+1*s,y+2,x+2.6*s,y-2*s,P1);b.tri(x-1.6*s,y+2,x+1.6*s,y+2,x,y-4*s,P2);b.tri(x-1,y+2,x+1,y+2,x,y-1.5*s,Y)}
+    b.rim(GL,[G],[[0,-1]])},
+  /* ---- hedgehogs: spark / earth ---- */
+  prickit(b){const Q='#c98f3a',QL='#f2d07a',T='#fff2a8',S='#e8c49a',SD='#b8906a',K='#2a1a10',Y='#ffe45c';
+    for(let k=0;k<9;k++){const a=Math.PI*(1.05+k*.1),x0=18+Math.cos(a)*7,y0=28+Math.sin(a)*5,x1=18+Math.cos(a)*14,y1=28+Math.sin(a)*12;b.quill(x0,y0,x1,y1,4,k%2?Q:QL);b.px(x1-Math.cos(a)*.8,y1-Math.sin(a)*.8,T)}
+    b.ell(18,29,11,7.5,Q);for(const[x,y]of[[11,26],[15,23],[20,24],[13,30]])b.line(x,y,x-2,y-2,QL,1,true);
+    b.ell(14,36,2.4,1.6,SD);b.ell(23,36,2.4,1.6,SD);
+    b.ell(27,31,6.2,5,S);b.ell(26,29,4,2.4,'#f6dcb8',0,true);b.ell(33,32,2.6,1.8,S);b.ell(35,31.4,1.3,1.1,K,0);
+    b.ell(25,25.5,1.8,1.8,SD);b.eye(28.5,29,1.8);b.ell(29,33,1.2,.8,'#ff9fb0',0);
+    b.zap(3,10,.55,Y);b.zap(30,13,.45,Y,true);
+    b.rim(QL,[Q],[[0,-1]])},
+  quillvolt(b){const Q='#2e3058',QD='#1e1f3e',Y='#f2d040',YL='#fff6b0',CY='#5ee6ff',S='#c9a070',SD='#8a6a40',K='#1a1208';
+    for(let k=0;k<11;k++){const a=Math.PI*(1.0+k*.09),x0=18+Math.cos(a)*8,y0=26+Math.sin(a)*6,x1=18+Math.cos(a)*17,y1=26+Math.sin(a)*15;b.quill(x0,y0,x1,y1,4.4,k%2?Y:'#d9b020');b.px(x1-Math.cos(a)*.7,y1-Math.sin(a)*.7,k%3?YL:CY)}
+    b.ell(18,27,13,9,Q);for(const[x,y]of[[8,24],[12,20],[18,19],[24,21],[10,29]])b.zap(x-1,y-2,.32,Y);
+    b.ell(11,35.5,3,2,QD);b.ell(24,36,3,2,QD);
+    b.ell(29,29,6.8,5.6,S);b.ell(28,27,4.4,2.6,'#e0bc8c',0,true);b.ell(35,30,2.8,2,S);b.ell(37.4,29.4,1.3,1.1,K,0);
+    b.angry(27,25.5,1,YL);b.line(31,33,35,32.4,SD,1);
+    b.zap(33,12,.55,CY);b.zap(1,15,.5,YL,true);
+    b.rim('#4a4e8a',[Q],[[0,-1]])},
+  voltpine(b){const B='#3a3050',BD='#241e36',BL='#5a4e7a',M='#c9d2dc',MD='#8a94a6',Y='#ffe45c',YL='#fff6b0',CY='#5ee6ff',S='#8a6a4a',SD='#5a4430',K='#140c1c';
+    const tips=[];for(let k=0;k<9;k++){const a=Math.PI*(1.02+k*.075),x0=17+Math.cos(a)*9,y0=26+Math.sin(a)*6,x1=17+Math.cos(a)*16,y1=26+Math.sin(a)*20;b.line(x0,y0,x1,y1,k%2?M:MD,2);tips.push([x1,y1])}
+    for(let k=0;k<tips.length-1;k+=2){const[a,c]=tips[k],[d,e]=tips[k+1],mx=(a+d)/2,my=(c+e)/2;b.pl([[a,c],[mx+1.5,my-1],[mx-1,my+1],[d,e]],CY,1)}
+    for(const[x,y]of tips){b.ell(x,y,1.5,1.5,Y,0);b.px(x,y,YL)}
+    for(const x of[8,13,22,27])b.rect(x,31,3,6,BD);for(const x of[8,13,22,27])b.rect(x-.5,37,4,1,K);
+    b.ell(18,26.5,14,8.5,B);b.ell(18,30,11,4,BL,0,true);
+    for(const[x,y]of[[7,24],[11,21],[16,20],[21,20],[25,21]])b.quill(x,y+3,x-2,y-3,2.4,MD);
+    b.ell(31,26.5,6.6,5.6,S);b.ell(30,24.5,4.4,2.4,'#b8906a',0,true);b.ell(36.5,27.5,3,2.2,S);b.ell(38.8,27,1.2,1.1,K,0);
+    b.angry(28.5,23,1,Y);b.line(32,30.5,37,30,SD,1);
+    b.zap(33,12,.45,CY);b.zap(30,2,.4,YL);
+    b.rim(BL,[B],[[0,-1]])},
+  /* ---- penguins: frost / water ---- */
+  pipguin(b){const F='#9aa4b4',FD='#5a6474',FL='#c9d2dc',W='#f4f6ff',O='#ffb04f',OD='#e07a1a',K='#1b1430',P='#ffb0c0';
+    b.ell(17,37,3.4,1.5,O);b.ell(24,37,3.4,1.5,O);
+    b.ell(20,27,10,10.5,F);for(const[x,y]of[[12,22],[11,28],[27,21],[14,33]])b.line(x,y,x-1.5,y+1.5,FL,1,true);
+    b.ell(22,28,6,7.5,W,0,true);
+    b.ell(11,27,2.6,5,FD);b.ell(29,27.5,2.4,4.4,FD);
+    b.ell(22,17.5,8,6.6,F);b.ell(23.5,19,5.8,4.6,W,0,true);
+    b.line(20,11,19,8,FD,1);b.line(22,11,23,7.5,FD,1);b.line(21,11,21,8.5,F,1);
+    b.eye(21,18,1.7);b.eye(26.5,18,1.7);b.tri(27,21,27,23.4,31,22,O);b.line(27,22.6,30,22.2,OD,1);b.ell(20,21.5,1.3,.9,P,0);
+    b.plus(5,10,'#d8f4ff');b.plus(35,12,'#d8f4ff');
+    b.rim(FL,[F],[[0,-1]])},
+  floebill(b){const D='#2a3a5a',DL='#4a6088',W='#f4f6ff',O='#ffb04f',Y='#ffd84a',I='#c9eefc',IL='#ffffff',ID='#8ad8f0',K='#0e1424';
+    for(const[x,h,w]of[[6,9,5],[12,6,4],[17,8,4],[26,5,3],[31,7,4]])b.crystal(x,38,h,w,I,IL,ID);
+    b.ell(9,36,7,2,'#6ab8e8',0);b.ell(28,36.5,8,1.6,'#6ab8e8',0);
+    const seg=[[13,31,6.5,5],[17,26,7.2,6],[22,20,6.6,5.8],[26,14.5,5.4,4.8]];for(const[x,y,rx,ry]of seg)b.ell(x,y,rx,ry,D);
+    b.ell(17.5,28,4.6,3.6,W,0,true);b.ell(21,22.5,4.2,3.4,W,0,true);b.ell(24.5,17,3,2.4,W,0,true);
+    b.poly([[11,36],[7,38],[12,34]],D);b.poly([[14,36],[13,39],[16,35]],D);
+    b.poly([[15,22],[6,18],[13,27]],DL);b.poly([[24,25],[31,30],[22,28]],DL);
+    b.poly([[28,10],[37,3],[33,11],[30,12.5]],'#ff9a2e');b.poly([[30,12],[36,6],[33,11]],Y);
+    b.ell(24.6,12.6,1.4,1,Y,0);b.eye(28,11,1.6);
+    for(const[x,y]of[[3,29],[36,20],[34,30],[2,22]])b.px(x,y,IL);b.plus(8,25,'#d8f4ff');
+    b.rim(DL,[D],[[0,-1],[1,0]])},
+  emperime(b){const D='#1f2a44',DL='#3a4c74',W='#f4f6ff',WS='#d6e2f0',O='#ffb04f',Y='#ffd84a',I='#c9eefc',IL='#ffffff',ID='#7ac8e8',K='#0a1020';
+    b.ell(16,38,4,1.4,O);b.ell(25,38,4,1.4,O);
+    b.poly([[12,14],[4,30],[9,36],[14,28]],D);b.line(6,30,9,35,DL,1);
+    b.ell(20,25,10,13.5,D);b.ell(22.5,27,6.5,10.5,W,0,true);for(const y of[22,27,32])b.line(19,y,26,y,WS,1,true);
+    b.ell(23,10,6.6,5.6,D);b.ell(20.5,13,3,2.4,Y,0);b.ell(20.5,12.4,1.8,1.4,'#fff2a8',0);
+    b.poly([[28,9.5],[37,12],[36,13.5],[28,12.5]],K);b.line(29,12,36,12.8,O,1);
+    b.angry(23,7.5,1,'#bfeaff');
+    for(const[x,h]of[[16.5,4],[19.5,6.5],[23,8.5],[26.5,6.5],[29.5,4]])b.crystal(x,6,h,2,I,IL,ID);b.line(15.5,6,30.5,6,ID,1);b.px(23,7,'#ffffff');
+    b.ell(31,27,2.6,6.5,D);b.line(31,22,32,32,DL,1,true);
+    for(const[x,y]of[[3,8],[35,4],[36,34],[2,18]])b.plus(x,y,'#d8f4ff');
+    b.rim(DL,[D],[[0,-1]])},
+  /* ---- moths: fire / air ---- */
+  wicklet(b){const B='#ffe0a0',BD='#f0b45a',S='#c97a2a',F='#fff2d0',K='#2a1a10',WK='#3a2a1a';
+    for(let k=0;k<5;k++){const x=5+k*5,y=31-Math.sin(k*.9)*1.2;b.ell(x,y,4.4,4.6,k%2?BD:B);b.line(x-1,y-4,x-1,y+3,S,1,true);b.px(x-1,y+4.6,K);b.px(x+1,y+4.6,K)}
+    b.ell(31,27,6.4,6.2,B);b.ell(32,28.5,4,3.6,F,0,true);
+    b.line(31,21,31,16,WK,1);b.flame(31,17.5,31,6,6);
+    b.eye(30.5,26,1.6);b.eye(34.5,26.2,1.4);b.line(31,30.5,34,30.2,S,1);b.ell(35.5,29,1.1,.8,'#ff9fb0',0);
+    for(const[x,y]of[[24,9],[37,12],[26,15]])b.px(x,y,'#ffd65a');
+    b.rim('#fff2c8',[B],[[0,-1]])},
+  lampwing(b){const B='#6a4a3a',BF='#c9a070',WG='#ffd36a',WL='#fff2a8',WR='#c96a2a',R='#d8323f',K='#1b1430';
+    b.ell(13,15,10,9.5,WG);b.ell(14,15,7,6.5,WL,0,true);for(const x of[7,11,15,19])b.line(x,6.5,x,23.5,WR,1,true);b.rect(6,5,15,1.2,WR);b.rect(6,24,14,1.2,WR);
+    b.line(9,25,9,30,R,1);b.line(17,25,17,29,R,1);b.ell(9,31,1,1.3,R,0);b.ell(17,30,1,1.3,R,0);
+    b.ell(14,29,7,5,WG);b.ell(14.5,29,4.6,3.2,WL,0,true);b.line(10,25,10,33,WR,1,true);b.line(15,24.5,15,34,WR,1,true);
+    b.ell(24,23,4.4,8.4,BF);for(const y of[18,22,26,30])b.line(21,y,27,y,B,1,true);
+    b.ell(28,13,4.6,4.2,BF);b.ell(29.5,12.5,2,2.4,K,0);b.px(29,11,'#ffffff');
+    b.pl([[27,9],[25,4],[22,2]],B,1);b.pl([[30,9],[32,4],[35,2]],B,1);for(const[x,y]of[[24,3],[26,5],[33,3],[31,5]])b.px(x,y,BF);
+    b.line(26,31,28,35,B,1);b.line(23,31,22,35,B,1);
+    for(const[x,y]of[[3,30],[36,20],[33,33]])b.plus(x,y,'#ffe9a0');
+    b.rim(WL,[WG],[[0,-1]])},
+  pyralume(b){const B='#5a2a1a',BF='#a0482a',R='#d8321e',O='#ff7a1f',Y='#ffc93a',L='#fff2a8',E='#2a1236';
+    b.poly([[22,17],[8,1],[1,3],[0,13],[7,21],[16,22]],R);b.poly([[21,17],[9,4],[3,6],[3,13],[9,19],[16,20]],O);b.poly([[20,17],[10,7],[6,9],[7,14],[11,18]],Y);
+    b.ell(9,11,2.6,2.6,E);b.ell(9,11,1.3,1.3,L,0);
+    b.poly([[22,23],[6,27],[2,35],[9,38],[18,31]],R);b.poly([[21,24],[8,28],[5,34],[10,36],[17,30]],O);b.poly([[20,25],[10,29],[9,33],[15,30]],Y);
+    b.ell(9,32,1.8,1.8,E);b.px(9,32,L);
+    b.ell(25,22,4.2,9.5,BF);for(const y of[16,20,24,28])b.line(22,y,28,y,B,1,true);b.ell(24,28,2.6,3,R,0,true);
+    b.ell(29,12,4.6,4.2,BF);b.ell(30.5,11.5,2,2.4,E,0);b.px(30,10,L);
+    b.pl([[28,8],[27,3],[24,0]],B,1);b.pl([[31,8],[34,3],[37,1]],B,1);
+    b.flame(25,31,24,38,3,['#d8321e','#ff7a1f','#ffc93a']);
+    for(const[x,y]of[[34,18],[37,24],[33,30],[36,8],[14,24]])b.px(x,y,Y);for(const[x,y]of[[35,22],[31,36]])b.plus(x,y,O);
+    b.rim(L,[Y],[[0,-1]])},
+  /* ---- raccoons: shadow / earth ---- */
+  bandikit(b){const F='#8a8aa0',FD='#4a4a5c',FL='#c9c9d6',M='#22222e',W='#f4f4f8',R='#3a3a48',G='#f1c66b',K='#140c1c';
+    for(let k=0;k<5;k++){const t=k/4,x=12-t*7,y=31-t*12;b.ell(x,y,3.4-t*.6,3.2-t*.4,k%2?R:FL)}b.ell(5,18,2.4,2.2,R);
+    b.ell(15,36.4,3,1.6,FD);b.ell(23,36.6,3,1.6,FD);
+    b.ell(19,28.5,8,7.5,F);b.ell(21,30,4.4,5,FL,0,true);
+    b.tri(18,15,22,14,19,9,F);b.tri(25,14,29,15,28,9,F);b.tri(19,14,21,14,19.6,11,'#ffb0c8');b.tri(26,14,28,14,27.6,11,'#ffb0c8');
+    b.ell(24,19.5,7.2,6,F);b.ell(28.5,22,4,3,W,0);b.ell(31.6,21,1.4,1.1,K,0);
+    b.ell(25,18.4,5.6,2,M,0);b.ell(23,18.2,1.3,1.3,'#ffffff',0);b.px(23.6,18.6,K);b.ell(27.5,18.4,1.2,1.2,'#ffffff',0);b.px(28,18.8,K);
+    b.ell(22,13.6,3.6,1.4,FL,0,true);
+    b.ell(26,27,2.8,2.8,G);b.px(25,26,'#fff3b0');b.ell(23.5,27.5,1.8,1.6,F);b.ell(28.5,28,1.8,1.6,F);
+    b.rim(FL,[F],[[0,-1]])},
+  masquoon(b){const F='#6a6a84',FD='#3a3a4c',FL='#a4a4b8',M='#16161e',W='#e8e8f0',R='#2a2a38',S='#c9a070',SD='#8a6a40',K='#0e0a14';
+    for(let k=0;k<6;k++){const t=k/5,x=11-t*9,y=33-t*8;b.ell(x,y,3.6-t*.5,3.2-t*.4,k%2?R:FL)}
+    b.ell(9,12,6.4,6.4,S);b.ell(8,10,4,3,'#e0bc8c',0,true);b.line(13,8,15,6,SD,2);b.line(5,14,12,15,SD,1,true);
+    b.ell(15,37,3.4,1.6,FD);b.ell(24,37,3.4,1.6,FD);
+    b.ell(19,26,8.5,10.5,F);b.ell(21,28,4.6,7.4,FL,0,true);
+    b.line(14,19,12,14,F,3);b.ell(12,14,2,2,F);
+    b.tri(18,9,22,8,19,2,F);b.tri(25,8,29,9,28.5,3,F);b.tri(19,8,21,8,19.8,5,'#ffb0c8');b.tri(26,8,28,8,28,5,'#ffb0c8');
+    b.ell(24,13.5,7.2,6,F);b.ell(28.6,16,4,3,W,0);b.ell(31.8,15,1.4,1.1,K,0);
+    b.ell(25,12.4,5.8,2.1,M,0);b.angry(23.5,11,1,'#ffffff');
+    b.line(27,22,32,27,F,3);b.ell(32.5,27.5,1.8,1.6,FD);
+    b.rim(FL,[F],[[0,-1]])},
+  heistrix(b){const F='#4a4a64',FD='#2a2a3c',FL='#7a7a96',C='#2a1a3e',CI='#6a3a8a',CL='#9a6ac8',M='#0e0a14',W='#d6d6e4',Y='#ffe27a',G='#f1c66b',R='#1e1e2c',K='#0a0610';
+    b.poly([[14,8],[3,22],[0,38],[9,35],[13,38],[19,34],[22,38],[24,16]],C);b.poly([[14,10],[6,22],[4,34],[9,32],[13,35],[17,31],[20,16]],CI);b.line(6,23,4,33,CL,1,true);b.line(11,20,11,33,CL,1,true);
+    b.ell(17,37.4,3.4,1.5,FD);b.ell(25,37.4,3.4,1.5,FD);
+    b.ell(21,25,7.5,10.5,F);b.ell(23,27,4,7.4,FL,0,true);b.line(16,17,27,17,'#3a1a56',2);b.ell(21.5,17,1.4,1.4,G,0);
+    b.tri(20,6,24,5,21,0,F);b.tri(27,5,31,6,30.5,0,F);
+    b.ell(25.5,10.5,6.6,5.4,F);b.ell(29.5,13,3.6,2.6,W,0);b.ell(32.4,12,1.3,1,K,0);
+    b.ell(26.5,9.6,5.8,2.2,M,0);b.ell(24.5,9.4,1.3,1,Y,0);b.ell(28.6,9.6,1.3,1,Y,0);
+    b.line(28,22,33,19,F,3);b.ell(34,18.4,2,1.8,FD);b.ell(35.5,15,2.4,2.4,G);b.px(35,14,'#fff3b0');b.line(35.5,12.6,35.5,17.4,'#c9962a',1,true);
+    for(const[x,y]of[[36,30],[2,8],[33,36]])b.plus(x,y,'#b89aff');
+    b.rim(FL,[F],[[0,-1]])},
+  /* ---- loners: they never evolve ---- */
+  chestle(b){const Wd='#8a5a2a',WD='#5a3a1a',WL='#b07a3a',G='#f1c66b',GD='#b8862a',M='#4a1018',T='#ff6a8a',Y='#ffe27a',K='#1b1430';
+    b.rect(11,36,3,3,WD);b.rect(26,36,3,3,WD);
+    b.poly([[8,22],[33,22],[33,37],[8,37]],Wd);for(const y of[26,30,34])b.line(8,y,33,y,WD,1,true);b.rect(8,22,25,1,WL);
+    b.rect(12,22,2,15,G);b.rect(27,22,2,15,G);b.rect(12,22,1,15,'#ffe9a8');
+    b.poly([[9,22],[32,22],[31,25],[10,25]],M);b.fangs(10,30,22,1,'#fffaf0');
+    b.poly([[17,24],[24,24],[26,31],[22,34],[18,30]],T);b.line(21,25,21,31,'#d8466a',1,true);
+    b.ell(20.5,29,2.8,3,G);b.ell(20.5,29,1.3,1.6,GD,0);
+    b.poly([[7,21],[34,21],[36,9],[10,6]],Wd);b.poly([[10,6],[36,9],[35,12],[9.5,9]],WL);for(const x of[15,22,29])b.line(x,7,x-.6,21,WD,1,true);
+    b.poly([[12.5,6.6],[14.5,6.8],[13.8,21],[12,21]],G);b.poly([[27.5,8.2],[29.5,8.4],[29,21],[27.2,21]],G);
+    b.poly([[9,19],[33,19],[34,21],[8,21]],M);b.fangs(10,32,19,-1,'#fffaf0');
+    b.angry(17,12.5,1,Y);b.angry(23,13,0,Y);
+    for(const[x,y]of[[4,36],[36,37],[34,34]])b.ell(x,y,1.8,1.2,G,0);b.px(4,35,'#fff3b0');
+    b.rim(WL,[Wd],[[0,-1]])},
+  moonhare(b){const F='#f4f6ff',FS='#c9d6e8',FD='#9aaac4',P='#ffb0c8',CR='#8ad8f0',CL='#e8fdff',E='#4a6ab8',K='#1b1430';
+    b.leaf(25,16,20,1,6,F);b.leaf(25,16,21,3,3,P,true);b.leaf(29,16,33,1,6,FS);b.leaf(29,16,32,3,3,P,true);
+    b.ell(7.5,26,3,3,F,0);
+    b.ell(12,31,7,6.4,F);b.ell(18,28.5,9,7.5,F);b.ell(20,31,5,4,'#ffffff',0,true);
+    b.ell(9,37,4.4,1.6,FS);b.ell(26,37,2.6,1.4,FS);b.line(25,31,26,36,FS,2);
+    b.ell(28,20.5,6.4,5.4,F);b.ell(27,18.5,4,2.4,'#ffffff',0,true);b.ell(32.5,22.5,2.6,2,F);b.ell(34.6,21.8,1.1,.9,P,0);
+    b.eye(29.5,19.6,1.8,'#dbe8ff');b.ell(30,20,.9,1.1,E,0);
+    b.ell(26.4,15.8,2.3,2.3,'#5aa8e0',0);b.ell(27.4,15.2,1.9,1.9,F,0);b.px(25,16,CL);
+    b.line(33,24,37,25,FS,1);b.line(33,23,37,22,FS,1);
+    for(const[x,y]of[[3,8],[10,4],[37,6],[2,18]])b.plus(x,y,CL);b.px(36,14,CR);
+    b.rim(FD,[F],[[0,1],[1,0]])},
+});
 const SPR={},_sc={},_su={};
 /* Shiny Lynties wear the opposite colours: every hue turns half way round the colour wheel, so blue becomes orange
    and green becomes magenta, while the shading stays the same. Outlines, whites and near-blacks are left alone,
@@ -2602,6 +2821,43 @@ const LEGENDS=[
 const LEGS=LEGENDS.map(l=>l[0]);
 for(const[id,name,el,cov,st,ratio,fl,desc]of LEGENDS){const sum=ratio.reduce((a,b2)=>a+b2,0);
   SP[id]={id,name,el,cov,st,stage:2,rare:true,leg:true,fl,desc,base:ratio.map(r=>Math.round(LEG_TOT*r/sum)),evo:null,line:[id]};ORDER.push(id)}
+/* twenty more Lynties: six new lines and two loners that never evolve. They come after the legends in the Lyndex,
+   so every older number stays where it was. */
+const LINES2=[
+ ['water','frost','focus',[1,1.15,.95,1.1],0,[0,0,0],[
+  ['ottwick','Ottwick','An otter pup that carries a favorite pebble everywhere. It cracks shells open by tapping them on its belly.'],
+  ['rapidotter','Rapidotter','Rides river rapids for fun. Its whiskers feel every current, so it never hits a rock.'],
+  ['cascadmiral','Cascadmiral','Commands every river from spring to sea. Waterfalls part when it raises its coral trident.']]],
+ ['leaf','water','brace',[1.15,1,1.1,.85],0,[0,0,0],[
+  ['lilypip','Lilypip','A tiny frog that wears a lily pad like a hat. On hot days it hides underneath it.'],
+  ['croakbloom','Croakbloom','Its throat blooms into a flower when it sings. Ponds fill with petals after a chorus.'],
+  ['lotitan','Lotitan','A toad as big as a hill, with a lotus garden growing on its back. Lilypips ride it across the marsh.']]],
+ ['spark','earth','brace',[1.05,1.1,1.2,.8],1,[0,0,0],[
+  ['prickit','Prickit','Rubs its quills on tree bark until they crackle with static. Petting one is a shocking idea.'],
+  ['quillvolt','Quillvolt','Every quill holds a tiny charge. When it curls up, it hums like a power line.'],
+  ['voltpine','Voltpine','Its quills are lightning rods. Storms seek it out, and it drinks every bolt that strikes.']]],
+ ['frost','water','glare',[1,1.1,1,1.05],0,[0,0,0],[
+  ['pipguin','Pipguin','A fluffy penguin chick that slides everywhere on its belly. It hasn’t worked out walking yet.'],
+  ['floebill','Floebill','Dives under the ice to hunt, then bursts back up through it, beak first.'],
+  ['emperime','Emperime','The emperor of the frozen coast. Its crown of icicles never melts, and one glare freezes the sea.']]],
+ ['fire','air','glare',[.9,1.15,.85,1.25],1,[0,1,1],[
+  ['wicklet','Wicklet','A fuzzy caterpillar with a candle wick on its head. It lights the way for lost travelers.'],
+  ['lampwing','Lampwing','Its wings glow like paper lanterns. On festival nights, swarms of them fill the sky.'],
+  ['pyralume','Pyralume','A great moth of living flame. Every beat of its wings scatters embers like falling stars.']]],
+ ['shadow','earth','focus',[.95,1.2,.9,1.15],0,[0,0,0],[
+  ['bandikit','Bandikit','A raccoon kit with a mask of black fur. It steals shiny things and hides them in hollow logs.'],
+  ['masquoon','Masquoon','Slips into camps at night and leaves with the snacks. Nobody has ever seen one arrive.'],
+  ['heistrix','Heistrix','The master thief of the night. Its cape of shadow lets it slip through walls, and it never leaves a footprint.']]],
+];
+for(const[el,cov,st,ratio,rare,fl,stages]of LINES2){const sum=ratio.reduce((a,b)=>a+b,0);
+  stages.forEach(([id,name,desc],i)=>{const tot=STAGE_TOT[i]+(rare?15:0);
+    SP[id]={id,name,el,cov,st,stage:i,rare:!!rare,fl:fl[i],desc,base:ratio.map(r=>Math.round(tot*r/sum)),evo:i<2?{to:stages[i+1][0],at:EVO_AT[i]}:null,line:stages.map(x=>x[0])};ORDER.push(id)})}
+/* loners never evolve: they are born in their final form. [id, name, element, coverage, status move, stat shape, floats, description, cave only] */
+const LONERS=[
+ ['chestle','Chestle','earth','shadow','brace',[1.2,1.15,1.3,.55],0,'It pretends to be a treasure chest. Reach inside and it snaps shut. Deep in caves it guards real treasure.',1],
+ ['moonhare','Moonhare','frost','air','focus',[.95,1.1,.9,1.35],0,'A white hare that only comes out under a full moon. The crescent on its brow glows brighter the colder the night.',0]];
+for(const[id,name,el,cov,st,ratio,fl,desc,cave]of LONERS){const sum=ratio.reduce((a,b2)=>a+b2,0),tot=STAGE_TOT[2]+15;
+  SP[id]={id,name,el,cov,st,stage:2,rare:true,loner:true,cave:!!cave,fl,desc,base:ratio.map(r=>Math.round(tot*r/sum)),evo:null,line:[id]};ORDER.push(id)}
 const learnset=id=>{const s=SP[id];return s.leg?[[1,'bump'],[1,s.el+'1'],[1,'sig_'+s.el],[8,s.st],[15,s.el+'2'],[24,s.cov+'1'],[38,s.el+'3'],[48,s.cov+'2'],[56,s.el+'4']]:[[1,'bump'],[1,s.el+'1'],[8,s.st],[15,s.el+'2'],[24,s.cov+'1'],[38,s.el+'3'],[48,s.cov+'2'],[56,s.el+'4']]};
 function learnMove(m,id){
   if(m.moves.includes(id))return null;
@@ -2763,17 +3019,17 @@ const TOWN_TR={
  frostfell:[TR8("Ice Carver Freya",[["yetlet", 44], ["snowpip", 44]],["I carve statues from ice.", "Hold still, I'll carve you one. After a battle."],"My chisel slipped.","Snowpips hide in the drifts by the fences. Watch your step."),TR8("Sled Racer Leif",[["glacifox", 45], ["snowbrute", 45]],["Fastest sled in Frostfell!", "Fastest battler too. Probably."],"Crashed into a snowbank.","Glacifox tails jingle when they run. You can hear them across town."),TR8("Frost Guard Hilde",[["snowbrute", 46], ["frostusk", 46], ["glacifox", 46]],["The north gate is guarded day and night.", "Through me, or not at all."],"Through me, then.","Halvard's labyrinth is carved from one glacier. Mind the cold.")],
  crownspire:[TR8("Royal Herald Tobias",[["owlvane", 52], ["voltmoray", 52]],["Hear ye! All challengers must prove themselves before the crown!"],"Hear ye... you win.","The Champion's labyrinth lies just north of the plaza."),TR8("Duchess Elowen",[["leafblade", 53], ["rockdillo", 53]],["Crownspire is no place for amateurs, darling.", "Show me some style."],"Exquisite. Truly.","I've watched every Champion pass through these gardens."),TR8("Knight Captain Aldwin",[["cogwalker", 54], ["scaldrake", 54], ["ravenmire", 54]],["I am the last wall before the Champion's district.", "Ready your team!"],"The wall has fallen. Go on, challenger.","Wren is waiting at the top of the Hall.")]
 };
-/* ---------- labyrinths: every Warden Hall now sits behind a maze guarded by two trainers ---------- */
+/* ---------- labyrinths: every Warden Hall sits behind a maze, with three trainers standing on the way through ---------- */
 const MAZE_TR={
- greenvale:[TR8("Hedge Keeper Rowe",[["mantling", 7], ["sproutle", 8]],["Lost already? Everyone gets lost in Fern's Labyrinth.", "I'll point the way. After a battle."],"The way out is... somewhere. Good luck!","Fern grows a new hedge every spring. The labyrinth never looks quite the same."),TR8("Garden Guard Lily",[["nibbud", 8], ["sporelet", 8]],["Halt! Only the worthy may reach the Warden Hall!"],"You're worthy. Go on.","Treasure hides in the dead ends. Fern hides it there herself.")],
- coral:[TR8("Tide Guard Nell",[["inkle", 12], ["tidlet", 13]],["The tide pools here twist and turn.", "Can you find the way, or will the current carry you off?"],"You swim against the current well.","Marisol built this maze from old shipwrecks. Can you tell?"),TR8("Deckhand Rory",[["shellby", 13], ["sparkeel", 14]],["Arr! This corner of the maze is mine!"],"Abandon ship!","The Warden Hall is at the north end. Follow the sound of the waves.")],
- redrock:[TR8("Quarry Guard Flint",[["dillit", 17], ["fossling", 18]],["These canyon walls have stood for a million years.", "Think you can find your way through them?"],"Rock-solid battling.","Tobin carved this maze with his bare hands. Took him two summers."),TR8("Prospector Gil",[["scarablet", 18], ["dillit", 19], ["pebblit", 19]],["You found my secret mining spot!", "Now I have to battle you. Rules are rules."],"Fine. Take the secret with you.","There's a treasure chest at a dead end somewhere. I never found it.")],
- duskwood:[TR8("Shadow Guard Raven",[["cawlet", 22], ["webling", 23]],["...", "...You can see me? Most people walk right past."],"You have sharp eyes.","Nyx's maze looks different at night. Then again, it's always night here."),TR8("Spider Keeper Ana",[["shadespin", 24], ["helmlet", 24]],["Mind the webs! My Shadespin worked very hard on them."],"My webs couldn't catch you.","If you hear clanking, it's just a Helmlet. They guard the old paths.")],
- skypeaks:[TR8("Cloud Guard Skye",[["driftlet", 27], ["hootlet", 28]],["You're walking among the clouds now.", "Don't fall off!"],"Blown away.","Aria's labyrinth sits right on the cliff tops. Don't look over the edge."),TR8("Wind Monk Haru",[["owlvane", 29], ["gustling", 29]],["The wind whispers the way through this maze.", "It also whispers: battle."],"The wind is laughing at me now.","The Hall is to the north. Always north. The wind never lies.")],
- stormreach:[TR8("Circuit Guard Edi",[["gearling", 32], ["zapkit", 33]],["This maze is wired with a thousand volts!", "Well, not really. But my Lynties are!"],"Circuit breaker tripped.","Rhett rebuilt this maze from old lightning rods. It hums when it rains."),TR8("Engineer Tess",[["cogwalker", 33], ["voltlynx", 34]],["My Cogwalker mapped every corner of this maze.", "It still gets lost, though. Battle!"],"Recalculating...","Dead ends have treasure. Rhett hides spare charms there.")],
- cinder:[TR8("Ember Guard Pyra",[["flickit", 37], ["cindercolt", 38]],["The walls of this maze are made of cooled lava.", "Mostly cooled."],"Ouch, ouch, too hot! You win!","Cinda says the maze teaches patience. Mostly it teaches you to wear thick boots."),TR8("Smith Apprentice Toby",[["scaldrake", 38], ["blazemare", 39], ["kilnkin", 38]],["I'm Cinda's apprentice! Well, the apprentice's apprentice."],"I need more practice. A LOT more practice.","Someday I'll forge my own blade in a Forgelord's chest.")],
- frostfell:[TR8("Ice Guard Sigrid",[["snowbrute", 43], ["glacifox", 44]],["Halvard's labyrinth is carved from a single glacier.", "Brave the cold, or turn back."],"You carry warmth with you. I can feel it.","Every winter the ice shifts, and the maze changes. Barely."),TR8("Yeti Tracker Olaf",[["snowbrute", 45], ["frostusk", 45]],["Shh! I'm tracking a Yetitan.", "...It's you. You're not a Yetitan."],"Not a Yetitan. Still strong, though.","Yetitans are real! I found a footprint as big as a bathtub.")],
- crownspire:[TR8("Royal Guard Lance",[["cogwalker", 50], ["rockdillo", 51], ["owlvane", 51]],["The Champion's Labyrinth tests every challenger.", "I am its first test."],"You passed. Very well, in fact.","Wren designed this maze personally. Wren loves dead ends."),TR8("Royal Guard Vera",[["voltmoray", 51], ["leafblade", 52], ["ravenmire", 52]],["Only true challengers reach the Hall.", "Are you one?"],"You are.","The gate beside the Hall leads straight back to town. You'll thank me later.")]
+ greenvale:[TR8("Hedge Keeper Rowe",[["mantling", 7], ["sproutle", 8]],["Lost already? Everyone gets lost in Fern's Labyrinth.", "I'll point the way. After a battle."],"The way out is... somewhere. Good luck!","Fern grows a new hedge every spring. The labyrinth never looks quite the same."),TR8("Garden Guard Lily",[["nibbud", 8], ["sporelet", 8]],["Halt! Only the worthy may reach the Warden Hall!"],"You're worthy. Go on.","Treasure hides in the dead ends. Fern hides it there herself."),TR8("Pond Keeper Moss",[["lilypip", 8], ["bandikit", 8]],["Ribbit! Oh, that was my Lilypip, not me.", "Nobody reaches the Warden Hall without passing my pond!"],"Splash! You hopped right past me.","Lilypips nap under the hedges here. Mind where you step.")],
+ coral:[TR8("Tide Guard Nell",[["inkle", 12], ["tidlet", 13]],["The tide pools here twist and turn.", "Can you find the way, or will the current carry you off?"],"You swim against the current well.","Marisol built this maze from old shipwrecks. Can you tell?"),TR8("Deckhand Rory",[["shellby", 13], ["sparkeel", 14]],["Arr! This corner of the maze is mine!"],"Abandon ship!","The Warden Hall is at the north end. Follow the sound of the waves."),TR8("Otter Tamer Brook",[["ottwick", 13], ["tidlet", 14]],["My Ottwick found a shiny pebble in this maze. Want to see it?", "Too bad. Battle first!"],"It's a really nice pebble, though.","Ottwicks keep their favorite pebble in a pocket of skin under one arm.")],
+ redrock:[TR8("Quarry Guard Flint",[["dillit", 17], ["fossling", 18]],["These canyon walls have stood for a million years.", "Think you can find your way through them?"],"Rock-solid battling.","Tobin carved this maze with his bare hands. Took him two summers."),TR8("Prospector Gil",[["scarablet", 18], ["dillit", 19], ["pebblit", 19]],["You found my secret mining spot!", "Now I have to battle you. Rules are rules."],"Fine. Take the secret with you.","There's a treasure chest at a dead end somewhere. I never found it."),TR8("Wrangler Dusty",[["prickit", 19], ["dillit", 19]],["Careful! My Prickit's been rolling in the dust all day.", "It's got enough static to light a lantern!"],"Zap... fizzle... done.","Rub a Prickit the wrong way and your hair stands up for an hour.")],
+ duskwood:[TR8("Shadow Guard Raven",[["cawlet", 22], ["webling", 23]],["...", "...You can see me? Most people walk right past."],"You have sharp eyes.","Nyx's maze looks different at night. Then again, it's always night here."),TR8("Spider Keeper Ana",[["shadespin", 24], ["helmlet", 24]],["Mind the webs! My Shadespin worked very hard on them."],"My webs couldn't catch you.","If you hear clanking, it's just a Helmlet. They guard the old paths."),TR8("Night Thief Pell",[["bandikit", 25], ["wicklet", 25]],["Shh! I'm not stealing. I'm... borrowing the maze.", "Okay, I'm stealing it. Battle!"],"You caught me red-handed.","Bandikits hide what they steal in hollow logs. I found a log full of spoons once.")],
+ skypeaks:[TR8("Cloud Guard Skye",[["driftlet", 27], ["hootlet", 28]],["You're walking among the clouds now.", "Don't fall off!"],"Blown away.","Aria's labyrinth sits right on the cliff tops. Don't look over the edge."),TR8("Wind Monk Haru",[["owlvane", 29], ["gustling", 29]],["The wind whispers the way through this maze.", "It also whispers: battle."],"The wind is laughing at me now.","The Hall is to the north. Always north. The wind never lies."),TR8("Lantern Flyer Mei",[["wicklet", 31], ["driftlet", 30]],["My Lampwing lights the way through the clouds.", "Let's see if you can keep up with the light!"],"Lights out on me.","On festival nights the whole sky up here fills with Lampwings.")],
+ stormreach:[TR8("Circuit Guard Edi",[["gearling", 32], ["zapkit", 33]],["This maze is wired with a thousand volts!", "Well, not really. But my Lynties are!"],"Circuit breaker tripped.","Rhett rebuilt this maze from old lightning rods. It hums when it rains."),TR8("Engineer Tess",[["cogwalker", 33], ["voltlynx", 34]],["My Cogwalker mapped every corner of this maze.", "It still gets lost, though. Battle!"],"Recalculating...","Dead ends have treasure. Rhett hides spare charms there."),TR8("Lightning Rod Lou",[["prickit", 35], ["zapkit", 34], ["prickit", 35]],["I collect lightning rods. My Quillvolts ARE lightning rods!", "Let's charge up!"],"Grounded.","Quillvolts curl up into a ball when it thunders. They hum like a kettle.")],
+ cinder:[TR8("Ember Guard Pyra",[["flickit", 37], ["cindercolt", 38]],["The walls of this maze are made of cooled lava.", "Mostly cooled."],"Ouch, ouch, too hot! You win!","Cinda says the maze teaches patience. Mostly it teaches you to wear thick boots."),TR8("Smith Apprentice Toby",[["scaldrake", 38], ["blazemare", 39], ["kilnkin", 38]],["I'm Cinda's apprentice! Well, the apprentice's apprentice."],"I need more practice. A LOT more practice.","Someday I'll forge my own blade in a Forgelord's chest."),TR8("Fire Dancer Lumi",[["wicklet", 39], ["flickit", 39], ["cindercolt", 40]],["Lampwings follow me wherever I dance.", "Dance with me!"],"I tripped over my own feet.","A Pyralume's wings scatter embers like falling stars. I've only ever seen one.")],
+ frostfell:[TR8("Ice Guard Sigrid",[["snowbrute", 43], ["glacifox", 44]],["Halvard's labyrinth is carved from a single glacier.", "Brave the cold, or turn back."],"You carry warmth with you. I can feel it.","Every winter the ice shifts, and the maze changes. Barely."),TR8("Yeti Tracker Olaf",[["snowbrute", 45], ["frostusk", 45]],["Shh! I'm tracking a Yetitan.", "...It's you. You're not a Yetitan."],"Not a Yetitan. Still strong, though.","Yetitans are real! I found a footprint as big as a bathtub."),TR8("Penguin Keeper Pia",[["pipguin", 45], ["ottwick", 44], ["pipguin", 46]],["Waddle waddle! My Floebills patrol this maze.", "Halt! Who goes there?"],"The Floebills salute you.","Pipguins slide everywhere on their bellies. They haven't worked out walking yet.")],
+ crownspire:[TR8("Royal Guard Lance",[["cogwalker", 50], ["rockdillo", 51], ["owlvane", 51]],["The Champion's Labyrinth tests every challenger.", "I am its first test."],"You passed. Very well, in fact.","Wren designed this maze personally. Wren loves dead ends."),TR8("Royal Guard Vera",[["voltmoray", 51], ["leafblade", 52], ["ravenmire", 52]],["Only true challengers reach the Hall.", "Are you one?"],"You are.","The gate beside the Hall leads straight back to town. You'll thank me later."),TR8("Royal Guard Mireille",[["bandikit", 52], ["lilypip", 52], ["prickit", 53]],["I'm the third guard of the Champion's Labyrinth.", "Whoever gets past me faces the Champion."],"Pass, then. You've earned it.","Wren has a soft spot for Croakblooms. Don't tell anyone.")]
 };
 const MAZE_LOOT=(i,k)=>[{items:[['grand',1+Math.floor(i/3)],['salve',2]],shells:60*i},{items:[['star',1+Math.floor(i/4)],['charm',2]],shells:45*i},{items:[i>=4?['shard',1]:['seed',1]],shells:35*i}][k];
 const ROUTE_LOOT=i=>i<3?{items:[['salve',2],['charm',2]],shells:80}:i<6?{items:[['grand',1],['star',1]],shells:150}:i<8?{items:[['seed',1],['grand',2]],shells:250}:{items:[['shard',1],['flask',1]],shells:400};
@@ -2812,6 +3068,7 @@ const SIDES=[
   ['Stargazer Liora',[['duskreaper',60],['tempestray',60],['elderstag',60]],["Stars fall on this ridge every night.","Last night, one of them told me you were coming."],"The stars didn't mention this part.","Make a wish when a star falls. I wished for a good battle. Wish granted."]]},
 ];
 /* ---------- caves: one off four of the routes, each with Lynties found nowhere else ---------- */
+/* (the twenty newer Lynties are added to the roads, side roads and caves just below the cave list) */
 const CAVES=[
  {id:'glowtide',name:'Glowtide Grotto',route:1,pal:'tide',theme:'coral',lv:[11,17],evo:.6,
   pool:[['lumewt',30],['shardling',18],['grublin',14],['inkle',10],['sparkeel',10],['squeakit',12],['shellby',8],['snapfin',4]],
@@ -2834,6 +3091,14 @@ const CAVES=[
   tr:[["Ice Climber Sorrel",[["geodon",49],["glowmander",49],["snowbrute",50]],["The ice down here never melts. Neither does my will to win!"],"Frozen solid.","Somewhere deep in the ice sleeps a Prismarch. Its chest glows through the walls."],
       ["Cave Hermit Ulf",[["tunnelisk",51],["glacifox",51],["glowmander",52]],["Forty winters in this hollow. You're my first visitor.","Let's make it memorable."],"Memorable indeed.","Grublins grow into Umbrapedes if you let them. I don't let them near my soup."]]},
 ];
+/* where the twenty newer Lynties live */
+{const add=(g,list)=>{for(const x of list)if(!g.pool.some(([id])=>id===x[0]))g.pool.push(x)};
+  [[['lilypip',7],['bandikit',4]],[['ottwick',12],['pipguin',4]],[['prickit',9],['bandikit',6]],[['lilypip',10],['wicklet',12],['bandikit',10]],[['wicklet',8],['pipguin',6],['moonhare',2]],
+   [['prickit',14],['lilypip',6]],[['wicklet',12],['prickit',6]],[['pipguin',16],['ottwick',10],['moonhare',3]],[['ottwick',4],['lilypip',4],['prickit',4],['pipguin',4],['wicklet',4],['bandikit',4],['moonhare',2]]
+  ].forEach((l,i)=>ROUTES[i]&&add(ROUTES[i],l));
+  [[['lilypip',10]],[['bandikit',10],['lilypip',8]],[['ottwick',14],['pipguin',8]],[['prickit',12]],[['wicklet',12],['bandikit',12]],[['moonhare',4],['wicklet',8]],[['lilypip',12],['prickit',14]],[['wicklet',14]],[['pipguin',14],['moonhare',6],['ottwick',8]],
+   [['ottwick',6],['lilypip',6],['prickit',6],['pipguin',6],['wicklet',6],['bandikit',6],['moonhare',4]]].forEach((l,i)=>SIDES[i]&&add(SIDES[i],l));
+  for(const cv of CAVES)add(cv,[['chestle',6]])}
 CAVES.forEach(cv=>{cv.cave=1;cv.tr=cv.tr.map(t=>TR8(...t))});
 SIDES.forEach((sd,i)=>{const b=i<ROUTES.length?ROUTES[i].lv:[54,56];sd.lv=[Math.min(MAXL,b[0]+4),Math.min(MAXL,b[1]+5)];sd.evo=.72;sd.tr=sd.tr.map(t=>TR8(...t))});
 
@@ -3362,7 +3627,8 @@ function buildMaze(tw,i){
   while(stack.length){const[c,r]=stack[stack.length-1];const nb=MDIR.map(([dc,dr])=>[c+dc,r+dr]).filter(([a,b2])=>a>=0&&b2>=0&&a<cw&&b2<ch&&!vis[id(a,b2)]);
     if(!nb.length){stack.pop();continue}
     const[a,b2]=nb[(rng()*nb.length)|0];vis[id(a,b2)]=1;const[x1,y1]=T(c,r),[x2,y2]=T(a,b2);mS(m,(x1+x2)/2,(y1+y2)/2,floor);mS(m,x2,y2,floor);stack.push([a,b2])}
-  for(let k=0;k<Math.round(cw*ch*.05);k++){const c=(rng()*cw)|0,r=(rng()*ch)|0,hz=rng()<.5,a=hz?c+1:c,b2=hz?r:r+1;if(a>=cw||b2>=ch)continue;const[x1,y1]=T(c,r),[x2,y2]=T(a,b2);mS(m,(x1+x2)/2,(y1+y2)/2,floor)}
+  /* a few extra openings make loops; they are cut only after the trainers are placed, and never where they'd let the way go round one */
+  const extra=[];for(let k=0;k<Math.round(cw*ch*.05);k++){const c=(rng()*cw)|0,r=(rng()*ch)|0,hz=rng()<.5,a=hz?c+1:c,b2=hz?r:r+1;if(a>=cw||b2>=ch)continue;const[x1,y1]=T(c,r),[x2,y2]=T(a,b2);extra.push([(x1+x2)/2,(y1+y2)/2])}
   mS(m,hx,oy,floor);mS(m,hx,H-1,floor);
   m.warps.push({x:hx,y:H-1,map:'world',tx:21,ty:tw.y0+5,dir:'down'});
   m.warps.push({x:hx,y:4,door:1,map:'hall_'+tw.id,tx:5,ty:26,dir:'up'});
@@ -3370,14 +3636,37 @@ function buildMaze(tw,i){
   const open=(c,r,dc,dr)=>{const a=c+dc,b2=r+dr;if(a<0||b2<0||a>=cw||b2>=ch)return false;const[x,y]=T(c,r);return walkT(mT(m,x+dc,y+dr))};
   const bfs=srcs=>{const d=new Int32Array(cw*ch).fill(-1),q=[];for(const[c,r]of srcs){d[id(c,r)]=0;q.push([c,r])}
     while(q.length){const[c,r]=q.shift();for(const[dc,dr]of MDIR)if(open(c,r,dc,dr)&&d[id(c+dc,r+dr)]<0){d[id(c+dc,r+dr)]=d[id(c,r)]+1;q.push([c+dc,r+dr])}}return d};
-  const dS=bfs([[c0,ch-1]]),sol=[];{let c=c0,r=0;sol.push([c,r]);while(!(c===c0&&r===ch-1)){for(const[dc,dr]of MDIR)if(open(c,r,dc,dr)&&dS[id(c+dc,r+dr)]===dS[id(c,r)]-1){c+=dc;r+=dr;break}sol.push([c,r])}}
-  const dP=bfs(sol),ends=[];
-  for(let r=0;r<ch;r++)for(let c=0;c<cw;c++){if((c===c0&&r===ch-1)||(c===c0&&r===0))continue;const exits=MDIR.filter(([dc,dr])=>open(c,r,dc,dr));if(exits.length===1)ends.push({c,r,dir:exits[0][2],d:dP[id(c,r)]})}
+  const solve=()=>{const dS=bfs([[c0,ch-1]]),sol=[];let c=c0,r=0;sol.push([c,r]);while(!(c===c0&&r===ch-1)){for(const[dc,dr]of MDIR)if(open(c,r,dc,dr)&&dS[id(c+dc,r+dr)]===dS[id(c,r)]-1){c+=dc;r+=dr;break}sol.push([c,r])}return sol};
+  const deadEnds=sol=>{const dP=bfs(sol),ends=[];for(let r=0;r<ch;r++)for(let c=0;c<cw;c++){if((c===c0&&r===ch-1)||(c===c0&&r===0))continue;const exits=MDIR.filter(([dc,dr])=>open(c,r,dc,dr));if(exits.length===1)ends.push({c,r,dir:exits[0][2],d:dP[id(c,r)]})}return ends};
+  let sol=solve(),ends=deadEnds(sol);
   const used=[],far=(e,n=4)=>used.every(u=>Math.abs(u.c-e.c)+Math.abs(u.r-e.r)>=n);
-  const guards=ends.slice().sort((a,b)=>(a.d>=1&&a.d<=3?0:1)-(b.d>=1&&b.d<=3?0:1)||a.d-b.d||b.r-a.r);
-  (MAZE_TR[tw.id]||[]).forEach((f,k)=>{const want=k?guards.filter(e=>e.r<ch/2):guards.filter(e=>e.r>=ch/2);const e=(want.find(e=>far(e))||guards.find(e=>far(e))||guards.find(e=>far(e,2)));if(!e)return;used.push(e);
-    const[x,y]=T(e.c,e.r),t=placeTrainer(m,x,y,e.dir,f,`mz${i}_${k}`,tw.theme);t.rot=0});
-  ends.filter(e=>!used.includes(e)).sort((a,b)=>b.d-a.d).filter(e=>far(e,3)&&used.push(e)).slice(0,3).forEach((e,k)=>{const[x,y]=T(e.c,e.r),L=MAZE_LOOT(i,k);
+  /* the trainers stand right on the way to the hall, each at a fork the way can't go round, so every one of them
+     has to be beaten; once beaten, a trainer steps into the side passage beside it and the way is clear */
+  const ck=(c,r)=>c+','+r,onSol=new Set(sol.map(([c,r])=>ck(c,r))),N=sol.length,dirOf=(dc,dr)=>MDIR.find(d=>d[0]===dc&&d[1]===dr)[2];
+  const goesRound=block=>{const seen=new Set([ck(c0,ch-1)]),q=[[c0,ch-1]];while(q.length){const[c,r]=q.shift();if(c===c0&&r===0)return true;
+    for(const[dc,dr]of MDIR){const k2=ck(c+dc,r+dr);if(k2===block||seen.has(k2)||!open(c,r,dc,dr))continue;seen.add(k2);q.push([c+dc,r+dr])}}return false};
+  /* where each one can stand aside: a new nook cut into the wall beside it (best: nothing else changes), or else a side
+     passage it then stands in (whatever lies beyond it was only ever reachable past the trainer anyway) */
+  const forks=[];
+  for(let k=2;k<N-2;k++){const[c,r]=sol[k];if(goesRound(ck(c,r)))continue;const opts=[];
+    for(const[dc,dr]of MDIR){const a=c+dc,b2=r+dr;if(a<0||b2<0||a>=cw||b2>=ch||onSol.has(ck(a,b2)))continue;
+      if(!open(c,r,dc,dr)){opts.push({dc,dr,cells:new Set(),cost:.5,carve:1});continue}
+      const cells=new Set([ck(a,b2)]),q=[[a,b2]];
+      while(q.length){const[x2,y2]=q.shift();for(const[ec,er]of MDIR){const k3=ck(x2+ec,y2+er);if(k3===ck(c,r)||cells.has(k3)||onSol.has(k3)||!open(x2,y2,ec,er))continue;cells.add(k3);q.push([x2+ec,y2+er])}}
+      opts.push({dc,dr,cells,cost:cells.size})}
+    if(opts.length){opts.sort((p1,p2)=>p1.cost-p2.cost);forks.push({k,c,r,...opts[0]})}}
+  const taken=[],pocket=new Set();
+  (MAZE_TR[tw.id]||[]).forEach((f,j,all)=>{const want=N-1-Math.round((j+1)*(N-1)/(all.length+1));
+    const sp=forks.filter(o=>taken.every(t=>Math.abs(t.k-o.k)>=3)).sort((p1,p2)=>Math.abs(p1.k-want)+p1.cost*.6-(Math.abs(p2.k-want)+p2.cost*.6))[0];
+    const id=`mz${i}_${j}`;
+    if(!sp){const e=ends.filter(e=>far(e)).sort((p1,p2)=>p1.d-p2.d)[0];if(!e)return;used.push(e);const[x,y]=T(e.c,e.r);placeTrainer(m,x,y,e.dir,f,id,tw.theme).rot=0;return}
+    taken.push(sp);for(const q of sp.cells)pocket.add(q);
+    const[x,y]=T(sp.c,sp.r),[nc,nr]=sol[sp.k+1],side=dirOf(sp.dc,sp.dr);if(sp.carve)mS(m,x+sp.dc,y+sp.dr,floor);
+    const t=placeTrainer(m,x,y,dirOf(nc-sp.c,nr-sp.r),f,id,tw.theme);
+    Object.assign(t,{rot:0,aside:side,ax:x+sp.dc,ay:y+sp.dr,adir:OPP[side]})});
+  for(const[x,y]of extra){if(walkT(mT(m,x,y)))continue;mS(m,x,y,floor);if(taken.some(t=>goesRound(ck(t.c,t.r))))mS(m,x,y,wall)}
+  sol=solve();ends=deadEnds(sol);
+  ends.filter(e=>!used.some(u=>u.c===e.c&&u.r===e.r)&&!pocket.has(ck(e.c,e.r))).sort((a,b)=>b.d-a.d).filter(e=>far(e,3)&&used.push(e)).slice(0,3).forEach((e,k)=>{const[x,y]=T(e.c,e.r),L=MAZE_LOOT(i,k);
     m.ents.push({kind:'chest',x,y,id:'mchest_'+tw.id+'_'+k,items:L.items,shells:L.shells,talk(){return chestTalk(this)}})});
   m.zones.push({key:'mz'+i,kind:'maze',town:tw,idx:i,y0:0,y1:H,name:m.name,theme:tw.theme});
   return{hx,ex:hx,ey:H-2,W,H}}
@@ -3743,7 +4032,7 @@ const pzSolved=pz=>!!(S&&(S.solved[pz.id]||S.beaten[pz.fid]||S.crests.includes(p
 function entStep(e,d){const[dx,dy]=DIRV[d];e.dir=d;e.anim={fx:e.x,fy:e.y,t0:performance.now(),dur:170};e.x+=dx;e.y+=dy;e.sn=(e.sn||0)+1;return sleep(170).then(()=>{e.anim=null})}
 /* put people back where they belong and reset any unsolved puzzles whenever a map is entered */
 function syncMap(m){
-  for(const e of m.ents){e.alert=0;if(e.hx==null)continue;e.anim=null;if((e.fighter||e.blocker||e.stepAside)&&isBeaten(e)){e.x=e.ax;e.y=e.ay;e.dir=e.adir}else{e.x=e.hx;e.y=e.hy;e.dir=e.home}}
+  for(const e of m.ents){e.alert=0;if(e.hx==null)continue;e.anim=null;if((e.fighter||e.blocker||e.stepAside||e.aside)&&isBeaten(e)){e.x=e.ax;e.y=e.ay;e.dir=e.adir}else{e.x=e.hx;e.y=e.hy;e.dir=e.home}}
   if(m.sanctum)rollAltar();
   if(m.puzzles)for(const pz of m.puzzles)resetPz(m,pz)}
 function lampStart(n){let st;do{st=Array(n).fill(true);const k=ri(1,Math.min(3,n)),idx=[...Array(n).keys()].sort(()=>rnd()-.5).slice(0,k);for(const i of idx)for(const j of[i-1,i,i+1])if(j>=0&&j<n)st[j]=!st[j]}while(st.every(Boolean));return st}
@@ -3829,7 +4118,7 @@ function startWild(z){const g=z.wild||z.route,tot=g.pool.reduce((s2,[,w])=>s2+w,
   /* one wild encounter in a hundred out in the tall grass is a legendary Lynty */
   if(!g.cave&&rnd()<LEG_RATE)return runBattle({wild:wildMon(pick(LEGS),clamp(L[1]+6,12,MAXL)),legend:1,reg:{bg}});
   const lv=ri(L[0],L[1]);
-  const ev=g.evo||.55;if(lv>=EVO_AT[0]&&rnd()<ev){id=SP[id].evo.to;if(lv>=EVO_AT[1]&&rnd()<ev)id=SP[id].evo.to}
+  const ev=g.evo||.55;if(SP[id].evo&&lv>=EVO_AT[0]&&rnd()<ev){id=SP[id].evo.to;if(lv>=EVO_AT[1]&&rnd()<ev)id=SP[id].evo.to}
   return runBattle({wild:wildMon(id,lv),reg:{bg}})}
 async function doWarp(w){if(mode!=='world')return;
   if(w.maze){const tw=townById(w.maze),wd=wardOf(tw.ward);if(hallDone(wd)){held.clear();const c=await choose(`You ${wd.id==='wren'?'are the Champion':'hold the '+EL[wd.el].n+' Crest'}, so the guards will let you skip the labyrinth.`,['Go straight to the Hall','Walk the labyrinth']);if(mode!=='world')return;if(c===0)w={map:'hall_'+tw.id,tx:5,ty:26,dir:'up'}}}
@@ -3898,7 +4187,7 @@ async function interact(){
   if(mode!=='world'||P.moving)return;
   const[dx,dy]=DIRV[P.dir];let x=P.x+dx,y=P.y+dy,e=entAt(x,y);
   if(!e&&tAt(x,y)==='counter'){x+=dx;y+=dy;e=entAt(x,y)}
-  if(e){if(e.kind==='npc'&&!e.anim&&!e.sleep)e.dir=OPP[P.dir];await e.talk();if(e.kind==='npc'&&!e.rot&&!e.wander&&!e.anim)e.dir=(e.fighter||e.blocker||e.stepAside)&&isBeaten(e)?e.adir:e.home;return}
+  if(e){if(e.kind==='npc'&&!e.anim&&!e.sleep)e.dir=OPP[P.dir];await e.talk();if(e.kind==='npc'&&!e.rot&&!e.wander&&!e.anim)e.dir=(e.fighter||e.blocker||e.stepAside||e.aside)&&isBeaten(e)?e.adir:e.home;return}
   const t=tAt(x,y),lk=CM.locked[`${x},${y}`];
   if(lk){await talk([lk]);return}
   if(!t)return;
@@ -4898,7 +5187,7 @@ function summary(m){openSheet({title:SP[m.sp].name,render:body=>{
   body.append(el('div','moves',m.moves.map(id=>{const x=MV[id];return `<div><b>${x.n}</b><span class="r-mid">${chipH(x.el)}<span class="num">${x.p?'PWR '+x.p:FXD[x.fx]}</span></span></div>`}).join('')));
   const nxt=learnset(m.sp).find(([l,mv])=>l>m.lvl&&!m.moves.includes(mv));
   body.append(el('p','desc',s.desc+(s.evo&&m.lvl<s.evo.at?` Evolves into ${SP[s.evo.to].name} at level ${s.evo.at}.`:'')+(nxt?` Learns ${MV[nxt[1]].n} at level ${nxt[0]}.`:'')+(m.lvl<MAXL?' Each level takes a little more XP than the last.':'')));
-  if(!s.leg)body.append(el('div','chain big',s.line.map((x,k)=>`${k?`<span class="arr">${EVO_AT[k-1]}</span>`:''}<span class="ch${x===m.sp?' on':''}"><img class="px" src="${sprURL(x,!S.seen[x]&&x!==m.sp,m.shiny&&(S.seen[x]||x===m.sp))}" alt=""><small>${S.seen[x]||x===m.sp?SP[x].name:'???'}</small></span>`).join('')));
+  if(!s.leg&&!s.loner)body.append(el('div','chain big',s.line.map((x,k)=>`${k?`<span class="arr">${EVO_AT[k-1]}</span>`:''}<span class="ch${x===m.sp?' on':''}"><img class="px" src="${sprURL(x,!S.seen[x]&&x!==m.sp,m.shiny&&(S.seen[x]||x===m.sp))}" alt=""><small>${S.seen[x]||x===m.sp?SP[x].name:'???'}</small></span>`).join('')));
   const a=el('div','acts');
   if(inTeam&&idx>0){const b=el('button','btn sm','Make lead');b.onclick=()=>{S.team.splice(idx,1);S.team.unshift(m);save();toast(`${s.name} now leads the team.`);backSheet()};a.append(b)}
   if(inTeam&&S.team.length>1){const b=el('button','btn sm','Send to Den');b.onclick=()=>{if(m.hp>0&&!S.team.some(x=>x!==m&&x.hp>0)){toast('Keep at least one Lynty that can battle on your team.');return}S.team.splice(idx,1);S.den.push(m);save();toast(`${s.name} is resting in the Den.`);backSheet()};a.append(b)}
@@ -4909,7 +5198,7 @@ function summary(m){openSheet({title:SP[m.sp].name,render:body=>{
 function areaList(){const out=[];TOWNS.forEach((tw,i)=>{if(SIDES[i])out.push({g:SIDES[i],side:1,town:tw});if(ROUTES[i]){out.push({g:ROUTES[i],side:0,town:tw,to:TOWNS[i+1]});for(const cv of CAVES.filter(c=>c.route===i))out.push({g:cv,cave:1,town:tw,to:TOWNS[i+1],rt:ROUTES[i]})}});return out}
 /* chance per encounter of meeting each form, counting the wild evolutions that happen at level 30 and 60 */
 function areaRates(g){const tot=g.pool.reduce((a,[,w])=>a+w,0),[lo,hi]=lvR(g),ev=g.evo||.55,n=hi-lo+1,out={};
-  for(const[id,w]of g.pool){const p=[0,0,0];
+  for(const[id,w]of g.pool){if(!SP[id].evo&&SP[id].line.length===1){out[id]=(out[id]||0)+w/tot;continue}const p=[0,0,0];
     for(let L=lo;L<=hi;L++){const e1=L>=EVO_AT[0]?ev:0,e2=L>=EVO_AT[1]?ev:0;p[0]+=1-e1;p[1]+=e1*(1-e2);p[2]+=e1*e2}
     SP[id].line.forEach((x,k)=>{const r=w/tot*p[k]/n;if(r>0)out[x]=(out[x]||0)+r})}
   return out}
@@ -4953,12 +5242,13 @@ function dexView(){openSheet({title:'Lyndex',render:body=>{
   if(hereEl)requestAnimationFrame(()=>{const sb=$('#sheetBody');sb.scrollTop=Math.max(0,hereEl.offsetTop-sb.offsetTop-12)})}})}
 function dexEntry(id,i){openSheet({title:`${dexNo(i)} ${SP[id].name}`,render:body=>{
   const s=SP[id],c=S.caught[id],root=s.line[0];
-  body.append(el('div','sum-head',`<img class="px" src="${sprURL(id,false,dexShiny)}" alt=""><div class="sum-info"><div class="sum-name">${s.name}</div><div>${chipH(s.el)} <span class="tag${s.leg?' leg':''}">${s.leg?'Legendary':`Stage ${s.stage+1}${s.rare?' · Rare':''}${s.cave?' · Cave':''}`}</span></div><span class="num">${c?'◆ Bonded':S.seen[id]?'Seen in the wild':'Not met yet'}${S.shiny[id]?' · ✦ Shiny bonded':''}</span></div>`));
+  body.append(el('div','sum-head',`<img class="px" src="${sprURL(id,false,dexShiny)}" alt=""><div class="sum-info"><div class="sum-name">${s.name}</div><div>${chipH(s.el)} <span class="tag${s.leg?' leg':''}">${s.leg?'Legendary':s.loner?`Loner · Rare${s.cave?' · Cave':''}`:`Stage ${s.stage+1}${s.rare?' · Rare':''}${s.cave?' · Cave':''}`}</span></div><span class="num">${c?'◆ Bonded':S.seen[id]?'Seen in the wild':'Not met yet'}${S.shiny[id]?' · ✦ Shiny bonded':''}</span></div>`));
   body.append(el('p','desc',s.desc));
   body.append(el('p','sec','Normal and shiny'));
   body.append(el('div','forms',`<span class="ch${dexShiny?'':' on'}"><img class="px" src="${sprURL(id)}" alt="${s.name}"><small>Normal</small></span><span class="ch${dexShiny?' on':''}"><img class="px" src="${sprURL(id,false,true)}" alt="Shiny ${s.name}"><small>✦ Shiny${S.shiny[id]?' · bonded':''}</small></span>`));
   body.append(el('p','sec','Evolution'));
   if(s.leg)body.append(el('p','desc','A legendary Lynty. It does not evolve: it has always been in its final form.'));
+  else if(s.loner)body.append(el('p','desc','A loner. It never evolves: it is born in its final form, and it is just as strong as one.'));
   else body.append(el('div','chain big',s.line.map((x,k)=>`${k?`<span class="arr">Lv ${EVO_AT[k-1]}</span>`:''}<span class="ch${x===id?' on':''}"><img class="px" src="${sprURL(x,false,dexShiny)}" alt=""><small>${SP[x].name}</small></span>`).join('')));
   {const tot=s.base.reduce((a,b2)=>a+b2,0),st60=stats({sp:id,lvl:MAXL});
     body.append(el('p','sec',`Base stats · total ${tot}`));
@@ -5051,7 +5341,7 @@ async function profTalk(){const L=[
   [`You have ${S.crests.length} of 8 crests. ${nextHint()}`,'Heal up at any Trading Post. The healers there are the best on the Long Road.'],
   ['Every town has a side road leading off its east edge.','The Lynties out there are rarer and tougher. So are the trainers. Bring Salves, and maybe a spare Revival Seed.'],
   ['Trainers on the road turn to look around every few seconds.','If one spots you, it marches straight over for a battle. Sneak past behind them... or don’t!'],
-  ['Every Warden Hall now sits behind a labyrinth. Two guards patrol each one, and treasure hides in the dead ends.','Inside the hall, solve a chamber to open its gate and beat the fighter behind it, three times over. Then the Warden will see you.'],
+  ['Every Warden Hall sits behind a labyrinth. Three trainers stand on the way through each one, so you can’t sneak past them. Treasure hides in the dead ends.','Inside the hall, solve a chamber to open its gate and beat the fighter behind it, three times over. Then the Warden will see you.'],
   ['Look for cave mouths in the rocks beside Route 2, Route 4, Route 7 and Route 8.','Caves are dark, but the Lynties inside live nowhere else.'],
   ['Eight legendary Lynties roam the tall grass. Only one wild encounter in a hundred is a legend.','A Crown Charm never fails, and every Warden you beat gives you one. Save them for the legends!'],
   ['Remember: your progress is only kept when you save. Open the MENU and tap Save!']];
@@ -5079,6 +5369,7 @@ async function fighterTalk(e,path){const f=e.f,pre=Array.isArray(f.pre)?f.pre:[f
     for(const d of(path||[]).slice().reverse())await entStep(e,OPP[d]);
     if(e.fighter){await entStep(e,e.ax<e.x?'left':'right');e.dir=e.adir}
     else if(e.blocker){await entStep(e,'up');await entStep(e,e.ax<e.x?'left':'right');e.dir=e.adir}
+    else if(e.aside){await entStep(e,e.aside);e.dir=e.adir}
     mode='world'}
   else if(e.hx!=null){e.x=e.hx;e.y=e.hy;e.dir=e.home;e.anim=null}}
 /* The Sky Sanctum altar gives the Champion one free legendary Lynty, ever. Every time you walk into the Sanctum it

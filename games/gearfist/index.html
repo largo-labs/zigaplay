@@ -433,7 +433,7 @@ const MV={
 const BOTS={
   gearfist:{name:'Gearfist',cost:0,hp:0,spd:1,pal:'hero',o:{visor:true,antenna:true,emblem:'#ffc23a'},blurb:'The all-rounder. Quick hands, a piston arm, and a fist he can fire.',
     chain:['jab','cross','hook'],heavy:'piston',ender:()=>has('upper')?'upper':'piston',rush:'rush',special:()=>has('rocket')?'rocket':null,air:'dive',
-    help:()=>[['A A A','Jab, cross, hook. The hook knocks down.'],['B','Piston punch: huge, and breaks shields.'],['A A B',has('upper')?'Uppercut: launches the foe into the air.':'Piston finisher (an uppercut after stage 2).'],['→ + B','Rush punch.'],['hold B',has('rocket')?'Rocket Fist: let go to fire your fist.':'Rocket Fist, after stage 1.'],['jump + A','Diving punch.']]},
+    help:()=>[['A A A','Jab, cross, hook. The hook knocks down.'],['B','Piston punch: huge, and breaks shields.'],['A A B',has('upper')?'Uppercut: launches the foe into the air.':'Piston finisher (an uppercut after stage 2).'],['→ + B','Rush punch.'],['hold B',has('rocket')?'Keep holding after the piston, then let go to fire your fist.':'Rocket Fist, after stage 1.'],['jump + A','Diving punch.']]},
   torque:{name:'Torque',cost:450,hp:30,spd:.86,pal:'torque',o:{s:1.15,tw:13,th:11,hw:8,hh:6,legH:7,fs:7,emblem:'#3affd0'},blurb:'A walking forklift. Slow, tough, and every swing lands like a crate.',
     chain:['hammer','hammer2','smash'],heavy:'lariat',ender:'bodyslam',rush:'shoulder',special:'quake',air:'dive',
     help:()=>[['A A A','Hammer, hammer, ground smash: hits all around.'],['B','Lariat: spins and hits both sides.'],['A A B','Body slam: hops up and crashes down on everyone near.'],['→ + B','Shoulder charge that bowls foes over.'],['hold B','Quake: shockwaves roll out both ways.'],['jump + A','Diving punch.']]},
@@ -484,24 +484,50 @@ const HURT=1.6;
 function inputX(){let x=0;if(keys.has('left'))x--;if(keys.has('right'))x++;x+=touchDir.x;return clamp(x,-1,1)}
 const guardHeld=()=>keys.has('down')||touchDir.z>0;
 const grounded=()=>P.y>=0&&P.vy>=0;
-/* turn toward the nearest foe when a punch starts with no direction held */
-function autoFace(){if(inputX())return;let best=null,bd=40;for(const e of foes()){const d=Math.abs(e.x-P.x);if(d<bd){bd=d;best=e}}if(best)P.face=best.x>P.x?1:-1}
-function startMove(m,ci=-1){const M=MV[m];if(ci<=0)P.bQ=false;P.state=M.air?'airatk':M.special==='storm'||M.special==='cyclone'?'special':M.dash?'dash':'atk';P.move=m;P.st=0;P.queue=null;P.ci=ci;P.hitId++;P.tick=0;P.fired=false;
-  if(!M.air&&!M.dash)autoFace();if(M.hop){P.vy=-M.hop;P.y=-1}SND.sfx('whiff')}
+/* a foe a blow can land on */
+const hittable=e=>e&&e.kind==='foe'&&e.state!=='dead'&&e.state!=='enter'&&!(e.state==='down'&&e.y>=0&&!e.boss)&&!(e.T.drone&&e.h>20);
+/* turn toward the nearest foe when a punch starts with no direction held (one in front wins a close call) */
+function autoFace(){if(inputX())return;let best=null,bd=64;for(const e of foes()){if(!hittable(e))continue;const d=Math.abs(e.x-P.x)-(Math.sign(e.x-P.x)===P.face?12:0);if(d<bd){bd=d;best=e}}if(best)P.face=best.x>P.x?1:-1}
+/* the fist finds its mark: the nearest foe in front, a little past the blow's reach */
+function pickTarget(M){let best=null,bd=1e9;const far=(M.range||M.aoe||14)+36;
+  for(const e of R.ents){if(!hittable(e)||(!M.air&&e.y<-30))continue;const dx=(e.x-P.x)*P.face;if(dx<-3||dx>far+(e.w||10)/2)continue;if(dx<bd){bd=dx;best=e}}return best}
+/* while a blow winds up and lands you slide in to meet its target, and stay on it as it staggers back */
+function stickTo(M,dt){const e=P.tgt;if(!hittable(e)||P.st>=M.start+M.act)return false;
+  const want=clamp((M.range||M.aoe||14)*.6,8,16)+(e.w||10)/2,gap=(e.x-P.x)*P.face-want;
+  if(gap>.5){P.x+=P.face*Math.min(gap,360*dt);return true}return false}
+/* free to start something new */
+const free=()=>P.state==='idle'||P.state==='walk'||P.state==='guard';
+function startMove(m,ci=-1){const M=MV[m];if(ci<=0)P.bQ=false;P.state=M.air?'airatk':M.special==='storm'||M.special==='cyclone'?'special':M.dash?'dash':'atk';P.move=m;P.st=0;P.queue=null;P.ci=ci;P.hitId++;P.tick=0;P.fired=false;P.hitLanded=false;P.canCharge=false;
+  /* each blow of a combo can turn you round: hold the way you want to hit */
+  if(!M.air&&!M.dash){const vx=inputX();if(vx)P.face=vx>0?1:-1;else autoFace()}
+  P.tgt=M.dmg&&!M.special&&!M.dash?pickTarget(M):null;
+  if(M.hop){P.vy=-M.hop;P.y=-1}SND.sfx('whiff')}
 function chainStart(){startMove(P.bot.chain[0],0)}
-function pressA(){if(!R||R.state!=='play')return;P.bufA=.35;P.aHeld=true;
-  if(P.state==='jump'&&!P.airUsed){P.airUsed=true;startMove(P.bot.air);P.bufA=0}}
+function pressA(){if(!R||R.state!=='play')return;P.bufA=.35;P.aHeld=true;if(P.state==='down')P.mash=true;
+  if(P.state==='jump'&&!P.airUsed){P.airUsed=true;P.airHits=0;startMove(P.bot.air);P.bufA=0;return}
+  tryChase()}
+/* after a blow that launches a foe, A leaps after it for a blow in the air */
+function tryChase(){const c=P.chase,M=MV[P.move];if(!c||c.t<=0||!P.bufA||!grounded())return false;const e=c.e;
+  if(!hittable(e)||e.y>-4||Math.abs(e.x-P.x)>70)return false;
+  if(!(free()||(P.state==='atk'&&M&&P.st>=M.start+M.act)))return false;
+  P.chase=null;P.bufA=0;P.face=e.x>P.x?1:-1;P.y=-1;P.vy=-235;P.airUsed=true;P.airHits=0;startMove(P.bot.air);P.tgt=e;sparks(P.x,LANE,-1,4,'#c8b8a0');return true}
 function releaseA(){P.aHeld=false}
-function jump(){if(!R||R.state!=='play')return;if(grounded()&&(P.state==='idle'||P.state==='walk'||P.state==='guard')){P.bufJ=0;P.state='jump';P.vy=-205;P.y=-1;P.airUsed=false;SND.sfx('whiff')}else P.bufJ=.25}
-function pressB(){if(!R||R.state!=='play')return;P.bDown=true;P.bT=0;const B=P.bot,vx=inputX();
-  if(P.state==='jump'&&!P.airUsed){P.airUsed=true;startMove(B.air);return}
+/* jump from standing, or out of a blow that landed */
+const canJump=()=>{if(!grounded())return false;if(free())return true;const M=MV[P.move];return P.state==='atk'&&P.hitLanded&&M&&!M.special&&P.st>=M.start+M.act};
+function jump(){if(!R||R.state!=='play')return;if(P.state==='down')P.mash=true;if(canJump()){P.bufJ=0;P.state='jump';P.vy=-205;P.y=-1;P.airUsed=false;P.airHits=0;P.queue=null;SND.sfx('whiff')}else P.bufJ=.25}
+function pressB(){if(!R||R.state!=='play')return;P.bDown=true;P.bT=0;const B=P.bot;if(P.state==='down')P.mash=true;
+  if(P.state==='jump'&&!P.airUsed){P.airUsed=true;P.airHits=0;startMove(B.air);return}
   if(P.state==='atk'&&P.ci>=0&&P.ci<B.chain.length-1){if(P.queue&&P.queue.ci>0&&P.queue.ci<B.chain.length-1)P.bQ=true;else if(!P.queue||P.queue.ci>0)P.queue={m:pick2(B.ender),ci:-1};return}
-  if(P.state==='idle'||P.state==='walk'||P.state==='guard'){
-    if(vx){P.face=vx>0?1:-1;startMove(B.rush);return}
-    if(pick2(B.special)&&P.specCD<=0){P.state='charge';P.st=0;P.chargeFx=false;SND.sfx('charge');return}
-    startMove(B.heavy)}}
-function releaseB(){P.bDown=false;if(!R||R.state!=='play')return;if(P.state==='charge'){if(P.st>=.45)fireSpecial();else startMove(P.bot.heavy)}}
-function fireSpecial(){const sp=pick2(P.bot.special);if(!sp){startMove(P.bot.heavy);return}P.specCD=1.3;startMove(sp);
+  if(free()){heavyNow();return}
+  /* too busy right now: it comes out the moment you're free */
+  P.bufB=.3}
+/* B: the rush with a direction held, otherwise the heavy blow, at once; keep holding to charge the special */
+function heavyNow(){const B=P.bot,vx=inputX();P.bufB=0;
+  if(vx){P.face=vx>0?1:-1;startMove(B.rush);return}
+  startMove(B.heavy);P.canCharge=!!pick2(B.special)&&P.specCD<=0}
+function releaseB(){P.bDown=false;if(!R||R.state!=='play')return;if(P.state==='charge'){if(P.st>=CHARGE)fireSpecial();else P.state='idle'}}
+const CHARGE=.32;
+function fireSpecial(){const sp=pick2(P.bot.special);if(!sp){P.state='idle';return}P.specCD=1.3;startMove(sp);
   if(sp==='rocket'){R.shots.push({kind:'rocket',x:P.x+P.face*8,z:LANE,y:-13,vx:P.face*240,face:P.face,life:1,hit:new Set(),dmg:22*dmgMul()});SND.sfx('rocket')}}
 function burst(){if(!R||R.state!=='play'||P.heat<100||P.state==='down'||P.state==='dead'||P.state==='burst')return;P.heat=0;P.state='burst';P.st=0;P.inv=Math.max(P.inv,.7);P.burstHit=false;SND.sfx('burst');R.shake=.35}
 /* o: {low (can be jumped), y (height of the strike), unblock} */
@@ -513,13 +539,17 @@ function hurtPlayer(d,kb,down,fromX,o={}){if(P.inv>0||P.state==='down'||P.state=
     if(!R.guardTip){R.guardTip=true}return'block'}
   d=Math.round(d);P.hp-=d;R.dmgTaken+=d;P.flash=.12;P.heat=Math.min(100,P.heat+2*(1+.25*lv('coolant')));R.combo=0;$('#combo').classList.remove('on');
   P.face=fromX>P.x?1:-1;P.vx=-P.face*(kb||40);SND.sfx('hurt');R.shake=Math.max(R.shake,.15);R.hitstop=.05;
+  P.mash=false;P.queue=null;P.canCharge=false;P.chase=null;
   if(P.hp<=0){P.hp=0;P.state='down';P.st=0;P.vy=-120;P.y=-1;P.dying=true}
   else if(down||P.y<0){P.state='down';P.st=0;P.vy=-110;P.y=Math.min(P.y,-1)}else{P.state='hurt';P.st=.28}
   return true}
 /* the body the foes can hit: from the feet up, lower while sliding */
 const bodyTop=()=>P.y-(P.state==='dash'&&MV[P.move]&&MV[P.move].low?9:22);
 function overlapsBody(y,h){return y+h>bodyTop()&&y-h<P.y}
-function updPlayer(dt){const vx=inputX(),B=P.bot;P.anim+=dt;P.inv=Math.max(0,P.inv-dt);P.flash=Math.max(0,P.flash-dt);P.specCD=Math.max(0,P.specCD-dt);P.bufA=Math.max(0,P.bufA-dt);if(P.bufJ>0){P.bufJ-=dt;if(P.state==='idle'||P.state==='walk')jump()}
+function updPlayer(dt){const vx=inputX(),B=P.bot;P.anim+=dt;P.inv=Math.max(0,P.inv-dt);P.flash=Math.max(0,P.flash-dt);P.specCD=Math.max(0,P.specCD-dt);
+  /* presses made while busy wait for you (twice as long as when you're free) */
+  const bk=free()?1:.5;P.bufA=Math.max(0,P.bufA-dt*bk);P.bufB=Math.max(0,(P.bufB||0)-dt*bk);if(P.chase&&(P.chase.t-=dt)<=0)P.chase=null;
+  if(P.bufJ>0){P.bufJ-=dt;if(canJump())jump()}
   if(P.bDown)P.bT+=dt;
   if(P.vx){P.x+=P.vx*dt;P.vx*=Math.pow(.004,dt);if(Math.abs(P.vx)<2)P.vx=0}
   if(P.y<0||P.vy){P.vy+=480*dt;P.y+=P.vy*dt;if(P.y>=0){P.y=0;P.vy=0;
@@ -529,19 +559,33 @@ function updPlayer(dt){const vx=inputX(),B=P.bot;P.anim+=dt;P.inv=Math.max(0,P.i
     case 'idle':case 'walk':case 'guard':{
       if(guardHeld()&&grounded()){if(vx)P.face=vx>0?1:-1;P.state='guard';if(P.bufA||P.aHeld){P.bufA=0;P.state='idle';chainStart()}break}
       const s=spd();P.x+=vx*s*dt;if(vx)P.face=vx>0?1:-1;P.state=vx?'walk':'idle';
+      if(P.bufB){heavyNow();break}
+      if(tryChase())break;
       /* tap A, or just hold it down to keep punching */
       if(P.bufA||P.aHeld){P.bufA=0;chainStart()}break}
     case 'jump':{P.x+=vx*spd()*.95*dt;if(vx)P.face=vx>0?1:-1;break}
-    case 'airatk':{const M=MV[P.move];P.st+=dt;P.x+=vx*spd()*.6*dt+P.face*40*dt;if(P.st>=M.start&&P.st<M.start+M.act)attack(M);if(P.st>=M.start+M.act&&P.y>=0)P.state='idle';break}
+    case 'airatk':{const M=MV[P.move];P.st+=dt;const e=P.tgt;
+      /* an air blow homes in on its target */
+      if(hittable(e)&&P.st<M.start+M.act){const gx=e.x-P.face*((e.w||10)/2+6)-P.x;P.x+=clamp(gx,-210*dt,210*dt);if(e.y<P.y-8&&P.vy>-60)P.vy-=500*dt}
+      else P.x+=vx*spd()*.6*dt+P.face*40*dt;
+      if(P.st>=M.start&&P.st<M.start+M.act)attack(M);
+      /* one that lands can be followed by another before you come down */
+      if(P.st>=M.start+M.act&&P.hitLanded&&(P.airHits||0)<2&&P.bufA&&P.y<-8){P.airHits=(P.airHits||0)+1;P.bufA=0;const t=P.tgt;startMove(B.air);if(hittable(t))P.tgt=t;P.vy=Math.min(P.vy,-70);break}
+      if(P.st>=M.start+M.act&&P.y>=0)P.state='idle';break}
     case 'atk':{const M=MV[P.move];P.st+=dt;
       if(M.special){if(!P.fired&&P.st>=M.start){P.fired=true;if(M.special==='quake'){for(const d of[-1,1])R.shots.push({kind:'pwave',x:P.x+d*8,z:LANE,y:-3,vx:d*150,face:d,life:.9,hit:new Set(),dmg:18*dmgMul()});R.shake=.3;SND.sfx('boom')}}
         if(P.st>=M.start+M.act+M.rec)P.state='idle';break}
-      if(M.adv&&P.st<M.start+M.act)P.x+=P.face*M.adv/(M.start+M.act)*dt;
+      const stuck=stickTo(M,dt);if(!stuck&&M.adv&&P.st<M.start+M.act)P.x+=P.face*M.adv/(M.start+M.act)*dt;
       /* the chain: a buffered or held A queues the next blow from almost any point in this one */
       if(P.ci>=0&&!P.queue&&(P.bufA>0||P.aHeld)&&P.st>.02&&P.ci<B.chain.length-1){P.queue={m:B.chain[P.ci+1],ci:P.ci+1};P.bufA=0}
       if(P.st>=M.start&&P.st<M.start+M.act&&(!M.hop||P.y>=-2))attack(M);
       if(M.ring&&!P.ringed&&P.st>=M.start&&(!M.hop||P.y>=0)){P.ringed=true;R.fx.push({k:'ring',x:P.x,z:LANE,y:-2,r:3,max:M.aoe||24,t:.3,c:M.ring})}
-      const cancel=M.start+M.act+Math.min(M.rec,.06);
+      /* the heavy blow turns into a charge if B is still held once it has landed */
+      if(P.canCharge&&P.move===B.heavy&&P.st>=M.start+M.act){if(P.bDown){P.canCharge=false;P.ringed=false;P.state='charge';P.st=0;P.chargeFx=false;SND.sfx('charge');break}if(P.st>=M.start+M.act+.05)P.canCharge=false}
+      if(tryChase())break;
+      /* a blow that connects can be followed sooner than one that misses */
+      const cancel=M.start+M.act+(P.hitLanded?.02:Math.min(M.rec,.06));
+      if(P.bufB&&!P.queue&&P.st>=cancel&&P.ci<0){P.ringed=false;P.landed=false;heavyNow();break}
       if(P.queue&&P.st>=cancel){const q=P.queue,bq=P.bQ;P.bQ=false;P.ringed=false;P.landed=false;startMove(q.m,q.ci);if(bq)P.queue={m:pick2(B.ender),ci:-1};break}
       if(P.st>=M.start+M.act+M.rec){P.ringed=false;P.landed=false;P.state='idle';if(P.bufA&&P.ci===B.chain.length-1){/* a short breath after a finisher */P.bufA=Math.min(P.bufA,.1)}}break}
     case 'dash':{const M=MV[P.move];P.st+=dt;if(P.st<M.start+M.act){P.x+=P.face*M.dash*dt;if(P.st>=M.start)attack(M);if(M.zap&&rnd()<.6)R.fx.push({k:'spark',x:P.x-P.face*4,z:LANE,y:-12,vx:-P.face*40,vy:(rnd()-.5)*30,t:.15,c:'#3ae8ff'})}
@@ -552,11 +596,11 @@ function updPlayer(dt){const vx=inputX(),B=P.bot;P.anim+=dt;P.inv=Math.max(0,P.i
           for(let i=0;i<4;i++){const a=rnd()*6.28;R.fx.push({k:'spark',x:P.x+Math.cos(a)*M.aoe*.8,z:LANE,y:-10+Math.sin(a)*12,vx:0,vy:0,t:.1,c:pick(['#3ae8ff','#ffffff','#f0d830'])})}SND.sfx('jab')}}
       else if(M.special==='cyclone'){if(P.st<M.start+M.act){P.x+=P.face*M.dash*dt;if(P.st>=M.start&&P.tick<=0){P.tick=M.every;P.hitId++;attack(M)}}}
       if(P.st>=M.start+M.act+M.rec)P.state='idle';break}
-    case 'charge':{P.st+=dt;if(P.st>=.45&&!P.chargeFx){P.chargeFx=true;SND.sfx('tele')}
-      if(P.st>=.45&&Math.random()<.5)R.fx.push({k:'spark',x:P.x-P.face*6,z:LANE,y:-13-rnd()*4,vx:(rnd()-.5)*40,vy:-rnd()*40,t:.15,c:'#9af4ff'});
-      if(!P.bDown){if(P.st>=.45)fireSpecial();else startMove(B.heavy)}break}
+    case 'charge':{P.st+=dt;if(vx)P.face=vx>0?1:-1;if(P.st>=CHARGE&&!P.chargeFx){P.chargeFx=true;SND.sfx('tele')}
+      if(P.st>=CHARGE&&Math.random()<.5)R.fx.push({k:'spark',x:P.x-P.face*6,z:LANE,y:-13-rnd()*4,vx:(rnd()-.5)*40,vy:-rnd()*40,t:.15,c:'#9af4ff'});
+      if(!P.bDown){if(P.st>=CHARGE)fireSpecial();else P.state='idle'}break}
     case 'hurt':P.st-=dt;if(P.st<=0)P.state='idle';break;
-    case 'down':P.st+=dt;if(P.y>=0&&P.st>.9){if(P.dying){P.state='dead';P.st=0}else{P.state='getup';P.st=0}}break;
+    case 'down':P.st+=dt;if(P.y>=0&&P.st>(P.mash&&!P.dying?.5:.9)){if(P.dying){P.state='dead';P.st=0}else{P.state='getup';P.st=0;if(P.mash){P.mash=false;P.bufA=P.bufB=0}}}break;
     case 'getup':P.st+=dt;if(P.st>.35){P.state='idle';P.inv=1}break;
     case 'burst':{P.st+=dt;if(P.st>.15&&!P.burstHit){P.burstHit=true;R.fx.push({k:'ring',x:P.x,z:LANE,y:-10,r:4,max:78,t:.4,c:'#9af4ff'});
         for(const e of R.ents){if(e.state==='dead')continue;if(Math.abs(e.x-P.x)<78)hitFoe(e,32*dmgMul(),{kb:150,down:true,brk:true,from:P.x,burst:true})}}
@@ -575,7 +619,8 @@ function attack(M){for(const e of R.ents){if(e.state==='dead'||e.lastHit===P.hit
     /* height: grounded strikes reach foes near the ground, air strikes reach below */
     if(!M.air&&e.y<-30)continue;
     strike(e,M,{})}}
-function strike(e,M,o){e.lastHit=P.hitId;hitFoe(e,M.dmg*dmgMul(),{kb:M.kb,down:M.down,launch:M.launch,brk:M.brk,from:P.x,heavy:M.heavy,stun:M.stun,zap:M.zap});
+function strike(e,M,o){e.lastHit=P.hitId;P.hitLanded=true;hitFoe(e,M.dmg*dmgMul(),{kb:M.kb,down:M.down,launch:M.launch,brk:M.brk,from:P.x,heavy:M.heavy,stun:M.stun,zap:M.zap});
+  if(M.launch&&e.kind==='foe'&&e.state==='air')P.chase={e,t:.55};
   if(M.whip&&!P.whipped){P.whipped=true}}
 function hitFoe(e,dmg,o){if(e.kind==='crate'){if(dmg<=0)return;e.hp-=dmg;e.flash=.08;SND.sfx('clank');sparks(e.x,LANE,-8,6,'#c8a060');R.hitstop=.03;if(e.hp<=0)breakCrate(e);return}
   if(e.state==='getup'&&!o.brk&&!e.boss)return;
@@ -620,7 +665,7 @@ function updFoe(e,dt){const T=e.T;e.anim+=dt;e.flash=Math.max(0,e.flash-dt);e.cd
       if(e.tok){e.tokT=(e.tokT||0)+dt;if(e.tokT>3.5){e.tok=false;R.tokens++;e.cd=1}}
       let tx;if(T.drone){tx=P.x+side*10;e.h=lerpN(e.h,e.tok?10:16,dt*2)}
       else if(T.ranged)tx=P.x+side*(56+e.slot*14);
-      else if(e.tok)tx=P.x+side*(T.range-2);else tx=P.x+side*(34+e.slot*26);
+      else if(e.tok)tx=P.x+side*(T.range-2);else{const d=34+e.slot*26;tx=adx>22&&adx<d?e.x:P.x+side*d}
       if(tx<lo+10||tx>hi-10){const alt=P.x-side*(T.ranged?56:34);tx=alt>lo+10&&alt<hi-10?alt:tx}tx=clamp(tx,lo+10,hi-10);const onScreen=e.x>lo+4&&e.x<hi-4;
       const mx=tx-e.x,s=T.spd*(e.tok?1:.7);if(Math.abs(mx)>2)e.x+=Math.sign(mx)*Math.min(Math.abs(mx),s*dt);
       e.face=dx>0?1:-1;e.state=Math.abs(mx)>2?'approach':'circle';
@@ -869,7 +914,8 @@ function howScreen(back=titleScreen){const o=showOv(true),pn=el('div','panel');c
   t.innerHTML=`<p>Walk right, punch every robot in the junkyard city, and beat the boss at the end of each stage.</p>
     <div class="mv"><i>←  →</i><span>Walk forward and back.</span><i>↑</i><span>Jump. Clears punches, sparks, tires and the Foreman's laser.</span><i>hold ↓</i><span>Guard. Blocks hits from the front (stomps and bombs get through).</span></div>
     <div class="mv">${B.help().map(([k,v])=>`<i>${k}</i><span>${v}</span>`).join('')}<i>${bk_}</i><span>Gear Burst, when the blue meter is full: a blast that knocks everyone down.</span></div>
-    <p><b>Combos are easy:</b> tap A as fast as you like, or just hold it, and the whole chain comes out. Press B at any point in the chain for the finisher. You turn to face the nearest robot when you swing.</p>
+    <p><b>Combos are easy:</b> tap A as fast as you like, or just hold it, and the whole chain comes out. Press B at any point in the chain for the finisher. Every blow slides you up to the robot in front of you and keeps you on it, and you turn to face the nearest one when you swing (or hold a direction to turn round between blows).</p>
+    <p>A blow that lands can be followed straight away: by the next blow, by B, or by a jump. After a blow that launches a robot, press A to leap after it, and A again for a second blow in the air. Presses you make while busy aren't lost: they come out the moment you're free. Knocked down? Press anything to get up sooner.</p>
     <p>Shields block light hits: break them with heavies and finishers. Foes flash before they strike: jump, guard, or back off.</p>
     <p>Smash crates for <b>oil</b> (health), <b>power cells</b> (Burst meter), <b>bolts</b> and the odd spare battery (a life).</p>
     <p>Bolts buy upgrades and new robots in the <b>Garage</b>. ${ZP?'START':'Pause'} stops the fight.</p><p>Your run saves after every fight you win, so you can quit any time${ZP?' (pause, or just flip the power switch)':''} and pick it up later from the title screen.</p>`;
