@@ -14,7 +14,7 @@
   --amber:#ffb627;--amber2:#b9821a;--text:#eadfbd;--dim:#8d9878;--green:#93e46c;--cyan:#5fd8ff;--red:#ff5545;--orange:#ff8a3a;
   --ui:'VT323',ui-monospace,monospace;--head:'Pixelify Sans','VT323',ui-monospace,monospace}
 *,::before,::after{box-sizing:border-box}
-html{font-size:clamp(12px,5vw,20px)}
+html{font-size:clamp(14px,5.5vw,22px)}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;line-height:1.05}
 #app{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(120% 80% at 50% 0%,#132313 0%,#070b07 70%)}
@@ -33,11 +33,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidde
 .row.off{color:#5c6450}
 .row.focus{background:var(--amber);color:#120c00;border-color:var(--amber)}
 .row.focus .r,.row.focus .dim{color:#3a2a00}
+.row.focus .grn,.row.focus .amb,.row.focus .red,.row.focus .tag{color:#120c00}
 .row.btn{justify-content:center;border-color:var(--line2);letter-spacing:.12em;font-size:1.05rem}
 .row.btn.focus{border-color:var(--amber)}
 .row.big{font-size:1.2rem;min-height:1.8rem}
 .dim{color:var(--dim)}.amb{color:var(--amber)}.grn{color:var(--green)}.red{color:var(--red)}.cyn{color:var(--cyan)}
-.small{font-size:.85rem}
+.small{font-size:.9rem}
 .qty{display:inline-flex;align-items:center;gap:.25rem}
 .qty i{font-style:normal;opacity:.7}
 .qty b{min-width:1.6rem;text-align:center;font-weight:400}
@@ -54,6 +55,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidde
 .stamp{font-family:var(--head);font-size:1.6rem;letter-spacing:.14em;text-align:center;padding:.2rem;border:3px solid currentColor;transform:rotate(-4deg);margin:.4rem auto;width:max-content}
 .coach{border:1px solid var(--amber);color:var(--amber);font-size:.85rem;padding:.12rem .3rem;line-height:1.1;flex:0 0 auto}
 .row.moving{background:#13303a;border-color:var(--cyan);color:var(--cyan)}
+.row.primary{justify-content:center;border:2px solid var(--amber);color:var(--amber);font-size:1.2rem;letter-spacing:.1em;min-height:2.1rem}
+.row.primary.focus{color:#120c00}
+.keys{display:flex;justify-content:center;gap:.25rem .8rem;flex-wrap:wrap;font-size:.88rem;color:var(--dim);flex:0 0 auto;padding-top:.15rem;border-top:1px solid var(--line)}
+.keys b{display:inline-block;min-width:1.3rem;padding:0 .25rem;border:1px solid var(--line2);color:var(--amber);font-weight:400;text-align:center;margin-right:.25rem;line-height:1.05}
+.status{display:flex;justify-content:space-between;gap:.5rem;font-size:1.05rem;padding:0 .15rem;flex:0 0 auto}
+.icons{display:flex;flex-wrap:wrap;gap:.3rem .5rem;align-items:flex-end;margin:.25rem 0 .15rem;padding-left:2px}
+.icons figure{margin:0;display:flex;flex-direction:column;align-items:center;font-size:.85rem;line-height:1}
+.big3{display:flex;justify-content:space-around;text-align:center;font-size:1.5rem;color:var(--amber)}
+.big3 small{display:block;font-size:.8rem;color:var(--dim)}
+.chips{display:flex;flex-wrap:wrap;gap:.25rem}
+.chip{border:1px solid var(--line2);padding:0 .35rem;font-size:.92rem}
+.chip.red{border-color:var(--red)}.chip.amb{border-color:var(--amber)}
 .hint{font-size:.78rem;color:var(--dim);text-align:center;flex:0 0 auto}
 .scroll{overflow:hidden;position:relative}
 canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
@@ -72,8 +85,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 /* battle */
 .mapbox{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--line2);background:#081108}
 .mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.log{font-size:.88rem;line-height:1.1;height:100%;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
-.log div{white-space:normal}
+.ticker{font-size:1.05rem;line-height:1.15;min-height:3.5em;overflow:hidden}
+.icons figure.dim{opacity:.45}.icons figure.cyn{color:var(--cyan)}.icons figure.grn{color:var(--green)}.icons figure.amb{color:var(--amber)}.icons figure.red{color:var(--red)}
+.icons figure.new canvas{outline:2px solid var(--green);outline-offset:1px}
 /* portraits */
 .port{width:3.4rem;height:4.2rem;border:1px solid var(--line2);background:#0a120a;flex:0 0 auto}
 /* touch controls when played on its own */

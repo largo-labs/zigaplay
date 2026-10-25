@@ -31,7 +31,8 @@ window.ZPCart={title:'Drone Strike',input(b,d){btn(b,d)},home(){return SCR&&SCR.
 let SCR=null;
 function screen(id,opts={}){const s={id,el:el('div','scr '+(opts.cls||'')),items:[],i:0,...opts};s.key=(b,rep)=>navKey(s,b,rep);return s}
 function row(s,parent,html,h={}){const e=el('div','row'+(h.cls?' '+h.cls:''),html);parent.appendChild(e);const it={el:e,...h};s.items.push(it);if(h.off)e.classList.add('off');return it}
-function show(s,{keep=false}={}){const prev=SCR;if(prev&&prev.el.parentNode)prev.el.remove();if(prev&&prev.leave)prev.leave();SCR=s;APP.appendChild(s.el);
+function keybar(s,keys){if(!s.keysEl){s.keysEl=el('div','keys','')}s.keysEl.innerHTML=keys.map(([k,t])=>`<span><b>${k}</b>${t}</span>`).join('');if(!s.keysEl.parentNode)s.el.appendChild(s.keysEl)}
+function show(s,{keep=false}={}){if(s.keys)keybar(s,s.keys);const prev=SCR;if(prev&&prev.el.parentNode)prev.el.remove();if(prev&&prev.leave)prev.leave();SCR=s;APP.appendChild(s.el);
   let i=keep&&prev&&prev.id===s.id?prev.i:(s.start0||0);i=Math.max(0,Math.min(s.items.length-1,i));setFocus(s,i,true);if(s.enter)s.enter()}
 function setFocus(s,i,quiet){if(!s.items.length)return;s.items.forEach(it=>it.el.classList.remove('focus'));s.i=i;const it=s.items[i];it.el.classList.add('focus');
   const sc=it.el.closest('.scroll');if(sc){const top=it.el.offsetTop-sc.offsetTop,bot=top+it.el.offsetHeight;if(top<sc.scrollTop)sc.scrollTop=top-4;else if(bot>sc.scrollTop+sc.clientHeight)sc.scrollTop=bot-sc.clientHeight+4}
@@ -46,7 +47,7 @@ function navKey(s,b,rep){if(s.busy)return;const it=s.items[s.i];
 /* ---------- message boxes on top of everything ---------- */
 function overlay(html){const o=el('div','ov',`<div class="panel">${html}</div>`);APP.appendChild(o);return o}
 function msg(text,{who=null,port=null}={}){return new Promise(res=>{
-  const o=overlay(`<div style="display:flex;gap:.45rem;align-items:flex-start">${port?'<span class="pslot"></span>':''}<div class="msg" style="flex:1">${who?`<span class="who">${esc(who)}</span>`:''}<span class="t"></span></div></div><div class="more">▼</div>`);
+  const o=overlay(`<div style="display:flex;gap:.45rem;align-items:flex-start">${port?'<span class="pslot"></span>':''}<div class="msg" style="flex:1">${who?`<span class="who">${esc(who)}</span>`:''}<span class="t"></span></div></div><div class="more">A ▶</div>`);
   if(port){const c=port;c.className='port px';o.querySelector('.pslot').replaceWith(c)}
   const t=o.querySelector('.t'),more=o.querySelector('.more');more.style.visibility='hidden';let n=0,done=false;const full=text;
   const tm=setInterval(()=>{n+=2;t.textContent=full.slice(0,n);if(n%6===0)AU.play('type');if(n>=full.length)fin()},22);

@@ -11,61 +11,118 @@ function startBattle(){const m=S.mission;
 function battleScreen(){const s=screen('battle');
   const bar=el('div','bar','');s.el.appendChild(bar);
   const mb=el('div','mapbox');const cv=el('canvas');mb.appendChild(cv);s.el.appendChild(mb);
-  const panel=el('div','panel');panel.style.cssText='flex:0 0 auto;height:12.4rem;overflow:hidden;display:flex;flex-direction:column;gap:.15rem';s.el.appendChild(panel);
+  const panel=el('div','panel');panel.style.cssText='flex:0 0 auto;height:14rem;overflow:hidden;display:flex;flex-direction:column;gap:.25rem';s.el.appendChild(panel);
   B.ui={bar,cv,panel,s};s.leave=()=>cancelAnimationFrame(bRaf);s.back=()=>{};
   show(s);planWave();
   const loop=t=>{if(SCR!==s)return;drawBattle(t);bRaf=requestAnimationFrame(loop)};bRaf=requestAnimationFrame(loop)}
 const availTot=()=>Object.values(B.avail).reduce((a,b)=>a+b,0);
 const plural=(n,one,many)=>n===1?one:(many||one+'s');
 const dname=(t,n)=>n===1?DRONES[t].name:DRONES[t].plural||DRONES[t].name+'s';
+// a drone icon drawn crisp at a readable size
+function dIcon(d,size='1.25rem',col){const c=droneIcon(d,16,col);c.className='px';c.style.cssText=`width:${size};height:${size};flex:0 0 auto`;return c}
+// a row of icons with a number under each: [[canvas,label,cls]]
+function figs(list){const w=el('div','icons');for(const [c,label,cls] of list){const f=el('figure',cls||'');f.appendChild(c);f.appendChild(el('span','',label));w.appendChild(f)}return w}
+// only the threats that are really there
+function threatChips(m){const t=threat(m);const c=[];
+  if(t.aaL)c.push([`Air defense: ${LEVEL[t.aaL]}`,t.aaL>1?'red':'amb']);
+  if(t.ewL)c.push([`Jamming: ${LEVEL[t.ewL]}`,t.ewL>1?'red':'amb']);
+  if(t.drL)c.push([`Enemy drones: ${LEVEL[t.drL]}`,t.drL>1?'red':'amb']);
+  const hid=m.units.filter(u=>u.hidden&&!u.dead).length;if(hid)c.push([`${hid} hidden ${plural(hid,'unit')}`,'amb']);
+  return`<div class="chips">${c.length?c.map(([t,k])=>`<span class="chip ${k}">${t}</span>`).join(''):'<span class="chip">No defenses spotted</span>'}</div>`}
 
-/* ---------- planning a wave ---------- */
+/* ---------- forecast: fly the planned wave 40 times on copies of the battle and report the likely result ---------- */
+function forecast(runs=40){const groups=B.order.filter(d=>B.plan[d]>0).map(d=>[d,B.plan[d]]);const prim=B.m.units.filter(u=>u.prim);
+  const out={objs:0,all:0,lost:0,total:prim.length,n:groups.reduce((a,[,n])=>a+n,0)};if(!out.n)return out;
+  const S0=S;const fi=B.focus&&!B.focus.dead?B.m.units.indexOf(B.focus):-1;
+  try{for(let r=0;r<runs;r++){S={...S0,stats:{...S0.stats},usage:{},usageAll:{}};
+      const units=B.m.units.map(u=>({...u}));const b={m:{...B.m,units},wave:B.wave,maxWave:B.maxWave,alert:B.alert,avail:{...B.avail},lost:{},spent:{},recon:B.recon};
+      resolveWave(b,groups,fi>=0?units[fi]:null);
+      const d=units.filter(u=>u.prim&&u.dead).length;out.objs+=d;if(d===prim.length)out.all++;out.lost+=Object.values(b.lost).reduce((a,c)=>a+c,0)}}
+  finally{S=S0}
+  out.objs/=runs;out.all/=runs;out.lost/=runs;return out}
+function forecastText(){const f=forecast();if(!f.n)return'<span class="dim">No drones are in this wave yet.</span>';
+  const o=Math.round(f.objs),l=Math.round(f.lost);
+  return`<span class="dim">Forecast:</span> about <span class="amb">${o} of ${f.total}</span> objectives destroyed${f.all>=.1&&f.all<.95?` <span class="dim">(${Math.round(f.all*100)}% chance of all)</span>`:''}, and ${l?`about <span class="red">${l} ${plural(l,'drone')}</span> lost`:'<span class="grn">few or no drones</span> lost'}.`}
+
+/* ---------- planning a wave: the plan at a glance, with the forecast and one big Launch button ---------- */
 function defaultPlan(){const wl=B.maxWave-B.wave+1;const p={};for(const d of B.order){const n=B.avail[d]||0;const D=DRONES[d];
     p[d]=(D.recon||D.hunter||D.interceptor||D.decoy)?n:wl<=1?n:Math.ceil(n*.6)}return p}
-function planWave(keepFocus){const {s,panel,bar}=B.ui;s.items=[];panel.innerHTML='';s.busy=false;
-  B.order=B.order.filter(d=>B.avail[d]>0);
-  bar.innerHTML=`<b>${esc(B.m.name.toUpperCase())}</b><span>WAVE ${B.wave} OF ${B.maxWave}</span>`;
-  if(!keepFocus)B.plan=defaultPlan();
-  const t=threat(B.m);
-  panel.appendChild(el('div','small dim',`Air defense: <span class="${t.aaL>1?'red':''}">${LEVEL[t.aaL]}</span> · Jamming: <span class="${t.ewL>1?'red':''}">${LEVEL[t.ewL]}</span> · Enemy drones: <span class="${t.drL>1?'red':''}">${LEVEL[t.drL]}</span>`));
+function battleBar(){B.ui.bar.innerHTML=`<b>${esc(B.m.name.toUpperCase())}</b><span>WAVE ${B.wave} OF ${B.maxWave}</span>`}
+function planWave(keep){const {s,panel}=B.ui;s.items=[];panel.innerHTML='';s.busy=false;B.editing=false;
+  B.order=B.order.filter(d=>B.avail[d]>0);battleBar();
+  if(!keep)B.plan=defaultPlan();if(B.focus&&B.focus.dead)B.focus=null;
+  panel.insertAdjacentHTML('beforeend',threatChips(B.m));
   const coach=el('div','coach','');panel.appendChild(coach);B.ui.coach=coach;
-  const box=el('div','scroll');box.style.cssText='flex:1 1 auto;min-height:0';const list=el('div','list');box.appendChild(list);panel.appendChild(box);const list2=el('div','list');panel.appendChild(list2);
-  let moving=null;
+  // the launch order, as icons, left to right
+  const fl=B.order.filter(d=>B.plan[d]>0);
+  const strip=figs(fl.map((d,i)=>[dIcon(d),`${i+1}. ×${B.plan[d]}`]));strip.style.minHeight='2.1rem';
+  if(!fl.length)strip.innerHTML='<span class="dim">No drones in this wave. Choose Edit Plan.</span>';
+  const wrap=el('div','');wrap.style.cssText='display:flex;align-items:center;gap:.4rem';wrap.appendChild(el('span','small dim','ORDER'));wrap.appendChild(strip);panel.appendChild(wrap);
+  if(B.focus)panel.appendChild(el('div','small',`<span class="dim">Aiming first at:</span> ${esc(B.focus.name)}`));
+  panel.appendChild(el('div','small',forecastText()));
+  panel.appendChild(el('div','grow'));
+  const list=el('div','list');panel.appendChild(list);
+  const n=fl.reduce((a,d)=>a+B.plan[d],0);
+  row(s,list,`LAUNCH WAVE ${B.wave} · ${n} ${plural(n,'DRONE','DRONES')}`,{cls:'primary',a:()=>launchWave()});
+  row(s,list,'EDIT PLAN',{cls:'btn',a:()=>editPlan()});
+  const quit=async()=>{if(s.busy)return;const c=await choose('End the mission now? Drones still at the launch site go back into stock, and you are scored on what has been destroyed so far.',['Keep fighting','End mission'],{cancel:0});if(c===1)endBattle('ended')};
+  s.key=(b,rep)=>navKey(s,b,rep);s.start=()=>launchWave();s.select=()=>editPlan();s.back=quit;
+  keybar(s,[['A','Select'],['START','Launch'],['B','End mission']]);
+  const tutFix=tutorialBattle()&&B.wave===1&&B.order[0]!=='recon';
+  setFocus(s,tutFix?1:0,true);coachCheck()}
+
+/* ---------- editing the plan: how many of each, the order they fly in, and what to aim at ---------- */
+function editPlan(focusD,movingD){const {s,panel}=B.ui;s.items=[];panel.innerHTML='';B.editing=true;battleBar();
+  const fc=el('div','small','');panel.appendChild(fc);
+  const coach=el('div','coach','');panel.appendChild(coach);B.ui.coach=coach;
+  const box=el('div','scroll');box.style.cssText='flex:1 1 auto;min-height:0';const list=el('div','list');box.appendChild(list);panel.appendChild(box);
+  let moving=movingD||null;
   const rows=B.order.map(d=>row(s,list,'',{d,
-    l:()=>{if(moving)return;if(B.plan[d]>0){B.plan[d]--;upd();AU.play('tick');coachCheck()}},
-    r:()=>{if(moving)return;if(B.plan[d]<B.avail[d]){B.plan[d]++;upd();AU.play('tick');coachCheck()}else AU.play('buzz')},
-    a:()=>{moving=moving?null:d;upd()}}));
-  const tg=row(s,list2,'',{l:()=>cycleFocus(-1),r:()=>cycleFocus(1),a:()=>cycleFocus(1)});
-  const launch=row(s,list2,'',{cls:'btn',a:()=>launchWave()});
-  row(s,list2,'END MISSION',{cls:'btn',a:async()=>{const c=await choose('End the mission now? Drones still at the launch site stay in your stock, and you are scored on what has been destroyed so far.',['End mission','Keep fighting'],{cancel:1});if(c===0)endBattle('ended')}});
+    l:()=>{if(moving)return;if(B.plan[d]>0){B.plan[d]--;upd();AU.play('tick')}},
+    r:()=>{if(moving)return;if(B.plan[d]<B.avail[d]){B.plan[d]++;upd();AU.play('tick')}else{AU.play('buzz');toast(`All ${B.avail[d]} are already in this wave`)}},
+    a:()=>{moving=moving?null:d;upd();keys()}}));
+  const tg=row(s,list,'',{l:()=>cycleFocus(-1),r:()=>cycleFocus(1),a:()=>cycleFocus(1)});
+  row(s,list,'DONE',{cls:'primary',a:()=>planWave(true)});
   function cycleFocus(dir){const L=B.m.units.filter(u=>!u.dead&&!u.hidden);const opts=[null,...L];let i=opts.indexOf(B.focus);i=(i+dir+opts.length)%opts.length;B.focus=opts[i];upd();AU.play('tick')}
-  // moving a row changes the launch order
-  s.key=(b,rep)=>{if(moving&&(b==='up'||b==='down')){const i=B.order.indexOf(moving),j=i+(b==='up'?-1:1);if(j<0||j>=B.order.length){AU.play('buzz');return}
-      B.order.splice(i,1);B.order.splice(j,0,moving);AU.play('tick');const keep=moving;planWave(true);const s2=B.ui.s;const k=s2.items.findIndex(it=>it.d===keep);setFocus(s2,k,true);s2.items[k].a();return}
-    if(moving&&b==='b'){moving=null;upd();return}navKey(s,b,rep)};
+  const keys=()=>keybar(s,moving?[['▲▼','Move in line'],['A','Drop']]:[['◀▶','How many'],['A','Change order'],['B','Done']]);
+  s.key=(b,rep)=>{
+    if(moving&&(b==='up'||b==='down')){const i=B.order.indexOf(moving),j=i+(b==='up'?-1:1);if(j<0||j>=B.order.length){AU.play('buzz');return}
+      B.order.splice(i,1);B.order.splice(j,0,moving);AU.play('tick');editPlan(moving,moving);return}
+    if(b==='b'){AU.play('back');if(moving){moving=null;upd();keys();return}planWave(true);return}
+    if(b==='start'){planWave(true);launchWave();return}
+    navKey(s,b,rep)};
+  s.start=null;s.select=null;
   const upd=()=>{rows.forEach((it,i)=>{const d=it.d;it.el.innerHTML='';it.el.classList.toggle('moving',moving===d);
-      it.el.insertAdjacentHTML('beforeend',`<span class="dim" style="width:1.1rem">${i+1}</span>`);it.el.appendChild(droneIcon(d,13));
-      it.el.insertAdjacentHTML('beforeend',moving===d?`<span style="flex:1">${DRONES[d].name}</span><span>▲▼ move · A done</span>`:
+      it.el.insertAdjacentHTML('beforeend',`<span class="dim" style="width:1rem">${i+1}</span>`);it.el.appendChild(dIcon(d));
+      it.el.insertAdjacentHTML('beforeend',moving===d?`<span style="flex:1">${DRONES[d].name}</span><span>▲▼</span>`:
         `<span style="flex:1">${DRONES[d].name}</span><span class="qty"><i>◀</i><b>${B.plan[d]}</b><i>▶</i></span><span class="r small">of ${B.avail[d]}</span>`)});
     tg.el.innerHTML=`<span>Aim first at</span><span class="qty"><i>◀</i><b style="min-width:auto">${B.focus&&!B.focus.dead?esc(B.focus.name):'Best target'}</b><i>▶</i></span>`;
-    const n=Object.values(B.plan).reduce((a,b)=>a+b,0);launch.el.innerHTML=`LAUNCH WAVE ${B.wave} (${n} ${plural(n,'drone')})`};
-  if(B.focus&&B.focus.dead)B.focus=null;upd();
-  setFocus(s,0,true);s.start=()=>launchWave();
-  coachCheck()}
+    fc.innerHTML=forecastText();coachCheck(moving)};
+  upd();keys();
+  const k=focusD?rows.findIndex(it=>it.d===focusD):tutorialBattle()&&B.wave===1?rows.findIndex(it=>it.d==='recon'):0;setFocus(s,Math.max(0,k),true)}
+
+/* ---------- the hands-on tutorial in the first battle ---------- */
+const tutorialBattle=()=>!S.seen.tutDone&&S.camp===0&&S.battle===0;
 function coachSay(text){const c=B.ui&&B.ui.coach;if(!c)return;c.innerHTML=text?esc(text):'';c.style.display=text?'':'none'}
-function coachCheck(){if(S.seen.tutDone||S.camp>0||S.battle>0){coachSay('');return}
-  if(B.wave===1){if(B.order[0]!=='recon')coachSay('Recon should fly first so it can find hidden targets. Press A on Recon, then ▲ to move it up.');
-    else coachSay('Drones fly in this order. Press START or choose Launch to send the wave.')}
-  else coachSay('Send the rest of your FPVs. Use ▶ to raise their number, then launch.')}
+function coachCheck(moving){if(!tutorialBattle()){coachSay('');return}
+  const first=B.order[0]==='recon';
+  if(B.wave===1){
+    if(!B.editing)coachSay(first?'Recon now flies first. The forecast shows what this wave will likely do. Press START to launch.':'Recon flies last, so it cannot find hidden targets for the drones ahead of it. Choose Edit Plan to fix that.');
+    else coachSay(first?'Recon is first in line. Press B to go back, then launch.':moving?'Press ▲ until Recon is at the top, then press A.':'Select Recon and press A to pick it up.')}
+  else if(B.wave===2)coachSay('Your FPVs are split over three waves. Launch as planned, or use Edit Plan to send more now.');
+  else coachSay('This is the last wave. Everything you have left is in it.')}
 
 /* ---------- a wave in the air ---------- */
-async function launchWave(){const s=B.ui.s;const n=Object.values(B.plan).reduce((a,b)=>a+b,0);if(!n){toast('Choose some drones for this wave');return}if(s.busy)return;s.busy=true;
+async function launchWave(){const s=B.ui.s;const n=B.order.reduce((a,d)=>a+(B.plan[d]||0),0);if(!n){toast('Choose Edit Plan and add some drones');return}if(s.busy)return;s.busy=true;
   const groups=B.order.filter(d=>B.plan[d]>0).map(d=>[d,B.plan[d]]);
   const focus=B.focus&&!B.focus.dead?B.focus:null;
   for(const u of B.m.units){u.vhp=u.hp;u.vdead=u.dead;u.vhidden=u.hidden}
   const before=B.m.units.map(u=>({u,hp:u.hp,dead:u.dead}));
   const res=resolveWave(B,groups,focus);
-  B.ui.panel.innerHTML='';const log=el('div','log');B.ui.panel.appendChild(log);B.ui.log=log;B.ui.panel.appendChild(el('div','hint','Hold A to speed up'));
+  const {panel}=B.ui;panel.innerHTML='';
+  const strip=figs(res.map((g,i)=>[dIcon(g.t),`${i+1}. ×${g.ds.length}`,'dim']));B.ui.strip=strip;panel.appendChild(strip);
+  const tk=el('div','ticker','');panel.appendChild(tk);B.ui.ticker=tk;B.ui.details=[];
+  keybar(s,[['A','Hold to speed up']]);
   AU.play('launch');
   await animateWave(res);
   for(const u of B.m.units){u.vhp=u.hp;u.vdead=u.dead;u.vhidden=u.hidden}
@@ -75,7 +132,9 @@ async function launchWave(){const s=B.ui.s;const n=Object.values(B.plan).reduce(
   if(B.wave>B.maxWave)return endBattle('time');
   if(!availTot())return endBattle('empty');
   planWave()}
-function addLog(h){if(!B.ui.log)return;B.ui.log.appendChild(el('div','',h));while(B.ui.log.children.length>7)B.ui.log.firstChild.remove()}
+// the strike ticker: one line, always the latest thing that happened
+function addLog(h){if(B.ui.ticker)B.ui.ticker.innerHTML=h}
+function groupLive(i){if(!B.ui.strip)return;[...B.ui.strip.children].forEach((f,k)=>{f.className=k===i?'cyn':k<i?'':'dim'})}
 // one plain sentence or two for what a group did
 function groupStory(g){const t=g.t,ev=g.ev,ds=g.ds,n=ds.length,D=DRONES[t];const out=[];
   const cnt=k=>ev.filter(e=>e.k===k).length;const jam=ds.filter(d=>d.fate==='jam').length,shot=ds.filter(d=>d.fate==='aa').length,dk=ds.filter(d=>d.fate==='drone').length;
@@ -92,7 +151,7 @@ function groupStory(g){const t=g.t,ev=g.ev,ds=g.ds,n=ds.length,D=DRONES[t];const
 function animateWave(res){return new Promise(done=>{
   const GAP=2.5,CROSS=3.0;const ys=B.m.units.filter(u=>!u.dead).map(u=>u.y);const lane=Math.max(.12,Math.min(.62,(ys.length?Math.min(...ys):.5)-.09));let t0=performance.now(),vt=0,last=t0;const timeline=[];
   res.forEach((g,gi)=>{const start=gi*GAP;const n=g.ds.length;
-    timeline.push([start,()=>{AU.play('buzzfly');addLog(`<span class="cyn">${n} ${dname(g.t,n).toUpperCase()} INBOUND</span>`)}]);
+    timeline.push([start,()=>{AU.play('buzzfly');groupLive(gi);addLog(`<span class="cyn">${n} ${dname(g.t,n)} ${n===1?'is':'are'} on the way.</span>`)}]);
     g.ds.forEach((d,i)=>{d.start=start+i*.12;d.dy=((i%5)-2)*.022;d.end=null;
       const xAt=x=>d.start+CROSS*((x+.05)/1.1);
       if(d.fate==='jam'){d.end={t:d.start+.4+Math.random()*.5,how:'jam'}}
@@ -106,7 +165,7 @@ function animateWave(res){return new Promise(done=>{
     const rv=g.ev.find(e=>e.k==='reveal');if(rv)for(const u of rv.units){timeline.push([start+CROSS*((u.x+.05)/1.1),()=>{u.vhidden=false;B.pops.push({x:u.x,y:u.y,text:'SPOTTED',t:performance.now(),col:'#5fd8ff'});AU.play('radio')}])}
     const ints=g.ev.filter(e=>e.k==='intercept').length;if(ints)timeline.push([start+.9,()=>{AU.play('zap');for(let k=0;k<ints;k++)B.fx.push({x:.3+Math.random()*.4,y:.3+Math.random()*.2,t:performance.now(),air:true})}]);
     for(const d of g.ds)if(d.end&&d.end.how==='jam')timeline.push([d.end.t,()=>AU.play('jam')]);
-    timeline.push([start+CROSS+.2,()=>{for(const line of groupStory(g))addLog(line)}])});
+    timeline.push([start+CROSS+.2,()=>{const L=groupStory(g);B.ui.details.push(...L);addLog(L.join(' '))}])});
   timeline.sort((a,b)=>a[0]-b[0]);const total=(res.length-1)*GAP+CROSS+1;let ti=0;
   const A={res,lane,CROSS,now:0},myB=B;B.anim=A;
   const tick=()=>{if(B!==myB){done();return}const now=performance.now();vt+=(now-last)/1000*(HELD.a||HELD.start?3:1);last=now;A.now=vt;
@@ -114,31 +173,38 @@ function animateWave(res){return new Promise(done=>{
     if(vt>=total){while(ti<timeline.length){timeline[ti][1]();ti++}B.anim=null;done();return}
     requestAnimationFrame(tick)};requestAnimationFrame(tick)})}
 
-/* ---------- the report after each wave: it stays until you press A ---------- */
-function waveReport(res,before){const destroyed=[],damaged=[];for(const b of before){if(!b.dead&&b.u.dead)destroyed.push(b.u);else if(!b.u.dead&&b.u.hp<b.hp)damaged.push(b.u)}
-  const lostBy={};for(const g of res)for(const d of g.ds){if(d.fate&&d.fate!=='spent'){const why=d.fate==='jam'?'jammed':d.fate==='drone'?'downed by drones':d.fate==='decoy'?'used up':'shot down';const k=d.t+'|'+why;lostBy[k]=(lostBy[k]||0)+1}}
-  const back={};for(const g of res)for(const d of g.ds)if(!d.fate)back[d.t]=(back[d.t]||0)+1;
+/* ---------- the report after each wave: pictures first, and it stays until you press A ---------- */
+// objective icons: a tick when destroyed, the health left when not
+function objFigs(m,fresh=[]){return figs(m.units.filter(u=>u.prim).map(u=>{const c=unitPic(u.type,30);return[c,u.dead?'✓':`${Math.round(u.hp/u.max*100)}%`,u.dead?(fresh.includes(u)?'grn new':'grn'):'amb']}))}
+function lossFigs(o,cls){return figs(Object.entries(o).filter(([,n])=>n>0).map(([t,n])=>[dIcon(t,'1.3rem',cls==='red'?'#ff5545':undefined),`×${n}`,cls]))}
+function waveReport(res,before){const fresh=before.filter(b=>!b.dead&&b.u.dead).map(b=>b.u);
+  const lost={},back={};for(const g of res)for(const d of g.ds){if(!d.fate)back[d.t]=(back[d.t]||0)+1;else if(d.fate!=='spent')lost[d.t]=(lost[d.t]||0)+1}
   const prim=B.m.units.filter(u=>u.prim),pd=prim.filter(u=>u.dead).length;
-  const L=[];L.push(`<h3>WAVE ${B.wave-1} REPORT</h3>`);
-  L.push(destroyed.length?`<div class="grn">Destroyed: ${destroyed.map(u=>esc(u.name)).join(', ')}.</div>`:'<div>Nothing was destroyed this wave.</div>');
-  if(damaged.length)L.push(`<div>Damaged: ${damaged.map(u=>`${esc(u.name)} (${Math.round(u.hp/u.max*100)}% left)`).join(', ')}.</div>`);
-  const ls=Object.entries(lostBy).map(([k,n])=>{const [t,why]=k.split('|');return`${n} ${dname(t,n)} ${why}`});
-  L.push(ls.length?`<div class="red">Lost: ${ls.join(', ')}.</div>`:'<div>No drones were lost.</div>');
-  const bk=Object.entries(back).map(([t,n])=>`${n} ${dname(t,n)}`);if(bk.length)L.push(`<div class="dim">Back at base and ready to fly again: ${bk.join(', ')}.</div>`);
-  L.push(`<div class="amb" style="margin-top:.25rem">Objectives destroyed: ${pd} of ${prim.length}.</div>`);
-  return report(L.join(''))}
-function report(html,btnText='CONTINUE'){return new Promise(res=>{const o=overlay(`<div class="msg" style="font-size:1rem;line-height:1.2">${html}</div><div class="list" style="margin-top:.45rem"><div class="row btn focus">${btnText}</div></div>`);
-  AU.play('radio');const L={key(b){if(b!=='a'&&b!=='start')return;AU.play('ok');layers.splice(layers.indexOf(L),1);o.remove();res()}};setTimeout(()=>layers.push(L),250)})}
+  const w=el('div','');w.appendChild(el('h3','',`WAVE ${B.wave-1} REPORT`));
+  w.appendChild(el('div','',fresh.length?`<span class="grn">Destroyed this wave: ${fresh.map(u=>esc(u.name)).join(', ')}.</span>`:'No objective was destroyed this wave.'));
+  w.appendChild(el('div','small dim',`Objectives destroyed: ${pd} of ${prim.length}`));w.appendChild(objFigs(B.m,fresh));
+  const nl=Object.values(lost).reduce((a,b)=>a+b,0);
+  w.appendChild(el('div','small dim',nl?`Drones lost: ${nl}`:'No drones were lost.'));if(nl)w.appendChild(lossFigs(lost,'red'));
+  if(Object.keys(back).length){w.appendChild(el('div','small dim','Back at base, ready to fly again'));w.appendChild(lossFigs(back,''))}
+  const det=(B.ui.details||[]).map(h=>`<div>${h}</div>`).join('');
+  return report(w,'CONTINUE',det)}
+// a panel that waits for A; SELECT flips to the details when there are any
+function report(content,btnText='CONTINUE',details=''){return new Promise(res=>{
+  const o=overlay(`<div class="msg rep" style="font-size:1rem;line-height:1.2"></div><div class="list" style="margin-top:.45rem"><div class="row primary focus">${btnText}</div></div><div class="keys" style="margin-top:.35rem"><span><b>A</b>Continue</span>${details?'<span><b>SELECT</b>Details</span>':''}</div>`);
+  const box=o.querySelector('.rep');if(typeof content==='string')box.innerHTML=content;else box.appendChild(content);
+  let detOn=false;const main=box.innerHTML===''?null:[...box.childNodes];
+  AU.play('radio');const L={key(b){
+    if(b==='select'&&details){detOn=!detOn;AU.play('tick');box.innerHTML='';if(detOn)box.innerHTML=`<h3>DETAILS</h3><div class="small">${details}</div>`;else main.forEach(n=>box.appendChild(n));return}
+    if(b!=='a'&&b!=='start'&&b!=='b')return;AU.play('ok');layers.splice(layers.indexOf(L),1);o.remove();res()}};setTimeout(()=>layers.push(L),250)})}
 async function endBattle(why){const m=B.m;const prim=m.units.filter(u=>u.prim),pd=prim.filter(u=>u.dead).length;
   const head={won:'ALL OBJECTIVES DESTROYED',time:'THE ENEMY HAS PULLED BACK',empty:'NO DRONES LEFT TO SEND',ended:'MISSION ENDED'}[why];
-  const body={won:`Every target marked ★ is destroyed. The enemy is falling back from this sector.`,
-    time:`Three waves have flown and the enemy has scattered under cover. ${pd} of ${prim.length} objectives were destroyed.`,
+  const body={won:'Every target marked ★ is destroyed.',
+    time:`All three waves have flown. ${pd} of ${prim.length} objectives were destroyed.`,
     empty:`Every drone you brought is spent. ${pd} of ${prim.length} objectives were destroyed.`,
     ended:`You called the drones home. ${pd} of ${prim.length} objectives were destroyed.`}[why];
   AU.play(why==='won'?'win':'alarm');
   await report(`<h3 class="${why==='won'?'grn':'amb'}" style="font-size:1rem">${head}</h3><div>${body}</div>`,'SEE THE RESULTS');
   const R=finishBattle(B);S.battle++;S.mission=null;S.loadout=null;if(S.camp===0&&S.battle===1)S.seen.tutDone=1;save();const b=B;go(()=>debrief(b,R))}
-
 /* ---------- drawing ---------- */
 function drawBattle(t){const {cv}=B.ui;const dpr=Math.min(2,window.devicePixelRatio||1);const W=Math.round(cv.clientWidth*dpr),H=Math.round(cv.clientHeight*dpr);if(!W||!H)return;
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}const g=cv.getContext('2d');
