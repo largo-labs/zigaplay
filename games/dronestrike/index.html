@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Drone Strike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=VT323&display=swap">
+<style>
+/* Drone Strike: a drone-unit strategy game for the ZigaPlay.
+   Everything looks like a rugged military tablet: olive panels, amber text, thin rules and corner brackets.
+   Battles draw a tactical map on a canvas, with a small thermal drone feed for the strikes. */
+:root{color-scheme:dark;
+  --bg:#060a06;--panel:#0d140c;--panel2:#121d10;--line:#2b3f25;--line2:#46653a;
+  --amber:#ffb627;--amber2:#b9821a;--text:#eadfbd;--dim:#8d9878;--green:#93e46c;--cyan:#5fd8ff;--red:#ff5545;--orange:#ff8a3a;
+  --ui:'VT323',ui-monospace,monospace;--head:'Pixelify Sans','VT323',ui-monospace,monospace}
+*,::before,::after{box-sizing:border-box}
+html{font-size:clamp(12px,5vw,20px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;line-height:1.05}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(120% 80% at 50% 0%,#132313 0%,#070b07 70%)}
+#app::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;padding:.35rem .4rem;gap:.3rem}
+.bar{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem;border-bottom:1px solid var(--line2);padding:0 .1rem .2rem;color:var(--amber);font-size:.95rem;letter-spacing:.06em;flex:0 0 auto}
+.bar b{font-family:var(--head);font-weight:500;font-size:.8rem;letter-spacing:.12em}
+.panel{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:.35rem .45rem}
+.panel::before,.panel::after{content:'';position:absolute;width:.45rem;height:.45rem;border:2px solid var(--amber2);pointer-events:none}
+.panel::before{left:-2px;top:-2px;border-right:0;border-bottom:0}.panel::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+.panel h3{margin:0 0 .2rem;font-family:var(--head);font-weight:500;font-size:.72rem;letter-spacing:.14em;color:var(--amber)}
+.grow{flex:1 1 auto;min-height:0;overflow:hidden}
+.list{display:flex;flex-direction:column;gap:.12rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.4rem;padding:.12rem .35rem;border:1px solid transparent;font-size:1rem;min-height:1.35rem}
+.row .r{color:var(--dim);white-space:nowrap}
+.row.off{color:#5c6450}
+.row.focus{background:var(--amber);color:#120c00;border-color:var(--amber)}
+.row.focus .r,.row.focus .dim{color:#3a2a00}
+.row.btn{justify-content:center;border-color:var(--line2);letter-spacing:.12em;font-size:1.05rem}
+.row.btn.focus{border-color:var(--amber)}
+.row.big{font-size:1.2rem;min-height:1.8rem}
+.dim{color:var(--dim)}.amb{color:var(--amber)}.grn{color:var(--green)}.red{color:var(--red)}.cyn{color:var(--cyan)}
+.small{font-size:.85rem}
+.qty{display:inline-flex;align-items:center;gap:.25rem}
+.qty i{font-style:normal;opacity:.7}
+.qty b{min-width:1.6rem;text-align:center;font-weight:400}
+.meter{display:inline-flex;gap:2px;vertical-align:middle}
+.meter i{width:.42rem;height:.65rem;border:1px solid var(--line2);display:block}
+.meter i.on{background:var(--amber);border-color:var(--amber)}
+.meter i.red{background:var(--red);border-color:var(--red)}
+.meter i.grn{background:var(--green);border-color:var(--green)}
+.front{display:flex;gap:2px;align-items:center}
+.front i{flex:1;height:.55rem;border:1px solid var(--line2);display:block}
+.front i.us{background:var(--cyan);border-color:var(--cyan)}.front i.them{background:var(--red);border-color:var(--red)}
+.desc{font-size:.9rem;color:#cfc6a4;min-height:2.6em}
+.tag{display:inline-block;padding:0 .25rem;border:1px solid currentColor;font-size:.8rem;line-height:1.1;margin-left:.2rem}
+.stamp{font-family:var(--head);font-size:1.6rem;letter-spacing:.14em;text-align:center;padding:.2rem;border:3px solid currentColor;transform:rotate(-4deg);margin:.4rem auto;width:max-content}
+.hint{font-size:.78rem;color:var(--dim);text-align:center;flex:0 0 auto}
+.scroll{overflow:hidden;position:relative}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
+/* overlays */
+.ov{position:absolute;inset:0;background:rgba(2,5,2,.72);display:flex;align-items:center;justify-content:center;z-index:30;padding:.6rem}
+.ov .panel{width:100%;max-width:22rem}
+.msg{font-size:1.05rem;line-height:1.15;white-space:pre-line}
+.msg .who{color:var(--amber);letter-spacing:.08em;display:block;margin-bottom:.15rem}
+.more{text-align:right;color:var(--amber);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.toast{position:absolute;left:50%;top:.5rem;transform:translateX(-50%);z-index:40;background:var(--amber);color:#120c00;padding:.1rem .5rem;font-size:1rem;white-space:nowrap;animation:fadeout 1.8s forwards}
+@keyframes fadeout{0%,75%{opacity:1}100%{opacity:0}}
+/* title */
+#title h1{margin:0;font-family:var(--head);font-weight:700;font-size:2.6rem;letter-spacing:.08em;color:var(--amber);text-align:center;line-height:.95;text-shadow:0 0 10px rgba(255,182,39,.45)}
+#title .sub{color:var(--green);text-align:center;letter-spacing:.3em;font-size:.9rem}
+/* battle */
+.mapbox{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--line2);background:#081108}
+.mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.feed{position:absolute;right:.3rem;top:.3rem;width:42%;aspect-ratio:3/2;border:1px solid var(--green);background:#000;display:none}
+.feed canvas{width:100%;height:100%}
+.feed span{position:absolute;left:.2rem;top:.05rem;font-size:.7rem;color:var(--green);text-shadow:0 0 2px #000}
+.feed.on{display:block}
+.log{font-size:.88rem;line-height:1.1;height:100%;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.log div{white-space:normal}
+/* portraits */
+.port{width:3.4rem;height:4.2rem;border:1px solid var(--line2);background:#0a120a;flex:0 0 auto}
+/* touch controls when played on its own */
+body.touch{display:flex;flex-direction:column}
+body.touch #app{height:auto;flex:1;min-height:0}
+#pad{display:none}
+body.touch #pad{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:34vh;max-height:290px;padding:.5rem 1.2rem calc(.6rem + env(safe-area-inset-bottom,0px));background:#0b120b;border-top:1px solid var(--line2);position:relative}
+#pad .dp{position:relative;width:9.5rem;height:9.5rem;justify-self:center}
+#pad b{font-weight:400}
+#pad .dp b{position:absolute;width:3.2rem;height:3.2rem;background:#1a2a17;border:1px solid var(--line2)}
+#pad b.on{background:#3b5a2c!important}
+#pad .dp .u{left:3.15rem;top:0}#pad .dp .d{left:3.15rem;bottom:0}#pad .dp .l{left:0;top:3.15rem}#pad .dp .r{right:0;top:3.15rem}
+#pad .ab{position:relative;width:9rem;height:7rem;justify-self:center}
+#pad .ab b{position:absolute;width:3.8rem;height:3.8rem;border-radius:50%;background:#3a2a08;border:1px solid var(--amber2);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+#pad .ab .a{right:0;top:0}#pad .ab .b{left:0;bottom:0}
+#pad .ss{position:absolute;left:50%;bottom:calc(.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:1rem}
+#pad .ss b{padding:.15rem .8rem;background:#1a2a17;border:1px solid var(--line2);font-size:.8rem;color:var(--dim);letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="pad"><div class="dp"><b class="u" data-b="up"></b><b class="d" data-b="down"></b><b class="l" data-b="left"></b><b class="r" data-b="right"></b></div>
+<div class="ab"><b class="a" data-b="a">A</b><b class="b" data-b="b">B</b></div><div class="ss"><b data-b="select">SELECT</b><b data-b="start">START</b></div></div>
+<script>
+(()=>{'use strict';
+/* ===================== AUDIO: synth effects and a small music sequencer ===================== */
+const AU=(()=>{
+  const ZP=(()=>{try{return window.parent&&window.parent!==window&&window.parent.ZIGAPLAY||null}catch(e){return null}})();
+  const AC=(ZP&&ZP.AudioContext)||window.AudioContext||window.webkitAudioContext;
+  let ctx=null,master,musicBus,sfxBus,noiseBuf,musicOn=true,sfxOn=true,pending='',gestured=false;
+  function init(){if(ctx||!AC)return;try{ctx=new AC()}catch(e){return}
+    master=ctx.createGain();master.gain.value=.9;master.connect(ctx.destination);
+    musicBus=ctx.createGain();musicBus.gain.value=.5;musicBus.connect(master);sfxBus=ctx.createGain();sfxBus.gain.value=.75;sfxBus.connect(master);
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  function unlock(){gestured=true;init();if(ctx&&ctx.state!=='running')ctx.resume().then(()=>{if(pending&&!cur){const n=pending;curName='';music(n)}}).catch(()=>{})}
+  const now=()=>ctx?ctx.currentTime+.005:0;
+  function tone(type,f,t,len,vol,bus,o={}){if(!ctx)return;const os=ctx.createOscillator(),g=ctx.createGain();os.type=type;os.frequency.setValueAtTime(f,t);
+    if(o.slide)os.frequency.exponentialRampToValueAtTime(Math.max(20,o.slide),t+len);if(o.det)os.detune.value=o.det;
+    let node=os;if(o.lp){const fl=ctx.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(o.lp,t);if(o.lp2)fl.frequency.exponentialRampToValueAtTime(o.lp2,t+len);fl.Q.value=o.q||1;os.connect(fl);node=fl}
+    const a=o.a||.005;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+a);
+    if(o.decay)g.gain.exponentialRampToValueAtTime(Math.max(.0004,vol*o.decay),t+len);else g.gain.setValueAtTime(vol,t+Math.max(a,len-(o.r||.05)));
+    g.gain.linearRampToValueAtTime(0,t+len+(o.tail||0));node.connect(g);g.connect(bus||sfxBus);os.start(t);os.stop(t+len+(o.tail||0)+.05)}
+  function noise(t,len,vol,bus,o={}){if(!ctx)return;const s=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();s.buffer=noiseBuf;
+    f.type=o.type||'lowpass';f.frequency.setValueAtTime(o.f||1000,t);if(o.f2)f.frequency.exponentialRampToValueAtTime(o.f2,t+len);f.Q.value=o.q||.7;
+    g.gain.setValueAtTime(o.a?0:vol,t);if(o.a)g.gain.linearRampToValueAtTime(vol,t+o.a);g.gain.exponentialRampToValueAtTime(.0005,t+len);
+    s.connect(f);f.connect(g);g.connect(bus||sfxBus);s.start(t,Math.random());s.stop(t+len+.05)}
+  const SFX={
+    tick(){tone('square',1200,now(),.025,.03)},
+    ok(){const t=now();tone('square',880,t,.04,.04);tone('square',1320,t+.045,.06,.04)},
+    back(){const t=now();tone('square',660,t,.04,.035);tone('square',440,t+.045,.06,.035)},
+    buzz(){tone('sawtooth',120,now(),.15,.04)},
+    radio(){const t=now();noise(t,.12,.08,null,{type:'bandpass',f:1800,q:2});tone('sine',1400,t+.1,.06,.05);tone('sine',1900,t+.17,.08,.05)},
+    type(){noise(now(),.02,.03,null,{type:'highpass',f:3000})},
+    launch(){const t=now();noise(t,.7,.12,null,{type:'bandpass',f:400,f2:2600,q:3,a:.1});tone('sawtooth',90,t,.7,.03,null,{slide:220,lp:600})},
+    buzzfly(){const t=now();for(let i=0;i<3;i++)tone('sawtooth',170+i*23,t+i*.02,1.2,.012,null,{lp:900,det:i*12})},
+    boom(){const t=now();noise(t,.9,.35,null,{f:900,f2:60});tone('sine',70,t,.6,.3,null,{slide:30,decay:.01})},
+    smallboom(){const t=now();noise(t,.35,.2,null,{f:1600,f2:120});tone('sine',110,t,.25,.15,null,{slide:50,decay:.02})},
+    aa(){const t=now();for(let i=0;i<6;i++)noise(t+i*.07,.05,.12,null,{type:'bandpass',f:900,q:1.5})},
+    jam(){const t=now();noise(t,.6,.12,null,{type:'bandpass',f:2400,f2:600,q:4});tone('square',220,t,.5,.02,null,{slide:3000})},
+    zap(){const t=now();tone('sawtooth',1800,t,.15,.04,null,{slide:300})},
+    stamp(){const t=now();noise(t,.18,.3,null,{f:500});tone('square',196,t,.25,.05,null,{decay:.05})},
+    cash(){const t=now();[1047,1319,1568,2093].forEach((f,i)=>tone('square',f,t+i*.05,.09,.035))},
+    research(){const t=now();[523,659,784,1047,1568].forEach((f,i)=>tone('triangle',f,t+i*.07,.18,.07,null,{decay:.1}))},
+    alarm(){const t=now();for(let i=0;i<3;i++){tone('square',880,t+i*.3,.14,.04);tone('square',660,t+i*.3+.15,.14,.04)}},
+    static(){noise(now(),.4,.1,null,{type:'highpass',f:2000})},
+    win(){const t=now();[392,523,659,784].forEach((f,i)=>tone('sawtooth',f,t+i*.12,.5,.035,null,{lp:2400,decay:.2}))},
+    lose(){const t=now();[392,349,311,262].forEach((f,i)=>tone('sawtooth',f,t+i*.2,.5,.035,null,{lp:1400,decay:.2}))},
+  };
+  function play(n){if(!sfxOn)return;unlock();if(ctx&&ctx.state==='running'&&SFX[n])try{SFX[n]()}catch(e){}}
+  /* ---------- music: notes are "A2:4" (length in sixteenths); a chord is "A2+C3+E3:16" ---------- */
+  const NOTE={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  const fq=n=>{const m=/^([A-G])([#b]?)(-?\d)$/.exec(n);if(!m)return 0;const s=NOTE[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(+m[3]+1)*12;return 440*Math.pow(2,(s-69)/12)};
+  const parse=str=>{let len=4;return str.trim().split(/\s+/).map(tok=>{const [n,l]=tok.split(':');if(l)len=+l;return[n==='-'?null:n==='x'||n==='k'||n==='s'?n:n.split('+').map(fq),len]})};
+  const rep=(s,n)=>Array(n).fill(s).join(' ');
+  const SONGS={
+    title:{bpm:70,ch:[
+      {w:'pad',v:.045,n:'A2+E3+A3:32 F2+C3+A3:32 D2+A2+F3:32 E2+B2+G#3:32'},
+      {w:'bass',v:.12,n:rep('A1:4 -:4 A1:2 -:6',4)+' '+rep('F1:4 -:4 F1:2 -:6',4)+' '+rep('D1:4 -:4 D1:2 -:6',4)+' '+rep('E1:4 -:4 E1:2 -:6',4)},
+      {w:'lead',v:.03,n:'-:16 E4:8 C4:8 -:16 A3:16 -:16 D4:8 F4:8 E4:32'}]},
+    hq:{bpm:84,ch:[
+      {w:'pad',v:.035,n:'D3+F3+A3:32 Bb2+D3+F3:32 C3+E3+G3:32 A2+C#3+E3:32'},
+      {w:'bass',v:.1,n:rep('D2:2 -:2',8)+' '+rep('Bb1:2 -:2',8)+' '+rep('C2:2 -:2',8)+' '+rep('A1:2 -:2',8)},
+      {w:'blip',v:.02,n:'-:12 A5:1 -:3 -:16 -:12 F5:1 -:3 -:16 -:12 G5:1 -:3 -:16 -:12 E5:1 -:3 -:16'}]},
+    battle:{bpm:132,ch:[
+      {w:'bass',v:.12,n:rep('E1:1 E1:1 E2:1 E1:1',8)+' '+rep('C1:1 C1:1 C2:1 C1:1',4)+' '+rep('D1:1 D1:1 D2:1 D1:1',4)},
+      {w:'pad',v:.03,n:'E2+B2+G3:32 C2+G2+E3:16 D2+A2+F#3:16'},
+      {w:'lead',v:.028,n:'-:8 B3:2 C4:2 B3:4 -:16 G3:4 A3:4 -:8 B3:2 C4:2 D4:4 E4:8 -:4 D4:4 C4:8 B3:8'},
+      {w:'drum',v:.05,n:rep('k:4 x:2 x:2 s:4 x:2 x:2',8)}]},
+    debrief:{bpm:76,ch:[
+      {w:'pad',v:.04,n:'C3+E3+G3:32 A2+C3+E3:32 F2+A2+C3:32 G2+B2+D3:32'},
+      {w:'lead',v:.03,n:'E4:8 G4:8 C5:16 -:8 A4:8 E4:16 F4:8 A4:8 C5:16 B4:16 G4:16'}]},
+    tension:{bpm:60,ch:[{w:'pad',v:.04,n:'C2+G2+Eb3:32 Db2+Ab2+F3:32'},{w:'bass',v:.1,n:rep('C1:8 -:8',2)+' '+rep('Db1:8 -:8',2)}]},
+  };
+  let cur=null,curName='',timer=null;
+  function voice(c,f,t,len){
+    if(c.w==='pad'){for(const x of f)for(const d of[-7,7])tone('sawtooth',x,t,len,c.v/f.length,cur.g,{lp:700,q:2,a:len*.25,r:len*.3,det:d})}
+    else if(c.w==='bass'){for(const x of f)tone('sawtooth',x,t,len*.9,c.v,cur.g,{lp:420,lp2:160,q:5})}
+    else if(c.w==='lead'){for(const x of f)tone('square',x,t,len*.95,c.v,cur.g,{lp:1800,a:.02})}
+    else if(c.w==='blip'){for(const x of f)tone('sine',x,t,.08,c.v*2,cur.g,{decay:.05})}}
+  function music(name){pending=name;if(!gestured&&!ctx)return;if(name===curName)return;stop();curName=name;if(!name||!SONGS[name]||!ctx||ctx.state!=='running')return;
+    const s=SONGS[name],sp=60/s.bpm/4,t0=ctx.currentTime+.1;const g=ctx.createGain();g.gain.value=musicOn?1:0;g.connect(musicBus);
+    cur={g,sp,chs:s.ch.map(c=>({...c,ev:parse(c.n),i:0,t:t0}))};timer=setInterval(pump,40);pump()}
+  function pump(){if(!cur||!ctx)return;const ahead=ctx.currentTime+.25;
+    for(const c of cur.chs){let n=0;while(c.t<ahead&&n++<64){const [f,l]=c.ev[c.i],len=l*cur.sp;
+      if(f){if(c.w==='drum'){if(f==='k')tone('sine',120,c.t,.15,.25,cur.g,{slide:40,decay:.02});else if(f==='s')noise(c.t,.12,c.v*2,cur.g,{type:'bandpass',f:1500});else noise(c.t,.03,c.v,cur.g,{type:'highpass',f:6000})}else voice(c,f,c.t,len)}
+      c.t+=len;c.i=(c.i+1)%c.ev.length}}}
+  function stop(){if(timer)clearInterval(timer);timer=null;if(cur&&ctx){const g=cur.g;try{g.gain.setTargetAtTime(0,ctx.currentTime,.08);setTimeout(()=>g.disconnect(),600)}catch(e){}}cur=null;curName=''}
+  return{unlock,play,music,stop,setMusic(o){musicOn=o;if(cur)cur.g.gain.value=o?1:0},setSfx(o){sfxOn=o},get musicOn(){return musicOn},get sfxOn(){return sfxOn}};
+})();
+
+/* ===================== DATA ===================== */
+// target categories: inf armor arty logi struct aa ew naval
+const CATS={inf:'Infantry',armor:'Armor',arty:'Artillery',logi:'Logistics',struct:'Structures',aa:'Air defense',ew:'Jammers',naval:'Naval'};
+// range: 0 front line only, 1 also the near rear, 2 anywhere. eva: chance to dodge a shot. jr: jamming resistance (1 = immune)
+// exp: expendable (used up when it strikes). Reusable drones strike every wave they survive and come home after.
+const DRONES={
+  fpv:{name:'FPV Kamikaze',short:'FPV',cost:2,slots:1,range:1,eva:.15,jr:0,exp:1,
+    atk:{inf:6,armor:5,arty:6,logi:6,struct:1,aa:3,ew:5,naval:1},desc:'Cheap, fast and one-way. Strong on troops and trucks. Jamming knocks it out of the sky.'},
+  recon:{name:'Recon Wing',short:'RCN',cost:6,slots:1,range:2,eva:.4,jr:.25,exp:0,recon:1,atk:{},
+    desc:'Finds hidden targets and guides every strike in its wave: +10% accuracy each, up to +30%. Comes home.'},
+  decoy:{name:'Decoy Swarm',short:'DCY',cost:1,slots:1,range:2,eva:0,jr:1,exp:1,decoy:1,atk:{},
+    desc:'Foam wings and a radar reflector. Air defense wastes its shots on decoys first.'},
+  hexa:{name:'Hexa Bomber',short:'HEX',cost:7,slots:1,range:0,eva:.05,jr:.15,exp:0,
+    atk:{inf:6,armor:2,arty:4,logi:3,struct:2,aa:2,ew:3},desc:'Drops grenades, flies home, does it again next wave. Slow and loud: easy prey for guns.'},
+  loiter:{name:'Loitering Munition',short:'LM',cost:12,slots:1,range:2,eva:.25,jr:.3,exp:1,
+    atk:{armor:15,arty:14,logi:8,aa:9,ew:9,inf:3,struct:6,naval:7},desc:'Circles until it finds armor, then dives. The tank killer.'},
+  intercept:{name:'Interceptor',short:'INT',cost:5,slots:1,range:2,eva:.3,jr:.3,exp:0,interceptor:1,atk:{},
+    desc:'Hunts enemy drones before they reach your wave. Useless against ground targets.'},
+  hunter:{name:'Radar Hunter',short:'RH',cost:14,slots:1,range:2,eva:.35,jr:.6,exp:1,hunter:1,
+    atk:{aa:24,ew:20,struct:2},desc:'Rides enemy radar beams home. Kills air defense and jammers, and strikes them first.'},
+  longr:{name:'Long-Range Wing',short:'LRW',cost:22,slots:2,range:2,eva:.2,jr:.35,exp:1,
+    atk:{struct:24,logi:16,arty:12,aa:10,ew:10,armor:8,naval:12,inf:4},desc:'A one-way plane with a big warhead. Reaches depots, bridges and command posts deep behind the lines.'},
+  fiber:{name:'Fiber-Optic FPV',short:'FOF',cost:3,slots:1,range:1,eva:.15,jr:1,exp:1,
+    atk:{inf:7,armor:6,arty:7,logi:7,struct:1,aa:4,ew:6,naval:1},desc:'Steered down a hair-thin cable. Jamming cannot touch it. Short range.'},
+  naval:{name:'Sea Drone',short:'SEA',cost:18,slots:2,range:1,eva:.3,jr:.4,exp:1,
+    atk:{naval:34,struct:6,arty:6},desc:'A jet-ski full of explosives. Built to sink ships.'},
+  ucav:{name:'Heavy UCAV',short:'UCV',cost:60,slots:3,range:2,eva:.55,jr:.6,exp:0,
+    atk:{inf:8,armor:13,arty:13,logi:10,struct:15,aa:12,ew:10,naval:11},desc:'A real warplane with no pilot. Hits anything, anywhere, and usually comes home.'},
+};
+const DRONE_ORDER=['fpv','fiber','hexa','loiter','recon','decoy','intercept','hunter','longr','naval','ucav'];
+// enemy units. depth: 0 front, 1 near rear, 2 deep. shots/acc: air defense. jam: jamming strength. spawn: enemy drones each wave
+const UNITS={
+  squad:{name:'Infantry Squad',cat:'inf',hp:8,depth:0,val:2},
+  trench:{name:'Trench Line',cat:'inf',hp:16,depth:0,val:4},
+  apc:{name:'APC',cat:'armor',hp:9,depth:0,val:4},
+  tank:{name:'Battle Tank',cat:'armor',hp:14,depth:0,val:6},
+  arty:{name:'Howitzer',cat:'arty',hp:14,depth:1,val:6},
+  mlrs:{name:'Rocket Launcher',cat:'arty',hp:12,depth:1,val:7},
+  truck:{name:'Supply Truck',cat:'logi',hp:7,depth:1,val:3},
+  fuel:{name:'Fuel Tanker',cat:'logi',hp:7,depth:1,val:4},
+  depot:{name:'Ammo Depot',cat:'struct',hp:28,depth:2,val:10},
+  bridge:{name:'Bridge',cat:'struct',hp:34,depth:2,val:10},
+  cp:{name:'Command Post',cat:'struct',hp:26,depth:2,val:12},
+  aagun:{name:'AA Gun',cat:'aa',hp:9,depth:0,val:4,shots:2,acc:.35},
+  sam:{name:'SAM Site',cat:'aa',hp:16,depth:1,val:8,shots:3,acc:.5},
+  ew:{name:'Jammer Truck',cat:'ew',hp:10,depth:1,val:6,jam:.18},
+  hive:{name:'Drone Launch Site',cat:'struct',hp:16,depth:1,val:7,spawn:2},
+  boat:{name:'Patrol Boat',cat:'naval',hp:16,depth:1,val:6,shots:1,acc:.3},
+  lship:{name:'Landing Ship',cat:'naval',hp:34,depth:1,val:12},
+  coastal:{name:'Coastal Battery',cat:'arty',hp:20,depth:1,val:8},
+  hq:{name:'Field Headquarters',cat:'struct',hp:36,depth:2,val:20},
+};
+// research. tier needs rank (0..4); cost in $k
+const RESEARCH=[
+  {id:'decoy',tier:0,cost:20,name:'Decoy Swarm',unlock:'decoy',desc:'Unlocks the Decoy Swarm.'},
+  {id:'hexa',tier:0,cost:30,name:'Hexa Bomber',unlock:'hexa',desc:'Unlocks the reusable Hexa Bomber.'},
+  {id:'loiter',tier:0,cost:45,name:'Loitering Munition',unlock:'loiter',desc:'Unlocks the Loitering Munition, the tank killer.'},
+  {id:'pay1',tier:0,cost:40,name:'Shaped Charges',desc:'+15% damage for every drone.'},
+  {id:'hop',tier:0,cost:40,name:'Frequency Hopping',desc:'Every radio drone resists jamming 25% better.'},
+  {id:'crew1',tier:0,cost:35,name:'Second Crew Shift',desc:'+2 launch slots.'},
+  {id:'intercept',tier:1,cost:40,name:'Interceptor',unlock:'intercept',desc:'Unlocks the Interceptor, for drone-on-drone fights.'},
+  {id:'hunter',tier:1,cost:60,name:'Radar Hunter',unlock:'hunter',desc:'Unlocks the Radar Hunter, an air-defense killer.'},
+  {id:'longr',tier:1,cost:70,name:'Long-Range Wing',unlock:'longr',desc:'Unlocks the Long-Range Wing for deep strikes.'},
+  {id:'thermal',tier:1,cost:50,name:'Thermal Optics',desc:'+10% accuracy for every strike.'},
+  {id:'workshop',tier:1,cost:60,name:'Garage Workshop',desc:'Drones cost 20% less.'},
+  {id:'recovery',tier:1,cost:50,name:'Recovery Teams',desc:'40% of reusable drones shot down are found and repaired.'},
+  {id:'fiber',tier:2,cost:70,name:'Fiber-Optic FPV',unlock:'fiber',desc:'Unlocks the jam-proof Fiber-Optic FPV.'},
+  {id:'naval',tier:2,cost:60,name:'Sea Drone',unlock:'naval',desc:'Unlocks the Sea Drone, a ship killer.'},
+  {id:'pay2',tier:2,cost:80,name:'Tandem Warheads',desc:'Another +15% damage for every drone.'},
+  {id:'auto',tier:2,cost:80,name:'Terminal Autonomy',desc:'Drones finish their dive on their own: another 25% jamming resistance.'},
+  {id:'crew2',tier:2,cost:70,name:'Field Launch Teams',desc:'+2 launch slots.'},
+  {id:'intel',tier:2,cost:50,name:'Signals Intelligence',desc:'Briefings show every enemy unit, hidden or not.'},
+  {id:'ucav',tier:3,cost:150,name:'Heavy UCAV',unlock:'ucav',desc:'Unlocks the Heavy UCAV.'},
+  {id:'pay3',tier:3,cost:120,name:'Thermobaric Fill',desc:'Another +20% damage for every drone.'},
+  {id:'crew3',tier:3,cost:110,name:'Second Airfield',desc:'+3 launch slots.'},
+];
+const RANKS=[['Lieutenant',0],['Captain',20],['Major',48],['Lt. Colonel',85],['Colonel',130]];
+// enemy generals, one per campaign
+const GENERALS=[
+  {id:'brask',name:'Gen. Oleg Brask',nick:'"The Hammer"',front:'Northern Plains',look:{skin:'#c99a78',hat:'cap',hatc:'#5a5f3a',mous:1,hair:'#3a2a20',scar:0},
+    doc:'Armored columns, and lots of them. Brask believes a tank fixes every problem.',
+    quote:'"Your little toys will break on our armor like rain on a road."',
+    missions:['column','convoy','trench','column','spear'],aa:1,ew:0,dr:0,hide:.1},
+  {id:'vorst',name:'Col. Ilyana Vorst',nick:'"The Silence"',front:'River Crossings',look:{skin:'#e0b898',hat:'beret',hatc:'#3a3f6a',mous:0,hair:'#1a1a22',scar:1},
+    doc:'An electronic-warfare specialist. Where she goes, the radio goes quiet.',
+    quote:'"Radios are a gift. Thank you for flying them at me."',
+    missions:['convoy','trench','arty','sead','final'],aa:1,ew:2,dr:0,hide:.15},
+  {id:'kessan',name:'Adm. Yuri Kessan',nick:'"The Tide"',front:'The Southern Coast',look:{skin:'#d8a888',hat:'naval',hatc:'#1e2a4a',mous:0,hair:'#b8b8c0',scar:0,beard:1},
+    doc:'Commands the fleet. He means to land troops on your coast behind the lines.',
+    quote:'"The sea does not care how brave you are."',
+    missions:['naval','coastal','convoy','naval','finalsea'],aa:1,ew:1,dr:0,hide:.15},
+  {id:'okhrin',name:'Marshal Pavel Okhrin',nick:'"The Umbrella"',front:'The Eastern Hills',look:{skin:'#c8946c',hat:'cap',hatc:'#4a2a2a',mous:1,hair:'#6a6a6a',scar:0},
+    doc:'Air defense and drone swarms. He has studied you, and he has built an umbrella.',
+    quote:'"Nothing flies over my men. Nothing."',
+    missions:['sead','hive','depot','arty','final'],aa:2,ew:1,dr:2,hide:.2},
+  {id:'dravik',name:'Supreme Cmdr. Arkady Dravik',nick:'"The Architect"',front:'The Road to the Capital',look:{skin:'#d0a080',hat:'peak',hatc:'#2a2a2a',mous:0,hair:'#2a2a2a',scar:1},
+    doc:'The man who planned the invasion. He uses everything, and he learns from every strike you make.',
+    quote:'"I have read every report you ever caused. Let us finish this."',
+    missions:['column','depot','hive','sead','final'],aa:2,ew:2,dr:2,hide:.25,adaptive:2},
+];
+// mission recipes: primary targets and escorts. n() scales with difficulty
+const MISSIONS={
+  column:{name:'Armored Column',brief:'An armored column is pushing toward the front. Stop the tanks before they break through.',prim:[['tank',2],['apc',2]],esc:[['aagun',1]],reward:42},
+  convoy:{name:'Supply Convoy',brief:'Fuel and ammunition are moving up behind the lines. Burn the convoy and their attack stalls.',prim:[['truck',2],['fuel',2]],esc:[['aagun',1]],reward:40},
+  trench:{name:'Trench Assault',brief:'Our infantry is pinned. Clear the enemy trenches so they can move.',prim:[['trench',2],['squad',2]],esc:[['aagun',1]],reward:36},
+  arty:{name:'Artillery Hunt',brief:'Enemy guns are shelling our towns from the rear. Find them and silence them.',prim:[['arty',2],['mlrs',1]],esc:[['sam',1]],reward:46},
+  sead:{name:'Break the Umbrella',brief:'Their air defense is choking our operations. Take it apart.',prim:[['sam',2],['aagun',1]],esc:[['ew',1]],reward:48},
+  hive:{name:'Drone Nest',brief:'Their drones launch from a site behind the lines. Shut it down.',prim:[['hive',2]],esc:[['aagun',1],['squad',1]],reward:46},
+  depot:{name:'Deep Strike',brief:'An ammunition depot and the bridge that feeds it. Hit them deep behind the front.',prim:[['depot',1],['bridge',1]],esc:[['sam',1],['aagun',1]],reward:52},
+  naval:{name:'Landing Force',brief:'Landing ships are gathering offshore with patrol boats screening them. Sink them before they land.',prim:[['lship',1],['boat',2]],esc:[],reward:52},
+  coastal:{name:'Coastal Guns',brief:'Coastal batteries are covering the landing beaches. Knock them out.',prim:[['coastal',2],['arty',1]],esc:[['sam',1]],reward:50},
+  spear:{name:'The Spearhead',brief:'Brask is leading his main assault in person, from a command post just behind his tanks. Break the spearhead.',prim:[['tank',3],['cp',1,1]],esc:[['aagun',2]],reward:55,final:1},
+  final:{name:'Field Headquarters',brief:'We have found the general\'s headquarters. Destroy it and this offensive collapses.',prim:[['hq',1],['cp',1]],esc:[['sam',1],['aagun',1],['tank',1]],reward:60,final:1},
+  finalsea:{name:'The Flagship Group',brief:'The admiral is aboard the lead landing ship. Sink the group and the invasion fleet turns back.',prim:[['lship',2],['hq',1]],esc:[['boat',2],['sam',1]],reward:60,final:1},
+};
+const NAME_A=['Night','Iron','Steel','Silent','Black','Red','Grey','Wild','Storm','Lucky','Old','Ghost','Copper','Stray','Winter','Bitter'];
+const NAME_B=['Wasps','Hornets','Kestrels','Owls','Ravens','Foxes','Magpies','Swifts','Bees','Herons','Falcons','Crows','Lynxes','Moths','Jackdaws','Martens'];
+const NAME_C=['Unit','Squadron','Company','Detachment','Wing'];
+const STORY={
+  intro:['Varna is a small country. Farms, forests, three rivers and one stubborn capital.',
+    'Its neighbor, the Dominion of Korgath, is forty times larger. At dawn, its columns crossed the border.',
+    'Our army is brave, and our guns are slowing them down. But slowing them is not stopping them.',
+    'Command has scraped together a drone unit: volunteers, garage workshops, and whatever we can build or buy.',
+    'You command it. It may be the only thing that can win this war.'],
+  co:'Gen. Ana Morel',
+};
+const CO_LINES={
+  win:['Good work. The line held where you struck.','The men on the ground are cheering your name on the radio.','That was textbook. Keep it up.','They will think twice before massing like that again.'],
+  lose:['That one hurt. Regroup and think about the mix.','We lost ground today. Study the intel and try a different approach.','Drones are cheaper than soldiers, but not free. Choose carefully.'],
+};
+
+/* ===================== ART: tactical map, symbols, drone feed, portraits ===================== */
+function mk(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
+function srng(seed){let x=(seed|0)||7;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return((x>>>0)%100000)/100000}}
+const COL={ground:'#0b150b',grid:'rgba(120,170,90,.10)',contour:'rgba(140,190,100,.16)',river:'#13394a',riverHi:'#1f5a70',road:'rgba(190,170,110,.28)',forest:'rgba(70,130,60,.35)',
+  town:'rgba(170,170,150,.35)',sea:'#0a2033',seaHi:'#174060',enemy:'#ff5545',friend:'#5fd8ff',amber:'#ffb627',dead:'#5c6450',text:'#d9cfa8'};
+
+/* ---------- the terrain under a mission, drawn once per mission and size ---------- */
+const terrCache=new Map();
+function terrain(m,W,H){const k=m.seed+'|'+W+'x'+H;let c=terrCache.get(k);if(c)return c;c=mk(W,H);const g=c.getContext('2d');const r=srng(m.seed);
+  g.fillStyle=COL.ground;g.fillRect(0,0,W,H);
+  // contour rings around a few hills
+  g.strokeStyle=COL.contour;g.lineWidth=1;
+  for(let h=0;h<5;h++){const cx=r()*W,cy=r()*H*.85,rad=(.12+r()*.18)*W;for(let i=1;i<=4;i++){g.beginPath();for(let a=0;a<=Math.PI*2+.01;a+=.2){const wob=1+Math.sin(a*3+h)*.12+Math.sin(a*5+i)*.06;const x=cx+Math.cos(a)*rad*i/4*wob,y=cy+Math.sin(a)*rad*i/4*wob*.7;a?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}}
+  // forests
+  g.fillStyle=COL.forest;for(let f=0;f<6;f++){const cx=r()*W,cy=r()*H*.85;for(let i=0;i<40;i++){const a=r()*6.28,d=r()*W*.07;g.fillRect(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.7,2,2)}}
+  // sea down the right edge
+  if(m.sea){g.fillStyle=COL.sea;g.beginPath();g.moveTo(W,0);for(let y=0;y<=H;y+=8)g.lineTo(W*(.6+Math.sin(y/37)*.03+Math.sin(y/11)*.008),y);g.lineTo(W,H);g.fill();
+    g.strokeStyle=COL.seaHi;g.beginPath();for(let y=0;y<=H;y+=8)g.lineTo(W*(.6+Math.sin(y/37)*.03+Math.sin(y/11)*.008),y);g.stroke();
+    g.strokeStyle='rgba(95,216,255,.08)';for(let y=10;y<H;y+=14){g.beginPath();g.moveTo(W*.68,y);g.lineTo(W*.95,y+3);g.stroke()}}
+  // a river winding across
+  else{g.strokeStyle=COL.river;g.lineWidth=Math.max(4,W*.022);g.beginPath();const y0=H*(.22+r()*.3);g.moveTo(-10,y0);g.bezierCurveTo(W*.3,y0+H*(r()-.5)*.4,W*.7,y0+H*(r()-.5)*.4,W+10,y0+(r()-.5)*H*.2);g.stroke();
+    g.strokeStyle=COL.riverHi;g.lineWidth=1;g.stroke()}
+  // roads
+  g.strokeStyle=COL.road;g.lineWidth=1.5;g.setLineDash([]);for(let i=0;i<3;i++){g.beginPath();const x=W*(.15+r()*.7);g.moveTo(x,H);g.bezierCurveTo(x+(r()-.5)*W*.5,H*.6,x+(r()-.5)*W*.5,H*.3,W*(.1+r()*.8),0);g.stroke()}
+  // towns
+  g.fillStyle=COL.town;for(let t=0;t<4;t++){const cx=r()*W*(m.sea?.55:1),cy=H*(.08+r()*.75);for(let i=0;i<7;i++)g.fillRect(cx+(r()-.5)*W*.06,cy+(r()-.5)*W*.05,3+r()*3,3+r()*3)}
+  // grid
+  g.strokeStyle=COL.grid;g.lineWidth=1;for(let i=1;i<8;i++){g.beginPath();g.moveTo(W*i/8,0);g.lineTo(W*i/8,H);g.stroke()}for(let i=1;i<10;i++){g.beginPath();g.moveTo(0,H*i/10);g.lineTo(W,H*i/10);g.stroke()}
+  g.fillStyle='rgba(150,190,110,.35)';g.font=`${Math.round(W*.03)}px VT323, monospace`;for(let i=0;i<8;i++)g.fillText(String.fromCharCode(65+i),W*i/8+3,W*.035);
+  terrCache.set(k,c);return c}
+const FRONT_Y=.74;
+function frontLine(g,W,H,t){const y=x=>H*(FRONT_Y+Math.sin(x/W*9+1)*.012+Math.sin(x/W*23)*.006);
+  g.lineWidth=2;g.strokeStyle='rgba(255,85,69,.75)';g.setLineDash([6,4]);g.beginPath();for(let x=0;x<=W;x+=6)g.lineTo(x,y(x)-3);g.stroke();
+  g.strokeStyle='rgba(95,216,255,.75)';g.beginPath();for(let x=0;x<=W;x+=6)g.lineTo(x,y(x)+3);g.stroke();g.setLineDash([]);
+  g.fillStyle='rgba(255,85,69,.06)';g.fillRect(0,0,W,H*FRONT_Y);
+  g.font=`${Math.round(W*.032)}px VT323, monospace`;g.fillStyle='rgba(255,85,69,.7)';g.fillText('ENEMY',4,H*FRONT_Y-8);g.fillStyle='rgba(95,216,255,.7)';g.fillText('VARNA',4,H*FRONT_Y+16)}
+function baseIcon(g,W,H){const x=W*.5,y=H*.92,s=W*.035;g.strokeStyle=COL.friend;g.lineWidth=1.5;g.strokeRect(x-s*1.6,y-s*.8,s*3.2,s*1.6);
+  g.beginPath();g.moveTo(x-s,y+s*.4);g.lineTo(x,y-s*.5);g.lineTo(x+s,y+s*.4);g.stroke();g.fillStyle=COL.friend;g.font=`${Math.round(W*.032)}px VT323, monospace`;g.textAlign='center';g.fillText('LAUNCH SITE',x,y+s*1.9);g.textAlign='left'}
+
+/* ---------- hostile unit symbol: a diamond with a sign for its kind ---------- */
+function unitSymbol(g,u,x,y,s,{focus=false,flash=0,t=0}={}){
+  g.save();g.translate(x,y);
+  if(u.hidden){g.strokeStyle='rgba(255,85,69,.7)';g.setLineDash([3,3]);g.lineWidth=1.5;g.beginPath();g.moveTo(0,-s);g.lineTo(s,0);g.lineTo(0,s);g.lineTo(-s,0);g.closePath();g.stroke();g.setLineDash([]);
+    g.fillStyle='rgba(255,85,69,.8)';g.font=`${Math.round(s*1.2)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('?',0,1);g.restore();return}
+  const col=u.dead?COL.dead:flash>0?'#ffffff':COL.enemy;
+  g.fillStyle=u.dead?'rgba(60,60,50,.6)':'rgba(255,85,69,.16)';g.strokeStyle=col;g.lineWidth=u.prim?2:1.3;
+  g.beginPath();g.moveTo(0,-s);g.lineTo(s,0);g.lineTo(0,s);g.lineTo(-s,0);g.closePath();g.fill();g.stroke();
+  g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1.2;const q=s*.42;
+  switch(u.cat){
+    case'inf':g.beginPath();g.moveTo(-q,-q);g.lineTo(q,q);g.moveTo(q,-q);g.lineTo(-q,q);g.stroke();break;
+    case'armor':g.beginPath();g.ellipse(0,0,q*1.2,q*.6,0,0,7);g.stroke();break;
+    case'arty':g.beginPath();g.arc(0,0,q*.45,0,7);g.fill();break;
+    case'logi':g.beginPath();g.moveTo(-q,q*.2);g.lineTo(q,q*.2);g.stroke();g.beginPath();g.arc(-q*.6,q*.55,q*.3,0,7);g.arc(q*.6,q*.55,q*.3,0,7);g.fill();break;
+    case'struct':g.strokeRect(-q*.8,-q*.6,q*1.6,q*1.2);g.beginPath();g.moveTo(-q*.8,-q*.6);g.lineTo(0,-q*1.1);g.lineTo(q*.8,-q*.6);g.stroke();break;
+    case'aa':g.beginPath();g.arc(0,q*.4,q*.9,Math.PI,0);g.stroke();g.beginPath();g.moveTo(0,q*.4);g.lineTo(q*.5,-q*.6);g.stroke();break;
+    case'ew':g.beginPath();g.moveTo(-q,q*.5);g.lineTo(-q*.3,-q*.5);g.lineTo(q*.3,q*.5);g.lineTo(q,-q*.5);g.stroke();break;
+    case'naval':g.beginPath();g.moveTo(-q,-q*.1);g.lineTo(q,-q*.1);g.lineTo(q*.6,q*.5);g.lineTo(-q*.6,q*.5);g.closePath();g.stroke();break}
+  if(u.dead){g.strokeStyle='#8d9878';g.lineWidth=1.5;g.beginPath();g.moveTo(-s*.8,-s*.8);g.lineTo(s*.8,s*.8);g.moveTo(s*.8,-s*.8);g.lineTo(-s*.8,s*.8);g.stroke()}
+  else{const w=s*1.8,f=Math.max(0,u.hp/u.max);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(-w/2,s+3,w,3);g.fillStyle=f>.5?'#93e46c':f>.25?'#ffb627':'#ff5545';g.fillRect(-w/2,s+3,w*f,3)}
+  if(u.prim&&!u.dead){g.fillStyle=COL.amber;g.font=`${Math.round(s*.9)}px VT323, monospace`;g.textAlign='center';g.fillText('★',s*.95,-s*.55)}
+  if(focus){const b=s*1.45+Math.sin(t/5)*1.5;g.strokeStyle=COL.amber;g.lineWidth=2;for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(sx*b,sy*b*.55);g.lineTo(sx*b,sy*b);g.lineTo(sx*b*.55,sy*b);g.stroke()}}
+  g.restore()}
+// a friendly drone on the map: a small cyan arrow
+function droneMark(g,x,y,ang,s,col=COL.friend){g.save();g.translate(x,y);g.rotate(ang);g.fillStyle=col;g.beginPath();g.moveTo(s,0);g.lineTo(-s*.7,s*.6);g.lineTo(-s*.35,0);g.lineTo(-s*.7,-s*.6);g.closePath();g.fill();g.restore()}
+
+/* ---------- the drone camera: a little thermal picture of the target ---------- */
+const FW=96,FH=64;
+function feedTarget(g,type,cx,cy,k,hot){const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(cx+x*k),Math.round(cy+y*k),Math.max(1,Math.round(w*k)),Math.max(1,Math.round(h*k)))};
+  const H=hot,M='#b8b8b8',D='#707070';
+  switch(type){
+    case'tank':R(-7,-4,14,8,M);R(-6,-5,12,1,D);R(-6,4,12,1,D);R(-2,-2,5,4,H);R(3,-.5,7,1,M);R(-7,-3,2,6,H);break;
+    case'apc':R(-7,-3,14,6,M);R(-7,-3,3,6,H);R(2,-2,3,4,D);break;
+    case'truck':case'fuel':R(-8,-2.5,4,5,H);R(-4,-3,12,6,type==='fuel'?'#d8d8d8':M);if(type==='fuel')R(-3,-1,10,2,'#f0f0f0');break;
+    case'arty':case'coastal':R(-5,-3,10,6,M);R(-1,-1,10,2,H);R(-6,-4,3,8,D);break;
+    case'mlrs':R(-8,-2.5,4,5,H);R(-4,-3,12,6,M);for(let i=0;i<4;i++)R(-3+i*3,-2,2,4,D);break;
+    case'aagun':R(-4,-4,8,8,M);R(0,-1,7,1,H);R(0,1,7,1,H);R(-2,-2,4,4,H);break;
+    case'sam':R(-6,-4,12,8,M);for(let i=0;i<3;i++)R(-5+i*4,-3,3,6,'#d0d0d0');R(-7,-5,2,2,H);break;
+    case'ew':R(-8,-2.5,4,5,H);R(-4,-3,12,6,M);g.strokeStyle=H;g.beginPath();g.arc(cx+2*k,cy,3*k,0,7);g.stroke();break;
+    case'squad':for(let i=0;i<5;i++)R(-6+i*3,-1+((i*7)%3)-1,1.6,1.6,H);break;
+    case'trench':for(let i=0;i<8;i++)R(-10+i*2.6,(i%2?1:-1)*1.2,2.6,1.4,D);for(let i=0;i<4;i++)R(-8+i*5,-.5,1.4,1.4,H);break;
+    case'depot':case'cp':case'hq':R(-9,-6,18,12,D);R(-8,-5,16,10,M);R(-3,-2,6,4,H);if(type==='hq'){R(7,-9,1,5,H)}break;
+    case'bridge':R(-12,-6,24,12,'#202020');R(-12,-2,24,4,M);R(-12,-2,24,1,'#d0d0d0');break;
+    case'hive':R(-8,-5,16,10,D);for(let i=0;i<4;i++){R(-6+i*4,-1,3,1,H);R(-5+i*4,-2,1,3,H)}break;
+    case'boat':R(-8,-2,14,4,M);R(6,-1,3,2,M);R(-4,-1,4,2,H);break;
+    case'lship':R(-12,-4,22,8,M);R(10,-2,3,4,M);R(-10,-2,6,4,H);R(0,-3,8,6,D);break;
+    default:R(-4,-4,8,8,H)}}
+function drawFeed(c,type,t,seed,{boom=false,sea=false}={}){const g=c.getContext('2d');const r=srng(seed);
+  // ground: dark grey noise, cooler water if at sea
+  g.fillStyle=sea?'#0e0e10':'#1c1c1c';g.fillRect(0,0,FW,FH);const k=1.4+t*2.6;const ox=FW/2,oy=FH/2;
+  for(let i=0;i<260;i++){const x=(r()-.5)*FW*1.5,y=(r()-.5)*FH*1.5;g.fillStyle=r()<.5?'#262626':'#141414';g.fillRect(Math.round(ox+x*k*.6),Math.round(oy+y*k*.6),Math.ceil(k),Math.ceil(k))}
+  if(!sea){g.fillStyle='#2c2c2c';g.fillRect(0,Math.round(oy+6*k*.6),FW,Math.ceil(3*k))}
+  const wob=(1-t)*3;feedTarget(g,type,ox+Math.sin(t*20)*wob,oy+Math.cos(t*17)*wob,k*.9,'#ffffff');
+  // crosshair and frame
+  g.strokeStyle='rgba(147,228,108,.9)';g.lineWidth=1;g.beginPath();g.moveTo(ox-14,oy+.5);g.lineTo(ox-5,oy+.5);g.moveTo(ox+5,oy+.5);g.lineTo(ox+14,oy+.5);g.moveTo(ox+.5,oy-12);g.lineTo(ox+.5,oy-4);g.moveTo(ox+.5,oy+4);g.lineTo(ox+.5,oy+12);g.stroke();
+  for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(ox+sx*20,oy+sy*10);g.lineTo(ox+sx*24,oy+sy*10);g.lineTo(ox+sx*24,oy+sy*6);g.stroke()}
+  if(boom){const p=Math.min(1,(t-.82)/.18);if(p>0){g.fillStyle=`rgba(255,255,255,${1-p*.4})`;g.fillRect(0,0,FW,FH);if(p>.4){for(let i=0;i<500;i++){g.fillStyle=r()<.5?'#fff':'#000';g.fillRect(r()*FW|0,r()*FH|0,2,1)}}}}
+  g.fillStyle='rgba(0,0,0,.25)';for(let y=0;y<FH;y+=2)g.fillRect(0,y,FW,1)}
+
+/* ---------- portraits of the generals: small pixel busts in green phosphor ---------- */
+function portrait(look,{tint=true,w=32,h=40}={}){const c=mk(w,h),g=c.getContext('2d');const R=(x,y,ww,hh,col)=>{g.fillStyle=col;g.fillRect(x,y,ww,hh)};
+  R(0,0,w,h,'#0b140b');for(let y=0;y<h;y+=3)R(0,y,w,1,'#0e180e');
+  const uni=shade(look.hatc,-.15);
+  R(4,30,24,10,uni);R(6,29,20,2,uni);R(13,29,6,3,shade(look.skin,-.15));R(14,31,4,9,'#d8d0b8');R(15,32,2,7,'#8a2020');
+  R(7,33,4,1,'#e0c050');R(21,33,4,1,'#e0c050');if(look.hat!=='beret'){R(20,35,2,2,'#c03030');R(23,35,2,2,'#3060c0');R(20,37,5,1,'#e0c050')}
+  // head
+  R(11,13,10,14,look.skin);R(10,15,12,10,look.skin);R(12,27,8,2,shade(look.skin,-.1));R(9,18,1,4,shade(look.skin,-.15));R(22,18,1,4,shade(look.skin,-.15));
+  R(10,14,12,2,look.hair);R(10,14,1,6,look.hair);R(21,14,1,6,look.hair);
+  R(12,19,3,1,'#f0f0f0');R(17,19,3,1,'#f0f0f0');R(13,19,1,1,'#101010');R(18,19,1,1,'#101010');R(12,17,3,1,shade(look.hair,-.2));R(17,17,3,1,shade(look.hair,-.2));
+  R(15,20,2,3,shade(look.skin,-.12));R(14,24,4,1,'#6a3030');
+  if(look.mous)R(13,23,6,1,look.hair);if(look.beard){R(11,23,10,5,look.hair);R(14,24,4,1,'#6a3030')}
+  if(look.scar){R(19,16,1,6,'#e8a0a0')}
+  // hats
+  const H=look.hatc;
+  if(look.hat==='cap'){R(9,9,14,5,H);R(8,11,16,3,H);R(10,13,13,2,'#151515');R(15,10,2,2,'#e0c050')}
+  else if(look.hat==='peak'){R(10,5,12,4,H);R(8,8,16,5,H);R(9,13,14,2,'#101010');R(14,9,4,2,'#e0c050');R(8,12,16,1,'#e0c050')}
+  else if(look.hat==='naval'){R(9,9,14,4,'#e8e8e8');R(9,13,14,2,H);R(10,15,12,1,'#101010');R(15,13,2,2,'#e0c050')}
+  else if(look.hat==='beret'){R(9,10,14,4,H);R(7,9,8,3,H);R(10,14,12,1,shade(H,-.3));R(18,11,2,2,'#e0c050')}
+  if(tint){const d=g.getImageData(0,0,w,h);for(let i=0;i<d.data.length;i+=4){const l=(d.data[i]*.3+d.data[i+1]*.59+d.data[i+2]*.11)/255;d.data[i]=Math.round(40+l*120);d.data[i+1]=Math.round(60+l*190);d.data[i+2]=Math.round(30+l*70)}g.putImageData(d,0,0)}
+  return c}
+function shade(c,k){const n=parseInt(c.slice(1),16);const f=v=>Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k)));return'#'+[f(n>>16&255),f(n>>8&255),f(n&255)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+const CO_LOOK={skin:'#d8a888',hat:'beret',hatc:'#2f4a3a',mous:0,hair:'#5a3a2a',scar:0};
+
+/* ---------- small drone icons for lists ---------- */
+function droneIcon(d,s=16){const c=mk(s,s),g=c.getContext('2d');g.strokeStyle='#5fd8ff';g.fillStyle='#5fd8ff';g.lineWidth=1;const m=s/2;
+  const quad=()=>{for(const [x,y] of [[3,3],[s-4,3],[3,s-4],[s-4,s-4]]){g.beginPath();g.arc(x+.5,y+.5,2.2,0,7);g.stroke()}g.beginPath();g.moveTo(3,3);g.lineTo(s-4,s-4);g.moveTo(s-4,3);g.lineTo(3,s-4);g.stroke();g.fillRect(m-2,m-2,4,4)};
+  const plane=(span,len)=>{g.fillRect(m-.5,m-len,2,len*2);g.fillRect(m-span,m-1,span*2,2);g.fillRect(m-span*.45,m+len-3,span*.9,2)};
+  switch(d){case'fpv':case'fiber':quad();if(d==='fiber'){g.strokeStyle='#ffb627';g.beginPath();g.moveTo(m,m);g.quadraticCurveTo(s,s*.8,s,s);g.stroke()}break;
+    case'hexa':for(let i=0;i<6;i++){const a=i/6*6.28;g.beginPath();g.arc(m+Math.cos(a)*5.5,m+Math.sin(a)*5.5,1.6,0,7);g.stroke()}g.fillRect(m-2,m-2,4,4);break;
+    case'recon':plane(7,4);break;case'loiter':g.beginPath();g.moveTo(m,1);g.lineTo(m+6,s-3);g.lineTo(m,s-5);g.lineTo(m-6,s-3);g.closePath();g.fill();break;
+    case'decoy':g.globalAlpha=.6;plane(6,4);g.globalAlpha=1;g.strokeRect(1.5,1.5,s-3,s-3);break;
+    case'intercept':g.beginPath();g.moveTo(m,1);g.lineTo(m+3,s-2);g.lineTo(m-3,s-2);g.closePath();g.fill();g.fillRect(m-6,m+1,12,2);break;
+    case'hunter':plane(5,6);g.strokeStyle='#ff5545';g.beginPath();g.arc(m,2,3,0,Math.PI);g.stroke();break;
+    case'longr':plane(7.5,6);break;case'naval':g.beginPath();g.moveTo(1,m);g.lineTo(s-4,m-3);g.lineTo(s-1,m);g.lineTo(s-4,m+3);g.closePath();g.fill();g.fillStyle='#e8f6ff';g.fillRect(0,m-1,2,2);break;
+    case'ucav':g.beginPath();g.moveTo(m,1);g.lineTo(s-1,m+3);g.lineTo(m,m+1);g.lineTo(1,m+3);g.closePath();g.fill();g.fillRect(m-1,m,2,6);break}
+  return c}
+
+/* ===================== SIMULATION: the campaign, missions and strikes ===================== */
+let S=null;
+const rnd=Math.random,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),pick=a=>a[rnd()*a.length|0];
+function newState(unit){return{v:1,unit,funds:90,prestige:0,research:{},stock:{fpv:14,recon:2},camp:0,battle:0,front:0,results:[],
+  usage:{},usageAll:{},stats:{sorties:0,strikes:0,kills:0,lost:0,spent:0,battles:0,wins:0},mission:null,checkpoint:null,seen:{},time:0}}
+const has=id=>!!(S&&S.research[id]);
+const unlocked=d=>d==='fpv'||d==='recon'||RESEARCH.some(r=>r.unlock===d&&has(r.id));
+function rankIdx(p=S.prestige){let r=0;RANKS.forEach(([,need],i)=>{if(p>=need)r=i});return r}
+const rankName=()=>RANKS[rankIdx()][0];
+function slots(){return 10+(has('crew1')?2:0)+(has('crew2')?2:0)+(has('crew3')?3:0)}
+function costOf(d){return Math.max(1,Math.round(DRONES[d].cost*(has('workshop')?.8:1)))}
+function jamRes(d){const b=DRONES[d].jr;return b>=1?1:Math.min(.95,b+(has('hop')?.25:0)+(has('auto')?.25:0))}
+function dmgMult(){return 1+(has('pay1')?.15:0)+(has('pay2')?.15:0)+(has('pay3')?.2:0)}
+function baseAcc(){return .72+(has('thermal')?.1:0)}
+const general=()=>GENERALS[S.camp];
+
+/* ---------- missions ---------- */
+function shares(u){const tot=Object.values(u).reduce((a,b)=>a+b,0)||1;const s={};for(const k in u)s[k]=u[k]/tot;return{s,tot}}
+function adaptation(){const g=general();const src=g.adaptive?S.usageAll:S.usage;const {s,tot}=shares(src);const out={ew:0,aagun:0,sam:0,decoy:1,hide:0,notes:[]};
+  if(tot<12||(S.battle===0&&!g.adaptive))return out;const k=g.adaptive?.75:1,m=g.adaptive?2:1;
+  if((s.fpv||0)+(s.hexa||0)>.45*k){out.ew+=m;out.notes.push('They have brought in jammers to stop your FPVs.')}
+  if((s.hexa||0)>.2*k){out.aagun+=m;out.notes.push('More anti-aircraft guns: your slow bombers have been noticed.')}
+  if((s.longr||0)+(s.hunter||0)+(s.loiter||0)+(s.ucav||0)>.4*k){out.sam+=1;out.notes.push('A new SAM site is covering their rear.')}
+  if((s.decoy||0)>.22*k){out.decoy=.5;out.notes.push('Their gunners have learned to tell decoys from real drones.')}
+  if((s.recon||0)>.15*k){out.hide=.15;out.notes.push('They are camouflaging more of their units.')}
+  return out}
+function genMission(){const g=general(),key=g.missions[S.battle],R=MISSIONS[key];const c=S.camp,b=S.battle;
+  const ad=adaptation();const hpk=1+c*.12+b*.03;const units=[];
+  const add=(type,prim,dep)=>{const U=UNITS[type];units.push({type,name:U.name,cat:U.cat,depth:dep!=null?dep:U.depth,max:Math.round(U.hp*hpk),hp:0,val:U.val,prim,shots:U.shots||0,acc:U.acc||0,jam:U.jam||0,spawn:U.spawn||0,hidden:false,dead:false})};
+  const extra=Math.floor((c+b)/4);
+  R.prim.forEach(([t,n,dep],i)=>{const e=i===0?Math.floor(extra/2):i===1&&n>1?Math.ceil(extra/2):0;for(let k=0;k<n+e;k++)add(t,1,dep)});
+  R.esc.forEach(([t,n])=>{for(let k=0;k<n;k++)add(t,0)});
+  const sea=['naval','coastal','finalsea'].includes(key);
+  for(let i=0;i<g.aa-1+(c>=2&&b>=2?1:0);i++)add(c>=2&&i%2===0?'sam':'aagun',0);
+  for(let i=0;i<g.ew;i++)if(i===0||b>=2)add('ew',0);
+  if(g.dr&&b>=1)add('hive',0);
+  for(let i=0;i<ad.ew;i++)add('ew',0);for(let i=0;i<ad.aagun;i++)add('aagun',0);for(let i=0;i<ad.sam;i++)add('sam',0);
+  if(!sea&&b>=1&&rnd()<.6)add(pick(['squad','truck','apc']),0);
+  units.forEach(u=>{u.hp=u.max;u.hidden=!has('intel')&&rnd()<(g.hide+ad.hide)*(u.prim?.5:1)});
+  // positions: depth rows from the front line (low) to the deep rear (high); the sea runs down the right edge
+  const rows=[[],[],[]];units.forEach(u=>rows[u.depth].push(u));
+  rows.forEach((r,d)=>r.forEach((u,i)=>{const n=r.length;const x0=sea&&u.cat==='naval'?.62:.1,x1=sea?(u.cat==='naval'?.92:.58):.9;
+    u.x=x0+(x1-x0)*((i+.5)/n)+(rnd()-.5)*.05;u.y=[.6,.4,.18][d]+(rnd()-.5)*.08}));
+  return{key,name:R.name,brief:R.brief,final:!!R.final,sea,units,reward:R.reward+c*8,notes:ad.notes,seed:(rnd()*1e9)|0,decoyEff:ad.decoy,genDr:g.dr,genEw:g.ew}}
+function threat(m){const live=m.units.filter(u=>!u.dead&&!u.hidden);
+  const aa=live.reduce((s,u)=>s+u.shots*u.acc,0),ew=live.reduce((s,u)=>s+u.jam,0)+m.genEw*.05,dr=live.reduce((s,u)=>s+u.spawn,0)+m.genDr*1.5;
+  return{aa,ew,dr,aaL:aa<=0?0:aa<1?1:aa<2.2?2:3,ewL:ew<=.06?0:ew<.3?1:ew<.6?2:3,drL:dr<=0?0:dr<3?1:dr<5?2:3}}
+
+/* ---------- how good a drone is against this mission (0-3 bars) ---------- */
+function fit(d,m){const D=DRONES[d];if(D.recon)return m.units.some(u=>u.hidden)?3:1;if(D.decoy)return threat(m).aaL>=2?3:threat(m).aaL?2:0;
+  if(D.interceptor)return threat(m).drL>=2?3:threat(m).drL?2:0;
+  let bp=0,be=0;for(const u of m.units){if(u.dead||u.depth>D.range)continue;const a=D.atk[u.cat]||0;if(!a)continue;if(u.prim)bp=Math.max(bp,a/u.max);else be=Math.max(be,a/u.max)}
+  const t=threat(m);let v=Math.max(bp>=.9?3:bp>=.45?2:bp>0?1:0,Math.min(be>=.6?2:be>0?1:0,D.hunter?2:1));if(v&&!D.exp&&t.aaL>=3&&D.eva<.3)v--;if(v&&jamRes(d)<.3&&t.ewL>=2)v--;return v}
+
+/* ---------- one wave ---------- */
+function resolveWave(B,launch,focus){
+  const m=B.m,ev=[];const ds=[];let id=0;
+  for(const [t,n] of Object.entries(launch))for(let i=0;i<n;i++)ds.push({t,D:DRONES[t],id:id++,fate:null,target:null});
+  const live=()=>ds.filter(d=>!d.fate);const L=u=>!u.dead;
+  // 1. jamming
+  const jam=Math.min(.7,m.units.filter(L).reduce((s,u)=>s+u.jam,0)+m.genEw*.05);
+  if(jam>0)for(const d of ds){if(d.D.decoy)continue;if(rnd()<jam*(1-jamRes(d.t))){d.fate='jam';ev.push({k:'jam',d})}}
+  // 2. drone fights
+  let E=Math.round(m.units.filter(L).reduce((s,u)=>s+u.spawn,0)+m.genDr*1.5+(m.genDr?rnd()*1.5:0));B.enemyDr=E;
+  for(const d of live().filter(d=>d.D.interceptor)){for(let k=0;k<2&&E>0;k++)if(rnd()<.8){E--;ev.push({k:'intercept',d})}}
+  for(let i=0;i<E;i++){const pool=live().filter(d=>!d.D.interceptor);const v=pool.length?pick(pool):pick(live()||[]);if(!v)break;if(rnd()<.45*(1-v.D.eva*.5)){v.fate='drone';ev.push({k:'dronekill',d:v})}}
+  const accB=baseAcc(),mult=dmgMult();
+  const strike=(d,u)=>{const a=(d.D.atk[u.cat]||0)*mult*(.85+rnd()*.3);const hit=rnd()<accB+B.recon;const dmg=Math.max(1,Math.round(a*(hit?1:.3)));
+    u.hp-=dmg;d.target=u;S.stats.strikes++;const kill=u.hp<=0&&!u.dead;if(kill){u.dead=true;u.hp=0;S.stats.kills++}ev.push({k:'strike',d,u,dmg,kill,hit});if(d.D.exp)d.fate='spent'};
+  const pickTarget=(d,list)=>{let best=null,bs=0;for(const u of list){if(u.dead||u.hidden||u.depth>d.D.range)continue;const a=d.D.atk[u.cat]||0;if(!a)continue;
+      const left=u.hp-(u.pend||0);let s=a*(u.prim?1.4:1)*(u===focus?4:1)*(left>0?1:.08)*(d.D.hunter&&(u.cat==='aa'||u.cat==='ew')?5:1);if(s>bs){bs=s;best=u}}return best};
+  // 3. recon reveals before anything is aimed
+  const rc=live().filter(d=>d.D.recon).length;B.recon=Math.min(.3,rc*.1);
+  if(rc&&m.units.some(u=>u.hidden&&!u.dead)){m.units.forEach(u=>{if(u.hidden){u.hidden=false;ev.push({k:'reveal',u})}})}
+  // 4. radar hunters strike the air defense before it fires
+  m.units.forEach(u=>u.pend=0);
+  for(const d of live().filter(d=>d.D.hunter)){const u=pickTarget(d,m.units.filter(u=>u.cat==='aa'||u.cat==='ew'));if(u){u.pend+=d.D.atk[u.cat]*mult;strike(d,u)}}
+  // 5. air defense fires
+  for(const u of m.units.filter(u=>L(u)&&u.shots&&!u.hidden)){const acc=u.acc*(1+B.alert*.15);for(let s=0;s<u.shots;s++){const pool=live();if(!pool.length)break;
+      const w=pool.map(d=>d.D.decoy?4*m.decoyEff:1),tot=w.reduce((a,b)=>a+b,0);let r=rnd()*tot,v=pool[0];for(let i=0;i<pool.length;i++){if((r-=w[i])<0){v=pool[i];break}}
+      if(v.D.decoy){if(rnd()<.9){v.fate='decoy';ev.push({k:'decoy',d:v,u})}else ev.push({k:'miss',u,d:v})}
+      else if(rnd()<acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',u,d:v})}}
+  // hidden air defense also fires, once found or not
+  for(const u of m.units.filter(u=>L(u)&&u.shots&&u.hidden)){for(let s=0;s<u.shots;s++){const pool=live().filter(d=>!d.D.decoy);if(!pool.length)break;const v=pick(pool);if(rnd()<u.acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}}}
+  // 6. the strike
+  m.units.forEach(u=>u.pend=0);
+  const strikers=live().filter(d=>!d.D.recon&&!d.D.decoy&&!d.D.interceptor&&!(d.D.hunter&&d.fate));
+  strikers.sort((a,b)=>(b.D.atk.armor||0)-(a.D.atk.armor||0));
+  for(const d of strikers){const u=pickTarget(d,m.units);if(!u){d.idle=true;continue}u.pend+=(d.D.atk[u.cat]||0)*mult*.9;strike(d,u)}
+  // decoys that were not shot are spent anyway
+  for(const d of ds)if(d.D.decoy&&!d.fate)d.fate='spent';
+  // bookkeeping
+  for(const d of ds){S.usage[d.t]=(S.usage[d.t]||0)+1;S.usageAll[d.t]=(S.usageAll[d.t]||0)+1;B.avail[d.t]-=1;
+    if(!d.fate){B.avail[d.t]+=1}
+    else if(d.fate==='spent'){B.spent[d.t]=(B.spent[d.t]||0)+1;S.stats.spent++}
+    else{B.lost[d.t]=(B.lost[d.t]||0)+1;S.stats.lost++}}
+  S.stats.sorties++;B.alert++;B.wave++;
+  return{ds,ev,jam}}
+function score(m){const p=m.units.filter(u=>u.prim);const tot=p.reduce((s,u)=>s+u.max,0);const done=p.reduce((s,u)=>s+(u.max-Math.max(0,u.hp)),0);return tot?done/tot:0}
+function tierOf(sc){return sc>=.9?0:sc>=.6?1:sc>=.3?2:3}
+const TIERS=[{name:'DECISIVE',col:'grn',funds:1.3,pres:10,front:2},{name:'SUCCESS',col:'amb',funds:1,pres:6,front:1},{name:'PARTIAL',col:'amb',funds:.6,pres:3,front:0},{name:'FAILED',col:'red',funds:.45,pres:0,front:-1}];
+function finishBattle(B){const m=B.m,sc=score(m),ti=tierOf(sc),T=TIERS[ti];
+  // everything still in the sortie goes home
+  for(const [t,n] of Object.entries(B.avail))S.stock[t]=(S.stock[t]||0)+n;
+  let recovered=0;if(has('recovery'))for(const [t,n] of Object.entries(B.lost)){if(DRONES[t].exp)continue;const r=Math.round(n*.4);if(r){recovered+=r;S.stock[t]=(S.stock[t]||0)+r}}
+  const sec=m.units.filter(u=>!u.prim&&u.dead).reduce((s,u)=>s+u.val,0);
+  const valDone=m.units.filter(u=>u.dead).reduce((s,u)=>s+u.val,0);
+  const cost=[...Object.entries(B.lost),...Object.entries(B.spent)].reduce((s,[t,n])=>s+costOf(t)*n,0);
+  const aid=rankIdx()*6,budget=25+S.camp*8;const funds=Math.round(m.reward*T.funds+sec+aid+budget);
+  const eff=ti<=1&&cost<=valDone*2.5?2:0;const pres=T.pres+eff+(m.final&&ti<=1?5:0);
+  S.funds+=funds;S.prestige+=pres;S.front+=T.front;S.stats.battles++;if(ti<=1)S.stats.wins++;
+  S.results.push(ti);
+  return{sc,ti,funds,aid,budget,pres,eff,recovered,cost,valDone,sec}}
+function campaignOver(){return S.battle>=GENERALS[S.camp].missions.length}
+const CAMP_NEED=3;
+
+/* ---------- names ---------- */
+function genName(){const r=rnd();const a=pick(NAME_A),b=pick(NAME_B);
+  return r<.45?`${a} ${b}`:r<.75?`The ${a} ${b}`:r<.9?`${pick(NAME_C)} ${100+(rnd()*900|0)} "${b}"`:`${b} ${pick(NAME_C)}`}
+
+/* ===================== UI: input, screens, message boxes, saves ===================== */
+const $=s=>document.querySelector(s);
+const APP=$('#app');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const frame=()=>new Promise(r=>requestAnimationFrame(r));
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=v=>'$'+v+'k';
+
+/* ---------- input ---------- */
+const HELD={};let repT=0;
+const layers=[]; // top layer gets the buttons: {key(b,rep)}
+function topLayer(){return layers[layers.length-1]||SCR}
+function btn(b,down){
+  if(down){AU.unlock();if(HELD[b])return;HELD[b]=true;const L=topLayer();if(L&&L.key)L.key(b,false);
+    if(['up','down','left','right'].includes(b)){clearTimeout(repT);const go=()=>{if(!HELD[b])return;const L2=topLayer();if(L2&&L2.key)L2.key(b,true);repT=setTimeout(go,95)};repT=setTimeout(go,330)}}
+  else HELD[b]=false}
+const KEYMAP={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',z:'a',Z:'a',x:'b',X:'b',Enter:'start',Shift:'select',' ':'a',Escape:'b',Backspace:'b'};
+addEventListener('keydown',e=>{const b=KEYMAP[e.key];if(b){e.preventDefault();if(!e.repeat)btn(b,true)}});
+addEventListener('keyup',e=>{const b=KEYMAP[e.key];if(b){e.preventDefault();btn(b,false)}});
+window.ZPCart={title:'Drone Strike',input(b,d){btn(b,d)},home(){return SCR&&SCR.id==='title'?true:'ask'}};
+(()=>{let inConsole=false;try{inConsole=window.parent!==window&&!!window.parent.ZIGAPLAY}catch(e){}
+  const touch='ontouchstart' in window||matchMedia('(pointer:coarse)').matches;if(inConsole||!touch)return;
+  document.body.classList.add('touch');const pad=$('#pad');const active=new Map();
+  const hit=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.dataset&&e.dataset.b?e:null};
+  const upd=ev=>{ev.preventDefault();const now=new Map();for(const t of ev.touches){const e=hit(t.clientX,t.clientY);if(e)now.set(e.dataset.b,e)}
+    for(const [b,e] of active)if(!now.has(b)){e.classList.remove('on');btn(b,false)}for(const [b,e] of now)if(!active.has(b)){e.classList.add('on');btn(b,true)}active.clear();for(const [b,e] of now)active.set(b,e)};
+  for(const ev of ['touchstart','touchmove','touchend','touchcancel'])pad.addEventListener(ev,upd,{passive:false})})();
+
+/* ---------- screens: a column of rows you move through with the D-pad ---------- */
+let SCR=null;
+function screen(id,opts={}){const s={id,el:el('div','scr '+(opts.cls||'')),items:[],i:0,...opts};s.key=(b,rep)=>navKey(s,b,rep);return s}
+function row(s,parent,html,h={}){const e=el('div','row'+(h.cls?' '+h.cls:''),html);parent.appendChild(e);const it={el:e,...h};s.items.push(it);if(h.off)e.classList.add('off');return it}
+function show(s,{keep=false}={}){const prev=SCR;if(prev&&prev.el.parentNode)prev.el.remove();if(prev&&prev.leave)prev.leave();SCR=s;APP.appendChild(s.el);
+  let i=keep&&prev&&prev.id===s.id?prev.i:(s.start0||0);i=Math.max(0,Math.min(s.items.length-1,i));setFocus(s,i,true);if(s.enter)s.enter()}
+function setFocus(s,i,quiet){if(!s.items.length)return;s.items.forEach(it=>it.el.classList.remove('focus'));s.i=i;const it=s.items[i];it.el.classList.add('focus');
+  const sc=it.el.closest('.scroll');if(sc){const top=it.el.offsetTop-sc.offsetTop,bot=top+it.el.offsetHeight;if(top<sc.scrollTop)sc.scrollTop=top-4;else if(bot>sc.scrollTop+sc.clientHeight)sc.scrollTop=bot-sc.clientHeight+4}
+  if(s.onFocus)s.onFocus(it);if(!quiet)AU.play('tick')}
+function navKey(s,b,rep){if(s.busy)return;const it=s.items[s.i];
+  if(b==='up'||b==='down'){if(!s.items.length)return;let j=s.i;const n=s.items.length;for(let k=0;k<n;k++){j=(j+(b==='up'?-1:1)+n)%n;if(!s.items[j].skip)break}if(rep&&((b==='down'&&j<s.i)||(b==='up'&&j>s.i)))return;setFocus(s,j);return}
+  if(rep)return void((b==='left'&&it&&it.l)?it.l():(b==='right'&&it&&it.r)?it.r():0);
+  if(b==='a'){if(!it)return;if(it.off){AU.play('buzz');if(it.offMsg)toast(it.offMsg);return}if(it.a){AU.play('ok');it.a()}}
+  else if(b==='left'&&it&&it.l)it.l();else if(b==='right'&&it&&it.r)it.r();
+  else if(b==='b'&&s.back){AU.play('back');s.back()}else if(b==='start'&&s.start)s.start();else if(b==='select'&&s.select)s.select()}
+
+/* ---------- message boxes on top of everything ---------- */
+function overlay(html){const o=el('div','ov',`<div class="panel">${html}</div>`);APP.appendChild(o);return o}
+function msg(text,{who=null,port=null}={}){return new Promise(res=>{
+  const o=overlay(`<div style="display:flex;gap:.45rem;align-items:flex-start">${port?'<span class="pslot"></span>':''}<div class="msg" style="flex:1">${who?`<span class="who">${esc(who)}</span>`:''}<span class="t"></span></div></div><div class="more">▼</div>`);
+  if(port){const c=port;c.className='port px';o.querySelector('.pslot').replaceWith(c)}
+  const t=o.querySelector('.t'),more=o.querySelector('.more');more.style.visibility='hidden';let n=0,done=false;const full=text;
+  const tm=setInterval(()=>{n+=2;t.textContent=full.slice(0,n);if(n%6===0)AU.play('type');if(n>=full.length)fin()},22);
+  function fin(){clearInterval(tm);done=true;t.textContent=full;more.style.visibility=''}
+  const L={key(b){if(b!=='a'&&b!=='b'&&b!=='start')return;if(!done){fin();return}layers.splice(layers.indexOf(L),1);o.remove();res()}};layers.push(L)})}
+function choose(text,opts,{cancel=-1,who=null}={}){return new Promise(res=>{
+  const o=overlay(`<div class="msg">${who?`<span class="who">${esc(who)}</span>`:''}${text}</div><div class="list" style="margin-top:.4rem"></div>`);const list=o.querySelector('.list');
+  const s=screen('choose');opts.forEach((t,i)=>row(s,list,t,{cls:'btn',a:()=>end(i)}));
+  function end(i){layers.splice(layers.indexOf(L),1);o.remove();res(i)}
+  const L={key(b,rep){if(b==='b'&&cancel>=0){AU.play('back');end(cancel);return}navKey(s,b,rep)}};layers.push(L);setFocus(s,0,true)})}
+function toast(t){const e=el('div','toast',esc(t));APP.appendChild(e);setTimeout(()=>e.remove(),1900)}
+const fadeEl=el('div','');fadeEl.style.cssText='position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:45;transition:opacity .3s';APP.appendChild(fadeEl);
+async function fade(on,ms=300){fadeEl.style.transitionDuration=ms+'ms';fadeEl.style.opacity=on?1:0;await sleep(ms+20)}
+async function go(fn,...a){await fade(1,200);fn(...a);await fade(0,220)}
+
+/* ---------- saves ---------- */
+const SAVE='dronestrike-save',SET='dronestrike-settings';
+function save(){if(!S)return;try{localStorage.setItem(SAVE,JSON.stringify(S))}catch(e){}}
+function loadSave(){try{const v=localStorage.getItem(SAVE);return v?JSON.parse(v):null}catch(e){return null}}
+function saveSettings(){try{localStorage.setItem(SET,JSON.stringify({m:AU.musicOn,s:AU.sfxOn}))}catch(e){}}
+try{const st=JSON.parse(localStorage.getItem(SET)||'null');if(st){AU.setMusic(st.m);AU.setSfx(st.s)}}catch(e){}
+
+/* ===================== SCREENS ===================== */
+const meter=(n,max=3,cls='on')=>`<span class="meter">${Array.from({length:max},(_,i)=>`<i class="${i<n?cls:''}"></i>`).join('')}</span>`;
+const fitBars=n=>`<span class="meter">${[0,1,2].map(i=>`<i class="${i<n?(n>=3?'grn':'on'):''}"></i>`).join('')}</span>`;
+function frontBar(){const need=CAMP_NEED,max=Math.max(need+2,5);let h='';for(let i=0;i<max;i++)h+=`<i class="${i<S.front?'us':''}"></i>`;
+  return`<div class="front">${S.front<0?`<span class="red small">${S.front}</span>`:''}${h}</div><div class="small dim" style="margin-top:.1rem">Front: ${S.front} of ${need} needed to hold · battle ${Math.min(S.battle+1,5)}/5</div>`}
+function header(s,title){const b=el('div','bar',`<b>${esc(title)}</b><span>${money(S.funds)} · ★${S.prestige}</span>`);s.el.appendChild(b);return b}
+
+/* ---------- title ---------- */
+let titleRaf=0;
+function titleScreen(){const s=screen('title',{cls:''});s.el.id='title';
+  const cv=el('canvas');cv.style.cssText='position:absolute;inset:0;width:100%;height:100%';s.el.appendChild(cv);
+  const top=el('div','');top.style.cssText='position:relative;margin-top:22%;display:flex;flex-direction:column;gap:.4rem';top.innerHTML='<h1>DRONE<br>STRIKE</h1><div class="sub">DEFENSE OF VARNA</div>';s.el.appendChild(top);
+  const box=el('div','panel');box.style.cssText='position:relative;margin:auto auto 18%;width:72%';const list=el('div','list');box.appendChild(list);s.el.appendChild(box);
+  const sv=loadSave();
+  row(s,list,'NEW WAR',{cls:'btn',a:async()=>{if(sv&&!(await confirmNew()))return;go(introScreen)}});
+  row(s,list,'CONTINUE',{cls:'btn',off:!sv,a:()=>{S=loadSave();go(S.won?victoryScreen:hq)}});
+  row(s,list,'SETTINGS',{cls:'btn',a:()=>settingsScreen(titleScreen)});
+  const foot=el('div','hint','A ZigaPlay cartridge');foot.style.cssText+=';position:absolute;bottom:.4rem;left:0;right:0';s.el.appendChild(foot);
+  s.start0=sv?1:0;
+  s.enter=()=>{AU.music('title');const g=cv.getContext('2d');const blips=Array.from({length:14},()=>[Math.random()*6.28,.2+Math.random()*.75]);
+    const draw=t=>{if(SCR!==s)return;const W=cv.width=cv.clientWidth,H=cv.height=cv.clientHeight;const cx=W/2,cy=H*.55,R=Math.min(W,H)*.48;
+      g.fillStyle='#050905';g.fillRect(0,0,W,H);g.strokeStyle='rgba(147,228,108,.18)';g.lineWidth=1;for(let i=1;i<=4;i++){g.beginPath();g.arc(cx,cy,R*i/4,0,7);g.stroke()}
+      g.beginPath();g.moveTo(cx-R,cy);g.lineTo(cx+R,cy);g.moveTo(cx,cy-R);g.lineTo(cx,cy+R);g.stroke();const a=t/1400%(Math.PI*2);
+      const gr=g.createConicGradient?g.createConicGradient(a-1,cx,cy):null;if(gr){gr.addColorStop(0,'rgba(147,228,108,0)');gr.addColorStop(.16,'rgba(147,228,108,.28)');gr.addColorStop(.161,'rgba(147,228,108,0)');g.fillStyle=gr;g.beginPath();g.arc(cx,cy,R,0,7);g.fill()}
+      g.strokeStyle='rgba(147,228,108,.7)';g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);g.stroke();
+      for(const [ba,br] of blips){const d=((a-ba)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);const al=Math.max(0,1-d/2.5);if(al<=0)continue;g.fillStyle=`rgba(255,85,69,${al})`;g.fillRect(cx+Math.cos(ba)*R*br-2,cy+Math.sin(ba)*R*br-2,4,4)}
+      titleRaf=requestAnimationFrame(draw)};titleRaf=requestAnimationFrame(draw)};
+  s.leave=()=>cancelAnimationFrame(titleRaf);
+  show(s)}
+async function confirmNew(){return(await choose('Start a new war? Your saved war will be overwritten.',['Start over','Keep my save'],{cancel:1}))===0}
+function settingsScreen(back){const s=screen('settings');header2(s,'SETTINGS');const p=el('div','panel');const list=el('div','list');p.appendChild(list);s.el.appendChild(p);
+  const m=row(s,list,'',{a:()=>{AU.setMusic(!AU.musicOn);saveSettings();upd()}}),f=row(s,list,'',{a:()=>{AU.setSfx(!AU.sfxOn);saveSettings();upd()}});row(s,list,'BACK',{cls:'btn',a:()=>back()});
+  const upd=()=>{m.el.innerHTML=`Music <span class="r">${AU.musicOn?'ON':'OFF'}</span>`;f.el.innerHTML=`Sound <span class="r">${AU.sfxOn?'ON':'OFF'}</span>`};upd();s.back=()=>back();show(s)}
+function header2(s,title){s.el.appendChild(el('div','bar',`<b>${esc(title)}</b><span></span>`))}
+
+/* ---------- the story so far ---------- */
+async function introScreen(){const s=screen('intro');s.el.appendChild(el('div','grow'));show(s);AU.music('tension');
+  for(const t of STORY.intro)await msg(t);
+  nameScreen()}
+function nameScreen(){const s=screen('name');header2(s,'NAME YOUR UNIT');
+  const p=el('div','panel');p.innerHTML='<h3>CALLSIGN</h3>';const big=el('div','');big.style.cssText='font-size:1.7rem;color:var(--amber);text-align:center;padding:.6rem 0;min-height:2.6rem;letter-spacing:.04em';p.appendChild(big);
+  const sub=el('div','small dim','');sub.style.textAlign='center';p.appendChild(sub);s.el.appendChild(p);
+  const list=el('div','list');s.el.appendChild(list);
+  const names=[genName()];let ni=0;const cur=()=>names[ni];
+  const nm=row(s,list,'',{l:()=>{ni=(ni-1+names.length)%names.length;draw();AU.play('tick')},r:()=>{ni++;if(ni>=names.length)names.push(genName());draw();AU.play('tick')}});
+  row(s,list,'EDIT LETTERS',{a:()=>editName(cur(),v=>{names[ni]=v;draw()})});
+  row(s,list,'CONFIRM',{cls:'btn',a:async()=>{S=newState(cur());S.checkpoint=null;save();await go(campaignIntro)}});
+  const draw=()=>{big.textContent=cur();nm.el.innerHTML=`<span>◀ Suggest another ▶</span><span class="r">${ni+1}</span>`;sub.textContent='◀ ▶ cycles names · A on Edit to change letters'};draw();
+  s.back=()=>go(titleScreen);show(s)}
+function editName(v,done){const CH=" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'\".&";let a=(v.toUpperCase()+' '.repeat(20)).slice(0,20).split('');let c=0;
+  const o=overlay(`<h3>EDIT CALLSIGN</h3><div class="ed" style="font-size:1.35rem;letter-spacing:.06em;white-space:pre;color:var(--amber)"></div><div class="small dim">▲▼ letter · ◀▶ move · A done · B cancel</div>`);const ed=o.querySelector('.ed');
+  const draw=()=>{ed.innerHTML=a.map((ch,i)=>i===c?`<span style="background:var(--amber);color:#000">${ch===' '?'_':esc(ch)}</span>`:esc(ch)).join('')};draw();
+  const L={key(b){if(b==='left'){c=Math.max(0,c-1)}else if(b==='right'){c=Math.min(19,c+1)}else if(b==='up'||b==='down'){const i=CH.indexOf(a[c]);a[c]=CH[(i+(b==='up'?1:-1)+CH.length)%CH.length]}
+      else if(b==='a'||b==='start'){const out=a.join('').trim().replace(/\s+/g,' ');layers.splice(layers.indexOf(L),1);o.remove();if(out)done(out);AU.play('ok');return}
+      else if(b==='b'){layers.splice(layers.indexOf(L),1);o.remove();AU.play('back');return}AU.play('tick');draw()}};layers.push(L)}
+
+/* ---------- a new front ---------- */
+async function campaignIntro(){const g=general();S.checkpoint=null;S.checkpoint=JSON.stringify(S);save();
+  const s=screen('dossier');header2(s,`FRONT ${S.camp+1} OF 5 · ${g.front.toUpperCase()}`);
+  const p=el('div','panel');p.innerHTML='<h3>ENEMY COMMANDER</h3>';const r=el('div','');r.style.cssText='display:flex;gap:.5rem';const pc=portrait(g.look);pc.className='port px';pc.style.width='5rem';pc.style.height='6.25rem';r.appendChild(pc);
+  r.appendChild(el('div','',`<div class="amb" style="font-size:1.15rem">${esc(g.name)}</div><div class="red">${esc(g.nick)}</div><div class="desc" style="margin-top:.2rem">${esc(g.doc)}</div>`));p.appendChild(r);s.el.appendChild(p);
+  const q=el('div','panel',`<div class="msg" style="font-size:1rem">${esc(g.quote)}</div>`);s.el.appendChild(q);
+  const hint=el('div','panel small',`Win enough battles here to hold the front: ${CAMP_NEED} front points over five battles. Decisive wins give 2, wins give 1, failures cost 1.`);s.el.appendChild(hint);
+  s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);row(s,list,'TO HEADQUARTERS',{cls:'btn',a:()=>go(hq)});show(s);AU.music('tension');
+  if(S.camp===0){await msg(`${S.unit}. Good name. You'll need it.`,{who:STORY.co,port:portrait(CO_LOOK)});await msg('Brask\'s tanks are rolling across the northern plains. Start with what you have: FPVs and a pair of recon planes. Research will get you more.',{who:STORY.co,port:portrait(CO_LOOK)})}
+  else await msg(['','The Silence is coming. Vorst jams everything. Think about what flies without a radio.','Kessan\'s fleet is off the southern coast. Ships need something that swims, or something that reaches far.','Okhrin has built an umbrella of guns and drones. You\'ll need to tear holes in it before anything gets through.','This is the last front. Dravik himself. He has studied everything you\'ve done. Surprise him.'][S.camp],{who:STORY.co,port:portrait(CO_LOOK)})}
+
+/* ---------- headquarters ---------- */
+function hq(){const s=screen('hq');const g=general();
+  s.el.appendChild(el('div','bar',`<b>${esc(S.unit.toUpperCase())}</b><span>${rankName()}</span>`));
+  const res=el('div','panel',`<div style="display:flex;justify-content:space-between"><span>FUNDS <span class="amb">${money(S.funds)}</span></span><span>PRESTIGE <span class="amb">★${S.prestige}</span></span><span>SLOTS <span class="amb">${slots()}</span></span></div>`);s.el.appendChild(res);
+  const nxt=RANKS[rankIdx()+1];if(nxt)res.appendChild(el('div','small dim',`Next rank ${nxt[0]} at ★${nxt[1]} · unlocks research tier ${rankIdx()+2} and more aid`));
+  const cp=el('div','panel');cp.innerHTML=`<h3>FRONT ${S.camp+1}/5 · ${esc(g.front.toUpperCase())}</h3>`;const r=el('div','');r.style.cssText='display:flex;gap:.45rem;align-items:center';const pc=portrait(g.look);pc.className='port px';r.appendChild(pc);
+  r.appendChild(el('div','',`<div class="amb">${esc(g.name)}</div><div class="red small">${esc(g.nick)}</div><div style="margin-top:.25rem">${frontBar()}</div>`));r.lastChild.style.flex='1';cp.appendChild(r);s.el.appendChild(cp);
+  const stockTot=Object.values(S.stock).reduce((a,b)=>a+b,0);
+  const list=el('div','list');s.el.appendChild(list);
+  row(s,list,`NEXT MISSION <span class="r">▶</span>`,{cls:'big',a:()=>{if(!stockTot){toast('No drones in stock. Visit the hangar.');return}go(briefing)}});
+  row(s,list,`HANGAR <span class="r">${stockTot} drones</span>`,{a:()=>go(hangar)});
+  const can=RESEARCH.filter(x=>!has(x.id)&&x.tier<=rankIdx()&&x.cost<=S.funds).length;
+  row(s,list,`RESEARCH <span class="r">${can?`<span class="amb">${can} ready</span>`:''}</span>`,{a:()=>go(research)});
+  row(s,list,'RECORDS',{a:()=>go(records)});
+  row(s,list,'SETTINGS',{a:()=>settingsScreen(hq)});
+  row(s,list,'QUIT TO TITLE',{a:()=>{save();go(titleScreen)}});
+  s.el.appendChild(el('div','grow'));s.el.appendChild(el('div','hint','Progress saves after every battle and purchase'));
+  s.back=()=>{};show(s,{keep:true});AU.music('hq');save()}
+
+/* ---------- hangar: buy drones ---------- */
+function hangar(){const s=screen('hangar');header(s,'HANGAR');
+  const box=el('div','panel grow scroll');const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
+  const order={};const tot=()=>Object.entries(order).reduce((a,[d,n])=>a+n*costOf(d),0);
+  const types=DRONE_ORDER.filter(unlocked);
+  const rows=types.map(d=>{const it=row(s,list,'',{l:()=>{order[d]=Math.max(0,(order[d]||0)-1);upd()},r:()=>{if(tot()+costOf(d)>S.funds){AU.play('buzz');return}order[d]=(order[d]||0)+1;upd();AU.play('tick')},
+      a:()=>{if(tot()+costOf(d)>S.funds){AU.play('buzz');return}order[d]=(order[d]||0)+1;upd()},d});it.el.prepend(droneIcon(d,14));return it});
+  const buy=row(s,list,'',{cls:'btn',a:()=>{const t=tot();if(!t){toast('Use ◀ ▶ to add drones to the order');return}S.funds-=t;for(const [d,n] of Object.entries(order))S.stock[d]=(S.stock[d]||0)+n;for(const k in order)order[k]=0;AU.play('cash');toast('Order delivered');save();hangar()}});
+  row(s,list,'BACK',{cls:'btn',a:()=>go(hq)});
+  const upd=()=>{rows.forEach(it=>{const d=it.d,n=order[d]||0;it.el.innerHTML='';it.el.appendChild(droneIcon(d,14));it.el.insertAdjacentHTML('beforeend',`<span style="flex:1">${DRONES[d].name}</span><span class="r">${S.stock[d]||0} · ${money(costOf(d))}</span><span class="qty"><i>◀</i><b>${n?'+'+n:'·'}</b><i>▶</i></span>`)});
+    buy.el.innerHTML=`PLACE ORDER <span class="amb">${money(tot())}</span>&nbsp;of ${money(S.funds)}`};upd();
+  s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):'◀ ▶ adds or removes drones from the order.'};
+  s.back=()=>go(hq);show(s)}
+function droneInfo(d){const D=DRONES[d];const best=Object.entries(D.atk).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c])=>CATS[c]).join(', ');
+  return`<span class="amb">${D.name}</span> ${D.exp?'<span class="tag">ONE-WAY</span>':'<span class="tag grn">REUSABLE</span>'}${D.slots>1?`<span class="tag">${D.slots} SLOTS</span>`:''}<br>${D.desc}<br><span class="dim">Range ${['front','near rear','deep'][D.range]} · dodge ${Math.round(D.eva*100)}% · anti-jam ${Math.round(jamRes(d)*100)}%${best?' · best vs '+best:''}</span>`}
+
+/* ---------- research ---------- */
+function research(){const s=screen('research');header(s,'RESEARCH');
+  const box=el('div','panel grow scroll');const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
+  for(let t=0;t<4;t++){const need=RANKS[t];const open=rankIdx()>=t;const hd=el('div','small '+(open?'amb':'dim'),`TIER ${t+1} ${open?'':`· needs ${need[0]} (★${need[1]})`}`);hd.style.margin='.2rem 0 0 .2rem';list.appendChild(hd);
+    for(const r of RESEARCH.filter(x=>x.tier===t)){const done=has(r.id);
+      row(s,list,`<span>${done?'✓ ':''}${r.name}</span><span class="r">${done?'done':open?money(r.cost):'locked'}</span>`,{r,off:done||!open||r.cost>S.funds,offMsg:done?'Already researched':!open?`Needs rank ${need[0]}`:'Not enough funds',
+        a:async()=>{S.funds-=r.cost;S.research[r.id]=1;AU.play('research');if(r.unlock){S.stock[r.unlock]=(S.stock[r.unlock]||0)+(DRONES[r.unlock].cost<10?4:1);toast(`${r.name} unlocked · prototypes delivered`)}else toast(`${r.name} complete`);save();research()}})}}
+  row(s,list,'BACK',{cls:'btn',a:()=>go(hq)});
+  s.onFocus=it=>{desc.innerHTML=it.r?`<span class="amb">${it.r.name}</span> · ${money(it.r.cost)}<br>${it.r.desc}`+(it.r.unlock?`<br><span class="dim">${DRONES[it.r.unlock].desc}</span>`:''):`Funds ${money(S.funds)}`};
+  s.back=()=>go(hq);show(s,{keep:true})}
+
+/* ---------- records ---------- */
+function records(){const s=screen('records');header(s,'RECORDS');const st=S.stats;
+  const p=el('div','panel',`<h3>${esc(S.unit.toUpperCase())}</h3><div class="small">Rank ${rankName()} · battles ${st.battles} (won ${st.wins}) · strikes ${st.strikes} · targets destroyed ${st.kills}<br>Drones expended ${st.spent} · drones lost ${st.lost}</div>`);s.el.appendChild(p);
+  const ad=adaptation();const a=el('div','panel',`<h3>ENEMY ADAPTATION</h3><div class="small">${ad.notes.length?ad.notes.map(esc).join('<br>'):'The enemy has not adapted to your tactics yet. Lean too hard on one drone and they will.'}</div>`);s.el.appendChild(a);
+  const box=el('div','panel grow scroll');box.innerHTML='<h3>DRONE CODEX</h3>';const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
+  for(const d of DRONE_ORDER){const u=unlocked(d);const it=row(s,list,`<span>${u?DRONES[d].name:'??? (not researched)'}</span><span class="r">${u?money(costOf(d)):''}</span>`,{d:u?d:null});if(u)it.el.prepend(droneIcon(d,14))}
+  row(s,list,'BACK',{cls:'btn',a:()=>go(hq)});s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):''};s.back=()=>go(hq);show(s)}
+
+/* ---------- briefing ---------- */
+function briefing(){if(!S.mission){S.mission=genMission();save()}const m=S.mission,g=general();const s=screen('brief');
+  s.el.appendChild(el('div','bar',`<b>BATTLE ${S.battle+1}/5</b><span class="red">${esc(g.nick)}</span>`));
+  s.el.appendChild(el('div','panel',`<h3>${esc(m.name.toUpperCase())}${m.final?' · <span class="red">DECISIVE</span>':''}</h3><div class="desc">${esc(m.brief)}</div>`));
+  const tp=el('div','panel grow scroll');tp.innerHTML='<h3>KNOWN TARGETS</h3>';const grp={};
+  for(const u of m.units){const k=u.hidden?'?':u.type+(u.prim?'*':'');(grp[k]=grp[k]||{u,n:0}).n++}
+  for(const [k,{u,n}] of Object.entries(grp)){const name=k==='?'?'<span class="red">Unknown contact</span>':`${u.prim?'<span class="amb">★</span> ':''}${u.name}`;
+    tp.appendChild(el('div','row',`<span>${name} ×${n}</span><span class="r">${k==='?'?'—':CATS[u.cat]+' · '+['front','rear','deep'][u.depth]}</span>`))}
+  s.el.appendChild(tp);
+  const t=threat(m);s.el.appendChild(el('div','panel small',`<h3>THREATS</h3>Air defense ${meter(t.aaL,3,'red')} &nbsp; Jamming ${meter(t.ewL,3,'red')} &nbsp; Enemy drones ${meter(t.drL,3,'red')}`+(m.notes.length?`<div class="amb" style="margin-top:.2rem">INTEL: ${m.notes.map(esc).join(' ')}</div>`:'')+`${m.units.some(u=>u.prim&&u.depth===2)?'<div class="amb" style="margin-top:.15rem">Deep targets: only long-range drones can reach them.</div>':''}<div class="dim" style="margin-top:.15rem">Reward ${money(m.reward)} · ★ marks objectives</div>`));
+  const list=el('div','list');s.el.appendChild(list);row(s,list,'PLAN THE STRIKE ▶',{cls:'btn',a:()=>go(loadout)});row(s,list,'BACK TO HQ',{cls:'btn',a:()=>go(hq)});
+  s.back=()=>go(hq);show(s);AU.music('tension')}
+
+/* ---------- loadout ---------- */
+function loadout(){const m=S.mission;const s=screen('loadout');const bar=el('div','bar','');s.el.appendChild(bar);
+  const box=el('div','panel grow scroll');box.innerHTML='<h3>DRONE · FIT · TAKE</h3>';const list=el('div','list');box.appendChild(list);s.el.appendChild(box);const desc=el('div','panel desc');s.el.appendChild(desc);
+  const types=DRONE_ORDER.filter(d=>unlocked(d)&&(S.stock[d]||0)>0);const take={};const used=()=>Object.entries(take).reduce((a,[d,n])=>a+n*DRONES[d].slots,0);
+  const prev=S.lastLoad||{};types.forEach(d=>{take[d]=0});
+  const apply=src=>{types.forEach(d=>take[d]=0);for(const d of types){let n=Math.min(src[d]||0,S.stock[d]||0);while(n>0&&used()+DRONES[d].slots>slots())n--;take[d]=n}};
+  if(Object.keys(prev).length)apply(prev);else apply(suggest(m,types));
+  const rows=types.map(d=>{const it=row(s,list,'',{d,l:()=>{if(take[d]>0){take[d]--;upd();AU.play('tick')}},r:()=>{if(take[d]>=S.stock[d]||used()+DRONES[d].slots>slots()){AU.play('buzz');return}take[d]++;upd();AU.play('tick')}});return it});
+  const go1=row(s,list,'LAUNCH ▶',{cls:'btn',a:()=>{if(!used()){toast('Choose at least one drone');return}S.lastLoad={...take};const ld={};for(const d in take)if(take[d])ld[d]=take[d];for(const d in ld)S.stock[d]-=ld[d];S.loadout=ld;save();go(startBattle)}});
+  row(s,list,'SUGGEST A LOADOUT',{a:()=>{apply(suggest(m,types));upd();toast('Suggested by your staff')}});
+  row(s,list,'BACK',{cls:'btn',a:()=>go(briefing)});
+  const upd=()=>{bar.innerHTML=`<b>LOADOUT</b><span>SLOTS ${used()}/${slots()}</span>`;rows.forEach(it=>{const d=it.d;it.el.innerHTML='';it.el.appendChild(droneIcon(d,14));
+      it.el.insertAdjacentHTML('beforeend',`<span style="flex:1">${DRONES[d].short} <span class="dim small">${DRONES[d].name}</span></span>${fitBars(fit(d,m))}<span class="qty"><i>◀</i><b>${take[d]}</b><i>▶</i></span><span class="r small">/${S.stock[d]}</span>`)})};upd();
+  s.onFocus=it=>{desc.innerHTML=it.d?droneInfo(it.d):'Green bars: how well a drone fits this mission, from what intel can see.'};
+  s.select=()=>{apply(suggest(m,types));upd();toast('Suggested by your staff')};
+  s.back=()=>go(briefing);show(s)}
+function suggest(m,types,stock=S.stock){const out={};let left=slots();const t=threat(m);const want=(d,n)=>{n=Math.min(n,stock[d]||0);while(n>0&&n*DRONES[d].slots>left)n--;if(n>0){out[d]=(out[d]||0)+n;left-=n*DRONES[d].slots}};
+  if(types.includes('recon'))want('recon',m.units.some(u=>u.hidden)?2:1);
+  if(t.aaL>=2&&types.includes('hunter'))want('hunter',2);if(t.aaL>=1&&types.includes('decoy'))want('decoy',t.aaL+1);
+  if(t.drL>=1&&types.includes('intercept'))want('intercept',t.drL+1);
+  const strikers=types.filter(d=>!DRONES[d].recon&&!DRONES[d].decoy&&!DRONES[d].interceptor&&!DRONES[d].hunter).sort((a,b)=>fit(b,m)-fit(a,m)||(DRONES[b].atk.armor||0)-(DRONES[a].atk.armor||0));
+  for(let pass=0;pass<6&&left>0;pass++)for(const d of strikers){if(fit(d,m)<2&&pass<2)continue;if(fit(d,m)<1)continue;want(d,Math.max(1,Math.ceil(left/2)))}
+  return out}
+
+/* ---------- debrief ---------- */
+async function debrief(B,R){const s=screen('debrief');const T=TIERS[R.ti];const m=B.m;
+  s.el.appendChild(el('div','bar',`<b>AFTER-ACTION REPORT</b><span>${esc(m.name)}</span>`));
+  const st=el('div',`stamp ${T.col}`,T.name);s.el.appendChild(st);
+  const p=m.units.filter(u=>u.prim);const pd=p.filter(u=>u.dead).length;
+  s.el.appendChild(el('div','panel',`<h3>RESULT</h3>Objectives ${Math.round(R.sc*100)}% · ${pd}/${p.length} destroyed<br>Other targets destroyed ${m.units.filter(u=>!u.prim&&u.dead).length}<br>
+    <span class="dim">Drones expended ${Object.values(B.spent).reduce((a,b)=>a+b,0)} · lost ${Object.values(B.lost).reduce((a,b)=>a+b,0)}${R.recovered?` · recovered ${R.recovered}`:''}</span>`));
+  s.el.appendChild(el('div','panel',`<h3>REWARDS</h3>Funds <span class="amb">+${money(R.funds)}</span> <span class="dim">(budget ${money(R.budget)}${R.aid?`, aid ${money(R.aid)}`:''})</span><br>Prestige <span class="amb">+★${R.pres}</span>${R.eff?' <span class="grn">efficient strike</span>':''}<br>Front <span class="${T.front>0?'grn':T.front<0?'red':''}">${T.front>0?'+':''}${T.front}</span><div style="margin-top:.2rem">${frontBar()}</div>`));
+  const before=rankIdx(S.prestige-R.pres),after=rankIdx();
+  s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);
+  row(s,list,'CONTINUE ▶',{cls:'btn',a:()=>afterBattle(R,before,after)});show(s);
+  AU.music('debrief');AU.play(R.ti<=1?'win':'lose');AU.play('stamp')}
+async function afterBattle(R,before,after){
+  await msg(pick(R.ti<=1?CO_LINES.win:CO_LINES.lose),{who:STORY.co,port:portrait(CO_LOOK)});
+  if(after>before){AU.play('research');await msg(`Promotion: you are now ${RANKS[after][0]}. Research tier ${after+1} is open, and foreign aid grows with your reputation.`,{who:STORY.co,port:portrait(CO_LOOK)})}
+  if(campaignOver()){if(S.front>=CAMP_NEED)await campaignWon();else await campaignLost();return}
+  save();go(hq)}
+async function campaignWon(){const g=general();AU.play('win');
+  await msg(`${g.name}'s offensive has collapsed. ${g.front} is holding.`,{who:STORY.co,port:portrait(CO_LOOK)});
+  if(S.camp>=GENERALS.length-1){await ending();return}
+  S.camp++;S.battle=0;S.front=0;S.usage={};S.mission=null;S.funds+=40;await msg(`The government has sent a reward to the unit: ${money(40)}. Spend it well.`,{who:STORY.co,port:portrait(CO_LOOK)});
+  save();go(campaignIntro)}
+async function campaignLost(){AU.play('lose');const g=general();
+  await msg(`The line has broken on ${g.front}. ${g.name}'s troops are through.`,{who:STORY.co,port:portrait(CO_LOOK)});
+  await msg('The army will fall back and dig in. We get one more chance at this front. Regroup and try again.',{who:STORY.co,port:portrait(CO_LOOK)});
+  const cp=S.checkpoint;if(cp){const keep={stats:S.stats};S=JSON.parse(cp);S.checkpoint=cp;S.stats=keep.stats}save();go(campaignIntro)}
+async function ending(){S.won=1;save();const s=screen('end');s.el.appendChild(el('div','grow'));show(s);AU.music('debrief');
+  const lines=['Dravik\'s headquarters burned through the night. By morning, the Dominion\'s columns were turning around.',
+    'The border is quiet now. Cratered, scarred, but ours.',
+    `In the capital they put up a plaque for ${S.unit}. Nobody can agree on what to call the drones on it.`,
+    'Wars like this one are not won by the biggest army. They are won by the side that learns fastest.',
+    'Varna learned faster.'];
+  for(const t of lines)await msg(t);
+  victoryScreen()}
+function victoryScreen(){const s=screen('end');s.el.appendChild(el('div','grow'));const p=el('div','panel',`<div class="stamp grn">VICTORY</div><div style="text-align:center">${esc(S.unit)}<br><span class="dim">${rankName()} · ${S.stats.battles} battles · ${S.stats.kills} targets destroyed</span></div>`);s.el.appendChild(p);
+  s.el.appendChild(el('div','grow'));const list=el('div','list');s.el.appendChild(list);row(s,list,'TO TITLE',{cls:'btn',a:()=>go(titleScreen)});show(s);AU.music('debrief')}
+
+/* ===================== BATTLE: plan a wave, watch it fly ===================== */
+let B=null,bRaf=0;
+function startBattle(){const m=S.mission;B={m,wave:1,maxWave:3,alert:0,avail:{...S.loadout},lost:{},spent:{},recon:0,focus:null,anim:null,log:[],plan:{}};
+  battleScreen();AU.music('battle');AU.play('radio')}
+function battleScreen(){const s=screen('battle');const m=B.m;
+  const bar=el('div','bar','');s.el.appendChild(bar);
+  const mb=el('div','mapbox');const cv=el('canvas');mb.appendChild(cv);const feed=el('div','feed');const fc=mk(FW,FH);fc.className='px';feed.appendChild(fc);const fl=el('span','','');feed.appendChild(fl);mb.appendChild(feed);s.el.appendChild(mb);
+  const panel=el('div','panel');panel.style.cssText='flex:0 0 auto;height:11.2rem;overflow:hidden';s.el.appendChild(panel);
+  B.ui={bar,cv,feed,fc,fl,panel,s};
+  s.leave=()=>cancelAnimationFrame(bRaf);
+  s.back=()=>{};
+  show(s);planWave();
+  const loop=t=>{if(SCR!==s)return;drawBattle(t);bRaf=requestAnimationFrame(loop)};bRaf=requestAnimationFrame(loop)}
+const availTot=()=>Object.values(B.avail).reduce((a,b)=>a+b,0);
+function targetsList(){return B.m.units.filter(u=>!u.dead&&!u.hidden)}
+function defaultPlan(){const wl=B.maxWave-B.wave+1;const p={};for(const [d,n] of Object.entries(B.avail)){if(!n)continue;const D=DRONES[d];
+    p[d]=(D.recon||D.hunter||D.interceptor)?n:wl<=1?n:Math.ceil(n/wl)}return p}
+function planWave(){const {s,panel,bar}=B.ui;s.items=[];panel.innerHTML='';s.busy=false;
+  bar.innerHTML=`<b>${esc(B.m.name.toUpperCase())}</b><span>WAVE ${B.wave}/${B.maxWave}${B.alert?` · <span class="red">ALERT ${B.alert}</span>`:''}</span>`;
+  B.plan=defaultPlan();const t=threat(B.m);
+  panel.appendChild(el('div','small',`<span class="dim">AA</span> ${meter(t.aaL,3,'red')} <span class="dim">JAM</span> ${meter(t.ewL,3,'red')} <span class="dim">DRONES</span> ${meter(t.drL,3,'red')} <span class="dim">· obj ${Math.round(score(B.m)*100)}%</span>`));
+  const box=el('div','scroll');box.style.cssText='height:5.1rem;margin:.15rem 0';const list=el('div','list');box.appendChild(list);panel.appendChild(box);const list2=el('div','list');panel.appendChild(list2);
+  const types=DRONE_ORDER.filter(d=>B.avail[d]>0);
+  const rows=types.map(d=>row(s,list,'',{d,l:()=>{if(B.plan[d]>0){B.plan[d]--;upd();AU.play('tick')}},r:()=>{if(B.plan[d]<B.avail[d]){B.plan[d]++;upd();AU.play('tick')}else AU.play('buzz')}}));
+  const tg=row(s,list2,'',{l:()=>cycleFocus(-1),r:()=>cycleFocus(1),a:()=>cycleFocus(1)});
+  const launch=row(s,list2,'',{cls:'btn',a:()=>launchWave()});
+  row(s,list2,'END MISSION · BRING DRONES HOME',{cls:'btn',a:async()=>{const c=await choose('End the mission now? Drones still in the air come home, and you are scored on what has been hit so far.',['End mission','Keep fighting'],{cancel:1});if(c===0)endBattle()}});
+  function cycleFocus(dir){const L=targetsList();const opts=[null,...L];let i=opts.indexOf(B.focus);i=(i+dir+opts.length)%opts.length;B.focus=opts[i];upd();AU.play('tick')}
+  const upd=()=>{rows.forEach(it=>{const d=it.d;it.el.innerHTML='';it.el.appendChild(droneIcon(d,13));it.el.insertAdjacentHTML('beforeend',`<span style="flex:1">${DRONES[d].short} <span class="dim small">${DRONES[d].exp?'one-way':'returns'}</span></span><span class="qty"><i>◀</i><b>${B.plan[d]}</b><i>▶</i></span><span class="r small">/${B.avail[d]}</span>`)});
+    tg.el.innerHTML=`<span>TARGET</span><span class="qty"><i>◀</i><b style="min-width:auto">${B.focus&&!B.focus.dead?esc(B.focus.name):'Best available'}</b><i>▶</i></span>`;
+    const n=Object.values(B.plan).reduce((a,b)=>a+b,0);launch.el.innerHTML=`LAUNCH WAVE ${B.wave} · ${n} DRONES`};
+  if(B.focus&&B.focus.dead)B.focus=null;upd();setFocus(s,Math.max(0,rows.length?0:0),true);
+  s.start=()=>launchWave();
+  if(B.wave===1&&!S.seen.battleTip){S.seen.battleTip=1;setTimeout(()=>msg('Each mission is three waves. Choose how many of each drone fly in this wave with ◀ ▶. Recon and decoys work best early. Anything you hold back can fly later, and a wave that wins early saves drones.',{who:STORY.co,port:portrait(CO_LOOK)}),300)}}
+async function launchWave(){const s=B.ui.s;const n=Object.values(B.plan).reduce((a,b)=>a+b,0);if(!n){toast('Choose drones for this wave');return}if(s.busy)return;s.busy=true;
+  const launch={};for(const [d,c] of Object.entries(B.plan))if(c)launch[d]=c;
+  const focus=B.focus&&!B.focus.dead?B.focus:null;
+  // snapshot positions before the wave changes anything
+  const res=resolveWave(B,launch,focus);
+  B.ui.panel.innerHTML='';const log=el('div','log');B.ui.panel.appendChild(log);B.ui.log=log;
+  AU.play('launch');setTimeout(()=>AU.play('buzzfly'),250);
+  await animateWave(res);
+  // wave summary
+  const c=k=>res.ev.filter(e=>e.k===k).length;const strikes=res.ev.filter(e=>e.k==='strike');
+  addLog(`<span class="amb">WAVE ${B.wave-1}:</span> ${res.ds.length} up · ${c('jam')} jammed · ${c('aa')+c('dronekill')} shot down · ${strikes.length} hits · <span class="grn">${strikes.filter(e=>e.kill).length} destroyed</span>`);
+  await sleep(900);
+  const allPrim=B.m.units.filter(u=>u.prim).every(u=>u.dead);
+  if(allPrim){addLog('<span class="grn">All objectives destroyed.</span>');await sleep(800);return endBattle()}
+  if(B.wave>B.maxWave||!availTot()){addLog(B.wave>B.maxWave?'The enemy has dispersed. Time to come home.':'No drones left to send.');await sleep(900);return endBattle()}
+  planWave()}
+function addLog(h){if(!B.ui.log)return;B.ui.log.appendChild(el('div','',h));while(B.ui.log.children.length>7)B.ui.log.firstChild.remove()}
+function endBattle(){const R=finishBattle(B);S.battle++;S.mission=null;S.loadout=null;save();const b=B;go(()=>debrief(b,R))}
+
+/* ---------- the wave, animated ---------- */
+function animateWave(res){return new Promise(done=>{const ds=res.ds;const T0=performance.now();const dur=3600;
+  const base=[.5,.93];const sprites=ds.map((d,i)=>{const n=ds.length;const sx=.5+(i-(n-1)/2)*Math.min(.04,.6/n);
+    let dest=d.target?[d.target.x,d.target.y]:d.D.recon?[.2+Math.random()*.6,.25+Math.random()*.3]:d.D.interceptor?[.3+Math.random()*.4,.62]:[.3+Math.random()*.4,.45];
+    const t0=i/n*.35;let end=null;const f=d.fate;
+    if(f==='jam')end={t:.55+Math.random()*.4,p:.25+Math.random()*.2,how:'jam'};
+    else if(f==='drone')end={t:.9+Math.random()*.3,p:.45+Math.random()*.15,how:'drone'};
+    else if(f==='aa'||f==='decoy')end={t:1.25+Math.random()*.4,p:.7+Math.random()*.15,how:'aa'};
+    else if(f==='spent')end={t:1.55+i/n*.5,p:1,how:'hit'};
+    return{d,sx,dest,t0,end,ret:!f||f===null}});
+  B.anim={sprites,T0,dur,res,fx:[],shots:[],done:false};
+  // events with times
+  const timeline=[];
+  for(const sp of sprites){const e=sp.end;if(!e)continue;
+    if(e.how==='jam')timeline.push([e.t,()=>{AU.play('jam');addLog(`<span class="red">${sp.d.D.short} lost to jamming</span>`)}]);
+    if(e.how==='drone')timeline.push([e.t,()=>{AU.play('zap');addLog(`<span class="red">${sp.d.D.short} downed by enemy drone</span>`)}]);
+    if(e.how==='aa')timeline.push([e.t-.25,()=>AU.play('aa')]);}
+  const ints=res.ev.filter(e=>e.k==='intercept').length;if(ints)timeline.push([.8,()=>{AU.play('zap');addLog(`<span class="cyn">Interceptors downed ${ints} enemy drone${ints>1?'s':''}</span>`)}]);
+  if(res.ev.some(e=>e.k==='reveal'))timeline.push([.7,()=>{AU.play('radio');addLog('<span class="cyn">Recon found hidden targets</span>')}]);
+  // strikes: by the drone that made them
+  const strikes=res.ev.filter(e=>e.k==='strike');strikes.forEach((e,i)=>{const sp=sprites.find(s=>s.d===e.d);const t=sp&&sp.end?sp.end.t:1.7+i*.05;
+    timeline.push([t,()=>{B.anim.fx.push({x:e.u.x,y:e.u.y,t:performance.now(),big:e.kill});AU.play(e.kill?'boom':'smallboom');e.u.flash=12;if(e.kill)addLog(`<span class="grn">${e.u.name} destroyed</span>`)}])});
+  // the featured strike on the drone camera
+  const star=strikes.find(e=>e.kill&&e.u.prim)||strikes.find(e=>e.kill)||strikes[0];
+  if(star){const sp=sprites.find(s=>s.d===star.d);const ti=sp&&sp.end?sp.end.t:1.7;B.anim.feed={e:star,t0:ti-1.15,t1:ti+.25,boom:!!star.d.D.exp};}
+  timeline.sort((a,b)=>a[0]-b[0]);let ti=0;
+  // A skips ahead
+  const L={key(b){if(b==='a'||b==='start'){B.anim.skip=true}}};layers.push(L);
+  const tick=()=>{const t=(performance.now()-T0)/1000*(B.anim.skip?4:1);if(B.anim.skip&&!B.anim.skipT){B.anim.skipT=performance.now();B.anim.skipBase=(performance.now()-T0)/1000}
+    const tt=B.anim.skip?B.anim.skipBase+(performance.now()-B.anim.skipT)/1000*4:t;B.anim.now=tt;
+    while(ti<timeline.length&&timeline[ti][0]<=tt){timeline[ti][1]();ti++}
+    if(tt>=dur/1000){while(ti<timeline.length){timeline[ti][1]();ti++}layers.splice(layers.indexOf(L),1);B.anim.done=true;B.ui.feed.classList.remove('on');B.anim=null;done();return}
+    requestAnimationFrame(tick)};requestAnimationFrame(tick)})}
+
+/* ---------- drawing ---------- */
+function drawBattle(t){const {cv,feed,fc,fl}=B.ui;const dpr=Math.min(2,window.devicePixelRatio||1);const W=Math.round(cv.clientWidth*dpr),H=Math.round(cv.clientHeight*dpr);if(!W||!H)return;
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}const g=cv.getContext('2d');
+  g.drawImage(terrain(B.m,W,H),0,0);frontLine(g,W,H,t);baseIcon(g,W,H);
+  const s=Math.max(7,W*.035);
+  for(const u of B.m.units){if(u.flash)u.flash--;unitSymbol(g,u,u.x*W,u.y*H,s,{focus:u===B.focus&&!B.anim,flash:u.flash||0,t:t/16})}
+  const A=B.anim;
+  if(A){const tt=A.now||0;
+    for(const sp of A.sprites){let p=(tt-sp.t0)/1.3;if(p<0)continue;let x0=sp.sx,y0=.93,[x1,y1]=sp.dest;let alpha=1,fall=0;
+      if(sp.end){const pe=sp.end.p;const te=sp.end.t;if(tt>=te){if(sp.end.how==='hit')continue;fall=Math.min(1,(tt-te)/.6);if(fall>=1)continue;p=pe}else p=Math.min(pe,p)}
+      else{if(p>1){const back=(tt-sp.t0-1.3)/1.3;if(back>1)continue;p=1-back*.999}}
+      p=Math.max(0,Math.min(1,p));const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;let x=x0+(x1-x0)*e,y=y0+(y1-y0)*e;
+      if(sp.d.D.recon&&!sp.end&&p>.6){x+=Math.sin(tt*3+sp.sx*9)*.04}
+      y+=fall*.06;const ang=Math.atan2((y1-y0),(x1-x0))+(fall?fall*6:0);
+      g.globalAlpha=1-fall;droneMark(g,x*W,y*H,ang,Math.max(3.5,W*.014),fall?'#ff8a3a':sp.d.D.decoy?'rgba(95,216,255,.55)':'#5fd8ff');g.globalAlpha=1;
+      // tracer from the gun that killed it
+      if(sp.end&&sp.end.how==='aa'&&tt>sp.end.t-.35&&tt<sp.end.t+.05){const gun=A.res.ev.find(e=>(e.k==='aa'||e.k==='decoy')&&e.d===sp.d);if(gun&&gun.u){g.strokeStyle='rgba(255,170,80,.9)';g.lineWidth=1.5;g.setLineDash([3,4]);g.beginPath();g.moveTo(gun.u.x*W,gun.u.y*H);g.lineTo(x*W,y*H);g.stroke();g.setLineDash([])}}
+      if(sp.end&&sp.end.how==='drone'&&tt>sp.end.t-.3&&tt<sp.end.t){droneMark(g,(x+.05)*W,(y-.04)*H,2.4,Math.max(3,W*.012),'#ff5545')}}
+    // AA misses: random flak bursts while drones are over the target area
+    if(tt>.9&&tt<2.2&&Math.random()<.25){const gun=A.res.ev.filter(e=>e.k==='miss')[Math.random()*20|0];if(gun&&gun.u){g.fillStyle='rgba(255,200,120,.8)';g.fillRect((gun.u.x+(Math.random()-.5)*.12)*W,(gun.u.y+.05+Math.random()*.1)*H,2,2)}}
+    // explosions
+    const now=performance.now();A.fx=A.fx.filter(f=>now-f.t<900);for(const f of A.fx){const p=(now-f.t)/900;const r=(f.big?W*.07:W*.035)*(.3+p);g.strokeStyle=`rgba(255,${180-p*120|0},60,${1-p})`;g.lineWidth=2;g.beginPath();g.arc(f.x*W,f.y*H,r,0,7);g.stroke();
+      g.fillStyle=`rgba(255,230,160,${(1-p)*.6})`;g.beginPath();g.arc(f.x*W,f.y*H,r*.5,0,7);g.fill()}
+    // the drone camera
+    const F=A.feed;if(F&&tt>=F.t0&&tt<=F.t1+.5){feed.classList.add('on');const p=Math.min(1,(tt-F.t0)/(F.t1-F.t0));
+      drawFeed(fc,F.e.u.type,p*.98,B.m.seed+(F.e.u.x*1000|0),{boom:true,sea:F.e.u.cat==='naval'});fl.textContent=`${F.e.d.D.short}-${String(F.e.d.id+1).padStart(2,'0')} · ${F.e.u.name.toUpperCase()}`}
+    else feed.classList.remove('on')}}
+
+/* ===================== BOOT ===================== */
+window.__DS={terrain,frontLine,unitSymbol,droneMark,get S(){return S},set S(v){S=v},get B(){return B},btn,newState,genMission,resolveWave,finishBattle,score,threat,fit,DRONES,UNITS,GENERALS,MISSIONS,RESEARCH,hq,briefing,loadout,startBattle,titleScreen,go,save,portrait,drawFeed,droneIcon,suggest,defaultPlan,adaptation,has,slots,costOf,unlocked,rankIdx,DRONE_ORDER,CAMP_NEED,TIERS,get SCR(){return SCR}};
+titleScreen();
+
+})();
+</script>
+</body></html>

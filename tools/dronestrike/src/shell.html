@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Drone Strike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=VT323&display=swap">
+<style>
+/* Drone Strike: a drone-unit strategy game for the ZigaPlay.
+   Everything looks like a rugged military tablet: olive panels, amber text, thin rules and corner brackets.
+   Battles draw a tactical map on a canvas, with a small thermal drone feed for the strikes. */
+:root{color-scheme:dark;
+  --bg:#060a06;--panel:#0d140c;--panel2:#121d10;--line:#2b3f25;--line2:#46653a;
+  --amber:#ffb627;--amber2:#b9821a;--text:#eadfbd;--dim:#8d9878;--green:#93e46c;--cyan:#5fd8ff;--red:#ff5545;--orange:#ff8a3a;
+  --ui:'VT323',ui-monospace,monospace;--head:'Pixelify Sans','VT323',ui-monospace,monospace}
+*,::before,::after{box-sizing:border-box}
+html{font-size:clamp(12px,5vw,20px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;line-height:1.05}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(120% 80% at 50% 0%,#132313 0%,#070b07 70%)}
+#app::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;padding:.35rem .4rem;gap:.3rem}
+.bar{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem;border-bottom:1px solid var(--line2);padding:0 .1rem .2rem;color:var(--amber);font-size:.95rem;letter-spacing:.06em;flex:0 0 auto}
+.bar b{font-family:var(--head);font-weight:500;font-size:.8rem;letter-spacing:.12em}
+.panel{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:.35rem .45rem}
+.panel::before,.panel::after{content:'';position:absolute;width:.45rem;height:.45rem;border:2px solid var(--amber2);pointer-events:none}
+.panel::before{left:-2px;top:-2px;border-right:0;border-bottom:0}.panel::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+.panel h3{margin:0 0 .2rem;font-family:var(--head);font-weight:500;font-size:.72rem;letter-spacing:.14em;color:var(--amber)}
+.grow{flex:1 1 auto;min-height:0;overflow:hidden}
+.list{display:flex;flex-direction:column;gap:.12rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.4rem;padding:.12rem .35rem;border:1px solid transparent;font-size:1rem;min-height:1.35rem}
+.row .r{color:var(--dim);white-space:nowrap}
+.row.off{color:#5c6450}
+.row.focus{background:var(--amber);color:#120c00;border-color:var(--amber)}
+.row.focus .r,.row.focus .dim{color:#3a2a00}
+.row.btn{justify-content:center;border-color:var(--line2);letter-spacing:.12em;font-size:1.05rem}
+.row.btn.focus{border-color:var(--amber)}
+.row.big{font-size:1.2rem;min-height:1.8rem}
+.dim{color:var(--dim)}.amb{color:var(--amber)}.grn{color:var(--green)}.red{color:var(--red)}.cyn{color:var(--cyan)}
+.small{font-size:.85rem}
+.qty{display:inline-flex;align-items:center;gap:.25rem}
+.qty i{font-style:normal;opacity:.7}
+.qty b{min-width:1.6rem;text-align:center;font-weight:400}
+.meter{display:inline-flex;gap:2px;vertical-align:middle}
+.meter i{width:.42rem;height:.65rem;border:1px solid var(--line2);display:block}
+.meter i.on{background:var(--amber);border-color:var(--amber)}
+.meter i.red{background:var(--red);border-color:var(--red)}
+.meter i.grn{background:var(--green);border-color:var(--green)}
+.front{display:flex;gap:2px;align-items:center}
+.front i{flex:1;height:.55rem;border:1px solid var(--line2);display:block}
+.front i.us{background:var(--cyan);border-color:var(--cyan)}.front i.them{background:var(--red);border-color:var(--red)}
+.desc{font-size:.9rem;color:#cfc6a4;min-height:2.6em}
+.tag{display:inline-block;padding:0 .25rem;border:1px solid currentColor;font-size:.8rem;line-height:1.1;margin-left:.2rem}
+.stamp{font-family:var(--head);font-size:1.6rem;letter-spacing:.14em;text-align:center;padding:.2rem;border:3px solid currentColor;transform:rotate(-4deg);margin:.4rem auto;width:max-content}
+.hint{font-size:.78rem;color:var(--dim);text-align:center;flex:0 0 auto}
+.scroll{overflow:hidden;position:relative}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
+/* overlays */
+.ov{position:absolute;inset:0;background:rgba(2,5,2,.72);display:flex;align-items:center;justify-content:center;z-index:30;padding:.6rem}
+.ov .panel{width:100%;max-width:22rem}
+.msg{font-size:1.05rem;line-height:1.15;white-space:pre-line}
+.msg .who{color:var(--amber);letter-spacing:.08em;display:block;margin-bottom:.15rem}
+.more{text-align:right;color:var(--amber);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.toast{position:absolute;left:50%;top:.5rem;transform:translateX(-50%);z-index:40;background:var(--amber);color:#120c00;padding:.1rem .5rem;font-size:1rem;white-space:nowrap;animation:fadeout 1.8s forwards}
+@keyframes fadeout{0%,75%{opacity:1}100%{opacity:0}}
+/* title */
+#title h1{margin:0;font-family:var(--head);font-weight:700;font-size:2.6rem;letter-spacing:.08em;color:var(--amber);text-align:center;line-height:.95;text-shadow:0 0 10px rgba(255,182,39,.45)}
+#title .sub{color:var(--green);text-align:center;letter-spacing:.3em;font-size:.9rem}
+/* battle */
+.mapbox{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--line2);background:#081108}
+.mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.feed{position:absolute;right:.3rem;top:.3rem;width:42%;aspect-ratio:3/2;border:1px solid var(--green);background:#000;display:none}
+.feed canvas{width:100%;height:100%}
+.feed span{position:absolute;left:.2rem;top:.05rem;font-size:.7rem;color:var(--green);text-shadow:0 0 2px #000}
+.feed.on{display:block}
+.log{font-size:.88rem;line-height:1.1;height:100%;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.log div{white-space:normal}
+/* portraits */
+.port{width:3.4rem;height:4.2rem;border:1px solid var(--line2);background:#0a120a;flex:0 0 auto}
+/* touch controls when played on its own */
+body.touch{display:flex;flex-direction:column}
+body.touch #app{height:auto;flex:1;min-height:0}
+#pad{display:none}
+body.touch #pad{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:34vh;max-height:290px;padding:.5rem 1.2rem calc(.6rem + env(safe-area-inset-bottom,0px));background:#0b120b;border-top:1px solid var(--line2);position:relative}
+#pad .dp{position:relative;width:9.5rem;height:9.5rem;justify-self:center}
+#pad b{font-weight:400}
+#pad .dp b{position:absolute;width:3.2rem;height:3.2rem;background:#1a2a17;border:1px solid var(--line2)}
+#pad b.on{background:#3b5a2c!important}
+#pad .dp .u{left:3.15rem;top:0}#pad .dp .d{left:3.15rem;bottom:0}#pad .dp .l{left:0;top:3.15rem}#pad .dp .r{right:0;top:3.15rem}
+#pad .ab{position:relative;width:9rem;height:7rem;justify-self:center}
+#pad .ab b{position:absolute;width:3.8rem;height:3.8rem;border-radius:50%;background:#3a2a08;border:1px solid var(--amber2);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+#pad .ab .a{right:0;top:0}#pad .ab .b{left:0;bottom:0}
+#pad .ss{position:absolute;left:50%;bottom:calc(.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:1rem}
+#pad .ss b{padding:.15rem .8rem;background:#1a2a17;border:1px solid var(--line2);font-size:.8rem;color:var(--dim);letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="pad"><div class="dp"><b class="u" data-b="up"></b><b class="d" data-b="down"></b><b class="l" data-b="left"></b><b class="r" data-b="right"></b></div>
+<div class="ab"><b class="a" data-b="a">A</b><b class="b" data-b="b">B</b></div><div class="ss"><b data-b="select">SELECT</b><b data-b="start">START</b></div></div>
+<script>
+(()=>{'use strict';
+/*@@SCRIPTS@@*/
+})();
+</script>
+</body></html>

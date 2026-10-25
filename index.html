@@ -309,6 +309,9 @@ const CARTS=[
   {id:'drownedmoon',title:'Drowned Moon',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#0d1a44',ink:'#cfe4ff',
    blurb:'The moon fell into the sea. Call the tide in and out to sail, walk the seabed and find out who is dragging it down.',
    note:'A talk · B back · START menu · SELECT turn the tide'},
+  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',
+   blurb:'A giant neighbor has invaded. Command your country\'s drone unit: research, build and choose what flies against five enemy generals.',
+   note:'D-pad choose · ◀ ▶ amounts · A confirm · B back'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 const SHELLS=[['classic','Classic grey'],['berry','Berry'],['teal','Teal'],['grape','Grape'],['kiwi','Kiwi'],['dandelion','Dandelion'],['midnight','Midnight']];
@@ -356,7 +359,7 @@ function renderShelf(){const sh=$('#shelf');sh.innerHTML='';
   items().forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':'');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
     b.innerHTML=c.ghost?'<span class="shell"></span><span class="ghostbox"><b>+</b><span>ADD A GAME</span></span>'
       :`<span class="shell"></span><span class="ridges"></span><span class="label" style="--lb:${c.label};--lf:${c.ink}"><img src="${c.art}" alt=""><b></b></span><span class="arrow"></span>`;
-    if(!c.ghost)b.querySelector('.label b').textContent=c.title.toUpperCase();
+    if(!c.ghost){const t=b.querySelector('.label b');t.textContent=c.title.toUpperCase();if(c.title.length>9){t.style.fontSize='11px';t.style.letterSpacing='.06em';t.style.whiteSpace='nowrap'}}
     b.setAttribute('aria-label',c.title);
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
