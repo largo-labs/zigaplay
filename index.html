@@ -29,7 +29,8 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
   --ab1:#de6a98;--ab2:#a8265e;--ab3:#7d1640;--abedge:#3a0f22;--abshadow:#4c0e29;
   --groove1:#b7b3a7;--groove2:#c8c4b8;--pill1:#a8a6af;--pill2:#77757f;--pilledge:#4c4a54;--grille:#a29e93;
   --bez1:#6a6e80;--bez2:#55586a;--bezink:#c9cbe0;
-  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;position:relative;
+  --st1:#a02c5c;--st2:#33449a;--dp1:#403f48;--dp2:#2a2930;--dpa:#5c5b66;--dpa2:#9a99a6;--dpsh:#23222a;--kn1:#6e6d7a;--kn2:#4a4955;--kn3:#33323b;
+  isolation:isolate;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;position:relative;
   background:linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);border:2px solid var(--edge);border-radius:14px 14px 52px 14px;
   padding:8px 14px 10px;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),inset 0 -4px 0 rgba(0,0,0,.14),inset 3px 0 0 rgba(255,255,255,.22),0 16px 34px rgba(0,0,0,.6);
   transition:background .4s}
@@ -57,7 +58,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 /* the bezel and the screen */
 .bezel{flex:1 1 auto;min-height:0;position:relative;display:flex;background:linear-gradient(180deg,var(--bez1),var(--bez2));border-radius:10px 10px 38px 10px;
   padding:18px 14px 22px 28px;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.5)}
-.bezel .stripes{position:absolute;left:12px;right:12px;top:7px;height:5px;border-radius:1px;background:linear-gradient(180deg,#a02c5c 0 2px,transparent 2px 3px,#33449a 3px 5px)}
+.bezel .stripes{position:absolute;left:12px;right:12px;top:7px;height:5px;border-radius:1px;background:linear-gradient(180deg,var(--st1) 0 2px,transparent 2px 3px,var(--st2) 3px 5px)}
 .bezel .led{position:absolute;left:9px;top:40%;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#7a3a3a,#3a1416 70%);transition:background .2s,box-shadow .2s}
 .console:not(.off) .bezel .led{background:radial-gradient(circle at 35% 35%,#ffb0b0,#ec2630 58%,#8a0f15);box-shadow:0 0 7px 1px rgba(255,46,46,.75)}
 .bezel .ledlbl{position:absolute;left:2px;top:calc(40% + 13px);width:24px;text-align:center;font-size:6px;font-weight:700;letter-spacing:.04em;color:var(--bezink)}
@@ -66,7 +67,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 
 /* ---------- the LCD: library, boot logo, messages ---------- */
 .lcd{position:absolute;inset:0;background:var(--lcd3);color:var(--lcd0);font-family:var(--pix);display:flex;flex-direction:column}
-.lcd::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(15,56,15,.06) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(15,56,15,.05) 0 1px,transparent 1px 3px)}
+.lcd::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.055) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.045) 0 1px,transparent 1px 3px)}
 .lcd-top{display:flex;align-items:baseline;justify-content:space-between;padding:10px 12px 6px;border-bottom:3px solid var(--lcd1)}
 .lcd-top b{font-size:17px;letter-spacing:.16em;font-style:italic}
 .lcd-top span{font-family:var(--num);font-size:17px;letter-spacing:.06em;color:var(--lcd1)}
@@ -108,7 +109,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .console.off .blackout,.blackout.on{opacity:1;pointer-events:auto}
 
 /* message box on the LCD: power-off questions and notes */
-.ask{position:absolute;left:10px;right:10px;bottom:12px;z-index:5;background:var(--lcd3);color:var(--lcd0);border:3px solid var(--lcd0);border-radius:6px;box-shadow:0 0 0 3px var(--lcd3),0 4px 0 6px rgba(15,56,15,.35);
+.ask{position:absolute;left:10px;right:10px;bottom:12px;z-index:5;background:var(--lcd3);color:var(--lcd0);border:3px solid var(--lcd0);border-radius:6px;box-shadow:0 0 0 3px var(--lcd3),0 4px 0 6px rgba(0,0,0,.3);
   padding:12px 12px 10px;font-family:var(--pix);display:flex;flex-direction:column;gap:8px}
 .ask p{margin:0;font-family:var(--num);font-size:19px;line-height:1.05}
 .ask .opts{display:flex;flex-direction:column;gap:5px}
@@ -126,17 +127,17 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 
 /* ---------- controls ---------- */
 .controls{position:relative;height:206px;flex:0 0 auto;touch-action:none}
-.dpad{position:absolute;left:2px;top:14px;width:138px;height:138px;touch-action:none;filter:drop-shadow(0 3px 0 #23222a) drop-shadow(0 5px 5px rgba(0,0,0,.25))}
-.dpad i{position:absolute;background:linear-gradient(180deg,#403f48,#2a2930)}
+.dpad{position:absolute;left:2px;top:14px;width:138px;height:138px;touch-action:none;filter:drop-shadow(0 3px 0 var(--dpsh)) drop-shadow(0 5px 5px rgba(0,0,0,.25))}
+.dpad i{position:absolute;background:linear-gradient(180deg,var(--dp1),var(--dp2))}
 .dpad .v{left:46px;top:0;width:46px;height:138px;border-radius:6px}
 .dpad .h{left:0;top:46px;width:138px;height:46px;border-radius:6px}
-.dpad .hub{left:46px;top:46px;width:46px;height:46px;background:radial-gradient(circle,#24232a 0 8px,#2e2d34 9px 10px,#36353d 11px)}
+.dpad .hub{left:46px;top:46px;width:46px;height:46px;background:radial-gradient(circle,rgba(0,0,0,.3) 0 8px,rgba(0,0,0,.14) 9px 10px,rgba(0,0,0,0) 11px),linear-gradient(180deg,var(--dp1),var(--dp2))}
 .dpad .ar{width:0;height:0;background:none;border:7px solid transparent}
-.dpad .ar.u{left:62px;top:10px;border-bottom:10px solid #5c5b66;border-top:0}
-.dpad .ar.d{left:62px;bottom:10px;border-top:10px solid #5c5b66;border-bottom:0}
-.dpad .ar.l{top:62px;left:10px;border-right:10px solid #5c5b66;border-left:0}
-.dpad .ar.r{top:62px;right:10px;border-left:10px solid #5c5b66;border-right:0}
-.dpad .ar.u.on{border-bottom-color:#9a99a6}.dpad .ar.d.on{border-top-color:#9a99a6}.dpad .ar.l.on{border-right-color:#9a99a6}.dpad .ar.r.on{border-left-color:#9a99a6}
+.dpad .ar.u{left:62px;top:10px;border-bottom:10px solid var(--dpa);border-top:0}
+.dpad .ar.d{left:62px;bottom:10px;border-top:10px solid var(--dpa);border-bottom:0}
+.dpad .ar.l{top:62px;left:10px;border-right:10px solid var(--dpa);border-left:0}
+.dpad .ar.r{top:62px;right:10px;border-left:10px solid var(--dpa);border-right:0}
+.dpad .ar.u.on{border-bottom-color:var(--dpa2)}.dpad .ar.d.on{border-top-color:var(--dpa2)}.dpad .ar.l.on{border-right-color:var(--dpa2)}.dpad .ar.r.on{border-left-color:var(--dpa2)}
 .dpad .sh{left:46px;top:46px;width:46px;height:46px;background:rgba(0,0,0,.22);opacity:0;border-radius:4px}
 .dpad[data-d=up] .sh{opacity:1;top:0}.dpad[data-d=down] .sh{opacity:1;top:92px}.dpad[data-d=left] .sh{opacity:1;left:0}.dpad[data-d=right] .sh{opacity:1;left:92px}
 
@@ -172,7 +173,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .stick .notch.l{top:63px;left:7px;border-right:8px solid #8a8996;border-left:0}.stick .notch.r{top:63px;right:7px;border-left:8px solid #8a8996;border-right:0}
 .stick .notch.on{opacity:1;filter:brightness(1.6)}
 .stick .knob{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px 0 0 -33px;border-radius:50%;pointer-events:none;will-change:transform;
-  background:radial-gradient(circle at 38% 32%,#6e6d7a 0,#4a4955 38%,#33323b 72%,#2a2930 100%);
+  background:radial-gradient(circle at 38% 32%,var(--kn1) 0,var(--kn2) 38%,var(--kn3) 72%,var(--dp2) 100%);
   box-shadow:0 5px 0 #18171d,0 8px 12px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.18)}
 .stick .knob::after{content:"";position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,#3c3b45 0 55%,#45444f 56%);box-shadow:inset 0 2px 3px rgba(0,0,0,.4)}
 .stick .knob.back{transition:transform .11s cubic-bezier(.3,1.6,.5,1)}
@@ -180,6 +181,16 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .console.stickmode .dpad{display:none}
 /* bigger touch targets for A and B than the buttons you see */
 .btn-ab::after{content:"";position:absolute;inset:-14px;border-radius:50%}
+/* four face buttons in a diamond, for games that ask for them (face4:true): D on top, A right, B below, C left */
+.btn-ab.c,.btn-ab.d{display:none}
+.console.face4 .ab::before{display:none}
+.console.face4 .btn-ab{width:50px;height:50px}
+.console.face4 .btn-ab.c,.console.face4 .btn-ab.d{display:block}
+.console.face4 .btn-ab.a{left:89px;right:auto;top:37px}.console.face4 .btn-ab.b{left:53px;top:73px}
+.console.face4 .btn-ab.c{left:17px;top:37px}.console.face4 .btn-ab.d{left:53px;top:1px}
+.console.face4 .btn-ab span{top:50%;transform:translate(-50%,-50%);font-size:17px;font-style:normal;color:rgba(255,255,255,.88);text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.console.face4 .btn-ab::after{inset:-5px}
+html.wide .console.face4 .btn-ab.a{left:89px;right:auto}html.wide .console.face4 .btn-ab.b{left:53px}
 
 /* sideways: a wide handheld, D-pad on the left, buttons on the right, the screen between. Used when the phone is
    turned (landscape and short), whenever a wide game is in on a landscape screen, and, for a wide game with the
@@ -216,6 +227,151 @@ html.wide .console.widegame .bezel .ledlbl{display:none}
 html.wide .console.widegame .bezel .led{left:6px}
 html.wide .dpad,html.wide .stick,html.wide .ab,html.wide .pills{zoom:var(--cz,1)}
 html.wide .console.widegame .grille{display:none}
+/* ---------- skins ----------
+   A skin is a set of the tokens above, sometimes an LCD tint and a printed edition name, and for the live and game
+   skins a layer of moving decoration (.skinfx) that sits on the body behind every control. The decoration only
+   moves with transform and opacity, so it costs the phone next to nothing while a game runs. */
+.skinfx{position:absolute;inset:0;z-index:-1;border-radius:inherit;overflow:hidden;pointer-events:none}
+.skinfx>*,.skinfx>*>*{position:absolute;display:block}
+@keyframes zspin{to{transform:rotate(360deg)}}
+@keyframes ztwk{0%,100%{opacity:.12;transform:scale(.45)}50%{opacity:1;transform:scale(1)}}
+@keyframes zsweep{0%{transform:translateX(-140%) skewX(-18deg)}55%,100%{transform:translateX(330%) skewX(-18deg)}}
+
+/* Aurora: bands of green and violet light drifting across a night-teal body */
+.console[data-shell=aurora]{--b1:#21465c;--b2:#16324a;--b3:#0d2134;--edge:#06121c;--print:#c4fbe9;--print2:#7fdcc4;
+  --ab1:#c4ffe8;--ab2:#33d6a0;--ab3:#13785a;--abedge:#063a2a;--abshadow:#04261c;--groove1:#0d2030;--groove2:#163246;
+  --pill1:#4a7090;--pill2:#2c4c68;--pilledge:#0c1e2e;--grille:#0d2030;--bez1:#15212d;--bez2:#0d151e;--bezink:#8fdcc8;--st1:#3fe0a8;--st2:#a07bff;
+  --dp1:#2c3f52;--dp2:#1a2836;--dpa:#6f98b0;--dpa2:#b8ffe4;--dpsh:#08131d;--kn1:#5a7f98;--kn2:#36536a;--kn3:#22394c;
+  --lcd0:#0b3a2e;--lcd1:#2e8a6e;--lcd2:#7fd8b8;--lcd3:#b8f2de}
+.fx-aurora .a{left:-45%;width:190%;border-radius:50%;will-change:transform;animation:zaur 15s ease-in-out infinite alternate}
+.fx-aurora .a1{top:40%;height:44%;background:radial-gradient(closest-side,rgba(90,255,190,.62),rgba(90,255,190,0))}
+.fx-aurora .a2{top:60%;height:42%;background:radial-gradient(closest-side,rgba(170,110,255,.58),rgba(170,110,255,0));animation-duration:19s;animation-delay:-7s}
+.fx-aurora .a3{top:-6%;height:34%;background:radial-gradient(closest-side,rgba(80,210,255,.45),rgba(80,210,255,0));animation-duration:23s;animation-delay:-12s}
+@keyframes zaur{0%{transform:translateX(-14%) scaleY(.7) skewX(-14deg)}50%{transform:translateX(5%) scaleY(1.2) skewX(10deg)}100%{transform:translateX(15%) scaleY(.85) skewX(-6deg)}}
+
+/* Galaxy: a slowly turning nebula, twinkling stars and now and then a shooting star */
+.console[data-shell=galaxy]{--b1:#2e1e56;--b2:#1b1038;--b3:#0d0720;--edge:#05030e;--print:#e8ddff;--print2:#b39dff;
+  --ab1:#ffb0dc;--ab2:#e0408f;--ab3:#951c58;--abedge:#3a0822;--abshadow:#2a0618;--groove1:#110a24;--groove2:#1c1238;
+  --pill1:#4e3e82;--pill2:#30245a;--pilledge:#0e0820;--grille:#110a24;--bez1:#151025;--bez2:#0b0816;--bezink:#c9b6ff;--st1:#ff6ac1;--st2:#6ab8ff;
+  --dp1:#2e2650;--dp2:#1a1434;--dpa:#7f70c0;--dpa2:#ffb0dc;--dpsh:#07040f;--kn1:#6a5aa8;--kn2:#41367a;--kn3:#2a2254;
+  --lcd0:#1e1248;--lcd1:#5a46a8;--lcd2:#a796f0;--lcd3:#d2c6ff}
+.fx-galaxy .neb{left:-35%;top:36%;width:130%;height:80%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,90,200,.34),rgba(120,90,255,.16) 58%,rgba(120,90,255,0));animation:zspin 70s linear infinite}
+.fx-galaxy .neb.n2{left:28%;top:-12%;width:105%;height:70%;background:radial-gradient(closest-side,rgba(90,170,255,.3),rgba(90,170,255,0));animation-duration:95s;animation-direction:reverse}
+.fx-galaxy b{width:var(--s);height:var(--s);border-radius:50%;background:#fff;box-shadow:0 0 5px 1px rgba(210,225,255,.85);animation:ztwk 3s ease-in-out infinite}
+.fx-galaxy u{left:0;top:0;width:76px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);opacity:0;animation:zshoot 8s ease-in infinite 2s}
+@keyframes zshoot{0%{opacity:0;transform:translate(30px,90px) rotate(24deg)}2%{opacity:1}11%{opacity:0;transform:translate(330px,230px) rotate(24deg)}100%{opacity:0;transform:translate(330px,230px) rotate(24deg)}}
+
+/* Lava: dark rock with glowing cracks that breathe, and embers floating up */
+.console[data-shell=lava]{--b1:#3e2d29;--b2:#271c1a;--b3:#160f0e;--edge:#0a0605;--print:#ffd2a0;--print2:#ff9a4a;
+  --ab1:#ffe48a;--ab2:#ff7a1a;--ab3:#b03206;--abedge:#3a0e02;--abshadow:#260902;--groove1:#191010;--groove2:#281b18;
+  --pill1:#5c3e34;--pill2:#3a2620;--pilledge:#140c0a;--grille:#191010;--bez1:#1e1513;--bez2:#120c0b;--bezink:#ff9a4a;--st1:#ff5a1a;--st2:#ffc04a;
+  --dp1:#3a2c28;--dp2:#221816;--dpa:#8a6a5c;--dpa2:#ffb347;--dpsh:#0c0706;--kn1:#7a5e52;--kn2:#4e3a32;--kn3:#33251f;
+  --lcd0:#3a1204;--lcd1:#a24e16;--lcd2:#f0a050;--lcd3:#ffcf8e}
+.fx-lava svg{inset:0;width:100%;height:100%;overflow:visible}
+.fx-lava path{fill:none;stroke:#ff8a2a;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.fx-lava .glow{filter:drop-shadow(0 0 2px #ff6a00) drop-shadow(0 0 5px #ff3c00);will-change:opacity;animation:zpulse 3.4s ease-in-out infinite}
+.fx-lava .pool{left:-10%;right:-10%;bottom:-70px;height:150px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,110,20,.45),rgba(255,60,0,0));animation:zpulse 3.4s ease-in-out infinite -1.7s}
+@keyframes zpulse{0%,100%{opacity:.4}50%{opacity:1}}
+.fx-lava b{bottom:-6px;width:3px;height:3px;border-radius:50%;background:#ffc060;box-shadow:0 0 6px 2px rgba(255,120,20,.8);opacity:0;animation:zember 6s linear infinite}
+@keyframes zember{0%{transform:translate(0,0);opacity:0}8%{opacity:1}70%{opacity:.8}100%{transform:translate(18px,-300px);opacity:0}}
+
+/* Holo: pearly white with a rainbow sheen that sweeps across */
+.console[data-shell=holo]{--b1:#f4ecff;--b2:#e4eefc;--b3:#d6e4f4;--edge:#3a3f62;--print:#4a4f80;--print2:#8088b8;
+  --ab1:#ffe4f8;--ab2:#c49aff;--ab3:#7660de;--abedge:#2e2470;--abshadow:#5242b0;--groove1:#d0d6ea;--groove2:#e0e5f2;
+  --pill1:#bcc2d8;--pill2:#959cb8;--pilledge:#5a6080;--grille:#bdc4da;--bez1:#5c6280;--bez2:#464b66;--bezink:#e6e9ff;--st1:#ff8ad8;--st2:#7ad8ff;
+  --dp1:#6a7090;--dp2:#4a5070;--dpa:#b8bedc;--dpa2:#ffffff;--dpsh:#3a3f5a;--kn1:#a8aed0;--kn2:#7a80a6;--kn3:#585e84;
+  --lcd0:#262c4a;--lcd1:#5e6a94;--lcd2:#b4c0dc;--lcd3:#dfe6f4;
+  background:linear-gradient(135deg,#f7e9ff 0%,#e3f0ff 30%,#e2fff3 56%,#fff0e2 80%,#f4e6ff 100%)}
+.fx-holo .grain{inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.22) 0 2px,rgba(255,255,255,0) 2px 9px)}
+.fx-holo .sheen{top:-25%;bottom:-25%;left:0;width:55%;will-change:transform;
+  background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,140,220,.5) 28%,rgba(140,215,255,.55) 50%,rgba(150,255,200,.5) 72%,rgba(255,255,255,0) 100%);animation:zsweep 5.5s ease-in-out infinite}
+
+/* Synthwave: a striped sunset over a neon grid that rolls toward you */
+.console[data-shell=synth]{--b1:#2e1150;--b2:#45146a;--b3:#7a1c78;--edge:#12041e;--print:#ffd2f4;--print2:#6ff0ff;
+  --ab1:#d6ffff;--ab2:#2fe0ff;--ab3:#0a82ac;--abedge:#032c3c;--abshadow:#031c28;--groove1:#240a3c;--groove2:#341054;
+  --pill1:#7a3aa6;--pill2:#4e1e74;--pilledge:#1a0630;--grille:#2a0c44;--bez1:#1a0a2c;--bez2:#10061c;--bezink:#ff9ae8;--st1:#ff4fd8;--st2:#2fe0ff;
+  --dp1:#3a1a5a;--dp2:#24103c;--dpa:#a070d0;--dpa2:#6ff0ff;--dpsh:#10041c;--kn1:#8a5ab8;--kn2:#5a3486;--kn3:#3a1e5e;
+  --lcd0:#3a0a3c;--lcd1:#a03a92;--lcd2:#ff9ad8;--lcd3:#ffd4f2}
+.fx-synth .sun,.fx-synth .sunglow{left:50%;bottom:58px;width:132px;height:132px;margin-left:-66px;border-radius:50%}
+.fx-synth .sunglow{box-shadow:0 0 40px 10px rgba(255,80,170,.4);animation:zpulse 4s ease-in-out infinite}
+.fx-synth .sun{background:linear-gradient(180deg,#ffea6a 0%,#ff9a52 42%,#ff3f9a 100%);
+  -webkit-mask:linear-gradient(180deg,#000 0 50%,transparent 50% 54%,#000 54% 63%,transparent 63% 68.5%,#000 68.5% 76%,transparent 76% 83%,#000 83% 88%,transparent 88%);
+  mask:linear-gradient(180deg,#000 0 50%,transparent 50% 54%,#000 54% 63%,transparent 63% 68.5%,#000 68.5% 76%,transparent 76% 83%,#000 83% 88%,transparent 88%)}
+.fx-synth .floor{left:-60%;right:-60%;bottom:0;height:58px;overflow:hidden;perspective:90px;perspective-origin:50% 0;background:linear-gradient(180deg,rgba(20,4,40,.6),rgba(70,10,90,.3))}
+.fx-synth .floor>i{left:0;right:0;bottom:0;height:320px;transform-origin:50% 100%;will-change:transform;
+  background:linear-gradient(90deg,rgba(47,224,255,.65) 0 1.5px,transparent 1.5px) 0 0/24px 100%,linear-gradient(180deg,rgba(255,79,216,.75) 0 1.5px,transparent 1.5px) 0 0/100% 24px;
+  animation:zgrid 1.1s linear infinite}
+@keyframes zgrid{0%{transform:rotateX(72deg) translateY(0)}100%{transform:rotateX(72deg) translateY(24px)}}
+.fx-synth .hz{left:0;right:0;bottom:57px;height:2px;background:#ff7ae0;box-shadow:0 0 8px 2px rgba(255,90,220,.8)}
+
+/* Lynties: night-indigo with gold trim, a flickering lightning bolt and sparkles */
+.console[data-shell=lynties]{--b1:#2e377e;--b2:#20275e;--b3:#151a46;--edge:#0a0d26;--print:#ffd36a;--print2:#ffe9b0;
+  --ab1:#fff3b8;--ab2:#ffc83a;--ab3:#c4860c;--abedge:#4a3004;--abshadow:#2e1e04;--groove1:#141a42;--groove2:#1d2452;
+  --pill1:#5260b0;--pill2:#343e86;--pilledge:#10143a;--grille:#141a42;--bez1:#12173e;--bez2:#0b0f2a;--bezink:#ffd36a;--st1:#ffd36a;--st2:#5ab8ff;
+  --dp1:#343c80;--dp2:#1f2558;--dpa:#8a94dc;--dpa2:#ffd36a;--dpsh:#0a0d26;--kn1:#6a74c8;--kn2:#3e478e;--kn3:#283068;
+  --lcd0:#101c4a;--lcd1:#3a62b0;--lcd2:#8fbef0;--lcd3:#c2e0ff}
+.console[data-shell=lynties] .btn-ab span{color:var(--print)}
+.fx-lynties .band{left:-20%;right:-20%;top:58%;height:70px;transform:rotate(-14deg);background:linear-gradient(180deg,rgba(90,184,255,0),rgba(90,184,255,.16) 50%,rgba(90,184,255,0))}
+.fx-lynties .bolt{left:50%;bottom:64px;width:58px;height:96px;margin-left:-29px;opacity:.3;filter:drop-shadow(0 0 5px rgba(255,211,106,.95));animation:zzap 5s linear infinite}
+.fx-lynties .bolt path{fill:#ffd36a;stroke:#fff3c4;stroke-width:1.5;stroke-linejoin:round}
+@keyframes zzap{0%,84%,89%,93%,100%{opacity:.3}86%,91%{opacity:1}}
+.fx-lynties .spk{width:var(--s);height:var(--s);background:var(--c);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:ztwk 2.8s ease-in-out infinite}
+
+/* Chip City: casino felt inside a gold rail, poker-chip buttons, card suits and a glint of light */
+.console[data-shell=chipcity]{--b1:#258a4f;--b2:#1a6c3e;--b3:#10522d;--edge:#4a3608;--print:#ffe39a;--print2:#ffd36a;
+  --ab1:#ff9a9a;--ab2:#d8262e;--ab3:#86101a;--abedge:#3a0408;--abshadow:#270306;--groove1:#0e4626;--groove2:#155a33;
+  --pill1:#ecc868;--pill2:#ac821e;--pilledge:#5a420c;--grille:#0e4626;--bez1:#1d1d22;--bez2:#101014;--bezink:#ffd36a;--st1:#d8262e;--st2:#ffd36a;
+  --dp1:#2c2c32;--dp2:#18181c;--dpa:#6e6e78;--dpa2:#ffd36a;--dpsh:#08100b;--kn1:#6e6e78;--kn2:#45454e;--kn3:#2c2c32;
+  --lcd0:#0e3a20;--lcd1:#2a7a48;--lcd2:#cdbd80;--lcd3:#f2e6b8;
+  background:radial-gradient(rgba(255,255,255,.05) 1px,rgba(255,255,255,0) 1.6px) 0 0/5px 5px,linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);
+  box-shadow:inset 0 0 0 3px #e2bc5a,inset 0 0 0 5px #6a4c10,inset 0 3px 0 4px rgba(255,255,255,.12),0 16px 34px rgba(0,0,0,.6)}
+.console[data-shell=chipcity] .btn-ab::before{content:"";position:absolute;inset:5px;border-radius:50%;border:4px dashed rgba(255,255,255,.88)}
+.console.face4[data-shell=chipcity] .btn-ab::before{inset:4px;border-width:3px}
+.fx-chipcity b{font:700 46px/1 Georgia,'Times New Roman',serif;color:rgba(0,30,10,.24);animation:zsuit 9s ease-in-out infinite}
+.fx-chipcity b.r{color:rgba(140,0,10,.24)}
+@keyframes zsuit{0%,100%{transform:translateY(0) rotate(var(--r))}50%{transform:translateY(-9px) rotate(calc(var(--r) + 9deg))}}
+.fx-chipcity .gloss{top:-30%;bottom:-30%;left:0;width:38%;will-change:transform;background:linear-gradient(100deg,rgba(255,240,190,0),rgba(255,240,190,.2) 50%,rgba(255,240,190,0));animation:zsweep 7s ease-in-out infinite 1s}
+
+/* Gearfist: rusty sunset steel, rivets, hazard stripes and gears turning in the corners */
+.console[data-shell=gearfist]{--b1:#d26c2c;--b2:#b25522;--b3:#883c14;--edge:#2a1206;--print:#2a1406;--print2:#4a2410;
+  --ab1:#ffa090;--ab2:#e2382a;--ab3:#981a10;--abedge:#3a0804;--abshadow:#3e0e06;--groove1:#7a3412;--groove2:#8e4018;
+  --pill1:#64646e;--pill2:#3e3e46;--pilledge:#18181e;--grille:#5e280c;--bez1:#34302e;--bez2:#221e1c;--bezink:#ffb35a;
+  --dp1:#56565f;--dp2:#34343c;--dpa:#a2a2b0;--dpa2:#ffd25a;--dpsh:#2a1206;--kn1:#8e8e9a;--kn2:#5c5c66;--kn3:#3c3c44;
+  --lcd0:#3a1c02;--lcd1:#a05a10;--lcd2:#f0a830;--lcd3:#ffd27a;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,rgba(255,255,255,0) 1px 3px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
+.console[data-shell=gearfist] .bezel .stripes{height:6px;background:repeating-linear-gradient(135deg,#f2b21a 0 6px,#1a1206 6px 12px)}
+.fx-gearfist .gear path{fill:rgba(58,18,2,.34)}
+.fx-gearfist .g1{left:-62px;bottom:-62px;width:180px;height:180px;animation:zspin 26s linear infinite}
+.fx-gearfist .g2{right:-44px;top:-44px;width:108px;height:108px;animation:zspin 15s linear infinite reverse}
+.fx-gearfist .g3{right:-30px;bottom:-36px;width:96px;height:96px;animation:zspin 13s linear infinite reverse}
+.fx-gearfist .rv{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffd8b0,#b05a20 55%,#5a2408);box-shadow:0 1px 0 rgba(255,255,255,.25)}
+.fx-gearfist .haz{left:0;right:0;bottom:0;height:9px;opacity:.85;background:repeating-linear-gradient(135deg,#f2b21a 0 9px,#1a1206 9px 18px)}
+
+/* Strike at Night: night-navy body, ember-red buttons, a crescent moon over Millbrook's rooftops, embers rising */
+.console[data-shell=drownedmoon]{--b1:#1e2448;--b2:#141836;--b3:#0b0d22;--edge:#04050f;--print:#e8ecff;--print2:#ff9a66;
+  --ab1:#ffa48a;--ab2:#d8342a;--ab3:#86140e;--abedge:#3a0806;--abshadow:#260604;--groove1:#0a0c20;--groove2:#121634;
+  --pill1:#5a6078;--pill2:#3a4058;--pilledge:#0a0c1c;--grille:#0a0c20;--bez1:#0b0d1e;--bez2:#05060f;--bezink:#ff9a66;--st1:#ff6a3a;--st2:#ffd36a;
+  --dp1:#2a3052;--dp2:#181c36;--dpa:#8a94c4;--dpa2:#ffd36a;--dpsh:#04050f;--kn1:#5a64a0;--kn2:#363e70;--kn3:#22284e;
+  --lcd0:#3a1208;--lcd1:#a04a2a;--lcd2:#f0a878;--lcd3:#ffd8b4}
+.fx-drownedmoon .moon{left:50%;margin-left:-6px;bottom:128px;width:40px;height:40px;border-radius:50%;background:#f6f0d4;box-shadow:0 0 26px 8px rgba(255,245,210,.18);
+  -webkit-mask:radial-gradient(circle at 72% 34%,transparent 0 46%,#000 47%);mask:radial-gradient(circle at 72% 34%,transparent 0 46%,#000 47%);animation:zmoon 8s ease-in-out infinite}
+@keyframes zmoon{50%{transform:translateY(-4px)}}
+.fx-drownedmoon .glow{left:-20%;right:-20%;bottom:-60px;height:150px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,100,40,.38),rgba(255,100,40,0));animation:zpulse 3.6s ease-in-out infinite}
+.fx-drownedmoon svg{left:0;bottom:0;width:100%;height:46px}
+.fx-drownedmoon svg path{fill:#05060f}
+.fx-drownedmoon svg rect{fill:#ffc46a}
+.fx-drownedmoon b{bottom:20px;width:3px;height:3px;border-radius:50%;background:#ffb050;box-shadow:0 0 6px 2px rgba(255,110,30,.75);opacity:0;animation:zember 7s linear infinite}
+
+/* the skin picker on the LCD */
+.skinlist{flex:1 1 auto;min-height:0;overflow:hidden;position:relative;padding:4px 8px 6px}
+.skinlist .head{font-family:var(--num);font-size:15px;letter-spacing:.12em;color:var(--lcd1);padding:7px 8px 2px}
+.skinlist .row{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:4px 8px;border-radius:5px;text-align:left;
+  font-family:var(--pix);font-size:15px;letter-spacing:.06em;color:var(--lcd0)}
+.skinlist .row[aria-selected=true]{background:var(--lcd0);color:var(--lcd3)}
+.skinlist .sw{flex:0 0 auto;width:30px;height:20px;border-radius:4px 4px 9px 4px;border:2px solid currentColor;background:linear-gradient(135deg,var(--s1) 0 56%,var(--s2) 56%)}
+.skinlist .row em{margin-left:auto;font-style:normal;font-family:var(--num);font-size:15px;letter-spacing:.06em;opacity:.75}
+html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .head{padding:4px 8px 1px;font-size:13px}
+@media (prefers-reduced-motion:reduce){.skinfx *{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#boot .logo{animation:none;transform:none}.cart{transition:none}.cart.sel::before{animation:none}}
 </style>
 
@@ -232,7 +388,12 @@ html.wide .console.widegame .grille{display:none}
           <div class="lcd-top"><b>ZIGAPLAY</b><span id="count"></span></div>
           <div class="shelf" id="shelf" role="listbox" aria-label="Games"></div>
           <div class="info" aria-live="polite"><h2 id="gTitle"></h2><p id="gBlurb"></p><small id="gNote"></small></div>
-          <div class="lcd-help"><span><i>◀▶</i> CHOOSE</span><span><i>A</i> PLAY</span><span><i>SELECT</i> COLOUR</span></div>
+          <div class="lcd-help"><span><i>◀▶</i> CHOOSE</span><span><i>A</i> PLAY</span><span><i>SELECT</i> SKINS</span></div>
+        </div>
+        <div class="lcd" id="skins" hidden>
+          <div class="lcd-top"><b>SKINS</b><span id="skinPos"></span></div>
+          <div class="skinlist" id="skinList" role="listbox" aria-label="Console skins"></div>
+          <div class="lcd-help"><span><i>▲▼</i> CHOOSE</span><span><i>A</i> WEAR</span><span><i>B</i> BACK</span></div>
         </div>
         <div class="lcd" id="boot" hidden><div class="logo">ZIGAPLAY<small>POCKET CONSOLE</small></div></div>
         <div class="lcd" id="loading" hidden><b id="loadName"></b><span class="dots">LOADING</span></div>
@@ -241,13 +402,15 @@ html.wide .console.widegame .grille{display:none}
         <div class="blackout" id="blackout"></div>
       </div>
     </div>
-    <div class="brand" aria-hidden="true"><b>ZIGAPLAY</b><small>POCKET CONSOLE</small></div>
+    <div class="brand" aria-hidden="true"><b>ZIGAPLAY</b><small id="edition">POCKET CONSOLE</small></div>
     <div class="controls">
       <div class="dpad" id="dpad" role="group" aria-label="D-pad"><i class="v"></i><i class="h"></i><i class="sh"></i><i class="hub"></i><i class="ar u"></i><i class="ar d"></i><i class="ar l"></i><i class="ar r"></i></div>
       <div class="stick" id="stick" role="group" aria-label="Control stick"><i class="notch u"></i><i class="notch d"></i><i class="notch l"></i><i class="notch r"></i><i class="knob"></i></div>
       <div class="ab">
         <button class="btn-ab b" data-btn="b" tabindex="-1" aria-label="B"><span>B</span></button>
         <button class="btn-ab a" data-btn="a" tabindex="-1" aria-label="A"><span>A</span></button>
+        <button class="btn-ab c" data-btn="c" tabindex="-1" aria-label="C"><span>C</span></button>
+        <button class="btn-ab d" data-btn="d" tabindex="-1" aria-label="D"><span>D</span></button>
       </div>
       <div class="pills">
         <button class="pill" data-btn="select" tabindex="-1">SELECT</button>
@@ -272,9 +435,12 @@ html.wide .console.widegame .grille{display:none}
 
    CONTROLS
    The console has a D-pad, A, B, SELECT and START, and a power switch. A cart with `stick:true` gets a round
-   control stick in place of the D-pad while it runs; it sends the same four directions (two at once on a diagonal).
+   control stick in place of the D-pad while it runs; it sends the same four directions (two at once on a diagonal),
+   and a game that defines ZPCart.stick(x, y) also gets where the stick points, x and y each from -1 to 1 (y down).
+   A cart with `face4:true` gets four face buttons in a diamond while it runs: D on top, A right, B below, C left;
+   they reach the game as 'a' 'b' 'c' 'd'.
    - A game can take the buttons directly by defining   window.ZPCart = { input(btn, isDown) {...} }
-     where btn is 'up' 'down' 'left' 'right' 'a' 'b' 'start' 'select'. The call happens inside the player's
+     where btn is 'up' 'down' 'left' 'right' 'a' 'b' 'start' 'select' (and 'c' 'd' for face4 carts). The call happens inside the player's
      own press, so a game may start sound from it.
    - A widescreen game sets `wide:true`: while it runs, the console takes its sideways shape (D-pad left,
      screen middle, buttons right), and with the phone upright it turns itself a quarter turn so the game
@@ -291,31 +457,82 @@ html.wide .console.widegame .grille{display:none}
    - claude        this page's window.claude (through a bridge that rebuilds the game's objects as this
                    page's own), so a game can keep cloud saves in this artifact's database.
                    Each game keeps its saves in its own folder: data/users/<user id>/<game id>/saves
+   - cloud         account saves done by the console: load(id, doc) resolves {ok, json, err}; save(id, json, extra, doc)
+                   writes the text json (plus a few plain fields) to data/users/<user id>/<id>/saves/<doc> (doc defaults to
+                   'main'); list(id) resolves {ok, docs:[{id, json, ...fields}]} for every document of that game;
+                   flush(id, doc) writes now (no doc: all of the game's documents); status(id, doc) says {state, okAt, pending, err}.
+                   Offline its state is 'none'.
    - AudioContext  use it (the console also sets it as the game's window.AudioContext before the game
                    runs) so presses on the console's own buttons can start the game's sound
    - takeRestore(id), cartReady(api)
+   SKINS
+   A cart may name a console skin (`skin:'<id>'`, one of SKINS below); with the skin set to "Match the game" the console
+   wears it while that cartridge is chosen or playing.
    Browser storage is shared by every game on the console, so each game prefixes its keys with its id.
    ===================================================================================================== */
 const CARTS=[
-  {id:'lynties',title:'Lynties',file:'games/lynties/index.html',art:'games/lynties/cart.png',label:'#1a2550',ink:'#ffd36a',
+  {id:'lynties',title:'Lynties',file:'games/lynties/index.html',art:'games/lynties/cart.png',label:'#1a2550',ink:'#ffd36a',skin:'lynties',
    blurb:'Explore the Long Road, beat eight Wardens and bond with 146 Lynties, eight of them legends.',
    note:'Saves to this ZigaPlay · START menu · SELECT map'},
-  {id:'chipcity',title:'Chip City',file:'games/chipcity/index.html',art:'games/chipcity/cart.png',label:'#3d1046',ink:'#ffd36a',
+  {id:'chipcity',title:'Chip City',file:'games/chipcity/index.html',art:'games/chipcity/cart.png',label:'#3d1046',ink:'#ffd36a',skin:'chipcity',
    blurb:'Blackjack, roulette, slots, video poker and hi-lo. Play chips only.',
    note:'A press · START deal or spin · B back'},
-  {id:'gearfist',title:'Gearfist',file:'games/gearfist/index.html',art:'games/gearfist/cart.png',label:'#6a2a14',ink:'#ffd36a',stick:true,
+  {id:'gearfist',title:'Gearfist',file:'games/gearfist/index.html',art:'games/gearfist/cart.png',label:'#6a2a14',ink:'#ffd36a',skin:'gearfist',stick:true,
    blurb:'Punch through a junkyard city of robots, beat four bosses and buy new fighters with the bolts you win.',
    note:'A light · B heavy · ▲ jump · ▼ guard · SELECT burst'},
-  {id:'drownedmoon',title:'Drowned Moon',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#0d1a44',ink:'#cfe4ff',
-   blurb:'The moon fell into the sea. Call the tide in and out to sail, walk the seabed and find out who is dragging it down.',
-   note:'A talk · B back · START menu · SELECT turn the tide'},
+  {id:'drownedmoon',title:'Strike at Night',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',
+   blurb:'Lift was a tech worker in 2026, until a car. Now he\'s a farm boy in a world of swords, framed for his parents\' murder, with a price on his head. Beat strong foes to take their power. Chapters 1 and 2.',
+   note:'A talk · B back · START menu'},
   {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',
    blurb:'A giant neighbor has invaded. Command your country\'s drone unit: research, build and choose what flies against five enemy generals.',
    note:'D-pad choose · ◀ ▶ amounts · A confirm · B back'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
-const SHELLS=[['classic','Classic grey'],['berry','Berry'],['teal','Teal'],['grape','Grape'],['kiwi','Kiwi'],['dandelion','Dandelion'],['midnight','Midnight']];
-const DEFKEYS={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',a:'z',b:'x',start:'Enter',select:'Shift'};
+/* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
+const SKINS=[
+  {id:'auto',name:'Match the game',tag:'AUTO',sw:['#2e377e','#d26c2c']},
+  {id:'lynties',name:'Lynties',tag:'GAME',group:'GAME SKINS',ed:'LYNTIES EDITION',sw:['#2e377e','#ffc83a']},
+  {id:'chipcity',name:'Chip City',tag:'GAME',ed:'CHIP CITY EDITION',sw:['#1a6c3e','#d8262e']},
+  {id:'gearfist',name:'Gearfist',tag:'GAME',ed:'GEARFIST EDITION',sw:['#b25522','#56565f']},
+  {id:'drownedmoon',name:'Strike at Night',tag:'GAME',ed:'STRIKE AT NIGHT EDITION',sw:['#141a3a','#d8342a']},
+  {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
+  {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
+  {id:'lava',name:'Lava',tag:'LIVE',sw:['#271c1a','#ff7a1a']},
+  {id:'holo',name:'Holo',tag:'LIVE',sw:['#e4eefc','#c49aff']},
+  {id:'synth',name:'Synthwave',tag:'LIVE',sw:['#45146a','#2fe0ff']},
+  {id:'classic',name:'Classic grey',group:'COLOURS',sw:['#d2cec3','#a8265e']},
+  {id:'berry',name:'Berry',sw:['#d9405f','#5d3fc0']},
+  {id:'teal',name:'Teal',sw:['#36aea6','#f0b82a']},
+  {id:'grape',name:'Grape',sw:['#7e60cc','#e04a82']},
+  {id:'kiwi',name:'Kiwi',sw:['#a4ca48','#e0483a']},
+  {id:'dandelion',name:'Dandelion',sw:['#f2ca3e','#2f6fd8']},
+  {id:'midnight',name:'Midnight',sw:['#30365a','#ff6a4a']}];
+const SKIN=Object.fromEntries(SKINS.map(k=>[k.id,k]));
+const prng=seed=>()=>(seed=(seed*16807)%2147483647)/2147483647;
+const pct=v=>v.toFixed(1)+'%',sec=v=>v.toFixed(2)+'s';
+function gearSvg(cls,n){let d='';const R=48,r=38,st=Math.PI*2/n;
+  for(let i=0;i<n;i++){const a=i*st;for(const[t,rr]of[[a-st*.24,r],[a-st*.15,R],[a+st*.15,R],[a+st*.24,r],[a+st*.5,r]])d+=(d?'L':'M')+(50+Math.cos(t)*rr).toFixed(2)+' '+(50+Math.sin(t)*rr).toFixed(2)}
+  return `<svg class="gear ${cls}" viewBox="0 0 100 100"><path fill-rule="evenodd" d="${d}Z M50 33a17 17 0 1 0 .01 0Z M50 43a7 7 0 1 0 .01 0Z"/></svg>`}
+const WAVE='<svg viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M0 8 Q12.5 2 25 8 T50 8 T75 8 T100 8 T125 8 T150 8 T175 8 T200 8 V20 H0Z"/></svg>';
+const SKINFX={
+  aurora:()=>'<i class="a a1"></i><i class="a a2"></i><i class="a a3"></i>',
+  galaxy:()=>{const r=prng(11);let h='<i class="neb"></i><i class="neb n2"></i>';
+    for(let i=0;i<18;i++)h+=`<b style="left:${pct(r()*100)};top:${pct(r()*100)};--s:${r()<.3?3:2}px;animation-duration:${sec(2.4+r()*3)};animation-delay:${sec(-r()*5)}"></b>`;return h+'<u></u>'},
+  lava:()=>{const r=prng(5);let h='<i class="pool"></i><svg class="glow" viewBox="0 0 100 100" preserveAspectRatio="none"><g>'+
+    ['M0 71 L7 69 L11 74 L19 72 L23 78 L30 77','M11 74 L12 80 L9 85','M100 63 L93 65 L90 61 L84 63 L80 59','M90 61 L91 56','M36 100 L40 94 L46 93 L48 88 L54 87','M46 93 L50 97',
+     'M68 100 L71 95 L77 94 L79 89 L85 88','M0 22 L4 25 L3 31 L7 34','M100 30 L96 34 L98 40','M0 92 L6 90 L9 94'].map(d=>`<path d="${d}"/>`).join('')+'</g></svg>';
+    for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*92)};animation-duration:${sec(4.5+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+  holo:()=>'<i class="grain"></i><i class="sheen"></i>',
+  synth:()=>'<i class="sunglow"></i><i class="sun"></i><i class="floor"><i></i></i><i class="hz"></i>',
+  lynties:()=>{const r=prng(23);let h='<i class="band"></i><svg class="bolt" viewBox="0 0 60 100"><path d="M40 2 L14 46 L30 46 L16 98 L50 38 L33 38 L50 2Z"/></svg>';
+    for(let i=0;i<12;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(7+r()*8).toFixed(0)}px;--c:${i%3?'#ffd36a':'#8fd0ff'};animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
+  chipcity:()=>{const S=[['♠',8,62,-14],['♥',74,58,12],['♣',40,76,8],['♦',86,88,-10],['♥',20,90,16],['♠',60,94,-6],['♦',6,30,10],['♣',88,24,-12]];
+    return '<i class="gloss"></i>'+S.map(([c,x,y,rot],i)=>`<b class="${c==='♥'||c==='♦'?'r':''}" style="left:${x}%;top:${y}%;--r:${rot}deg;animation-delay:${-i*1.3}s;margin:-23px 0 0 -16px">${c}</b>`).join('')},
+  gearfist:()=>gearSvg('g1',12)+gearSvg('g2',9)+gearSvg('g3',8)+'<i class="haz"></i>'+[['8px','8px'],['calc(100% - 16px)','8px'],['8px','calc(100% - 24px)']].map(([x,y])=>`<i class="rv" style="left:${x};top:${y}"></i>`).join(''),
+  drownedmoon:()=>{const r=prng(31);let h='<i class="glow"></i><i class="moon"></i><svg viewBox="0 0 200 46" preserveAspectRatio="none"><path d="M0 46 V30 H10 L18 22 L26 30 H34 V26 H40 L48 16 L56 26 H62 V32 H72 L80 20 L88 32 H98 V28 H106 L116 14 L126 28 H134 V31 H142 L150 21 L158 31 H166 V27 H172 L182 17 L192 27 H200 V46 Z"/><rect x="45" y="30" width="3" height="3"/><rect x="113" y="28" width="3" height="3"/><rect x="178" y="31" width="3" height="3"/><rect x="77" y="34" width="3" height="3"/></svg>';
+    for(let i=0;i<9;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(5+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+};
+const DEFKEYS={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',a:'z',b:'x',c:'c',d:'v',start:'Enter',select:'Shift'};
 const KEYINFO={ArrowUp:['ArrowUp',38],ArrowDown:['ArrowDown',40],ArrowLeft:['ArrowLeft',37],ArrowRight:['ArrowRight',39],Enter:['Enter',13],Shift:['ShiftLeft',16],' ':['Space',32],Escape:['Escape',27],Backspace:['Backspace',8],Tab:['Tab',9]};
 const keyInfo=k=>KEYINFO[k]?{key:k,code:KEYINFO[k][0],keyCode:KEYINFO[k][1]}:{key:k,code:/^[a-z]$/i.test(k)?'Key'+k.toUpperCase():/^\d$/.test(k)?'Digit'+k:k,keyCode:k.length===1?k.toUpperCase().charCodeAt(0):0};
 
@@ -349,17 +566,28 @@ const SFX={tick:()=>beep([[1568,0,.04]],'square',.03),pick:()=>beep([[1047,0,.06
 let state='off',sel=Math.min(store.get('sel',0),CARTS.length),cur=null,frame=null,restore={};
 const items=()=>[...CARTS,GHOST];
 const cartWin=()=>{try{return frame&&frame.contentWindow}catch(e){return null}};
-function setShell(name){consoleEl.dataset.shell=name;store.set('shell',name)}
-setShell(store.get('shell','classic'));
+/* ---------- skins: what the player picked (skinChoice), and what the console wears right now ---------- */
+let skinChoice=SKIN[store.get('shell','classic')]?store.get('shell','classic'):'classic',skinTouched=false,skinUI=null;
+const fxEl=document.createElement('div');fxEl.className='skinfx';fxEl.setAttribute('aria-hidden','true');consoleEl.prepend(fxEl);
+function autoSkin(){const c=cur||items()[sel];return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
+function wearSkin(id){if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
+  consoleEl.dataset.shell=id;fxEl.dataset.on=id;fxEl.className='skinfx fx-'+id;fxEl.innerHTML=SKINFX[id]?SKINFX[id]():'';$('#edition').textContent=SKIN[id].ed||'POCKET CONSOLE'}
+function refreshSkin(){if(state!=='skins')wearSkin(skinChoice)}
+function chooseSkin(id){skinChoice=id;skinTouched=true;store.set('shell',id);wearSkin(id);
+  try{zclSave('_console',JSON.stringify({shell:id,at:Date.now()}),{shell:id})}catch(e){}}
+/* the skin is kept in the player's account too, so it comes back when the phone has wiped this page's storage */
+async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r.ok||!r.json||skinTouched)return;
+  const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}}catch(e){}}
+wearSkin(skinChoice);
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
-function show(id){for(const x of['home','boot','loading'])$('#'+x).hidden=x!==id}
+function show(id){for(const x of['home','boot','loading','skins'])$('#'+x).hidden=x!==id}
 
 /* ---------- the library shelf ---------- */
 function renderShelf(){const sh=$('#shelf');sh.innerHTML='';
   items().forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':'');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
     b.innerHTML=c.ghost?'<span class="shell"></span><span class="ghostbox"><b>+</b><span>ADD A GAME</span></span>'
       :`<span class="shell"></span><span class="ridges"></span><span class="label" style="--lb:${c.label};--lf:${c.ink}"><img src="${c.art}" alt=""><b></b></span><span class="arrow"></span>`;
-    if(!c.ghost){const t=b.querySelector('.label b');t.textContent=c.title.toUpperCase();if(c.title.length>9){t.style.fontSize='11px';t.style.letterSpacing='.06em';t.style.whiteSpace='nowrap'}}
+    if(!c.ghost){const lb=b.querySelector('.label b');lb.textContent=c.title.toUpperCase();if(c.title.length>11){lb.style.fontSize=Math.max(9,14-(c.title.length-11)*.85).toFixed(1)+'px';lb.style.letterSpacing='.05em';lb.style.whiteSpace='nowrap'}}
     b.setAttribute('aria-label',c.title);
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
@@ -374,13 +602,13 @@ function applyLayout(){const de=document.documentElement,vv=window.visualViewpor
   de.style.setProperty('--zw',cw+'px');de.style.setProperty('--zh',(turned?W:H)+'px');
   const cz=wide?Math.max(.5,Math.min(wideGame?.94:1,(chh-34)/200,wideGame?cw/820:1)):1;
   de.style.setProperty('--cz',cz.toFixed(3));
-  consoleEl.classList.toggle('stickmode',!!(cur&&cur.stick));consoleEl.classList.toggle('widegame',wideGame);
+  consoleEl.classList.toggle('stickmode',!!(cur&&cur.stick));consoleEl.classList.toggle('face4',!!(cur&&cur.face4));consoleEl.classList.toggle('widegame',wideGame);
   if(!$('#home').hidden)requestAnimationFrame(layoutShelf)}
 addEventListener('resize',applyLayout);addEventListener('orientationchange',()=>setTimeout(applyLayout,250));if(window.visualViewport)visualViewport.addEventListener('resize',applyLayout);
 function layoutShelf(){const list=$$('#shelf .cart'),sh=$('#shelf'),k=Math.max(.55,Math.min(1.15,(sh.clientHeight-30)/134));
   list.forEach((b,i)=>{const d=i-sel,ad=Math.abs(d);b.classList.toggle('sel',d===0);b.setAttribute('aria-selected',String(d===0));
     b.style.transform=`translateX(${d*132*k}px) scale(${k*(d===0?1:.82)})`;b.style.opacity=ad>1?0:d===0?1:.55;b.style.zIndex=10-ad});
-  const c=items()[sel];$('#gTitle').textContent=c.title;$('#gBlurb').textContent=c.blurb;$('#gNote').textContent=c.note||'';store.set('sel',sel)}
+  const c=items()[sel];$('#gTitle').textContent=c.title;$('#gBlurb').textContent=c.blurb;$('#gNote').textContent=c.note||'';store.set('sel',sel);if(skinChoice==='auto')refreshSkin()}
 function moveSel(d){const n=items().length,ns=Math.max(0,Math.min(n-1,sel+d));if(ns===sel){SFX.buzz();return}sel=ns;layoutShelf();SFX.tick()}
 function activate(){const c=items()[sel];if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
 
@@ -393,7 +621,7 @@ async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#bla
 async function powerOff(){state='off';consoleEl.classList.add('off');SFX.click()}
 async function launch(c,opts={}){if(state!=='home'&&!opts.instant)return;state='loading';SFX.pick();
   const card=$$('#shelf .cart')[items().indexOf(c)];if(card&&!opts.instant){card.classList.add('inserting');await sleep(380)}
-  $('#loadName').textContent=c.title.toUpperCase();show('loading');cur=c;applyLayout();
+  $('#loadName').textContent=c.title.toUpperCase();show('loading');cur=c;applyLayout();refreshSkin();
   frame=document.createElement('iframe');frame.title=c.title;frame.setAttribute('allow','autoplay; fullscreen');frame.style.visibility='hidden';screenEl.insertBefore(frame,$('#ask'));
   const loaded=new Promise(r=>frame.addEventListener('load',r,{once:true}));
   const inl=inlineCart(c);
@@ -411,11 +639,12 @@ function prepare(html,c,inline){const dir=new URL(c.file.replace(/[^/]*$/,''),do
 async function eject(){if(state!=='game')return;state='ejecting';SFX.eject();$('#blackout').classList.add('on');await sleep(260);
   for(const ac of gameContexts){try{ac.close()}catch(e){}}gameContexts.clear();
   if(frame){try{frame.srcdoc='';frame.removeAttribute('src')}catch(e){}frame.remove();frame=null}cur=null;held.clear();stickDirs.clear();stickId=null;knob.style.transform='';applyLayout();
-  show('home');renderShelf();$('#blackout').classList.remove('on');state='home'}
+  show('home');renderShelf();refreshSkin();$('#blackout').classList.remove('on');state='home'}
 /* the power switch: in a game it turns the game off (asking first when the game wants to), in the library it turns the console off */
 let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
   if(state==='off'){SFX.click();await boot(false);return}
+  if(state==='skins')closeSkins(false);
   if(state==='home'){await powerOff();return}
   if(state!=='game')return;
   releaseAll();const w=cartWin();let r='ask';
@@ -423,6 +652,26 @@ async function powerSwitch(){if(powering)return;powering=true;try{
   if(r===false)return;
   if(r!==true){const ok=await askAsync('Turn this game off and go back to the library? Anything you have not saved will be lost.',['Turn off','Keep playing']);if(ok!==0)return}
   await eject()}finally{powering=false}}
+
+/* ---------- the skin picker: SELECT in the library. Moving through the list tries each skin on at once ---------- */
+function openSkins(){if(state!=='home')return;skinUI={i:Math.max(0,SKINS.findIndex(k=>k.id===skinChoice))};state='skins';show('skins');renderSkins();SFX.pick()}
+function renderSkins(){const L=$('#skinList');L.innerHTML='';
+  SKINS.forEach((k,n)=>{if(k.group){const h=document.createElement('div');h.className='head';h.textContent=k.group;L.append(h)}
+    const b=document.createElement('button');b.className='row';b.tabIndex=-1;b.setAttribute('role','option');
+    b.innerHTML=`<i class="sw" style="--s1:${k.sw[0]};--s2:${k.sw[1]}"></i><span></span><em>${k.tag||''}</em>`;b.querySelector('span').textContent=k.name.toUpperCase();
+    b.addEventListener('click',()=>{sfxUnlock();if(state!=='skins')return;if(skinUI.i===n)keepSkin();else{skinUI.i=n;markSkins();SFX.tick()}});L.append(b)});
+  markSkins()}
+function markSkins(){const rows=$$('#skinList .row'),L=$('#skinList');rows.forEach((r,n)=>r.setAttribute('aria-selected',String(n===skinUI.i)));
+  wearSkin(SKINS[skinUI.i].id);$('#skinPos').textContent=`${skinUI.i+1}/${SKINS.length}`;
+  const r=rows[skinUI.i];if(r){const prev=r.previousElementSibling,top=prev&&prev.classList.contains('head')?prev.offsetTop:r.offsetTop;
+    if(top<L.scrollTop+4)L.scrollTop=Math.max(0,top-4);else if(r.offsetTop+r.offsetHeight>L.scrollTop+L.clientHeight-4)L.scrollTop=r.offsetTop+r.offsetHeight-L.clientHeight+6}}
+function skinsInput(b){if(!skinUI)return;
+  if(b==='up'||b==='left'){if(skinUI.i>0){skinUI.i--;markSkins();SFX.tick()}else SFX.buzz()}
+  else if(b==='down'||b==='right'){if(skinUI.i<SKINS.length-1){skinUI.i++;markSkins();SFX.tick()}else SFX.buzz()}
+  else if(b==='a'||b==='start'||b==='select')keepSkin();
+  else if(b==='b')closeSkins(false)}
+function keepSkin(){const k=SKINS[skinUI.i];chooseSkin(k.id);closeSkins(true);toast('SKIN: '+k.name.toUpperCase())}
+function closeSkins(kept){if(!kept)SFX.eject();skinUI=null;state='home';show('home');wearSkin(skinChoice);requestAnimationFrame(layoutShelf)}
 
 /* ---------- questions on the LCD ---------- */
 let askState=null;
@@ -446,12 +695,15 @@ function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}cat
     case 'home':
       if(b==='left'||b==='up')moveSel(-1);else if(b==='right'||b==='down')moveSel(1);
       else if(b==='a'||b==='start')activate();
-      else if(b==='select'){const i=SHELLS.findIndex(s=>s[0]===consoleEl.dataset.shell),n=SHELLS[(i+1)%SHELLS.length];setShell(n[0]);toast('SHELL: '+n[1].toUpperCase());SFX.tick()}
+      else if(b==='select')openSkins();
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='home'){moveSel(d==='left'||d==='up'?-1:1);repT=setTimeout(again,150)}},420)}
+      break;
+    case 'skins':skinsInput(b);
+      if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='skins'){skinsInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'off':if(b==='start'||b==='a')powerSwitch();break}}
 function releaseBtn(b){if(!held.has(b))return;held.delete(b);if(state==='game')toCart(b,false)}
-function releaseAll(){for(const b of[...held])releaseBtn(b);setDpad(null);stickDirs.clear();stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stick.querySelectorAll('.notch').forEach(n=>n.classList.remove('on'))}
+function releaseAll(){for(const b of[...held])releaseBtn(b);setDpad(null);try{toCartStick(0,0)}catch(e){}stickDirs.clear();stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stick.querySelectorAll('.notch').forEach(n=>n.classList.remove('on'))}
 function toCart(b,down){const w=cartWin();if(!w)return;
   try{if(w.ZPCart&&typeof w.ZPCart.input==='function'){w.ZPCart.input(b,down);return}}catch(e){console.warn('ZigaPlay cartridge input failed',e);return}
   const k=((cur&&cur.keys)||DEFKEYS)[b];if(!k)return;const info=keyInfo(k);
@@ -482,8 +734,10 @@ function stickSet(nx,ny){const on=d=>stickDirs.has(d),want=new Set();
 function stickAt(e){const r=stick.getBoundingClientRect(),z=r.width/138||1;let dx=(e.clientX-(r.left+r.width/2))/z,dy=(e.clientY-(r.top+r.height/2))/z;
   if(document.documentElement.classList.contains('turned'))[dx,dy]=[dy,-dx];
   const d=Math.hypot(dx,dy),k=d>STICK_R?STICK_R/d:1;dx*=k;dy*=k;
-  knob.style.transform=`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`;stickSet(dx/STICK_R,dy/STICK_R)}
-function stickEnd(e){if(e&&e.pointerId!==stickId)return;stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stickSet(0,0)}
+  knob.style.transform=`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`;stickSet(dx/STICK_R,dy/STICK_R);toCartStick(dx/STICK_R,dy/STICK_R)}
+function stickEnd(e){if(e&&e.pointerId!==stickId)return;stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stickSet(0,0);toCartStick(0,0)}
+/* games that want the stick's exact direction get it too, not just the four directions */
+function toCartStick(x,y){if(state!=='game')return;const w=cartWin();try{if(w&&w.ZPCart&&typeof w.ZPCart.stick==='function')w.ZPCart.stick(x,y)}catch(e){}}
 stick.addEventListener('pointerdown',e=>{e.preventDefault();sfxUnlock();stickId=e.pointerId;try{stick.setPointerCapture(e.pointerId)}catch(_){}knob.classList.remove('back');stickAt(e)});
 stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)stickAt(e)});
 for(const t of['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(t,stickEnd);
@@ -495,7 +749,7 @@ for(const el of $$('[data-btn]')){const b=el.dataset.btn;
   el.addEventListener('contextmenu',e=>e.preventDefault())}
 $('#power').addEventListener('click',()=>{sfxUnlock();powerSwitch()});
 /* keyboard, for when the console itself has focus (a game that has focus reads the keys itself) */
-const KB={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',z:'a',Z:'a',' ':'a',x:'b',X:'b',Escape:'b',Backspace:'b',Enter:'start',Shift:'select'};
+const KB={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',z:'a',Z:'a',' ':'a',x:'b',X:'b',c:'c',C:'c',v:'d',V:'d',Escape:'b',Backspace:'b',Enter:'start',Shift:'select'};
 addEventListener('keydown',e=>{const b=KB[e.key];if(!b||e.metaKey||e.ctrlKey||e.altKey)return;e.preventDefault();if(e.repeat)return;pressBtn(b)});
 addEventListener('keyup',e=>{const b=KB[e.key];if(b)releaseBtn(b)});
 addEventListener('blur',()=>{if(state!=='game')releaseAll()});
@@ -512,25 +766,77 @@ const ownCopy=x=>{if(x===null||typeof x!=='object')return x;if(Array.isArray(x))
   if(Object.prototype.toString.call(x)!=='[object Object]')return x;
   const o={};for(const k of Object.keys(x))o[k]=ownCopy(x[k]);return o};
 const hasMethods=v=>{for(let o=v;o&&Object.getPrototypeOf(o)!==null;o=Object.getPrototypeOf(o))for(const k of Object.getOwnPropertyNames(o)){if(k==='constructor')continue;try{if(typeof v[k]==='function')return true}catch(e){}}return false};
-const bridged=new WeakMap();
+const bridged=new WeakMap(),ASYNC_VERBS=new Set(['get','set','update','delete','add']);
 const bridge=v=>{
   if(v===null||(typeof v!=='object'&&typeof v!=='function'))return v;
   if(typeof v==='object'&&typeof v.then==='function')return v.then(bridge);
   if(Array.isArray(v)||(typeof v==='object'&&!hasMethods(v)))return v;
   if(bridged.has(v))return bridged.get(v);
-  const call=(f,self,a)=>bridge(f.apply(self,a.map(ownCopy)));
+  /* reads and writes run a moment later from this page's own code, never from inside the game's call */
+  const call=(f,self,a,k)=>{const args=a.map(ownCopy);return ASYNC_VERBS.has(k)?bridge(Promise.resolve().then(()=>f.apply(self,args))):bridge(f.apply(self,args))};
   const p=new Proxy(typeof v==='function'?function(){}:{},{
-    get:(_,k)=>{const x=v[k];return typeof x==='function'?(...a)=>call(x,v,a):x},
+    get:(_,k)=>{const x=v[k];return typeof x==='function'?(...a)=>call(x,v,a,k):x},
     has:(_,k)=>k in v,
     apply:(_,self,a)=>call(v,undefined,a)});
   bridged.set(v,p);return p};
 let claudeBridge=null;
+/* ---------- account saves, written by the console itself ----------
+   A game hands its save over as text with ZIGAPLAY.cloud.save(id, json, extra). The console writes it to this
+   artifact's database with its own objects and its own window.claude (no objects from the game's frame reach the
+   platform), one write at a time and at most one every two seconds per game, retrying on failure. status(id) tells
+   the game exactly what happened, including the platform's error code when a write is turned down. */
+const ZCL={st:'off',db:null,uid:null,err:'',perm:'',games:{},boot:null};
+const zSleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* a game may keep several documents (doc names), each with its own queue: data/users/<uid>/<id>/saves/<doc> */
+const zclG=(id,doc)=>{const k=String(id)+'|'+String(doc||'main');return ZCL.games[k]||(ZCL.games[k]={id:String(id),doc:String(doc||'main'),json:null,extra:null,dirty:false,busy:false,okAt:0,loadAt:0,had:false,err:'',t:0,last:0})};
+const zErr=e=>e&&typeof e==='object'&&(e.code||e.name)?String(e.code||e.name):String(e||'error');
+function zclBoot(){if(ZCL.boot)return ZCL.boot;
+  ZCL.boot=(async()=>{const c=window.claude;if(!c||typeof c.use!=='function'){ZCL.st='none';return}
+    for(let a=0;a<6;a++){ZCL.st='connecting';
+      try{
+        const pmP=Promise.race([Promise.resolve().then(()=>c.use('permissions')),zSleep(4000).then(()=>null)]).catch(()=>null);
+        const got=await Promise.race([Promise.all([c.use('db'),c.use('user')]),zSleep(9000).then(()=>null)]);
+        try{const pm=await pmP;if(pm&&typeof pm.state==='function'){ZCL.perm=await pm.state('db');if(ZCL.perm==='prompt'&&typeof pm.request==='function'){const r=await pm.request(['db']);ZCL.perm=(r&&r.db)||ZCL.perm}}}catch(e){}
+        if(!got)throw{code:'slow'};if(!got[0])throw{code:'no_db'};if(!got[1])throw{code:'no_user'};
+        const uid=await got[1].id();if(!uid)throw{code:'no_user_id'};
+        ZCL.db=got[0];ZCL.uid=uid;ZCL.st='on';ZCL.err='';for(const k in ZCL.games)zclPump(ZCL.games[k]);return}
+      catch(e){ZCL.st='off';ZCL.err=zErr(e);await zSleep(4000+a*4000)}}})();
+  return ZCL.boot}
+const zclCol=id=>ZCL.db.collection('data/users/'+ZCL.uid+'/'+String(id)+'/saves');
+const zclRef=(id,doc)=>zclCol(id).doc(String(doc||'main'));
+async function zclLoad(id,doc){const g=zclG(id,doc);await zclBoot();if(ZCL.st!=='on')return{ok:false,err:ZCL.err||ZCL.st};
+  for(let a=0;a<3;a++){try{const snap=await zclRef(id,doc).get();const d=snap.exists?snap.data():null;g.loadAt=Date.now();g.had=!!(d&&typeof d.json==='string');
+      return{ok:true,json:g.had?d.json:null}}catch(e){g.err=zErr(e);await zSleep(700*(a+1))}}
+  return{ok:false,err:g.err}}
+/* every document a game keeps, as plain fields plus its doc name in id */
+async function zclList(id){await zclBoot();if(ZCL.st!=='on')return{ok:false,err:ZCL.err||ZCL.st};let err='';
+  for(let a=0;a<3;a++){try{const snap=await zclCol(id).limit(1000).get();
+      return{ok:true,docs:snap.docs.map(d=>{const b=d.exists===false?null:d.data();return b?Object.assign({},b,{id:d.id}):null}).filter(Boolean)}}
+    catch(e){err=zErr(e);await zSleep(700*(a+1))}}
+  return{ok:false,err}}
+function zclSave(id,json,extra,doc){const g=zclG(id,doc);g.json=String(json);try{g.extra=extra&&typeof extra==='object'?JSON.parse(JSON.stringify(extra)):{}}catch(e){g.extra={}}g.dirty=true;zclPump(g)}
+async function zclPump(g){if(g.busy||!g.dirty)return;zclBoot();if(ZCL.st!=='on')return;
+  const w=g.last+2000-Date.now();if(w>0){clearTimeout(g.t);g.t=setTimeout(()=>zclPump(g),w);return}
+  g.busy=true;g.dirty=false;g.last=Date.now();const body=Object.assign({savedAt:Date.now()},g.extra,{json:g.json});
+  try{await zclRef(g.id,g.doc).set(body);g.okAt=Date.now();g.err=''}
+  catch(e){g.err=zErr(e);if(!g.dirty)g.dirty=true;
+    if(g.err==='not_granted'){try{const pm=await window.claude.use('permissions');if(pm&&pm.request){const r=await pm.request(['db']);ZCL.perm=(r&&r.db)||ZCL.perm}}catch(_){}}}
+  finally{g.busy=false;if(g.dirty){clearTimeout(g.t);g.t=setTimeout(()=>zclPump(g),g.err?5000:200)}}}
+async function zclFlushG(g){if(!g.dirty&&!g.busy)return true;g.last=0;const t0=Date.now();
+  while((g.dirty||g.busy)&&Date.now()-t0<4000){if(!g.busy)zclPump(g);await zSleep(120)}return!g.dirty&&!g.busy}
+/* write now: one document, or with no doc name every document of that game */
+async function zclFlush(id,doc){const gs=doc!=null?[zclG(id,doc)]:Object.values(ZCL.games).filter(g=>g.id===String(id));
+  if(!gs.length)return true;const r=await Promise.all(gs.map(zclFlushG));return r.every(Boolean)}
+const zclStatus=(id,doc)=>{const g=zclG(id,doc);return{state:ZCL.st,err:g.err||(ZCL.st==='on'?'':ZCL.err),okAt:g.okAt,loadAt:g.loadAt,had:g.had,pending:g.dirty||g.busy,perm:ZCL.perm,who:ZCL.uid?String(ZCL.uid).slice(-4):''}};
+addEventListener('visibilitychange',()=>{if(document.hidden)for(const k in ZCL.games)zclFlushG(ZCL.games[k])});
+addEventListener('pagehide',()=>{for(const k in ZCL.games)zclFlushG(ZCL.games[k])});
 const gameClaude=()=>{const c=window.claude;if(!c||typeof c.use!=='function')return null;
   return claudeBridge||(claudeBridge=Object.freeze({use:name=>Promise.resolve(c.use(name)).then(bridge)}))};
 
 window.ZIGAPLAY=Object.freeze({
   version:1,
   get claude(){return gameClaude()},
+  cloud:Object.freeze({load:zclLoad,save:zclSave,flush:zclFlush,status:zclStatus,list:zclList}),
   AudioContext:ZPAudioContext,
   takeRestore(id){const r=restore[id];delete restore[id];return r||null},
   cartReady(api){},
@@ -539,15 +845,15 @@ window.ZIGAPLAY=Object.freeze({
 
 /* ---------- start, and come back to the same game after this page is updated ---------- */
 const hot=window.claude&&window.claude.hot;
-if(hot&&hot.snapshot)hot.snapshot(()=>{const w=cartWin();let s=null;try{s=w&&w.ZPCart&&w.ZPCart.snapshot&&w.ZPCart.snapshot()}catch(e){}return{cart:state==='game'&&cur?cur.id:null,state:s,shell:consoleEl.dataset.shell,sel}});
+if(hot&&hot.snapshot)hot.snapshot(()=>{const w=cartWin();let s=null;try{s=w&&w.ZPCart&&w.ZPCart.snapshot&&w.ZPCart.snapshot()}catch(e){}return{cart:state==='game'&&cur?cur.id:null,state:s,shell:skinChoice,sel}});
 const start=data=>{applyLayout();data=data||{};if(typeof data.sel==='number')sel=Math.min(data.sel,CARTS.length);
   const c=data.cart&&CARTS.find(x=>x.id===data.cart);
   if(c){if(data.state)restore[c.id]=data.state;consoleEl.classList.remove('off');show('home');renderShelf();state='home';launch(c,{instant:true})}
   else boot(false)};
 if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
-window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel}};
+setTimeout(skinFromAccount,400);
+window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
 })();
 </script>
-
 </body>
 </html>

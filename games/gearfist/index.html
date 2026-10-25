@@ -149,7 +149,14 @@ const upgrade=s=>{const o=Object.assign(fresh(),s);o.upg=Object.assign({},s.upg|
 let SV=(()=>{try{const s=JSON.parse(localStorage.getItem(KEY));if(valid(s))return upgrade(s)}catch(e){}return fresh()})();
 function save(){SV.savedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}cloudSoon()}
 const CL={ref:null,state:'off',t:0,writing:null,dirty:false};
-async function cloudInit(){const C=ZP?ZP.claude:window.claude;if(!C||typeof C.use!=='function')return;
+/* inside the ZigaPlay the console writes account saves itself (ZIGAPLAY.cloud) */
+const ZC=ZP&&ZP.cloud&&typeof ZP.cloud.save==='function'?ZP.cloud:null;
+async function cloudInit(){
+  if(ZC){CL.mode='zp';const r=await ZC.load('gearfist');if(!r||!r.ok){CL.tries=(CL.tries||0)+1;if(CL.tries<10)setTimeout(cloudInit,10000);return}
+    CL.state='on';let cs=null;try{cs=r.json?JSON.parse(r.json):null}catch(e){}
+    if(valid(cs)&&(+cs.savedAt||0)>(+SV.savedAt||0)){const snd=SV.sound;SV=upgrade(cs);SV.sound=snd;try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}if(SCREEN==='title')titleScreen();toast('Your garage came back from your account.')}
+    else if(SV.savedAt&&(!cs||(+SV.savedAt||0)>(+cs.savedAt||0)))cloudWrite();return}
+  const C=ZP?ZP.claude:window.claude;if(!C||typeof C.use!=='function')return;
   try{const got=await Promise.race([Promise.all([C.use('db'),C.use('user')]),sleep(8000).then(()=>null)]);if(!got||!got[0]||!got[1])return;
     const[db,user]=got,uid=await Promise.race([user.id(),sleep(5000).then(()=>null)]);if(!uid)return;
     const ref=ZP?db.collection(`data/users/${uid}/gearfist/saves`).doc('main'):db.collection(`data/users/${uid}`).doc('gearfist');
@@ -157,10 +164,10 @@ async function cloudInit(){const C=ZP?ZP.claude:window.claude;if(!C||typeof C.us
     if(valid(cs)&&(+cs.savedAt||0)>(+SV.savedAt||0)){const snd=SV.sound;SV=upgrade(cs);SV.sound=snd;try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}if(SCREEN==='title')titleScreen();toast('Your garage came back from the cloud.')}
     else if(SV.savedAt&&(!cs||(+SV.savedAt||0)>(+cs.savedAt||0)))cloudWrite()}catch(e){CL.state='off'}}
 function cloudSoon(){if(CL.state!=='on')return;CL.dirty=true;clearTimeout(CL.t);CL.t=setTimeout(cloudWrite,1500)}
-async function cloudWrite(){if(CL.state!=='on')return;if(CL.writing)return CL.writing;clearTimeout(CL.t);CL.dirty=false;const body={json:JSON.stringify(SV),savedAt:SV.savedAt||Date.now(),bolts:SV.bolts};
+async function cloudWrite(){if(CL.state!=='on')return;if(CL.mode==='zp'){clearTimeout(CL.t);CL.dirty=false;ZC.save('gearfist',JSON.stringify(SV),{bolts:SV.bolts});return true}if(CL.writing)return CL.writing;clearTimeout(CL.t);CL.dirty=false;const body={json:JSON.stringify(SV),savedAt:SV.savedAt||Date.now(),bolts:SV.bolts};
   CL.writing=(async()=>{for(let a=0;a<2;a++){try{await CL.ref.set(body);return true}catch(e){if(a===0&&e&&e.code==='unavailable'){await sleep(700);continue}CL.dirty=true;return false}}})();
   try{return await CL.writing}finally{CL.writing=null;if(CL.dirty)cloudSoon()}}
-async function cloudFlush(){if(CL.state!=='on')return;clearTimeout(CL.t);await Promise.race([cloudWrite(),sleep(3000)])}
+async function cloudFlush(){if(CL.state!=='on')return;clearTimeout(CL.t);if(CL.mode==='zp'){if(CL.dirty)cloudWrite();await ZC.flush('gearfist');return}await Promise.race([cloudWrite(),sleep(3000)])}
 
 /* ---------- sound: punchy effects and a rock loop for every stage ---------- */
 const SND=(()=>{let ac=null,out=null,mg=null,timer=0,next=0,step=0,song=null;

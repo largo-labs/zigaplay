@@ -116,6 +116,55 @@ button:focus{outline:none}
 .table-btn small{display:block;font-size:.68rem;font-weight:500;color:#cdb6da;line-height:1.2;margin-top:.1rem}
 .lobby .bar .row .btn{font-size:.82rem}
 .cashier{margin:0 .7rem .3rem}
+/* ---------- your luck, in the top bar ---------- */
+.luckp{display:flex;align-items:center;gap:.2rem;background:#0b1a10;border:2px solid #2f9a44;border-radius:999px;padding:0 .4rem 0 .2rem;font-family:var(--num);line-height:1.2;color:#9dffb4;flex:0 0 auto}
+.luckp b{font-weight:400;font-size:1.1rem}.luckp small{font-size:.85rem;color:#6fc07a}
+.lk-ic{width:.85rem;height:.85rem;background:radial-gradient(circle at 30% 30%,#5fd06a 0 28%,transparent 30%),radial-gradient(circle at 70% 30%,#5fd06a 0 28%,transparent 30%),radial-gradient(circle at 30% 70%,#5fd06a 0 28%,transparent 30%),radial-gradient(circle at 70% 70%,#5fd06a 0 28%,transparent 30%);flex:0 0 auto}
+/* ---------- Big Sal ---------- */
+.debt{display:flex;align-items:center;gap:.55rem;text-align:left;margin:0 .7rem .4rem;padding:.35rem .55rem;background:linear-gradient(90deg,#4a1820,#2a0f16)}
+.debt canvas{width:2.6rem;height:2.6rem;image-rendering:pixelated;flex:0 0 auto}
+.debt span{flex:1;min-width:0}.debt b{display:block;font-size:.92rem;color:#fff}.debt b em{font-style:normal;font-family:var(--num);font-size:1.3rem;font-weight:400;color:#ff9aa2}
+.debt small{display:block;font-size:.64rem;color:#e6bcc4;margin-top:.12rem}
+.debt.free{background:linear-gradient(90deg,#1d4a2a,#10291a)}.debt.free b{color:#9dffb4}
+.dbar{display:block;height:.45rem;margin-top:.2rem;border-radius:999px;background:#12060a;border:1px solid #000;overflow:hidden}.dbar>i{display:block;height:100%;background:linear-gradient(#ffe08a,#e0a330)}
+.dbar.big{height:.8rem;margin:.4rem 0}
+.sal{background:radial-gradient(110% 70% at 50% 25%,#5a1d2a 0%,#2e0f18 50%,#140c1c 100%)}
+.sal-head{display:flex;align-items:center;gap:.6rem;padding:.7rem .8rem .3rem}.sal-head canvas{width:5rem;height:5rem;image-rendering:pixelated;flex:0 0 auto;filter:drop-shadow(0 .25rem 0 rgba(0,0,0,.5))}
+.sal-say{margin:0;flex:1;background:#fff4d8;color:#2a1600;border:2px solid #000;border-radius:.6rem;padding:.45rem .55rem;font-size:.82rem;line-height:1.3;position:relative}
+.sal-box{flex:1;min-height:0;padding:.3rem 1rem;display:flex;flex-direction:column;justify-content:center}
+.sal-owe{text-align:center}.sal-owe small{display:block;font-size:.7rem;letter-spacing:.2em;color:#e6bcc4}.sal-owe b{display:block;font-family:var(--num);font-weight:400;font-size:3rem;line-height:1;color:#ff9aa2;text-shadow:0 .15rem 0 #000}
+.sal-owe.free b{color:#9dffb4}.sal-note{text-align:center;font-size:.76rem;color:#d9c2e6;margin:.2rem 0}
+/* ---------- the corner store ---------- */
+.store{background:radial-gradient(110% 70% at 50% 0%,#1f4a2a 0%,#13301c 45%,#0c1a10 100%)}
+.st-top{margin:.6rem .7rem .3rem;padding:.45rem .55rem;border:2px solid #000;border-radius:.55rem;background:#0b1a10}
+.st-top b{display:block;color:#9dffb4;font-size:1rem}.st-top small{display:block;font-size:.66rem;color:#a8d4b0;margin-top:.1rem;line-height:1.25}
+.good{background:linear-gradient(90deg,#2a4a30,#1a3020)}.good .price{font-style:normal;font-family:var(--num);font-size:1.25rem;color:var(--gold);text-align:right;flex:0 0 auto;line-height:1}
+.good .price i{display:block;font-style:normal;font-size:.95rem;color:#9dffb4}
+.store-btn{background:linear-gradient(90deg,#2a4a30,#18301e)}
+textarea.code{width:100%;min-height:5.5rem;margin-top:.35rem;background:#0b0710;color:var(--cream);border:2px solid var(--gold2);border-radius:.4rem;font:.7rem/1.3 ui-monospace,monospace;padding:.35rem;word-break:break-all;-webkit-user-select:text;user-select:text}
+.savewhere{margin:0;font-size:.8rem;line-height:1.3}.savenote{margin:.35rem 0 0;font-size:.7rem;line-height:1.3;opacity:.7}.savewhere.cloud{color:#9dffb4}.savewhere.none,.savewhere.maybe{color:#ffb0b6}
+/* ---------- work: the vault ---------- */
+.job-btn{background:linear-gradient(90deg,#1f4a5a,#14303b)}
+.work{background:radial-gradient(110% 70% at 50% 30%,#2c5866 0%,#163540 45%,#0d1c23 100%)}
+.wk-head{text-align:center;padding:.6rem .5rem 0}.wk-head h2{margin:0;font-size:1.5rem;letter-spacing:.12em;color:var(--cyan);text-shadow:0 0 .45rem rgba(94,230,255,.8),0 .12rem 0 #062a33}
+.wk-rank{margin:.15rem 0 0;font-size:.78rem;color:var(--gold);letter-spacing:.06em}
+.wk-stage{flex:1;min-height:0;position:relative;display:grid;place-items:center}
+.wk-chip{position:relative;width:min(13rem,58vw,34vh);aspect-ratio:1;filter:drop-shadow(0 .4rem 0 rgba(0,0,0,.45))}
+.wk-chip canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.wk-shine{position:absolute;inset:8%;border-radius:50%;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.75) 47%,transparent 58%);background-size:260% 100%;background-position:120% 0;opacity:0;pointer-events:none}
+.wk-chip.rub{animation:rub .18s ease-out}.wk-chip.rub .wk-shine{animation:shine .35s ease-out}
+.wk-chip.done{animation:flipchip .55s ease-in-out}
+@keyframes rub{30%{transform:scale(.94) rotate(-4deg)}70%{transform:scale(1.03) rotate(3deg)}}
+@keyframes shine{0%{opacity:1;background-position:120% 0}100%{opacity:0;background-position:-30% 0}}
+@keyframes flipchip{0%{transform:scale(1)}40%{transform:scale(1.12) rotateY(180deg)}100%{transform:scale(1) rotateY(360deg)}}
+.wk-tap{position:absolute;inset:0;background:none;border:0;padding:0;cursor:pointer}
+.wk-prog{display:flex;align-items:center;gap:.55rem;padding:0 1.2rem}
+.wk-bar{flex:1;height:.8rem;border-radius:999px;background:#0a1418;border:2px solid #000;overflow:hidden}
+.wk-bar i{display:block;height:100%;width:0;background:linear-gradient(#ffe08a,#e0a330);transition:width .12s}
+.wk-count{font-family:var(--num);font-size:1.4rem;color:var(--gold);min-width:3.3rem;text-align:right}
+.wk-tip{text-align:center;margin:.35rem 0 0;font-size:.82rem;color:#cfe9ef}.wk-tip b{color:var(--gold)}
+.wk-shift{text-align:center;margin:.2rem 0 .45rem;font-size:.72rem;color:#8fb3bd;min-height:1em}
+.wk-btn{font-size:1.15rem;padding:.55rem}
 .fine{font-size:.6rem;color:#8d7a9a;text-align:center;padding:0 .5rem .1rem;letter-spacing:.04em}
 
 /* ---------- blackjack ---------- */
@@ -219,6 +268,7 @@ button:focus{outline:none}
   <header id="top">
     <span class="brand">CHIP<b>CITY</b></span>
     <span id="where"></span>
+    <span class="luckp" id="luck" hidden title="Luck"><i class="lk-ic" aria-hidden="true"></i><b id="luckv"></b><small id="luckt"></small></span>
     <span class="bal" id="bal" aria-label="Chips"><i class="coin" aria-hidden="true"></i><span id="chips">1,000</span></span>
     <button id="snd" class="snd nonav" aria-label="Music and sound" title="Music and sound">♪</button>
   </header>
@@ -246,14 +296,69 @@ const ri=n=>Math.floor(rnd()*n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=ri(i+1),t=a[i];a[i]=a[j];a[j]=t}return a};
 
 /* ---------- the player's wallet, kept in this browser and (inside the ZigaPlay) in the cloud ---------- */
-const KEY='chipcity-save',START=1000,BAILOUT=500,MINBET=5;
+const KEY='chipcity-save',START=1000,MINBET=5,WORK_N=10,WORK_PAY=5,DEBT=100000;
 const GAMES={bj:'Blackjack',rl:'Roulette',sl:'Slots',vp:'Video Poker',hl:'Hi-Lo'};
-const fresh=()=>({v:1,chips:START,peak:START,bailouts:0,wagered:0,biggest:{amt:0,game:''},games:{},tier:0,sound:2,bets:{bj:25,sl:10,vp:25,hl:25},chip:25,rlLast:null,created:Date.now(),savedAt:0});
+/* each casino you start gets its own id, so a brand-new stack can never be mistaken for (and overwrite) your saved one */
+const newRun=()=>Date.now().toString(36)+'-'+Math.floor(rnd()*1e9).toString(36);
+const fresh=()=>({v:1,run:newRun(),chips:START,peak:START,bailouts:0,wagered:0,biggest:{amt:0,game:''},games:{},tier:0,sound:2,bets:{bj:25,sl:10,vp:25,hl:25},chip:25,rlLast:null,work:{n:0,clicks:0,earned:0},debt:DEBT,paid:0,freed:0,intro:0,boosts:{},bought:{},created:Date.now(),savedAt:0});
 const valid=s=>!!s&&typeof s==='object'&&typeof s.chips==='number'&&isFinite(s.chips)&&s.chips>=0;
-const upgrade=s=>{const o=Object.assign(fresh(),s);o.bets=Object.assign(fresh().bets,s.bets||{});o.games=s.games&&typeof s.games==='object'?s.games:{};o.biggest=s.biggest||{amt:0,game:''};o.chips=Math.floor(o.chips);return o};
-let ST=(()=>{try{const s=JSON.parse(localStorage.getItem(KEY));if(valid(s))return upgrade(s)}catch(e){}return fresh()})();
-function save(){ST.savedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}cloudSoon()}
+const upgrade=s=>{const o=Object.assign(fresh(),s);if(!s.run)o.run='legacy';o.work=Object.assign({n:0,clicks:0,earned:0},s.work||{});o.boosts=Object.assign({},s.boosts||{});o.bought=Object.assign({},s.bought||{});if(typeof s.debt!=='number'){o.debt=DEBT;o.paid=0}o.bets=Object.assign(fresh().bets,s.bets||{});o.games=s.games&&typeof s.games==='object'?s.games:{};o.biggest=s.biggest||{amt:0,game:''};o.chips=Math.floor(o.chips);return o};
+/* the wallet is kept in several separate stores on this device (this page's storage, the console's own storage,
+   IndexedDB and the offline cache), so if a phone forgets one of them when the app is closed, the newest copy
+   that survived comes back. Every store gets every save, so the newest copy is always the right one. */
+const BK=KEY+'-backup',TOPW=(()=>{try{return window.parent!==window&&window.parent.document?window.parent:window}catch(e){return window}})();
+const alive=()=>{if(TOPW===window)return true;try{return !!(window.frameElement&&window.frameElement.isConnected)}catch(e){return false}};
+const stores=()=>{const a=[];try{a.push(localStorage)}catch(e){}try{if(TOPW!==window&&TOPW.localStorage)a.push(TOPW.localStorage)}catch(e){}return a};
+const newest=list=>list.filter(valid).sort((a,b)=>(+b.savedAt||0)-(+a.savedAt||0))[0]||null;
+function lsRead(){const out=[];for(const st of stores())for(const k of[KEY,BK]){try{out.push(JSON.parse(st.getItem(k)))}catch(e){}}return newest(out)}
+function lsWrite(j){for(const st of stores())for(const k of[KEY,BK]){try{st.setItem(k,j)}catch(e){}}}
+let idbP=null;
+function idb(){if(idbP)return idbP;
+  idbP=new Promise(res=>{let done=false;const fin=d=>{if(!done){done=true;res(d)}};setTimeout(()=>fin(null),4000);
+    try{const f=TOPW.indexedDB||window.indexedDB;if(!f)return fin(null);const rq=f.open('chipcity',1);
+      rq.onupgradeneeded=()=>{try{rq.result.createObjectStore('save')}catch(e){}};
+      rq.onsuccess=()=>{const d=rq.result;d.onversionchange=()=>{try{d.close()}catch(e){}idbP=null};d.onclose=()=>{idbP=null};fin(d)};
+      rq.onerror=rq.onblocked=()=>fin(null)}catch(e){fin(null)}}).then(d=>{if(!d)idbP=null;return d});
+  return idbP}
+async function idbPut(j){const d=await idb();if(!d)return false;
+  return new Promise(r=>{try{const t=d.transaction('save','readwrite',{durability:'strict'});t.objectStore('save').put(j,'main');t.oncomplete=()=>r(true);t.onerror=t.onabort=()=>r(false)}catch(e){idbP=null;r(false)}})}
+async function idbGet(){const d=await idb();if(!d)return null;
+  return new Promise(r=>{try{const q=d.transaction('save','readonly').objectStore('save').get('main');q.onsuccess=()=>{try{r(JSON.parse(q.result))}catch(e){r(null)}};q.onerror=()=>r(null)}catch(e){r(null)}})}
+const cacheBox=()=>{try{const W=TOPW.caches?TOPW:window;return W.caches&&location.protocol!=='file:'?W:null}catch(e){return null}};
+async function cachePut(j){const W=cacheBox();if(!W)return;try{const c=await W.caches.open('chipcity-save');await c.put(new W.Request('chipcity-save.json'),new W.Response(j,{headers:{'content-type':'application/json'}}))}catch(e){}}
+async function cacheGet(){const W=cacheBox();if(!W)return null;try{const c=await W.caches.open('chipcity-save'),r=await c.match(new W.Request('chipcity-save.json'));return r?JSON.parse(await r.text()):null}catch(e){return null}}
+/* IndexedDB and the cache are written one save at a time, always with the latest one */
+let aw=null,aj=null;
+function slowWrite(j){aj=j;if(aw)return aw;aw=(async()=>{try{while(aj){const x=aj;aj=null;await idbPut(x);await cachePut(x)}}finally{aw=null}})();return aw}
+function persist(){if(!alive())return;const j=JSON.stringify(ST);lsWrite(j);slowWrite(j)}
+let ST=(()=>{const s=lsRead();return s?upgrade(s):fresh()})();
+function save(){ST.savedAt=Date.now();persist();cloudSoon()}
+/* how many times Chip City has opened on this device: a count that starts over means the phone cleared its storage */
+const OPENS=(()=>{let n=0;for(const st of stores()){try{n=Math.max(n,+st.getItem('chipcity-opens')||0)}catch(e){}}n++;for(const st of stores()){try{st.setItem('chipcity-opens',String(n))}catch(e){}}return n})();
+/* the slower stores are read once at start; a newer copy there means the quick store lost the latest save */
+async function localRestore(){const got=await Promise.race([Promise.all([idbGet(),cacheGet()]),sleep(4000).then(()=>[])]);
+  const best=newest([...got,ST.savedAt?ST:null]);
+  if(best&&best!==ST&&(+best.savedAt||0)>(+ST.savedAt||0)){LOADED.from='backup';adopt(best,'Your casino came back from a backup on this device.')}
+  else persist()}
+const LOADED={from:ST.savedAt?'device':'new'};
 const gs=id=>ST.games[id]||(ST.games[id]={rounds:0,wins:0,bet:0,ret:0,best:0});
+
+/* ---------- luck: the corner store's goods give a little for a while ----------
+   Luck is a second chance. Whenever chance is about to go against you (the ball lands on nothing you bet on, the
+   reels show no line, a hit would bust you, the dealer is about to beat you, a Hi-Lo card is wrong, a video poker
+   draw pays nothing), luck is the odds that it gets one more try. Boosts add up, to at most +25%. They run on the
+   clock, even while the game is closed. */
+const GOODS={
+  cookie:{n:'Fortune Cookie',price:15,luck:.02,mins:1,d:'A crunchy fortune. +2% luck for 1 minute.'},
+  beer:{n:'Beer',price:40,luck:.03,mins:2,d:'Liquid courage. +3% luck for 2 minutes.'},
+  energy:{n:'Energy Drink',price:120,luck:.06,mins:3,d:'Jittery, but sharp. +6% luck for 3 minutes.'},
+  clover:{n:'Four-Leaf Clover',price:2500,luck:.1,mins:5,d:'The real deal. +10% luck for 5 minutes.'},
+  cat:{n:'Lucky Cat',price:10000,luck:.15,mins:10,d:'Its paw never stops waving. +15% luck for 10 minutes.'}};
+const LUCK_CAP=.25;
+function luckNow(){const t=Date.now();let l=0;for(const[k,end]of Object.entries(ST.boosts||{}))if(end>t&&GOODS[k])l+=GOODS[k].luck;return Math.min(LUCK_CAP,l)}
+const lucky=()=>{const l=luckNow();return l>0&&rnd()<l};
+/* a little sparkle when luck changed how things went */
+function luckFlash(text){toast(text||'Lucky!');SND.sfx('coin')}
 
 /* chips leave the stack when they go on the table and come back as winnings */
 function spend(n){n=Math.floor(n);if(n<=0||n>ST.chips)return false;ST.chips-=n;showChips();return true}
@@ -271,28 +376,45 @@ function checkTier(){const i=tierIdx();if(i>(ST.tier||0)){ST.tier=i;save();SND.s
   setTimeout(()=>info(`<h3>VIP ${TIERS[i][1]}!</h3><p>You have held ${fmt(TIERS[i][0])} chips at once. Your VIP card is now <b>${TIERS[i][1]}</b>.</p>${TIERS[i+1]?`<p>Next level: ${TIERS[i+1][1]} at ${fmt(TIERS[i+1][0])} chips.</p>`:'<p>That is the top of the house. Chip City salutes you.</p>'}`),500)}}
 
 /* ---------- cloud copy of the wallet (only where the page can reach the ZigaPlay database) ---------- */
-const CL={ref:null,state:'off',t:0,writing:null,dirty:false};
+const CL={ref:null,state:'off',t:0,writing:null,dirty:false,later:null,tries:0};
+/* which copy to keep when this browser and the cloud disagree: the same casino keeps whichever was saved last;
+   a different casino means this one is a new stack (a cleared browser, another device), so the cloud's progress
+   wins, unless you chose Start over here after the cloud copy was saved */
+function cloudPick(cs){if(!valid(cs))return ST.savedAt?'write':'same';
+  const mine=ST.run||'legacy',theirs=cs.run||'legacy',ct=+cs.savedAt||0,lt=+ST.savedAt||0;
+  if(mine===theirs)return ct>lt?'adopt':lt>ct?'write':'same';
+  return ST.restart&&ST.restart>ct?'write':'adopt'}
+/* inside the ZigaPlay the console writes account saves itself (ZIGAPLAY.cloud); on its own the game uses window.claude */
+const ZC=ZP&&ZP.cloud&&typeof ZP.cloud.save==='function'?ZP.cloud:null;
 async function cloudInit(){
+  if(ZC){CL.mode='zp';const r=await ZC.load('chipcity');if(!r||!r.ok){CL.state='off';if(++CL.tries<10)setTimeout(cloudInit,10000);return}
+    CL.state='on';CL.had=!!r.json;let cs=null;try{cs=r.json?JSON.parse(r.json):null}catch(e){cs=null}
+    const pick=cloudPick(cs);if(pick==='adopt')adoptSoon(cs);else if(pick==='write')cloudWrite();return}
   const C=ZP?ZP.claude:window.claude;if(!C||typeof C.use!=='function')return;
   try{
     const got=await Promise.race([Promise.all([C.use('db'),C.use('user')]),sleep(8000).then(()=>null)]);
-    if(!got||!got[0]||!got[1])return;
-    const[db,user]=got,uid=await Promise.race([user.id(),sleep(5000).then(()=>null)]);if(!uid)return;
+    if(!got||!got[0]||!got[1])throw new Error('no db');
+    const[db,user]=got,uid=await Promise.race([user.id(),sleep(5000).then(()=>null)]);if(!uid)throw new Error('no user');
     const ref=ZP?db.collection(`data/users/${uid}/chipcity/saves`).doc('main'):db.collection(`data/users/${uid}`).doc('chipcity');
-    const snap=await ref.get();CL.ref=ref;CL.state='on';
+    const snap=await Promise.race([ref.get(),sleep(8000).then(()=>{throw new Error('slow')})]);CL.ref=ref;
     let cs=null;if(snap.exists){try{cs=JSON.parse(snap.data().json)}catch(e){cs=null}}
-    if(valid(cs)&&(+cs.savedAt||0)>(+ST.savedAt||0)){
-      if(S&&S.busy&&S.busy()){CL.later=cs}else adopt(cs)}
-    else if(ST.savedAt&&(!cs||(+ST.savedAt||0)>(+cs.savedAt||0)))cloudWrite();
-  }catch(e){CL.state='off'}}
-function adopt(cs){const snd=ST.sound;ST=upgrade(cs);ST.sound=snd;try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}
-  showChips(true);if(S&&S.id==='lobby')go(lobby);toast('Your chips came back from the cloud.')}
-function cloudSoon(){if(CL.state!=='on')return;CL.dirty=true;clearTimeout(CL.t);CL.t=setTimeout(cloudWrite,1500)}
-async function cloudWrite(){if(CL.state!=='on')return;if(CL.writing)return CL.writing;clearTimeout(CL.t);CL.dirty=false;
-  const body={json:JSON.stringify(ST),savedAt:ST.savedAt||Date.now(),chips:ST.chips};
-  CL.writing=(async()=>{for(let a=0;a<2;a++){try{await CL.ref.set(body);return true}catch(e){if(a===0&&e&&e.code==='unavailable'){await sleep(700);continue}CL.dirty=true;return false}}})();
+    const pick=cloudPick(cs);CL.state='on';
+    if(pick==='adopt'){LOADED.from='cloud';adoptSoon(cs)}else if(pick==='write')cloudWrite();
+  }catch(e){CL.state='off';if(++CL.tries<10)setTimeout(cloudInit,12000)}}
+/* bring the cloud copy in, but only away from the tables, so no hand in progress changes under you */
+function adoptSoon(cs){CL.later=cs;tryAdopt()}
+function tryAdopt(){const cs=CL.later;if(!cs)return;if(S&&(['bj','rl','sl','vp','hl'].includes(S.id)||(S.busy&&S.busy())))return;CL.later=null;adopt(cs)}
+setInterval(tryAdopt,1000);
+function adopt(cs,why){const snd=ST.sound;ST=upgrade(cs);ST.sound=snd;persist();
+  showChips(true);if(S&&['lobby','stats','work','shark','store'].includes(S.id))go({stats,work,shark,store:shop}[S.id]||lobby);showLuck();toast(why||'Your chips came back from the cloud.')}
+function cloudSoon(){if(CL.state!=='on'||CL.later)return;CL.dirty=true;clearTimeout(CL.t);CL.t=setTimeout(cloudWrite,800)}
+async function cloudWrite(){if(CL.state!=='on'||CL.later)return;
+  if(CL.mode==='zp'){clearTimeout(CL.t);CL.dirty=false;ZC.save('chipcity',JSON.stringify(ST),{chips:ST.chips,run:ST.run||'legacy'});return true}
+  if(CL.writing)return CL.writing;clearTimeout(CL.t);CL.dirty=false;
+  const body={json:JSON.stringify(ST),savedAt:ST.savedAt||Date.now(),chips:ST.chips,run:ST.run||'legacy'};
+  CL.writing=(async()=>{for(let a=0;a<3;a++){try{await CL.ref.set(body);return true}catch(e){if(a<2){await sleep(700*(a+1));continue}CL.dirty=true;return false}}})();
   try{return await CL.writing}finally{CL.writing=null;if(CL.dirty)cloudSoon()}}
-async function cloudFlush(){if(CL.state!=='on')return;clearTimeout(CL.t);await Promise.race([cloudWrite(),sleep(3000)])}
+async function cloudFlush(){if(CL.state!=='on')return;clearTimeout(CL.t);if(CL.mode==='zp'){if(CL.dirty)cloudWrite();await ZC.flush('chipcity');return}await Promise.race([cloudWrite(),sleep(3000)])}
 
 /* ---------- sound: little chiptune effects and a soft lounge loop ---------- */
 const SND=(()=>{
@@ -428,7 +550,7 @@ let rep=0,repBtn=null;
 function down(btn){input(btn);if(DIRS[btn]){clearTimeout(rep);repBtn=btn;rep=setTimeout(function again(){if(repBtn!==btn)return;input(btn);rep=setTimeout(again,90)},340)}}
 function up(btn){if(repBtn===btn){repBtn=null;clearTimeout(rep)}}
 const KEYS={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',z:'a',Z:'a',' ':'a',x:'b',X:'b',Escape:'b',Backspace:'b',Enter:'start',Shift:'select'};
-addEventListener('keydown',e=>{const b=KEYS[e.key];if(!b||e.metaKey||e.ctrlKey||e.altKey)return;e.preventDefault();if(e.repeat){if(DIRS[b])input(b);return}input(b)});
+addEventListener('keydown',e=>{const b=KEYS[e.key];if(!b||e.metaKey||e.ctrlKey||e.altKey)return;if(e.target&&/^(TEXTAREA|INPUT)$/.test(e.target.tagName)&&b!=='b')return;e.preventDefault();if(e.repeat){if(DIRS[b])input(b);return}input(b)});
 addEventListener('keyup',e=>{if(KEYS[e.key])e.preventDefault()});
 /* touches move the cursor to what was touched */
 document.addEventListener('pointerdown',e=>{SND.unlock();const b=e.target.closest('button');if(b&&!b.disabled&&!b.classList.contains('nonav')&&(modalOpen()?b.closest('#modal'):b.closest('#scr')))setHot(b)},{capture:true});
@@ -473,6 +595,18 @@ const ICON={
     P.disc(11.5,5.6,1.5,'#17171f');P.disc(10.2,7,1.3,'#17171f');P.disc(12.8,7,1.3,'#17171f');P.rect(11,7,1,3,'#17171f');P.rect(2,4,1,2,'#d21f2f')}),
   hl:pix(16,16,P=>{P.rect(4,2,8,12,'#fffaf0');P.rect(6,5,4,1,'#17171f');P.rect(7,5,2,6,'#17171f');P.poly([[0,6],[3,2.5],[3,9]],'#3fcf7c');P.poly([[13,7],[16,10.5],[13,14]],'#ff5a6a');P.rect(1,6,2,4,'#3fcf7c');P.rect(13,7,2,4,'#ff5a6a')}),
 };
+ICON.wk=pix(16,16,P=>{P.disc(7,9,6,'#c62f3a');P.disc(7,9,4.2,'#fff4d8');P.disc(7,9,3.4,'#c62f3a');for(const[x,y]of[[7,3],[7,14],[1,9],[12,9]])P.rect(x,y,1,1,'#fff4d8');
+  P.poly([[9,2],[15,1],[15,6],[11,8]],'#5ee6ff');P.poly([[10,3],[14,2.5],[14,5],[11.5,6.5]],'#b8f6ff');P.set(3,6,'#ffffff');P.set(4,5,'#ffffff')});
+ICON.cookie=pix(16,16,P=>{P.poly([[2,10],[5,4],[9,3],[13,5],[14,10],[8,12]],'#c98a3a');P.poly([[3,9.5],[5.6,5],[9,4.2],[12.4,6],[13,9.6],[8,11]],'#e8b35a');P.line(8,4,8,11,'#a8702a');P.rect(9,7,5,1,'#fff4d8')});
+ICON.beer=pix(16,16,P=>{P.rect(3,5,8,10,'#e8a52a');P.rect(4,6,2,8,'#ffd36a');P.rect(11,7,3,1,'#c9d2dc');P.rect(13,7,1,5,'#c9d2dc');P.rect(11,11,3,1,'#c9d2dc');P.ell(7,4.5,4.6,2.2,'#fffaf0');P.disc(4,3.5,1.6,'#fffaf0');P.disc(9.5,3.2,1.8,'#fffaf0');P.set(5,9,'#fff3b0');P.set(7,12,'#fff3b0')});
+ICON.energy=pix(16,16,P=>{P.rect(4,2,8,13,'#1fb7a6');P.rect(4,2,8,1,'#c9d2dc');P.rect(4,14,8,1,'#c9d2dc');P.rect(5,3,1,11,'#7ff0e0');P.poly([[9,4],[6,9],[8,9],[7,13],[11,7],[9,7]],'#ffe45c')});
+ICON.clover=pix(16,16,P=>{for(const[x,y]of[[5,5],[11,5],[5,10],[11,10]]){P.disc(x,y,3.1,'#2f9a44');P.disc(x-.6,y-.6,1.6,'#5fd06a')}P.disc(8,7.5,1.6,'#2f9a44');P.line(8,9,10,15,'#2f7a34')});
+ICON.cat=pix(16,16,P=>{P.disc(8,11,5,'#fff4d8');P.disc(8,6,4,'#fff4d8');P.poly([[4.5,3.5],[5,0.5],[7,2.5]],'#fff4d8');P.poly([[11.5,3.5],[11,0.5],[9,2.5]],'#fff4d8');P.rect(12,3,3,6,'#fff4d8');P.disc(13.5,3,1.6,'#fff4d8');
+  P.set(6,6,'#140c1c');P.set(10,6,'#140c1c');P.set(8,7,'#e05a6a');P.rect(4,10,8,1,'#d8323f');P.disc(8,12,1.5,'#f4c74f');P.set(13,4,'#ffb0c0')});
+ICON.sal=pix(24,24,P=>{/* Big Sal: a shark in a hat and a pinstripe suit */P.ell(12,13,8.5,7,'#7a8aa6');P.ell(12,15.5,6,3.6,'#e8eef6');P.poly([[4,9],[2,2],[8,7]],'#5a6a86');
+  P.rect(2,6,20,2,'#2a2238');P.rect(6,1,12,6,'#2a2238');P.rect(6,5,12,1,'#d8323f');P.disc(9,11,1.6,'#ffffff');P.set(9,11,'#140c1c');P.disc(15,11,1.6,'#ffffff');P.set(15,11,'#140c1c');
+  P.line(7,9,10,10,'#2a2238');P.line(17,9,14,10,'#2a2238');for(let x=8;x<=16;x+=2){P.poly([[x,15],[x+1,15],[x+.5,17]],'#ffffff')}P.rect(6,19,12,5,'#3a3050');P.rect(11,19,2,5,'#e8eef6');P.poly([[11,19],[13,19],[12,22]],'#d8323f');for(const x of[7,9,15,17])P.rect(x,20,1,4,'#5a4e72')});
+ICON.store=pix(16,16,P=>{P.rect(2,6,12,9,'#c98f5a');P.rect(3,8,4,7,'#6fd3e8');P.rect(9,8,4,4,'#6fd3e8');P.poly([[1,6],[3,2],[13,2],[15,6]],'#d8323f');for(const x of[3,7,11])P.poly([[x,2],[x+2,2],[x+2.6,6],[x+.6,6]],'#fff4d8')});
 const iconEl=k=>{const c=document.createElement('canvas');c.width=16;c.height=16;c.getContext('2d').drawImage(ICON[k],0,0);return c};
 
 /* ---------- playing cards ---------- */
@@ -500,19 +634,30 @@ function lobby(){const root=el('div','screen lobby');
   const t=TIERS[tierIdx()],nx=TIERS[tierIdx()+1];
   root.innerHTML=`<div class="sign"><h1>CHIP<b>CITY</b></h1><p>POCKET CASINO</p></div>
     <div class="wallet"><span>VIP <span class="tier" style="--tc:${t[2]}">${t[1]}</span></span><span>${nx?`${nx[1]} at <b>${big(nx[0])}</b>`:'Top of the house'}</span></div>`;
-  if(ST.chips<MINBET){const c=el('button','btn gold cashier',`Visit the cashier<small>Out of chips? Take ${fmt(BAILOUT)} free chips and keep playing</small>`);
-    c.addEventListener('click',()=>{ST.bailouts++;pay(BAILOUT);save();SND.sfx('coin');toast(`The cashier slides you ${fmt(BAILOUT)} chips.`);go(lobby)});root.append(c)}
+  /* the reason you're here: what you still owe Big Sal */
+  {const owe=ST.debt,b=el('button','btn debt'+(owe?'':' free'));b.append(iconEl('sal'));const s3=el('span');
+    s3.innerHTML=owe?`<b>You owe Big Sal <em>${fmt(owe)}</em></b><i class="dbar"><i style="width:${(DEBT-owe)/DEBT*100}%"></i></i><small>${salNag()}</small>`:`<b>Debt-free!</b><small>You paid Big Sal every chip. Stop by and gloat.</small>`;
+    b.append(s3);b.addEventListener('click',()=>{SND.sfx('ok');go(shark)});root.append(b)}
+  if(ST.chips<MINBET){const c=el('button','btn gold cashier',`Go to work<small>Out of chips! Polish chips at the vault: every ${WORK_N} polishes earn ${WORK_PAY} chips</small>`);
+    c.addEventListener('click',()=>{SND.sfx('ok');go(work)});root.append(c)}
   const sc=el('div','scroll'),list=el('div','tables');sc.append(list);root.append(sc);
   for(const[k,name,desc,open]of TABLES){const b=el('button','btn table-btn');b.append(iconEl(k));const s=el('span');s.innerHTML=`<b>${name}</b><small>${desc}</small>`;b.append(s);
-    b.addEventListener('click',()=>{if(ST.chips<MINBET){SND.sfx('buzz');toast('You need chips first. Visit the cashier.');return}SND.sfx('ok');open()});list.append(b)}
+    b.addEventListener('click',()=>{if(ST.chips<MINBET){SND.sfx('buzz');toast('You need chips first. Go to work to earn some.');return}SND.sfx('ok');open()});list.append(b)}
+  /* the corner store, for a little luck */
+  {const b=el('button','btn table-btn store-btn');b.append(iconEl('store'));const s2=el('span');const l=luckNow();s2.innerHTML=`<b>Corner Store</b><small>${l?`Your luck: +${Math.round(l*100)}%. `:''}Beer, energy drinks and lucky charms. A little luck for a while.</small>`;b.append(s2);
+    b.addEventListener('click',()=>{SND.sfx('ok');go(shop)});list.append(b)}
+  /* the job is always open, even with chips to spare */
+  {const b=el('button','btn table-btn job-btn');b.append(iconEl('wk'));const s2=el('span');s2.innerHTML=`<b>Go to work</b><small>Polish chips at the vault. Every ${WORK_N} polishes pay ${WORK_PAY} chips.</small>`;b.append(s2);
+    b.addEventListener('click',()=>{SND.sfx('ok');go(work)});list.append(b)}
   const bar=el('div','bar'),row=el('div','row');
   const st=el('button','btn ghost','Stats');st.addEventListener('click',()=>go(stats));
   const hp=el('button','btn ghost','How to play');hp.addEventListener('click',()=>info(`<h3>Welcome to Chip City</h3><p>Every table here uses play chips. There is no real money anywhere in this game.</p>
     <ul><li><b>D-pad</b> moves the cursor, <b>A</b> presses.</li><li><b>START</b> deals, spins or draws at every table.</li><li><b>B</b> takes you back (and takes a chip back at roulette).</li><li>On a bet, left and right change the amount.</li></ul>
-    <p>You start with ${fmt(START)} chips. If you run out, the cashier in the lobby gives you ${fmt(BAILOUT)} more. Your VIP card goes up as your stack grows.</p><p>Chips save by themselves after every round.</p>`));
+    <p><b>The goal:</b> you owe Big Sal ${fmt(DEBT)} chips. Win them at the tables and pay him off at his booth, a bit at a time or all at once.</p><p>You start with ${fmt(START)} chips. Run out, and it's time to go to work: at the vault, every ${WORK_N} polishes earn ${WORK_PAY} chips. You can go to work any time.</p><p>The <b>Corner Store</b> sells beer, energy drinks and charms that give you a little luck for a few minutes: when a round is about to go against you, luck gives it a second chance.</p><p>Chips save by themselves after every round.</p>`));
   const sd=el('button','btn ghost sndbtn',sndLabel());sd.addEventListener('click',cycleSound);
-  row.append(st,sd,hp);bar.append(row);root.append(bar,el('div','fine','PLAY CHIPS ONLY · NO REAL MONEY'));
-  return{id:'lobby',el:root,title:'',first:()=>$('.cashier',root)||$('.table-btn',root),select:()=>go(stats)}}
+  row.append(st,sd,hp);bar.append(row);root.append(bar,el('div','fine','PLAY CHIPS ONLY · NO REAL MONEY · '+saveWord()));
+  if(!ST.intro)setTimeout(()=>{if(S&&S.id==='lobby'&&!ST.intro)introStory()},350);
+  return{id:'lobby',el:root,title:'',first:()=>$('.cashier',root)||$('.debt',root),select:()=>go(stats)}}
 
 /* ========================================================================================================
    BLACKJACK: six decks, dealer stands on all 17s, blackjack pays 3 to 2, double any two, split to four hands
@@ -557,10 +702,10 @@ function blackjack(){
   function refit(){const W=root.clientWidth;fan(dHand,W-30);const n=Math.max(1,hands.length);hands.forEach(h=>fan(h.hand,(W-20)/n-14))}
   function sizeCards(){const W=root.clientWidth,H=root.clientHeight,n=Math.max(1,hands.length);
     let cw=Math.min(W*.18,H*.105,64);if(n>1)cw=Math.min(cw,((W-20)/n-14)*.62);root.style.setProperty('--cw',Math.max(24,cw)+'px')}
-  async function give(h,i){const c=draw();h.cards.push(c);const e=cardEl(c);e.classList.add('deal');h.hand.append(e);SND.sfx('card');paintHand(h,i);refit();await sleep(330);return e}
-  async function giveD(down){const c=draw();dealer.push(c);const e=cardEl(c,down);e.classList.add('deal');dHand.append(e);if(down)holeEl=e;SND.sfx('card');paint();await sleep(330)}
+  async function give(h,i,save){let c=draw();if(save&&bjTotal([...h.cards,c]).t>21&&lucky()){BJ.shoe.unshift(c);c=draw();if(bjTotal([...h.cards,c]).t<=21)h.lucky=true}h.cards.push(c);const e=cardEl(c);e.classList.add('deal');h.hand.append(e);SND.sfx('card');paintHand(h,i);refit();await sleep(330);return e}
+  async function giveD(down,save){let c=draw();if(save){const best=Math.max(0,...hands.map(h=>bjTotal(h.cards).t).filter(t=>t<=21)),t=bjTotal([...dealer,c]).t;if(best&&t>=17&&t<=21&&t>best&&lucky()){BJ.shoe.unshift(c);c=draw();BJ.lk=true}}dealer.push(c);const e=cardEl(c,down);e.classList.add('deal');dHand.append(e);if(down)holeEl=e;SND.sfx('card');paint();await sleep(330)}
   async function deal(){if(phase!=='bet')return;fitBet('bj',sl);const bet=ST.bets.bj;
-    if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. The cashier is in the lobby.':'Not enough chips for that bet.','lose');return}
+    if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. Go to work in the lobby to earn more.':'Not enough chips for that bet.','lose');return}
     if(BJ.shoe.length<BJ.cut){BJ.shoe=newDeck(6);BJ.cut=Math.floor(BJ.shoe.length*.25);SND.sfx('shuffle');toast('The dealer shuffles a fresh shoe.');await sleep(400)}
     spend(bet);SND.sfx('chip');phase='deal';ins=0;hands=[{cards:[],bet,stake:bet}];act=0;dealer=[];holeEl=null;dHand.innerHTML='';pHands.innerHTML='';pHands.append(handBox(hands[0]));msg('');
     sizeCards();controls();paint();
@@ -578,9 +723,9 @@ function blackjack(){
   async function doAct(a){if(phase!=='play')return;const h=hands[act];if(!h)return;
     if(a==='dbl'&&!canDbl(h)||a==='split'&&!canSplit(h)){SND.sfx('buzz');return}
     phase='busy';controls();
-    if(a==='hit'){await give(h,act);const t=bjTotal(h.cards).t;if(t>21){h.done=true;h.res=['l','BUST'];SND.sfx('lose');paintHand(h,act)}else if(t===21)h.done=true}
+    if(a==='hit'){await give(h,act,true);if(h.lucky){h.lucky=false;luckFlash('Lucky card! That one nearly busted you.')}const t=bjTotal(h.cards).t;if(t>21){h.done=true;h.res=['l','BUST'];SND.sfx('lose');paintHand(h,act)}else if(t===21)h.done=true}
     else if(a==='stand'){h.done=true;SND.sfx('ok')}
-    else if(a==='dbl'){spend(h.bet);SND.sfx('chip');h.bet*=2;const e=await give(h,act);e.classList.add('side');h.done=true;if(bjTotal(h.cards).t>21){h.res=['l','BUST'];SND.sfx('lose')}paintHand(h,act)}
+    else if(a==='dbl'){spend(h.bet);SND.sfx('chip');h.bet*=2;const e=await give(h,act,true);if(h.lucky){h.lucky=false;luckFlash('Lucky card!')}e.classList.add('side');h.done=true;if(bjTotal(h.cards).t>21){h.res=['l','BUST'];SND.sfx('lose')}paintHand(h,act)}
     else if(a==='split'){spend(h.bet);SND.sfx('chip');const c2=h.cards.pop(),e2=h.hand.lastElementChild;const nh={cards:[c2],bet:h.bet,split:true};h.split=true;
       hands.splice(act+1,0,nh);const box=handBox(nh);h.el.after(box);e2.classList.remove('deal');nh.hand.append(e2);
       if(c2.r===1&&h.cards[0].r===1){h.aces=nh.aces=true}
@@ -593,14 +738,14 @@ function blackjack(){
     await dealerTurn()}
   async function dealerTurn(){phase='dealer';controls();paint();await sleep(200);await flipTo(holeEl,dealer[1]);paint();await sleep(350);
     const live=hands.some(h=>bjTotal(h.cards).t<=21);
-    if(live)while(bjTotal(dealer).t<17){await giveD(false);await sleep(150)}
+    BJ.lk=false;if(live)while(bjTotal(dealer).t<17){await giveD(false,true);await sleep(150)}
     const d=bjTotal(dealer).t;let ret=0,stake=ins;
     for(const h of hands){stake+=h.bet;const t=bjTotal(h.cards).t;
       if(t>21){h.res=h.res||['l','BUST']}
       else if(d>21||t>d){h.res=['w','WIN'];ret+=h.bet*2}
       else if(t===d){h.res=['p','PUSH'];ret+=h.bet}
       else h.res=['l','LOSE']}
-    pay(ret);const net=ret-stake;
+    pay(ret);const net=ret-stake;if(BJ.lk&&ret>0)luckFlash('Lucky! The dealer drew badly.');
     finish(stake,ret,!live?(hands.length>1?`Every hand busts. You lose ${fmt(-net)}.`:`Bust! You lose ${fmt(-net)}.`):d>21?`Dealer busts with ${d}. `+(net>0?`You win ${fmt(net)}!`:net===0?'Push.':`You lose ${fmt(-net)}.`):net>0?`You win ${fmt(net)}!`:net===0?'Push. Your bet comes back.':`Dealer has ${d}. You lose ${fmt(-net)}.`)}
   function finish(stake,ret,text){const net=ret-stake;phase='bet';act=-1;paint();msg(text,net>0?'win':net<0?'lose':'');
     if(net>0){SND.sfx(net>=stake*1.4?'big':'win');floatAt(pHands,'+'+fmt(net))}else if(net<0)SND.sfx('lose');else SND.sfx('push');
@@ -661,13 +806,13 @@ function roulette(){
   function leaveTable(){if(spinning)return;const n=total();if(n){refund(n);bets={};save()}go(lobby)}
   async function spin(){if(spinning)return;if(!total()&&!rebet()){if(!ST.rlLast){SND.sfx('buzz');msg('Put a chip on the board first.')}return}
     spinning=true;paintBets();const stake=total();ST.rlLast=Object.assign({},bets);save();msg('No more bets!');
-    const n=WHEEL[ri(37)];await spinWheel(root,n);
+    let n=WHEEL[ri(37)],lk=false;const hits=x=>Object.keys(bets).some(id=>rWins(id,x));if(!hits(n)&&lucky()){n=WHEEL[ri(37)];lk=hits(n)}await spinWheel(root,n);
     let ret=0;const winners=[];for(const[id,a]of Object.entries(bets))if(rWins(id,n)){ret+=a*rPays(id);winners.push(id)}
     hist.push(n);hist=hist.slice(-9);ST.rlHist=hist;paintHist();
     cells['n'+n].classList.add('winner');winners.forEach(id=>cells[id].classList.add('winner'));
     pay(ret);const net=ret-stake;
     msg(`${n} ${n===0?'GREEN':REDS.has(n)?'RED':'BLACK'} · `+(net>0?`You win ${fmt(net)}!`:ret>0?`${fmt(ret)} back`:`You lose ${fmt(stake)}.`),net>0?'win':net<0?'lose':'');
-    if(net>0){SND.sfx(net>=stake*5?'big':'win');floatAt(cells['n'+n],'+'+fmt(net))}else SND.sfx('lose');
+    if(net>0){SND.sfx(net>=stake*5?'big':'win');floatAt(cells['n'+n],'+'+fmt(net))}else SND.sfx('lose');if(lk&&ret>0)luckFlash('Lucky bounce! The ball hopped your way.');
     record('rl',stake,ret);
     setTimeout(()=>{$$('.winner',board).forEach(c=>c.classList.remove('winner'))},2800);
     bets={};spinning=false;paintBets();if(!navList().includes(hot))setHot(B.spin)}
@@ -742,9 +887,10 @@ function slots(){if(!STRIPS)STRIPS=[makeStrip(),makeStrip(),makeStrip()];
   B.spin.addEventListener('click',spin);B.out.addEventListener('click',()=>{if(!spinning)go(lobby)});
   B.help.addEventListener('click',()=>info(`<h3>Slots</h3><p>Pick a bet and spin. Wins are read along the red line in the middle, and pay your bet times the number on the table below the reels.</p><ul><li>Three of a kind pays the most: three diamonds pay 1,000×.</li><li>Any three of BAR, 7 and diamond, mixed, pay 8×.</li><li>Cherries pay anywhere on the line: one pays 2×, two pay 6×.</li></ul><p>The machine pays back about 95% over a long run, like a real one.</p>`));
   const bar=el('div','bar'),r1=el('div','row'),r2=el('div','row');r1.append(sl,B.spin);r2.append(B.help,B.out);bar.append(r1,r2);root.append(bar);
-  async function spin(){if(spinning)return;fitBet('sl',sl);const bet=ST.bets.sl;if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. The cashier is in the lobby.':'Not enough chips for that bet.','lose');return}
+  async function spin(){if(spinning)return;fitBet('sl',sl);const bet=ST.bets.sl;if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. Go to work in the lobby to earn more.':'Not enough chips for that bet.','lose');return}
     spend(bet);SND.sfx('chip');spinning=true;B.spin.disabled=true;lit=false;$$('.lit',pt).forEach(x=>x.classList.remove('lit'));msg('');
-    const stops=[ri(L),ri(L),ri(L)],start=pos.slice(),t0=performance.now(),T=[900,1300,1700].map(x=>x+ri(120)),D=[];
+    let stops=[ri(L),ri(L),ri(L)],lk=false;{const pays=st=>slotPay(...st.map((q,r)=>STRIPS[r][q]))[0];if(!pays(stops)&&lucky()){stops=[ri(L),ri(L),ri(L)];lk=pays(stops)>0}}
+    const start=pos.slice(),t0=performance.now(),T=[900,1300,1700].map(x=>x+ri(120)),D=[];
     for(let r=0;r<3;r++){let d=((start[r]-stops[r])%L+L)%L;const want=T[r]/1000*17;while(d<want)d+=L;D.push(d)}
     const a=.72,kk=1/(a+(1-a)/2);const e=x=>x<a?kk*x:kk*a+kk*(x-a)-kk*(x-a)*(x-a)/(2*(1-a));
     const stopped=[false,false,false];let lastTick=0;
@@ -758,6 +904,7 @@ function slots(){if(!STRIPS)STRIPS=[makeStrip(),makeStrip(),makeStrip()];
     if(mult){pay(ret);lit=true;const row=$(`[data-k="${key}"]`,pt);row&&row.classList.add('lit');
       msg(mult>=100?`JACKPOT! ${mult}× · +${fmt(ret)}`:`Win ${mult}× · +${fmt(ret)}`,mult>=25?'gold':'win');SND.sfx(mult>=25?'big':mult>2?'win':'coin');floatAt(cv,'+'+fmt(ret))}
     else msg('No win. Spin again?');
+    if(lk&&mult)luckFlash('Lucky spin! The reels slipped into place.');
     draw();record('sl',bet,ret);spinning=false;B.spin.disabled=false;if(!navList().includes(hot))setHot(B.spin)}
   msg('Pick a bet and pull!');
   return{id:'sl',el:root,title:'Slots',first:()=>B.spin,start:()=>spin(),back:()=>{if(!spinning)go(lobby)},select:()=>sl._slide(1),busy:()=>spinning,
@@ -789,7 +936,7 @@ function poker(){
   function cardsOn(on){slots.forEach(s=>s.disabled=!on)}
   function toggle(i){if(phase!=='hold'||busy)return;held[i]=!held[i];slots[i].classList.toggle('held',held[i]);SND.sfx(held[i]?'chip':'unchip')}
   async function act(){if(busy)return;phase==='bet'?deal():drawCards()}
-  async function deal(){fitBet('vp',sl);const bet=ST.bets.vp;if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. The cashier is in the lobby.':'Not enough chips for that bet.','lose');return}
+  async function deal(){fitBet('vp',sl);const bet=ST.bets.vp;if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. Go to work in the lobby to earn more.':'Not enough chips for that bet.','lose');return}
     spend(bet);SND.sfx('chip');busy=true;B.go.disabled=true;paintTable(-1);msg('');deck=newDeck(1);hand=[];held=[false,false,false,false,false];
     slots.forEach(s=>s.classList.remove('held'));
     for(let i=0;i<5;i++){const c=$('.card',slots[i]);if(!c.classList.contains('back'))await flipTo(c,null)}
@@ -798,10 +945,13 @@ function poker(){
     phase='hold';busy=false;B.go.textContent='Draw';B.go.disabled=false;cardsOn(true);setHot(slots[0])}
   async function drawCards(){if(phase!=='hold')return;busy=true;B.go.disabled=true;cardsOn(false);
     for(let i=0;i<5;i++)if(!held[i])await flipTo($('.card',slots[i]),null);
-    for(let i=0;i<5;i++)if(!held[i]){hand[i]=deck.pop();await flipTo($('.card',slots[i]),hand[i])}
+    const nh=hand.slice();for(let i=0;i<5;i++)if(!held[i])nh[i]=deck.pop();let lk=false;
+    if(vpEval(nh)<0&&held.some(x=>!x)&&lucky()){for(let i=0;i<5;i++)if(!held[i])nh[i]=deck.pop();lk=vpEval(nh)>=0}
+    for(let i=0;i<5;i++)if(!held[i]){hand[i]=nh[i];await flipTo($('.card',slots[i]),hand[i])}
     const k=vpEval(hand),bet=ST.bets.vp,ret=k>=0?bet*VPPAY[k][1]:0;paintTable(k);
     if(ret){pay(ret);const net=ret-bet;msg(net>0?`${VPPAY[k][0]}! You win ${fmt(net)}.`:`${VPPAY[k][0]}: your bet comes back.`,net>0?(k<=3?'gold':'win'):'');SND.sfx(k<=2?'big':net>0?'win':'push');if(net>0)floatAt(wrap,'+'+fmt(net))}
     else{msg('No win this time.','lose');SND.sfx('lose')}
+    if(lk&&ret)luckFlash('Lucky draw!');
     record('vp',bet,ret);phase='bet';busy=false;B.go.textContent='Deal';B.go.disabled=false;setHot(B.go)}
   cardsOn(false);msg('Pick a bet and Deal.');
   return{id:'vp',el:root,title:'Video Poker',first:()=>B.go,start:()=>act(),
@@ -833,12 +983,12 @@ function hilo(){
     const n=card.r,hi=13-n,lo=n-1;$('#oddL',root).innerHTML=`HIGHER<b>${hi}/13</b>`;$('#oddR',root).innerHTML=`LOWER<b>${lo}/13</b>`}
   const pull=()=>({r:1+ri(13),s:ri(4)});
   function pushTrail(c){const e=cardEl(c);trail.append(e);while(trail.children.length>6)trail.firstChild.remove()}
-  async function deal(){if(phase!=='bet'||busy)return;fitBet('hl',sl);bet=ST.bets.hl;if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. The cashier is in the lobby.':'Not enough chips for that bet.','lose');return}
+  async function deal(){if(phase!=='bet'||busy)return;fitBet('hl',sl);bet=ST.bets.hl;if(bet>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. Go to work in the lobby to earn more.':'Not enough chips for that bet.','lose');return}
     spend(bet);SND.sfx('chip');busy=true;trail.innerHTML='';pot=bet;streak=0;card=pull();await flipTo(cardE,card);phase='play';busy=false;paintPot();controls();msg('Higher or lower?')}
   async function guess(dir){if(phase!=='play'||busy)return;const m=hlMult(card.r,dir);if(!m){SND.sfx('buzz');return}busy=true;controls();
-    const nx=pull();pushTrail(card);await flipTo(cardE,null);await flipTo(cardE,nx);const prev=card;card=nx;
+    let nx=pull(),lk=false;const right=c=>c.r!==card.r&&(dir==='hi'?c.r>card.r:c.r<card.r);if(nx.r!==card.r&&!right(nx)&&lucky()){nx=pull();lk=right(nx)}pushTrail(card);await flipTo(cardE,null);await flipTo(cardE,nx);const prev=card;card=nx;
     if(nx.r===prev.r){msg('Same rank: push. Guess again.');SND.sfx('push')}
-    else if(dir==='hi'?nx.r>prev.r:nx.r<prev.r){pot=pot*m;streak++;msg(`Right! The pot grows ×${m.toFixed(2)}.`,'win');SND.sfx('coin')}
+    else if(dir==='hi'?nx.r>prev.r:nx.r<prev.r){pot=pot*m;streak++;msg(`Right! The pot grows ×${m.toFixed(2)}.`,'win');SND.sfx('coin');if(lk)luckFlash('Lucky card!')}
     else{msg(`Wrong. The pot of ${fmt(pot)} is lost.`,'lose');SND.sfx('lose');record('hl',bet,0);phase='bet';busy=false;paintPot();controls();setHot(B.deal);return}
     busy=false;paintPot();controls()}
   function cash(){if(phase!=='play'||busy)return;const ret=Math.floor(pot);pay(ret);const net=ret-bet;msg(net>0?`Banked ${fmt(ret)}. That's +${fmt(net)}!`:'Took your bet back.',net>0?'win':'');
@@ -849,28 +999,146 @@ function hilo(){
     fit:(W,H)=>{cardE.style.setProperty('--cw',Math.max(40,Math.min(W*.3,H*.2,96))+'px')}}}
 
 /* ========================================================================================================
+   WORK: polish chips at the vault. Every 10 polishes pay 5 chips. Open any time; it's the way back when you're broke.
+   ======================================================================================================== */
+const WRANKS=[[0,'Trainee Polisher'],[100,'Chip Polisher'],[500,'Senior Polisher'],[2000,'Head of Shine'],[10000,'Chip Wizard']];
+const wrank=()=>{let r=WRANKS[0][1];for(const[n,t]of WRANKS)if(ST.work.clicks>=n)r=t;return r};
+const BIGCHIP=pix(32,32,P=>{P.disc(16,16,15,'#9c1424');P.disc(16,16,14,'#c62f3a');for(let k=0;k<8;k++){const a=k*Math.PI/4,x=16+Math.cos(a)*12,y=16+Math.sin(a)*12;P.disc(x,y,2.1,'#fff4d8')}
+  P.disc(16,16,9.5,'#fff4d8');P.disc(16,16,8.4,'#c62f3a');P.disc(16,16,7.2,'#d8323f');P.poly([[16,10.5],[20.5,16],[16,21.5],[11.5,16]],'#f4c74f');P.poly([[16,12],[18.6,16],[16,17],[13.4,16]],'#fff3b0')});
+const GRIME=pix(32,32,P=>{const r=(()=>{let a=7;return()=>(a=(a*16807)%2147483647)/2147483647})();for(let i=0;i<120;i++){const x=16+(r()-.5)*28,y=16+(r()-.5)*28;if((x-16)**2+(y-16)**2<196)P.disc(x,y,1+r()*1.6,r()<.5?'#3a2a1a':'#5a4630')}},null);
+function work(){const root=el('div','screen lobby work');
+  root.innerHTML=`<div class="wk-head"><h2>The Vault</h2><p class="wk-rank"></p></div>
+    <div class="wk-stage"><div class="wk-chip"><canvas class="wk-c" width="32" height="32"></canvas><canvas class="wk-g" width="32" height="32"></canvas><i class="wk-shine"></i></div></div>
+    <div class="wk-prog"><div class="wk-bar"><i></i></div><span class="wk-count"></span></div>
+    <p class="wk-tip">Every <b>${WORK_N}</b> polishes earn <b>${WORK_PAY}</b> chips</p><p class="wk-shift"></p>`;
+  root.querySelector('.wk-c').getContext('2d').drawImage(BIGCHIP,0,0);root.querySelector('.wk-g').getContext('2d').drawImage(GRIME,0,0);
+  const chipE=$('.wk-chip',root),grime=$('.wk-g',root),fill=$('.wk-bar i',root),count=$('.wk-count',root),rankE=$('.wk-rank',root),shiftE=$('.wk-shift',root);let shift=0,earned=0;
+  const show=()=>{const n=ST.work.n;fill.style.width=(n/WORK_N*100)+'%';count.textContent=`${n} / ${WORK_N}`;grime.style.opacity=String((1-n/WORK_N)*.85);rankE.textContent=wrank();
+    shiftE.textContent=shift?`This shift: ${fmt(shift)} polishes · +${fmt(earned)} chips`:'Tap the chip or press A to polish it';};
+  function polish(){ST.work.n++;ST.work.clicks++;shift++;
+    chipE.classList.remove('rub');void chipE.offsetWidth;chipE.classList.add('rub');
+    if(ST.work.n>=WORK_N){ST.work.n=0;ST.work.earned+=WORK_PAY;earned+=WORK_PAY;pay(WORK_PAY);save();SND.sfx('coin');floatAt(chipE,'+'+WORK_PAY);
+      chipE.classList.remove('done');void chipE.offsetWidth;chipE.classList.add('done');
+      const r0=wrank();setTimeout(()=>{if(S&&S.id==='work')show()},10);if(ST.work.clicks>0&&WRANKS.some(([n2])=>n2===ST.work.clicks))setTimeout(()=>toast(`Promoted! You're now ${r0}.`),400)}
+    else{SND.sfx(ST.work.n%2?'chip':'tick');if(ST.work.n%3===0)save()}
+    show()}
+  const go1=el('button','btn gold wk-btn','Polish!<small>tap here or the chip · A</small>');go1.addEventListener('click',polish);
+  const tap=el('button','wk-tap nonav');tap.setAttribute('aria-label','Polish the chip');tap.addEventListener('pointerdown',e=>{e.preventDefault();polish()});$('.wk-stage',root).append(tap);
+  const bar=el('div','bar'),row=el('div','row'),bk=el('button','btn ghost','Back to the lobby');row.append(bk);bar.append(go1,row);root.append(bar);
+  bk.addEventListener('click',()=>go(lobby));show();
+  return{id:'work',el:root,title:'Work',first:()=>go1,back:()=>go(lobby),start:polish,leave:()=>save()}}
+
+/* ========================================================================================================
+   BIG SAL: the loan shark. You owe him 100,000 chips; pay him whenever you like. Paying it all off wins the game.
+   ======================================================================================================== */
+function salNag(){const f=(DEBT-ST.debt)/DEBT;return f<=0?'Big Sal is waiting. He has very big teeth.':f<.25?'Big Sal says: "A start. Keep \'em coming."':f<.5?'Big Sal says: "Tick tock, kid."':f<.75?'Big Sal says: "Now we\'re talkin\'."':'Big Sal says: "So close I can taste it."'}
+function salLine(){const f=(DEBT-ST.debt)/DEBT;
+  return ST.debt<=0?"Paid in full. I gotta say, kid, I didn't think you had it in you. Come back anytime. For a new loan, maybe.":
+    f<=0?`You borrowed ${fmt(DEBT)} chips, and you blew all but a thousand of 'em. I'm a patient shark. For now. Win it back and pay me.`:
+    f<.25?"Every chip helps. Mostly it helps me.":f<.5?"Almost halfway. You're not sleeping with the fishes yet. Well, I'm a fish. But you know what I mean.":
+    f<.75?"More than half! My fins are tingling.":"You're nearly square with Big Sal. Don't go blowing it at the slots."}
+function shark(){const root=el('div','screen lobby sal');
+  const head=el('div','sal-head');head.append(iconEl('sal'));const say=el('p','sal-say');head.append(say);root.append(head);
+  const box=el('div','sal-box');root.append(box);
+  let amt=0;const steps=()=>{const most=Math.min(ST.chips,ST.debt),a=BETS.filter(v=>v<=most);if(most>0&&!a.includes(most))a.push(most);return a.length?a:[0]};
+  const sl=slider('Payment',steps,()=>amt,v=>{amt=v});
+  const pay1=el('button','btn gold','Pay Big Sal'),all=el('button','btn','Pay everything I can'),bk=el('button','btn ghost','Back to the lobby');
+  const show=()=>{const owe=ST.debt;say.textContent=salLine();
+    box.innerHTML=owe?`<div class="sal-owe"><small>STILL OWED</small><b>${fmt(owe)}</b></div><i class="dbar big"><i style="width:${(DEBT-owe)/DEBT*100}%"></i></i><p class="sal-note">Paid so far: ${fmt(ST.paid)} of ${fmt(DEBT)}</p>`:
+      `<div class="sal-owe free"><small>YOU OWE</small><b>NOTHING</b></div><p class="sal-note">Paid off ${ST.freed?new Date(ST.freed).toLocaleDateString():''}. The rest of the chips are yours.</p>`;
+    const st=steps();if(!st.includes(amt))amt=amt?st.filter(v=>v<=amt).pop()||st[0]:st.filter(v=>v<=Math.max(MINBET,Math.floor(Math.min(ST.chips,ST.debt)/2))).pop()||st[0];sl._show();
+    sl.hidden=pay1.hidden=all.hidden=!owe;pay1.disabled=all.disabled=ST.chips<1}
+  function payOff(n){n=Math.min(Math.floor(n),ST.chips,ST.debt);if(n<1){SND.sfx('buzz');toast(ST.chips<1?'You have no chips to give him.':'Pick an amount first.');return}
+    spend(n);ST.debt-=n;ST.paid+=n;SND.sfx('coin');floatAt(say,'-'+fmt(n),true);
+    if(ST.debt<=0){ST.debt=0;ST.freed=Date.now();save();show();SND.sfx('big');
+      setTimeout(()=>info(`<h3>You're free!</h3><p>You paid Big Sal all ${fmt(DEBT)} chips. Nobody's leaning on you any more.</p><p>Keep playing for your VIP card, or start a new game from Stats.</p>`),400)}
+    else{save();show();toast(pick(['Pleasure doing business.','Big Sal counts every chip. Twice.','"That\'s more like it."','Big Sal tucks the chips into his hat.']))}}
+  pay1.addEventListener('click',()=>payOff(amt));all.addEventListener('click',()=>payOff(Math.min(ST.chips,ST.debt)));bk.addEventListener('click',()=>go(lobby));
+  const bar=el('div','bar'),row=el('div','row'),row2=el('div','row');row.append(sl);row2.append(pay1,all);bar.append(row,row2,bk);root.append(bar);
+  show();
+  return{id:'shark',el:root,title:'Big Sal',first:()=>ST.debt?pay1:bk,back:()=>go(lobby),start:()=>{if(ST.debt)payOff(amt)}}}
+const pick=a=>a[ri(a.length)];
+function introStory(){ST.intro=1;save();
+  info(`<h3>You owe Big Sal</h3><p>Big Sal, the loan shark, lent you <b>${fmt(DEBT)}</b> chips. You lost all but ${fmt(START)} of them.</p><p>Win it back at the tables and pay him off at his booth. Go broke, and there's always work at the vault. The corner store sells a little luck.</p><p>Big Sal is waiting. Good luck. You'll need it.</p>`)}
+
+/* ========================================================================================================
+   THE CORNER STORE: beer, energy drinks and lucky charms, each a little luck for a few minutes
+   ======================================================================================================== */
+const FORTUNES=['The next card is a friend.','Fortune favors the slightly reckless.','Big Sal is exactly as scary as he looks.','Your lucky number is between 0 and 36.','Know when to cash out. Today is not that day. Or is it?','A stranger will deal you an ace.','Polish your chips and your chips will polish you.'];
+const mmss=ms=>{const t=Math.max(0,Math.ceil(ms/1000));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+function shop(){const root=el('div','screen lobby store');
+  const top=el('div','st-top');root.append(top);
+  const sc=el('div','scroll'),list=el('div','tables');sc.append(list);root.append(sc);
+  const rows={};
+  for(const[k,g]of Object.entries(GOODS)){const b=el('button','btn table-btn good');b.append(iconEl(k));const s2=el('span');s2.innerHTML=`<b>${g.n}</b><small>${g.d}</small>`;b.append(s2);
+    const r=el('em','price');b.append(r);rows[k]=r;b.addEventListener('click',()=>buy(k));list.append(b)}
+  function paint(){const l=luckNow(),t=Date.now();top.innerHTML=`<b>Your luck: ${l?'+'+Math.round(l*100)+'%':'none'}</b><small>${l>=LUCK_CAP?'You can\'t get any luckier than this.':'Boosts add up, to +'+Math.round(LUCK_CAP*100)+'% at most.'} Luck gives a round a second chance when it's about to go against you.</small>`;
+    for(const[k,g]of Object.entries(GOODS)){const end=(ST.boosts||{})[k]||0;rows[k].innerHTML=end>t?`<i>${mmss(end-t)}</i>${fmt(g.price)}`:fmt(g.price)}}
+  function buy(k){const g=GOODS[k];if(ST.chips<g.price){SND.sfx('buzz');toast(`A ${g.n} costs ${fmt(g.price)} chips.`);return}
+    spend(g.price);const t=Date.now();ST.boosts[k]=Math.max(t,ST.boosts[k]||0)+g.mins*60000;ST.bought[k]=(ST.bought[k]||0)+1;save();SND.sfx('coin');showLuck();paint();
+    toast(k==='cookie'?'"'+pick(FORTUNES)+'"':k==='beer'?'Glug glug. You feel braver.':k==='energy'?'Zzzap! Your hands are buzzing.':k==='clover'?'Four whole leaves. Lucky you.':'The lucky cat waves at you.')}
+  const bar=el('div','bar'),bk=el('button','btn ghost','Back to the lobby');bk.addEventListener('click',()=>go(lobby));bar.append(bk);root.append(bar);
+  paint();const tick=setInterval(()=>{if(!root.isConnected){clearInterval(tick);return}paint()},1000);
+  return{id:'store',el:root,title:'Corner Store',first:()=>$('.good',root),back:()=>go(lobby),leave:()=>clearInterval(tick)}}
+/* the luck you have running, in the top bar */
+function showLuck(){const e=$('#luck');if(!e)return;const l=luckNow(),t=Date.now();e.hidden=!l;if(!l)return;
+  const ends=Object.entries(ST.boosts||{}).filter(([k,v])=>v>t&&GOODS[k]).map(([,v])=>v);$('#luckv').textContent='+'+Math.round(l*100)+'%';$('#luckt').textContent=mmss(Math.min(...ends)-t)}
+setInterval(showLuck,1000);
+
+/* ---------- where your casino is being kept, and a code to carry it by hand ---------- */
+function canStore(){try{localStorage.setItem('chipcity-probe','1');const ok=localStorage.getItem('chipcity-probe')==='1';localStorage.removeItem('chipcity-probe');return ok}catch(e){return false}}
+/* a ZigaPlay file opened straight from an iPhone's Files app may lose what it stores when it closes */
+const iosFile=()=>{try{const top=window.parent!==window?window.parent.location:location;return top.protocol==='file:'&&/iPhone|iPad|iPod|Macintosh.*Mobile/.test(navigator.userAgent)}catch(e){return false}};
+/* "saved to your account" only once the account has really taken a save (or already had one) */
+const zcStatus=()=>ZC?ZC.status('chipcity'):null;
+const saveWhere=()=>{const z=zcStatus();if(z&&z.state!=='none'){if(z.err)return'fail';if(z.okAt||CL.had&&!z.pending)return'cloud';return z.state==='on'?'saving':'connecting'}
+  return CL.state==='on'?'cloud':canStore()?(iosFile()?'maybe':'device'):'none'};
+const saveWord=()=>{const w=saveWhere(),z=zcStatus();return({cloud:'SAVED TO YOUR ACCOUNT',saving:'SAVING TO YOUR ACCOUNT…',connecting:'CONNECTING TO YOUR ACCOUNT…',fail:'ACCOUNT SAVE FAILED ('+(z&&z.err)+') · USE A SAVE CODE',device:'SAVED ON THIS DEVICE',maybe:'SAVES MAY NOT LAST · USE A SAVE CODE',none:'NOT SAVING HERE · USE A SAVE CODE'})[w]};
+setInterval(()=>{const f=document.querySelector('.lobby .fine');if(f&&f.textContent.includes('·'))f.textContent='PLAY CHIPS ONLY · NO REAL MONEY · '+saveWord()},1500);
+const ago=t=>{if(!t)return'never';const m=Math.floor((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' h ago':Math.floor(m/1440)+' d ago'};
+const saveCode=()=>'CC1:'+btoa(unescape(encodeURIComponent(JSON.stringify(ST))));
+function readCode(t){try{t=String(t||'').trim().replace(/\s+/g,'');if(!t.startsWith('CC1:'))return null;const o=JSON.parse(decodeURIComponent(escape(atob(t.slice(4)))));return valid(o)?o:null}catch(e){return null}}
+async function showCode(){const code=saveCode();let copied=false;try{await navigator.clipboard.writeText(code);copied=true}catch(e){}
+  await choose(`<h3>Your save code</h3><p>${copied?'It is copied. ':''}Keep it somewhere safe, like Notes. Load it here any time to get this casino back.</p><textarea class="code" readonly>${code}</textarea>`,['Done'],0,0)}
+async function loadCode(){const p=choose(`<h3>Load a save code</h3><p>Paste a save code below. It replaces the casino you have now.</p><textarea class="code" id="codein" placeholder="CC1:..."></textarea>`,['Cancel','Load it'],1,0);
+  setTimeout(()=>{const t=$('#codein');t&&t.focus()},60);const c=await p;if(c!==1)return;const v=$('#codein')?$('#codein').value:'',o=readCode(v);
+  if(!o){SND.sfx('buzz');toast("That doesn't look like a whole save code.");return}
+  const snd=ST.sound;ST=upgrade(o);ST.sound=snd;ST.restart=Date.now();CL.later=null;save();cloudFlush();showChips(true);showLuck();toast('Your casino is back.');go(lobby)}
+
+/* ========================================================================================================
    STATS
    ======================================================================================================== */
 function stats(){const root=el('div','screen lobby');const sc=el('div','scroll'),box=el('div','stats');sc.append(box);root.append(sc);
   const t=TIERS[tierIdx()],sign=n=>n>0?`<span class="pos">+${big(n)}</span>`:n<0?`<span class="neg">−${big(-n)}</span>`:'0';
+  const where=saveWhere();
   box.innerHTML=`<h2>Your casino card</h2><table>
+    <tr><td>Owed to Big Sal</td><td>${ST.debt?fmt(ST.debt):'<span class="pos">Paid off!</span>'}</td></tr><tr><td>Paid to Big Sal</td><td>${fmt(ST.paid)}</td></tr>
     <tr><td>Chips now</td><td>${fmt(ST.chips)}</td></tr><tr><td>Most chips ever</td><td>${fmt(ST.peak)}</td></tr>
     <tr><td>VIP</td><td><span class="tier" style="--tc:${t[2]}">${t[1]}</span></td></tr>
     <tr><td>Biggest win</td><td>${ST.biggest.amt?fmt(ST.biggest.amt)+' · '+GAMES[ST.biggest.game]:'—'}</td></tr>
-    <tr><td>Total bet</td><td>${fmt(ST.wagered)}</td></tr><tr><td>Cashier visits</td><td>${ST.bailouts}</td></tr></table>
+    <tr><td>Total bet</td><td>${fmt(ST.wagered)}</td></tr><tr><td>Earned at work</td><td>${fmt(ST.work.earned)}</td></tr><tr><td>Chips polished</td><td>${fmt(ST.work.clicks)}</td></tr><tr><td>Store goods bought</td><td>${fmt(Object.values(ST.bought||{}).reduce((a,b)=>a+b,0))}</td></tr></table>
+    <h2>Saving</h2><p class="savewhere ${where}">${where==='fail'?'Your Claude account turned the last save down ('+(zcStatus()&&zcStatus().err)+'). Copy a save code to be safe; the game keeps trying.':where==='saving'||where==='connecting'?'Saving to your Claude account…':where==='cloud'?'Saved to your Claude account after every round, so your casino follows you to any device.':where==='device'?'Saved on this device after every round, in four separate places, so closing the app keeps your casino.':where==='maybe'?'Saved on this phone after every round, but an iPhone can throw away what a file opened from the Files app saves. Copy a save code to be safe, or play the ZigaPlay inside Claude, where saves go to your account.':'This browser can\'t keep saves. Copy a save code before you leave.'}</p>
+    <p class="savenote">Last saved ${ago(ST.savedAt)} · opened here ${fmt(OPENS)} time${OPENS===1?'':'s'} · this time it loaded ${({device:'from this device',backup:'from a backup on this device',cloud:'from your account',new:'as a new casino'})[LOADED.from]}</p>
     <h2>By table</h2><table><tr><th>Table</th><th>Rounds</th><th>Wins</th><th>Net</th></tr>${Object.entries(GAMES).map(([k,n])=>{const g=ST.games[k]||{rounds:0,wins:0,bet:0,ret:0};return`<tr><td>${n}</td><td>${g.rounds}</td><td>${g.wins}</td><td>${sign(g.ret-g.bet)}</td></tr>`}).join('')}</table>`;
-  const bar=el('div','bar'),row=el('div','row'),bk=el('button','btn gold','Back'),rs=el('button','btn ghost','Start over');row.append(bk,rs);bar.append(row);root.append(bar);
+  const bar=el('div','bar'),row=el('div','row'),row2=el('div','row'),bk=el('button','btn gold','Back'),rs=el('button','btn ghost','New game'),cp=el('button','btn ghost','Save code'),ld=el('button','btn ghost','Load a code');
+  row.append(bk,rs);row2.append(cp,ld);bar.append(row2,row);root.append(bar);cp.addEventListener('click',showCode);ld.addEventListener('click',loadCode);
   bk.addEventListener('click',()=>go(lobby));
-  rs.addEventListener('click',async()=>{const c=await choose(`<h3>Start over?</h3><p>This resets your chips to ${fmt(START)} and clears every stat and your VIP card. It can't be undone.</p>`,['Keep my casino','Start over'],0,0);
-    if(c===1){const snd=ST.sound;ST=fresh();ST.sound=snd;save();showChips(true);toast('A fresh start with '+fmt(START)+' chips.');go(lobby)}});
+  rs.addEventListener('click',async()=>{const c=await choose(`<h3>Start a new game?</h3><p>This throws away this casino: your chips go back to ${fmt(START)}, you owe Big Sal ${fmt(DEBT)} again, and every stat and your VIP card are cleared. It can't be undone.</p>`,['Keep my casino','New game'],0,0);
+    if(c===1){const snd=ST.sound;ST=fresh();ST.sound=snd;ST.restart=Date.now();CL.later=null;save();cloudFlush();showChips(true);toast('A new game, with '+fmt(START)+' chips.');showLuck();go(lobby)}});
   return{id:'stats',el:root,title:'Stats',first:()=>bk,back:()=>go(lobby),
     key:b=>{if(b==='up'||b==='down'){sc.scrollTop+=b==='down'?50:-50;return true}return false}}}
 
 /* ========================================================================================================
    START, and the ZigaPlay console
    ======================================================================================================== */
-setSound(ST.sound,false);showChips(true);
-addEventListener('visibilitychange',()=>{if(document.hidden&&CL.dirty)cloudFlush();SND.pause(document.hidden)});
+setSound(ST.sound,false);showChips(true);showLuck();try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+/* write everything down the moment the app is hidden or closed: on an iPhone, leaving the app can be the last chance */
+const onHide=()=>{if(!alive())return;persist();if(CL.dirty)cloudFlush()};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)onHide();SND.pause(document.hidden)});
+addEventListener('pagehide',onHide);addEventListener('freeze',onHide);
+if(TOPW!==window){const tv=()=>{if(TOPW.document.hidden)onHide()};
+  try{TOPW.document.addEventListener('visibilitychange',tv);TOPW.addEventListener('pagehide',onHide);TOPW.addEventListener('freeze',onHide);
+    addEventListener('pagehide',()=>{try{TOPW.document.removeEventListener('visibilitychange',tv);TOPW.removeEventListener('pagehide',onHide);TOPW.removeEventListener('freeze',onHide)}catch(e){}})}catch(e){}}
 
 if(ZP){
   window.ZPCart={
@@ -879,14 +1147,15 @@ if(ZP){
     /* the power switch: chips save by themselves; only a round in the middle of play needs a word */
     async home(){closeModal();
       if(S&&S.busy&&S.busy()&&S.id!=='hl'){const c=await choose('<p>Turn off in the middle of a round? Chips already in play are lost.</p>',['Keep playing','Turn off'],0,0);if(c===0)return false}
-      if(S&&S.powerOff)S.powerOff();save();await cloudFlush();return true},
-    snapshot:()=>null,
+      if(S&&S.powerOff)S.powerOff();save();if(CL.dirty)cloudWrite();await cloudFlush();return true},
+    snapshot:()=>JSON.parse(JSON.stringify(ST)),
   };
-  if(ZP.takeRestore)ZP.takeRestore('chipcity');
+  {const r=ZP.takeRestore&&ZP.takeRestore('chipcity');if(valid(r)&&(r.run||'legacy')===(ST.run||'legacy')&&(+r.savedAt||0)>=(+ST.savedAt||0)){ST=upgrade(r);persist();showChips(true)}}
 }
 go(lobby);
-cloudInit();
-window.__cc={get ST(){return ST},get S(){return S},get hot(){return hot},input,go,screens:{lobby,blackjack,roulette,slots,poker,hilo,stats},vpEval,slotPay,bjTotal,BJ,hlMult,save,REEL,STRIPS:()=>STRIPS,rWins,rPays,RBET,WHEEL,fresh:()=>{ST=fresh();showChips(true)}};
+/* the cloud is checked after the backups on this device, so it compares against your newest local casino */
+localRestore().catch(()=>{}).then(cloudInit);
+window.__cc={get ST(){return ST},get S(){return S},get hot(){return hot},input,go,screens:{lobby,blackjack,roulette,slots,poker,hilo,stats,work,shark,shop},CL,cloudPick,luckNow,GOODS,saveCode,readCode,saveWhere,vpEval,slotPay,bjTotal,BJ,hlMult,save,REEL,STRIPS:()=>STRIPS,rWins,rPays,RBET,WHEEL,fresh:()=>{ST=fresh();showChips(true)}};
 if(ZP&&ZP.cartReady)ZP.cartReady(window.ZPCart);
 })();
 </script>
