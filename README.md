@@ -9,6 +9,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Strike at Night** | A 16-bit style RPG. Lift was a tech worker in 2026 until a car hit him; he wakes up as a farm boy in Larkfield, is framed for his new parents' murder, and lives as a bandit with a price on his head. Beat strong foes to take their power as new forms. Prologue and two chapters. | D-pad move · A talk/confirm · B back · START menu · SELECT change form |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
+| **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 
 ## Lynties in 3D
 
@@ -38,10 +39,22 @@ The cartridge with the id `drownedmoon` now holds *Strike at Night*, built on th
 
 The Dominion of Korgath has invaded the small Republic of Varna. You name and command Varna's drone unit through five fronts, each against a different enemy general.
 
-- **A battle** starts with a briefing (targets, air defense, jamming, enemy drones), then a loadout limited by launch slots and your drone stock. The strike flies in up to three waves: before each one you choose how many of each drone to send and what to aim at, and watch it play out on a tactical map with a thermal drone camera.
+- **A battle** starts with a briefing (targets, air defense, jamming, enemy drones), then a loadout limited by launch slots and your drone stock. The strike flies in up to three waves. Before each one you choose how many of each drone to send, the order the groups fly in, and what to aim at first. Each group then crosses the map from left to right: decoys draw fire, recon reveals hidden units, and strikers dive onto their targets. A report after each wave waits for you to continue.
+- **The first mission is a hands-on tutorial**: short prompts show you what to press as you go.
 - **Eleven drones**, from cheap FPVs to the Heavy UCAV, each strong against different targets: troops, armor, artillery, supply lines, buildings, air defense, jammers and ships. Some are one-way; others come home if they survive.
 - **Funds** buy drones and research; **prestige** raises your rank, which opens research tiers and foreign aid. Enemy generals adapt when you lean too hard on one drone.
 - The game is built from `tools/dronestrike/src/`: `python3 tools/dronestrike/build.py` writes `games/dronestrike/index.html`, and `tools/dronestrike/make-cart.js` redraws its label.
+
+## Pitchfork Rising
+
+A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. Twelve battles in four acts take the revolt from the village manor, past the Earl's sheriff and the Earl himself, to the king's palace yard, and then you choose what replaces the crown.
+
+- **Learning by playing:** there is no manual. The first battle starts within seconds, and short tips appear one at a time as each thing becomes useful (move, strike, shout orders, roll, light the hay). New weapons, traps and plans arrive one or two at a time after each victory, each on its own card, and camp grows a new button when there is something new to use.
+- **Before each battle (camp):** spend plunder to arm unarmed folk (pitchforks, slings, scythes, flails, bows, firebrands, pikes, crossbows), buy traps (stake pits, snares, caltrops, hay & pitch, beehives, deadfalls, barricades), pick one scheme (spike the ale, ring the bell, spread rumours, night attack and more) and improve Wat.
+- **Deployment:** squads start in the green area; traps can go anywhere that isn't right on top of the enemy. Everything is placed for you to start with, so START is always ready.
+- **Battle:** you play Wat on the field. A strikes, B rolls, SELECT shouts HOLD / CHARGE / FOLLOW ME to every squad. Folk hidden in wheat or brush strike for double damage; folk near Wat hit harder and never run; fire spreads through wheat; pikes break cavalry charges; nobles only really fear Wat's own blade.
+- **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
+- Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
 
 ## Playing it
 
@@ -67,6 +80,7 @@ tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
 tools/lynties-3d/           the Lynties game, its 3D world and the script that builds the cartridge
 tools/drownedmoon/          Strike at Night's source (src/*.js), its build script and label maker
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
+tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 ```
 
 ## How the console works
@@ -79,6 +93,7 @@ tools/dronestrike/          Drone Strike's source (src/*.js), its build script a
   - `wide:true` gives the game the console's sideways shape. If the phone is upright, the console turns itself a quarter turn.
   - `face4:true` gives the game four face buttons in a diamond (A, B, C, D).
   - `skin:'<id>'` names the console skin the game wears when the player picks *Match the game*.
+- **Home screen and Library:** the shelf shows the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
 - **Skins:** SELECT on the shelf opens the skin picker. Some skins move (aurora, galaxy and others), and each game can bring its own.
 - **Inside the console:** games detect it with `window.parent.ZIGAPLAY`, and each one still runs fine on its own. Every game prefixes its `localStorage` keys with its own id, because they all share one origin.
 

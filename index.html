@@ -362,6 +362,44 @@ html.wide .console.widegame .grille{display:none}
 .fx-drownedmoon svg rect{fill:#ffc46a}
 .fx-drownedmoon b{bottom:20px;width:3px;height:3px;border-radius:50%;background:#ffb050;box-shadow:0 0 6px 2px rgba(255,110,30,.75);opacity:0;animation:zember 7s linear infinite}
 
+/* the home screen's EDIT mode and the library */
+.lcd-top .tr{display:flex;align-items:center;gap:8px}
+.editbtn{font-family:var(--pix);font-size:12px;letter-spacing:.1em;line-height:1.25;padding:1px 7px 0;border:2px solid var(--lcd0);border-radius:4px;background:transparent;color:var(--lcd0);cursor:pointer}
+.editing .editbtn{background:var(--lcd0);color:var(--lcd3)}
+.cart .cb{position:absolute;inset:0}
+#home.editing .cart.game .cb{animation:zjig .28s ease-in-out infinite alternate}
+#home.editing .cart.game:nth-child(2n) .cb{animation-delay:-.14s}
+@keyframes zjig{from{transform:rotate(-1.5deg)}to{transform:rotate(1.5deg)}}
+.cart .rm{display:none;position:absolute;left:-7px;top:-7px;z-index:3;width:26px;height:26px;border-radius:50%;border:0;padding:0;background:var(--lcd0);color:var(--lcd3);
+  font-family:var(--pix);font-size:21px;line-height:24px;text-align:center;box-shadow:0 0 0 2px var(--lcd3);cursor:pointer}
+#home.editing .cart.game .rm{display:block}
+.cart.tolib{transition:transform .32s ease-in,opacity .32s!important;opacity:0!important}
+.cart.lt .box{position:absolute;left:9px;right:9px;top:22px;height:84px;border-radius:5px;background:var(--lcd0);color:var(--lcd3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}
+.cart.lt .stk{position:relative;width:48px;height:30px}
+.cart.lt .stk i{position:absolute;bottom:0;width:22px;height:27px;border-radius:2px 5px 0 0;background:var(--lcd2);box-shadow:inset 0 0 0 2px var(--lcd1),inset 0 7px 0 2px var(--lcd1)}
+.cart.lt .stk i:nth-child(1){left:1px;transform:rotate(-9deg);transform-origin:bottom center}
+.cart.lt .stk i:nth-child(2){left:13px;height:30px}
+.cart.lt .stk i:nth-child(3){left:25px;transform:rotate(9deg);transform-origin:bottom center}
+.cart.lt .box b{font-size:13px;letter-spacing:.14em;line-height:1}
+.cart.lt .box em{font-style:normal;font-family:var(--num);font-size:14px;letter-spacing:.06em;opacity:.85;line-height:1}
+.libact{display:block;align-self:flex-start;margin-top:3px;font-family:var(--pix);font-size:13px;letter-spacing:.1em;padding:3px 10px 2px;border:0;border-radius:4px;background:var(--lcd0);color:var(--lcd3);cursor:pointer}
+.libact[hidden]{display:none}
+#home.editing .info small{display:none}
+#home.editing .info p{-webkit-line-clamp:2}
+.liblist{flex:1 1 auto;min-height:0;overflow:hidden;position:relative;padding:6px 8px 4px}
+.liblist .row{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:4px 8px;border-radius:5px;text-align:left;
+  font-family:var(--pix);font-size:15px;letter-spacing:.06em;color:var(--lcd0);cursor:pointer}
+.liblist .row img{flex:0 0 auto;width:42px;height:28px;object-fit:cover;border-radius:3px;image-rendering:pixelated;box-shadow:0 0 0 2px currentColor;background:var(--lcd1)}
+.liblist .row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.liblist .row[aria-selected=true]{background:var(--lcd0);color:var(--lcd3)}
+.liblist .row em{margin-left:auto;flex:0 0 auto;font-style:normal;font-family:var(--num);font-size:15px;letter-spacing:.06em;opacity:.85}
+.liblist .row.out{transition:transform .3s ease-in,opacity .3s;transform:translateY(-14px);opacity:0}
+.liblist .empty{margin:0;padding:10px 8px;font-family:var(--num);font-size:17px;line-height:1.1;color:var(--lcd1)}
+.libinfo{padding:4px 12px 5px;border-top:3px solid var(--lcd1);font-family:var(--num);font-size:16px;line-height:1.05;color:var(--lcd1);min-height:2.4em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-height:720px){.liblist .row{padding:2px 8px;font-size:14px}.liblist .row img{width:36px;height:24px}.libinfo{font-size:15px}}
+@media (prefers-reduced-motion:reduce){#home.editing .cart.game .cb{animation:none}}
+
 /* the skin picker on the LCD */
 .skinlist{flex:1 1 auto;min-height:0;overflow:hidden;position:relative;padding:4px 8px 6px}
 .skinlist .head{font-family:var(--num);font-size:15px;letter-spacing:.12em;color:var(--lcd1);padding:7px 8px 2px}
@@ -385,10 +423,16 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
       <span class="stripes" aria-hidden="true"></span><span class="led" aria-hidden="true"></span><span class="ledlbl" aria-hidden="true">POWER</span>
       <div class="screen" id="screen">
         <div class="lcd" id="home" hidden>
-          <div class="lcd-top"><b>ZIGAPLAY</b><span id="count"></span></div>
+          <div class="lcd-top"><b>ZIGAPLAY</b><span class="tr"><span id="count"></span><button class="editbtn" id="editBtn" tabindex="-1">EDIT</button></span></div>
           <div class="shelf" id="shelf" role="listbox" aria-label="Games"></div>
-          <div class="info" aria-live="polite"><h2 id="gTitle"></h2><p id="gBlurb"></p><small id="gNote"></small></div>
-          <div class="lcd-help"><span><i>◀▶</i> CHOOSE</span><span><i>A</i> PLAY</span><span><i>SELECT</i> SKINS</span></div>
+          <div class="info" aria-live="polite"><h2 id="gTitle"></h2><p id="gBlurb"></p><small id="gNote"></small><button class="libact" id="libAct" tabindex="-1" hidden>ADD TO LIBRARY</button></div>
+          <div class="lcd-help" id="homeHelp"></div>
+        </div>
+        <div class="lcd" id="lib" hidden>
+          <div class="lcd-top"><b>LIBRARY</b><span class="tr"><span id="libCount"></span><button class="editbtn" id="libEdit" tabindex="-1">EDIT</button></span></div>
+          <div class="liblist" id="libList" role="listbox" aria-label="Library"></div>
+          <div class="libinfo" id="libInfo" aria-live="polite"></div>
+          <div class="lcd-help" id="libHelp"></div>
         </div>
         <div class="lcd" id="skins" hidden>
           <div class="lcd-top"><b>SKINS</b><span id="skinPos"></span></div>
@@ -439,6 +483,12 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
    and a game that defines ZPCart.stick(x, y) also gets where the stick points, x and y each from -1 to 1 (y down).
    A cart with `face4:true` gets four face buttons in a diamond while it runs: D on top, A right, B below, C left;
    they reach the game as 'a' 'b' 'c' 'd'.
+
+   HOME SCREEN AND LIBRARY
+   The home screen shows the games on the shelf; the rest are put away in the library (the LIBRARY tile on the shelf).
+   EDIT (or START) on the home screen sends the chosen game to the library, and EDIT in the library puts one back.
+   A cart with `lib:true` starts out in the library; after that, where each game sits is the player's choice.
+
    - A game can take the buttons directly by defining   window.ZPCart = { input(btn, isDown) {...} }
      where btn is 'up' 'down' 'left' 'right' 'a' 'b' 'start' 'select' (and 'c' 'd' for face4 carts). The call happens inside the player's
      own press, so a game may start sound from it.
@@ -481,11 +531,14 @@ const CARTS=[
    blurb:'Punch through a junkyard city of robots, beat four bosses and buy new fighters with the bolts you win.',
    note:'A light · B heavy · ▲ jump · ▼ guard · SELECT burst'},
   {id:'drownedmoon',title:'Strike at Night',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',
-   blurb:'Lift was a tech worker in 2026, until a car. Now he\'s a farm boy in a world of swords, framed for his parents\' murder, with a price on his head. Beat strong foes to take their power. Chapters 1 and 2.',
+   lib:true,blurb:'Lift was a tech worker in 2026, until a car. Now he\'s a farm boy in a world of swords, framed for his parents\' murder, with a price on his head. Beat strong foes to take their power. Chapters 1 and 2.',
    note:'A talk · B back · START menu'},
-  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',
+  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',lib:true,
    blurb:'A giant neighbor has invaded. Command your country\'s drone unit: research, build and choose what flies against five enemy generals.',
    note:'D-pad choose · ◀ ▶ amounts · A confirm · B back'},
+  {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',stick:true,wide:true,lib:true,
+   blurb:'Lead a peasant revolt from the village barn to the king\'s throne: arm your folk, set traps, and fight on the field yourself.',
+   note:'A strike · B roll · SELECT orders · START pause'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -564,34 +617,89 @@ const SFX={tick:()=>beep([[1568,0,.04]],'square',.03),pick:()=>beep([[1047,0,.06
 
 /* ---------- console state ---------- */
 let state='off',sel=Math.min(store.get('sel',0),CARTS.length),cur=null,frame=null,restore={};
-const items=()=>[...CARTS,GHOST];
+/* ---------- the home screen and the library ----------
+   Every game is either on the home screen's shelf or put away in the library. Where a game starts comes from its CARTS
+   entry (lib:true starts it in the library); after that it follows the player. EDIT (or START) on the home screen lets
+   them send a game to the library, and EDIT in the library sends it back. The choice is kept on this phone and, inside
+   Claude, in the player's account with the skin, so it comes back on their other devices too. */
+let libPlace=(()=>{const o=store.get('lib',null);return o&&typeof o==='object'&&!Array.isArray(o)?o:{}})(),libTouched=false,editing=false,libUI=null,launchFrom='home';
+const inLib=c=>!!c&&!c.ghost&&!c.libtile&&(libPlace[c.id]?libPlace[c.id]==='lib':!!c.lib);
+const homeCarts=()=>CARTS.filter(c=>!inLib(c)),libCarts=()=>CARTS.filter(inLib);
+const names=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const LIBTILE={id:'#library',libtile:true,title:'Library',note:'',
+  get blurb(){const l=libCarts();return l.length?`${l.length} game${l.length===1?'':'s'} put away: ${names(l.map(c=>c.title))}.`:'Games you put away go here. Press EDIT on the home screen, then choose a game.'}};
+const items=()=>[...homeCarts(),LIBTILE,GHOST];
 const cartWin=()=>{try{return frame&&frame.contentWindow}catch(e){return null}};
 /* ---------- skins: what the player picked (skinChoice), and what the console wears right now ---------- */
 let skinChoice=SKIN[store.get('shell','classic')]?store.get('shell','classic'):'classic',skinTouched=false,skinUI=null;
 const fxEl=document.createElement('div');fxEl.className='skinfx';fxEl.setAttribute('aria-hidden','true');consoleEl.prepend(fxEl);
-function autoSkin(){const c=cur||items()[sel];return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
+function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:items()[sel]);return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
 function wearSkin(id){if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
   consoleEl.dataset.shell=id;fxEl.dataset.on=id;fxEl.className='skinfx fx-'+id;fxEl.innerHTML=SKINFX[id]?SKINFX[id]():'';$('#edition').textContent=SKIN[id].ed||'POCKET CONSOLE'}
 function refreshSkin(){if(state!=='skins')wearSkin(skinChoice)}
-function chooseSkin(id){skinChoice=id;skinTouched=true;store.set('shell',id);wearSkin(id);
-  try{zclSave('_console',JSON.stringify({shell:id,at:Date.now()}),{shell:id})}catch(e){}}
+function chooseSkin(id){skinChoice=id;skinTouched=true;store.set('shell',id);wearSkin(id);saveConsoleDoc()}
+function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoice,lib:libPlace,at:Date.now()}),{shell:skinChoice})}catch(e){}}
 /* the skin is kept in the player's account too, so it comes back when the phone has wiped this page's storage */
 async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r.ok||!r.json||skinTouched)return;
-  const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}}catch(e){}}
+  const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}
+  if(o&&o.lib&&typeof o.lib==='object'&&!libTouched&&JSON.stringify(o.lib)!==JSON.stringify(libPlace)){libPlace=o.lib;store.set('lib',libPlace);
+    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib()}}catch(e){}}
 wearSkin(skinChoice);
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
-function show(id){for(const x of['home','boot','loading','skins'])$('#'+x).hidden=x!==id}
+function show(id){for(const x of['home','lib','boot','loading','skins'])$('#'+x).hidden=x!==id}
 
 /* ---------- the library shelf ---------- */
-function renderShelf(){const sh=$('#shelf');sh.innerHTML='';
-  items().forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':'');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
+function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();sel=Math.max(0,Math.min(sel,all.length-1));
+  all.forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':c.libtile?' lt':' game');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
+    const n=libCarts().length;
     b.innerHTML=c.ghost?'<span class="shell"></span><span class="ghostbox"><b>+</b><span>ADD A GAME</span></span>'
-      :`<span class="shell"></span><span class="ridges"></span><span class="label" style="--lb:${c.label};--lf:${c.ink}"><img src="${c.art}" alt=""><b></b></span><span class="arrow"></span>`;
-    if(!c.ghost){const lb=b.querySelector('.label b');lb.textContent=c.title.toUpperCase();if(c.title.length>11){lb.style.fontSize=Math.max(9,14-(c.title.length-11)*.85).toFixed(1)+'px';lb.style.letterSpacing='.05em';lb.style.whiteSpace='nowrap'}}
+      :c.libtile?`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="box"><span class="stk"><i></i><i></i><i></i></span><b>LIBRARY</b><em>${n} GAME${n===1?'':'S'}</em></span><span class="arrow"></span></span>`
+      :`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="label" style="--lb:${c.label};--lf:${c.ink}"><img src="${c.art}" alt=""><b></b></span><span class="arrow"></span></span><span class="rm" role="button" aria-label="Add to library">–</span>`;
+    if(!c.ghost&&!c.libtile){b.querySelector('.rm').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home'&&editing)toLibrary(c)})}
+    if(!c.ghost&&!c.libtile){const lb=b.querySelector('.label b');lb.textContent=c.title.toUpperCase();if(c.title.length>11){lb.style.fontSize=Math.max(9,14-(c.title.length-11)*.85).toFixed(1)+'px';lb.style.letterSpacing='.05em';lb.style.whiteSpace='nowrap'}}
     b.setAttribute('aria-label',c.title);
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
-  $('#count').textContent=`${CARTS.length} GAME${CARTS.length===1?'':'S'}`;requestAnimationFrame(layoutShelf)}
+  $('#count').textContent=`${CARTS.length} GAME${CARTS.length===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
+function homeHelp(){$('#homeHelp').innerHTML=editing?'<span><i>A</i> ADD TO LIBRARY</span><span><i>START</i> DONE</span>':'<span><i>A</i> PLAY</span><span><i>START</i> EDIT</span><span><i>SELECT</i> SKINS</span>'}
+function markEdit(){$('#home').classList.toggle('editing',editing);$('#editBtn').textContent=editing?'DONE':'EDIT';homeHelp();
+  const c=items()[sel],can=editing&&c&&!c.ghost&&!c.libtile;$('#libAct').hidden=!can}
+function setEditing(on){if(state!=='home')return;if(on===editing)return;editing=on;SFX[on?'pick':'eject']();markEdit();layoutShelf()}
+/* send a game from the home screen to the library: it drops off the shelf, and the shelf closes up */
+async function toLibrary(c){if(!c||c.ghost||c.libtile||inLib(c))return;state='moving';SFX.eject();
+  const card=$$('#shelf .cart')[items().indexOf(c)];if(card){card.classList.add('tolib');card.style.transform+=' translateY(70px) scale(.35)';await sleep(320)}
+  libPlace[c.id]='lib';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='home';renderShelf();toast(c.title.toUpperCase()+' → LIBRARY')}
+/* ---------- the library screen ---------- */
+function openLib(){if(state!=='home')return;if(editing){editing=false;markEdit()}
+  const n=libCarts().length;libUI={i:Math.max(0,Math.min(store.get('libSel',0),n-1)),edit:false};state='lib';show('lib');renderLib();SFX.pick()}
+function renderLib(){const L=$('#libList'),cs=libCarts();L.innerHTML='';if(!libUI)return;libUI.i=Math.max(0,Math.min(libUI.i,cs.length-1));
+  $('#libCount').textContent=`${cs.length} GAME${cs.length===1?'':'S'}`;$('#lib').classList.toggle('editing',libUI.edit);$('#libEdit').textContent=libUI.edit?'DONE':'EDIT';
+  if(!cs.length){const p=document.createElement('p');p.className='empty';p.textContent='Nothing put away yet. On the home screen, press EDIT, then choose a game to add it here.';L.append(p)}
+  cs.forEach((c,n)=>{const b=document.createElement('button');b.className='row';b.tabIndex=-1;b.setAttribute('role','option');
+    b.innerHTML=`<img src="${c.art}" alt=""><span></span><em></em>`;b.querySelector('span').textContent=c.title.toUpperCase();b.setAttribute('aria-label',c.title);
+    b.addEventListener('click',()=>{sfxUnlock();if(state!=='lib')return;if(libUI.i===n)libActivate();else{libUI.i=n;markLib();SFX.tick()}});L.append(b)});
+  markLib()}
+function markLib(){if(!libUI)return;const rows=$$('#libList .row'),cs=libCarts(),L=$('#libList');
+  rows.forEach((r,n)=>{const on=n===libUI.i;r.setAttribute('aria-selected',String(on));r.querySelector('em').textContent=on?(libUI.edit?'+ HOME':'PLAY'):''});
+  const c=cs[libUI.i];$('#libInfo').textContent=c?c.blurb:'';
+  $('#libHelp').innerHTML=libUI.edit?'<span><i>A</i> PUT ON HOME</span><span><i>START</i> DONE</span>':'<span><i>A</i> PLAY</span><span><i>START</i> EDIT</span><span><i>B</i> HOME</span>';
+  const r=rows[libUI.i];if(r){if(r.offsetTop<L.scrollTop+4)L.scrollTop=Math.max(0,r.offsetTop-6);else if(r.offsetTop+r.offsetHeight>L.scrollTop+L.clientHeight-4)L.scrollTop=r.offsetTop+r.offsetHeight-L.clientHeight+6}
+  store.set('libSel',libUI.i);if(skinChoice==='auto')refreshSkin()}
+function libActivate(){const c=libCarts()[libUI.i];if(!c){SFX.buzz();return}if(libUI.edit)toHome(c);else launch(c)}
+/* send a game from the library back to the home screen, at the end of the shelf */
+async function toHome(c){state='moving';SFX.pick();const r=$$('#libList .row')[libCarts().indexOf(c)];if(r){r.classList.add('out');await sleep(300)}
+  libPlace[c.id]='home';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='lib';renderLib();toast(c.title.toUpperCase()+' → HOME')}
+function setLibEdit(on){if(state!=='lib'||!libUI)return;libUI.edit=on;SFX[on?'pick':'eject']();renderLib()}
+$('#editBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')setEditing(!editing)});
+$('#libEdit').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='lib'&&libUI)setLibEdit(!libUI.edit)});
+$('#libAct').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home'&&editing)toLibrary(items()[sel])});
+function closeLib(){if(state!=='lib')return;libUI=null;state='home';show('home');sel=items().indexOf(LIBTILE);renderShelf();SFX.eject();refreshSkin()}
+function libInput(b){if(!libUI)return;const n=libCarts().length;
+  if(b==='up'||b==='left'){if(libUI.i>0){libUI.i--;markLib();SFX.tick()}else SFX.buzz()}
+  else if(b==='down'||b==='right'){if(libUI.i<n-1){libUI.i++;markLib();SFX.tick()}else SFX.buzz()}
+  else if(b==='a')libActivate();
+  else if(b==='start')setLibEdit(!libUI.edit);
+  else if(b==='b'){if(libUI.edit)setLibEdit(false);else closeLib()}}
 /* the console's shape: upright, or sideways (see the CSS); a wide game turns it sideways */
 function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide);
   const turned=wideGame&&!land,wide=turned||(land&&(H<=600||wideGame));
@@ -608,9 +716,10 @@ addEventListener('resize',applyLayout);addEventListener('orientationchange',()=>
 function layoutShelf(){const list=$$('#shelf .cart'),sh=$('#shelf'),k=Math.max(.55,Math.min(1.15,(sh.clientHeight-30)/134));
   list.forEach((b,i)=>{const d=i-sel,ad=Math.abs(d);b.classList.toggle('sel',d===0);b.setAttribute('aria-selected',String(d===0));
     b.style.transform=`translateX(${d*132*k}px) scale(${k*(d===0?1:.82)})`;b.style.opacity=ad>1?0:d===0?1:.55;b.style.zIndex=10-ad});
-  const c=items()[sel];$('#gTitle').textContent=c.title;$('#gBlurb').textContent=c.blurb;$('#gNote').textContent=c.note||'';store.set('sel',sel);if(skinChoice==='auto')refreshSkin()}
+  const c=items()[sel];$('#gTitle').textContent=c.title;$('#gBlurb').textContent=c.blurb;$('#gNote').textContent=c.note||'';store.set('sel',sel);if(skinChoice==='auto')refreshSkin();
+  $('#libAct').hidden=!(editing&&c&&!c.ghost&&!c.libtile)}
 function moveSel(d){const n=items().length,ns=Math.max(0,Math.min(n-1,sel+d));if(ns===sel){SFX.buzz();return}sel=ns;layoutShelf();SFX.tick()}
-function activate(){const c=items()[sel];if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
+function activate(){const c=items()[sel];if(editing){if(c.libtile)openLib();else if(c.ghost)SFX.buzz();else toLibrary(c);return}if(c.libtile){openLib();return}if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
 
 /* ---------- power: boot, games in and out ---------- */
 async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#blackout').classList.remove('on');
@@ -619,7 +728,7 @@ async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#bla
     for(let t=0;t<1500&&!skip;t+=50)await sleep(50);SFX.chime();for(let t=0;t<700&&!skip;t+=50)await sleep(50);screenEl.removeEventListener('pointerdown',sk)}
   show('home');renderShelf();state='home'}
 async function powerOff(){state='off';consoleEl.classList.add('off');SFX.click()}
-async function launch(c,opts={}){if(state!=='home'&&!opts.instant)return;state='loading';SFX.pick();
+async function launch(c,opts={}){if(state!=='home'&&state!=='lib'&&!opts.instant)return;launchFrom=state==='lib'?'lib':'home';if(editing){editing=false;markEdit()}state='loading';SFX.pick();
   const card=$$('#shelf .cart')[items().indexOf(c)];if(card&&!opts.instant){card.classList.add('inserting');await sleep(380)}
   $('#loadName').textContent=c.title.toUpperCase();show('loading');cur=c;applyLayout();refreshSkin();
   frame=document.createElement('iframe');frame.title=c.title;frame.setAttribute('allow','autoplay; fullscreen');frame.style.visibility='hidden';screenEl.insertBefore(frame,$('#ask'));
@@ -639,13 +748,14 @@ function prepare(html,c,inline){const dir=new URL(c.file.replace(/[^/]*$/,''),do
 async function eject(){if(state!=='game')return;state='ejecting';SFX.eject();$('#blackout').classList.add('on');await sleep(260);
   for(const ac of gameContexts){try{ac.close()}catch(e){}}gameContexts.clear();
   if(frame){try{frame.srcdoc='';frame.removeAttribute('src')}catch(e){}frame.remove();frame=null}cur=null;held.clear();stickDirs.clear();stickId=null;knob.style.transform='';applyLayout();
-  show('home');renderShelf();refreshSkin();$('#blackout').classList.remove('on');state='home'}
+  if(launchFrom==='lib'&&libUI){show('lib');state='lib';renderLib()}else{libUI=null;show('home');renderShelf();state='home'}
+  refreshSkin();$('#blackout').classList.remove('on')}
 /* the power switch: in a game it turns the game off (asking first when the game wants to), in the library it turns the console off */
 let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
   if(state==='off'){SFX.click();await boot(false);return}
   if(state==='skins')closeSkins(false);
-  if(state==='home'){await powerOff();return}
+  if(state==='home'||state==='lib'){editing=false;libUI=null;await powerOff();return}
   if(state!=='game')return;
   releaseAll();const w=cartWin();let r='ask';
   try{if(w&&w.ZPCart&&typeof w.ZPCart.home==='function')r=await w.ZPCart.home()}catch(e){r='ask'}
@@ -654,7 +764,7 @@ async function powerSwitch(){if(powering)return;powering=true;try{
   await eject()}finally{powering=false}}
 
 /* ---------- the skin picker: SELECT in the library. Moving through the list tries each skin on at once ---------- */
-function openSkins(){if(state!=='home')return;skinUI={i:Math.max(0,SKINS.findIndex(k=>k.id===skinChoice))};state='skins';show('skins');renderSkins();SFX.pick()}
+function openSkins(){if(state!=='home')return;if(editing){editing=false;markEdit()}skinUI={i:Math.max(0,SKINS.findIndex(k=>k.id===skinChoice))};state='skins';show('skins');renderSkins();SFX.pick()}
 function renderSkins(){const L=$('#skinList');L.innerHTML='';
   SKINS.forEach((k,n)=>{if(k.group){const h=document.createElement('div');h.className='head';h.textContent=k.group;L.append(h)}
     const b=document.createElement('button');b.className='row';b.tabIndex=-1;b.setAttribute('role','option');
@@ -694,9 +804,14 @@ function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}cat
     case 'ask':askInput(b);break;
     case 'home':
       if(b==='left'||b==='up')moveSel(-1);else if(b==='right'||b==='down')moveSel(1);
-      else if(b==='a'||b==='start')activate();
+      else if(b==='a')activate();
+      else if(b==='start')setEditing(!editing);
+      else if(b==='b'){if(editing)setEditing(false)}
       else if(b==='select')openSkins();
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='home'){moveSel(d==='left'||d==='up'?-1:1);repT=setTimeout(again,150)}},420)}
+      break;
+    case 'lib':libInput(b);
+      if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='lib'){libInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'skins':skinsInput(b);
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='skins'){skinsInput(d);repT=setTimeout(again,140)}},420)}
@@ -852,7 +967,7 @@ const start=data=>{applyLayout();data=data||{};if(typeof data.sel==='number')sel
   else boot(false)};
 if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
 setTimeout(skinFromAccount,400);
-window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
+window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},lib:{open:openLib,close:closeLib,edit:setEditing,libEdit:setLibEdit,home:()=>homeCarts().map(c=>c.id),inLib:()=>libCarts().map(c=>c.id),get sel(){return sel},get libSel(){return libUI&&libUI.i}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
 })();
 </script>
 </body>
