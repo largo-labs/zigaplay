@@ -7,11 +7,11 @@ const has=id=>!!(S&&S.research[id]);
 const unlocked=d=>d==='fpv'||d==='recon'||RESEARCH.some(r=>r.unlock===d&&has(r.id));
 function rankIdx(p=S.prestige){let r=0;RANKS.forEach(([,need],i)=>{if(p>=need)r=i});return r}
 const rankName=()=>RANKS[rankIdx()][0];
-function slots(){return 10+(has('crew1')?2:0)+(has('crew2')?2:0)+(has('crew3')?3:0)}
+function slots(){return 10+(has('crew1')?2:0)+(has('crew2')?3:0)+(has('crew3')?3:0)+(has('crew4')?4:0)}
 function costOf(d){return Math.max(1,Math.round(DRONES[d].cost*(has('workshop')?.8:1)))}
 function jamRes(d){const b=DRONES[d].jr;return b>=1?1:Math.min(.95,b+(has('hop')?.25:0)+(has('auto')?.25:0))}
 function dmgMult(){return 1+(has('pay1')?.15:0)+(has('pay2')?.15:0)+(has('pay3')?.2:0)}
-function baseAcc(){return .72+(has('thermal')?.1:0)}
+function baseAcc(){return .8+(has('thermal')?.1:0)}
 const general=()=>GENERALS[S.camp];
 
 /* ---------- missions ---------- */
@@ -25,16 +25,16 @@ function adaptation(){const g=general();const src=g.adaptive?S.usageAll:S.usage;
   if((s.recon||0)>.15*k){out.hide=.15;out.notes.push('They are camouflaging more of their units.')}
   return out}
 function genMission(){const g=general(),key=g.missions[S.battle],R=MISSIONS[key];const c=S.camp,b=S.battle;
-  const ad=adaptation();const hpk=1+c*.12+b*.03;const units=[];
+  const ad=adaptation();const hpk=1+c*.07+b*.02;const units=[];
   const add=(type,prim,dep)=>{const U=UNITS[type];units.push({type,name:U.name,cat:U.cat,depth:dep!=null?dep:U.depth,max:Math.round(U.hp*hpk),hp:0,val:U.val,prim,shots:U.shots||0,acc:U.acc||0,jam:U.jam||0,spawn:U.spawn||0,hidden:false,dead:false})};
-  const extra=Math.floor((c+b)/4);
+  const extra=Math.floor((c+b)/5);
   R.prim.forEach(([t,n,dep],i)=>{const e=i===0?Math.floor(extra/2):i===1&&n>1?Math.ceil(extra/2):0;for(let k=0;k<n+e;k++)add(t,1,dep)});
   R.esc.forEach(([t,n])=>{for(let k=0;k<n;k++)add(t,0)});
   const sea=['naval','coastal','finalsea'].includes(key);
   for(let i=0;i<g.aa-1+(c>=2&&b>=2?1:0);i++)add(c>=2&&i%2===0?'sam':'aagun',0);
-  for(let i=0;i<g.ew;i++)if(i===0||b>=2)add('ew',0);
+  for(let i=0;i<Math.min(g.ew,b>=3?2:1);i++)add('ew',0);
   if(g.dr&&b>=1)add('hive',0);
-  for(let i=0;i<ad.ew;i++)add('ew',0);for(let i=0;i<ad.aagun;i++)add('aagun',0);for(let i=0;i<ad.sam;i++)add('sam',0);
+  for(let i=0;i<Math.min(1,ad.ew);i++)add('ew',0);for(let i=0;i<ad.aagun;i++)add('aagun',0);for(let i=0;i<ad.sam;i++)add('sam',0);
   if(!sea&&b>=1&&rnd()<.6)add(pick(['squad','truck','apc']),0);
   units.forEach(u=>{u.hp=u.max;u.hidden=!has('intel')&&rnd()<(g.hide+ad.hide)*(u.prim?.5:1)});
   // positions: depth rows from the front line (low) to the deep rear (high); the sea runs down the right edge
@@ -52,52 +52,50 @@ function fit(d,m){const D=DRONES[d];if(D.recon)return m.units.some(u=>u.hidden)?
   let bp=0,be=0;for(const u of m.units){if(u.dead||u.depth>D.range)continue;const a=D.atk[u.cat]||0;if(!a)continue;if(u.prim)bp=Math.max(bp,a/u.max);else be=Math.max(be,a/u.max)}
   const t=threat(m);let v=Math.max(bp>=.9?3:bp>=.45?2:bp>0?1:0,Math.min(be>=.6?2:be>0?1:0,D.hunter?2:1));if(v&&!D.exp&&t.aaL>=3&&D.eva<.3)v--;if(v&&jamRes(d)<.3&&t.ewL>=2)v--;return v}
 
-/* ---------- one wave ---------- */
-function resolveWave(B,launch,focus){
-  const m=B.m,ev=[];const ds=[];let id=0;
-  for(const [t,n] of Object.entries(launch))for(let i=0;i<n;i++)ds.push({t,D:DRONES[t],id:id++,fate:null,target:null});
-  const live=()=>ds.filter(d=>!d.fate);const L=u=>!u.dead;
-  // 1. jamming
-  const jam=Math.min(.7,m.units.filter(L).reduce((s,u)=>s+u.jam,0)+m.genEw*.05);
-  if(jam>0)for(const d of ds){if(d.D.decoy)continue;if(rnd()<jam*(1-jamRes(d.t))){d.fate='jam';ev.push({k:'jam',d})}}
-  // 2. drone fights
-  let E=Math.round(m.units.filter(L).reduce((s,u)=>s+u.spawn,0)+m.genDr*1.5+(m.genDr?rnd()*1.5:0));B.enemyDr=E;
-  for(const d of live().filter(d=>d.D.interceptor)){for(let k=0;k<2&&E>0;k++)if(rnd()<.8){E--;ev.push({k:'intercept',d})}}
-  for(let i=0;i<E;i++){const pool=live().filter(d=>!d.D.interceptor);const v=pool.length?pick(pool):pick(live()||[]);if(!v)break;if(rnd()<.45*(1-v.D.eva*.5)){v.fate='drone';ev.push({k:'dronekill',d:v})}}
-  const accB=baseAcc(),mult=dmgMult();
-  const strike=(d,u)=>{const a=(d.D.atk[u.cat]||0)*mult*(.85+rnd()*.3);const hit=rnd()<accB+B.recon;const dmg=Math.max(1,Math.round(a*(hit?1:.3)));
-    u.hp-=dmg;d.target=u;S.stats.strikes++;const kill=u.hp<=0&&!u.dead;if(kill){u.dead=true;u.hp=0;S.stats.kills++}ev.push({k:'strike',d,u,dmg,kill,hit});if(d.D.exp)d.fate='spent'};
-  const pickTarget=(d,list)=>{let best=null,bs=0;for(const u of list){if(u.dead||u.hidden||u.depth>d.D.range)continue;const a=d.D.atk[u.cat]||0;if(!a)continue;
-      const left=u.hp-(u.pend||0);let s=a*(u.prim?1.4:1)*(u===focus?4:1)*(left>0?1:.08)*(d.D.hunter&&(u.cat==='aa'||u.cat==='ew')?5:1);if(s>bs){bs=s;best=u}}return best};
-  // 3. recon reveals before anything is aimed
-  const rc=live().filter(d=>d.D.recon).length;B.recon=Math.min(.3,rc*.1);
-  if(rc&&m.units.some(u=>u.hidden&&!u.dead)){m.units.forEach(u=>{if(u.hidden){u.hidden=false;ev.push({k:'reveal',u})}})}
-  // 4. radar hunters strike the air defense before it fires
-  m.units.forEach(u=>u.pend=0);
-  for(const d of live().filter(d=>d.D.hunter)){const u=pickTarget(d,m.units.filter(u=>u.cat==='aa'||u.cat==='ew'));if(u){u.pend+=d.D.atk[u.cat]*mult;strike(d,u)}}
-  // 5. air defense fires
-  for(const u of m.units.filter(u=>L(u)&&u.shots&&!u.hidden)){const acc=u.acc*(1+B.alert*.15);for(let s=0;s<u.shots;s++){const pool=live();if(!pool.length)break;
-      const w=pool.map(d=>d.D.decoy?4*m.decoyEff:1),tot=w.reduce((a,b)=>a+b,0);let r=rnd()*tot,v=pool[0];for(let i=0;i<pool.length;i++){if((r-=w[i])<0){v=pool[i];break}}
-      if(v.D.decoy){if(rnd()<.9){v.fate='decoy';ev.push({k:'decoy',d:v,u})}else ev.push({k:'miss',u,d:v})}
-      else if(rnd()<acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',u,d:v})}}
-  // hidden air defense also fires, once found or not
-  for(const u of m.units.filter(u=>L(u)&&u.shots&&u.hidden)){for(let s=0;s<u.shots;s++){const pool=live().filter(d=>!d.D.decoy);if(!pool.length)break;const v=pick(pool);if(rnd()<u.acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}}}
-  // 6. the strike
-  m.units.forEach(u=>u.pend=0);
-  const strikers=live().filter(d=>!d.D.recon&&!d.D.decoy&&!d.D.interceptor&&!(d.D.hunter&&d.fate));
-  strikers.sort((a,b)=>(b.D.atk.armor||0)-(a.D.atk.armor||0));
-  for(const d of strikers){const u=pickTarget(d,m.units);if(!u){d.idle=true;continue}u.pend+=(d.D.atk[u.cat]||0)*mult*.9;strike(d,u)}
-  // decoys that were not shot are spent anyway
-  for(const d of ds)if(d.D.decoy&&!d.fate)d.fate='spent';
-  // bookkeeping
-  for(const d of ds){S.usage[d.t]=(S.usage[d.t]||0)+1;S.usageAll[d.t]=(S.usageAll[d.t]||0)+1;B.avail[d.t]-=1;
-    if(!d.fate){B.avail[d.t]+=1}
-    else if(d.fate==='spent'){B.spent[d.t]=(B.spent[d.t]||0)+1;S.stats.spent++}
-    else{B.lost[d.t]=(B.lost[d.t]||0)+1;S.stats.lost++}}
-  S.stats.sorties++;B.alert++;B.wave++;
-  return{ds,ev,jam}}
-function score(m){const p=m.units.filter(u=>u.prim);const tot=p.reduce((s,u)=>s+u.max,0);const done=p.reduce((s,u)=>s+(u.max-Math.max(0,u.hp)),0);return tot?done/tot:0}
-function tierOf(sc){return sc>=.9?0:sc>=.6?1:sc>=.3?2:3}
+/* ---------- one wave: groups fly in the order the player set ----------
+   Each air defense site has a limited amount of fire per wave, so whatever flies first draws it. Enemy drones
+   attack the first groups they meet. Recon reveals hidden targets for its own group and every group after it,
+   and radar hunters dive on air defense before the rest of their group passes over it. */
+const DEFAULT_ORDER=['decoy','intercept','hunter','recon','loiter','longr','ucav','naval','hexa','fpv','fiber'];
+function resolveWave(B,groups,focus){
+  const m=B.m,out=[];const L=u=>!u.dead;const accB=baseAcc(),mult=dmgMult();let nid=0;
+  const jam=Math.min(.55,m.units.filter(L).reduce((s,u)=>s+u.jam,0)+m.genEw*.05);
+  let E=Math.round(m.units.filter(L).reduce((s,u)=>s+u.spawn,0)+m.genDr*1.5+(m.genDr?rnd()*1.5:0));
+  // ammunition: each gun or missile site can engage about two groups' worth this wave
+  for(const u of m.units)u.ammo=u.shots*2;
+  for(const [t,n] of groups){if(!n)continue;const D=DRONES[t];const ds=[];for(let i=0;i<n;i++)ds.push({t,D,id:nid++,fate:null,target:null});
+    const ev=[];const live=()=>ds.filter(d=>!d.fate);
+    // jamming cuts some radio links before they arrive
+    if(jam>0&&!D.decoy)for(const d of ds)if(rnd()<jam*(1-jamRes(t))){d.fate='jam';ev.push({k:'jam',d})}
+    // interceptors clear enemy drones; the rest of the enemy drones attack this group
+    if(D.interceptor)for(const d of live()){for(let k=0;k<2&&E>0;k++)if(rnd()<.8){E--;ev.push({k:'intercept',d})}}
+    else{let tries=Math.min(E,live().length);while(tries-->0&&E>0){const v=pick(live());if(!v)break;E--;if(rnd()<(D.decoy?.8:.45*(1-D.eva*.5))){v.fate=D.decoy?'decoy':'drone';ev.push({k:'dronekill',d:v})}}}
+    // recon finds what is hidden
+    if(D.recon&&live().length){const found=m.units.filter(u=>u.hidden&&!u.dead);found.forEach(u=>{u.hidden=false});if(found.length)ev.push({k:'reveal',units:found})}
+    B.recon=Math.max(B.recon||0,Math.min(.3,live().filter(d=>d.D.recon).length*.1));
+    const strike=(d,u)=>{const a=(d.D.atk[u.cat]||0)*mult*(.85+rnd()*.3);const hit=rnd()<accB+B.recon;const dmg=Math.max(1,Math.round(a*(hit?1:.3)));
+      u.hp-=dmg;d.target=u;S.stats.strikes++;const kill=u.hp<=0&&!u.dead;if(kill){u.dead=true;u.hp=0;S.stats.kills++}ev.push({k:'strike',d,u,dmg,kill,hit});if(d.D.exp)d.fate='spent'};
+    const pickTarget=(d,list)=>{let best=null,bs=0;for(const u of list){if(u.dead||u.hidden||u.depth>d.D.range)continue;const a=d.D.atk[u.cat]||0;if(!a)continue;
+        const left=u.hp-(u.pend||0);const s=a*(u.prim?1.4:1)*(u===focus?4:1)*(left>0?1:.08);if(s>bs){bs=s;best=u}}return best};
+    m.units.forEach(u=>u.pend=0);
+    // radar hunters strike air defense before it can fire on their group
+    if(D.hunter)for(const d of live()){const u=pickTarget(d,m.units.filter(u=>u.cat==='aa'||u.cat==='ew'));if(u){u.pend+=d.D.atk[u.cat]*mult;strike(d,u)}}
+    // air defense fires at the group as it passes
+    for(const u of m.units.filter(u=>L(u)&&u.shots&&u.ammo>0)){if(D.decoy&&m.decoyEff<1&&rnd()>m.decoyEff)continue;
+      u.hidden=false;const acc=u.acc*(1+B.alert*.15);const n2=Math.min(u.ammo,u.shots);for(let k=0;k<n2;k++){const pool=live();if(!pool.length)break;u.ammo--;const v=pick(pool);
+        if(D.decoy){if(rnd()<.85){v.fate='decoy';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',d:v,u})}
+        else if(rnd()<acc*(1-v.D.eva)){v.fate='aa';ev.push({k:'aa',d:v,u})}else ev.push({k:'miss',d:v,u})}}
+    // the strike
+    if(!D.recon&&!D.decoy&&!D.interceptor){m.units.forEach(u=>u.pend=0);for(const d of live()){if(d.D.hunter)continue;const u=pickTarget(d,m.units);if(!u){d.idle=true;continue}u.pend+=(d.D.atk[u.cat]||0)*mult*.9;strike(d,u)}
+      if(D.hunter)for(const d of live()){const u=pickTarget(d,m.units);if(u)strike(d,u);else d.idle=true}}
+    for(const d of ds)if(d.D.decoy&&!d.fate)d.fate='spent';
+    for(const d of ds){S.usage[t]=(S.usage[t]||0)+1;S.usageAll[t]=(S.usageAll[t]||0)+1;B.avail[t]-=1;
+      if(!d.fate)B.avail[t]+=1;else if(d.fate==='spent'){B.spent[t]=(B.spent[t]||0)+1;S.stats.spent++}else{B.lost[t]=(B.lost[t]||0)+1;S.stats.lost++}}
+    out.push({t,ds,ev})}
+  S.stats.sorties++;B.alert++;B.wave++;B.enemyDr=E;
+  return out}
+function score(m){const p=m.units.filter(u=>u.prim);if(!p.length)return 0;const dead=p.filter(u=>u.dead).length;const dmg=p.filter(u=>!u.dead).reduce((s,u)=>s+(1-u.hp/u.max),0);return Math.min(1,(dead+dmg*.25)/p.length)}
+function tierOf(sc){return sc>=.999?0:sc>=.5?1:sc>=.2?2:3}
 const TIERS=[{name:'DECISIVE',col:'grn',funds:1.3,pres:10,front:2},{name:'SUCCESS',col:'amb',funds:1,pres:6,front:1},{name:'PARTIAL',col:'amb',funds:.6,pres:3,front:0},{name:'FAILED',col:'red',funds:.45,pres:0,front:-1}];
 function finishBattle(B){const m=B.m,sc=score(m),ti=tierOf(sc),T=TIERS[ti];
   // everything still in the sortie goes home

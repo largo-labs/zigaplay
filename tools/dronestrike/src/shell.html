@@ -8,7 +8,7 @@
 <style>
 /* Drone Strike: a drone-unit strategy game for the ZigaPlay.
    Everything looks like a rugged military tablet: olive panels, amber text, thin rules and corner brackets.
-   Battles draw a tactical map on a canvas, with a small thermal drone feed for the strikes. */
+   Battles draw a tactical map on a canvas, where each group of drones flies across in launch order. */
 :root{color-scheme:dark;
   --bg:#060a06;--panel:#0d140c;--panel2:#121d10;--line:#2b3f25;--line2:#46653a;
   --amber:#ffb627;--amber2:#b9821a;--text:#eadfbd;--dim:#8d9878;--green:#93e46c;--cyan:#5fd8ff;--red:#ff5545;--orange:#ff8a3a;
@@ -52,6 +52,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidde
 .desc{font-size:.9rem;color:#cfc6a4;min-height:2.6em}
 .tag{display:inline-block;padding:0 .25rem;border:1px solid currentColor;font-size:.8rem;line-height:1.1;margin-left:.2rem}
 .stamp{font-family:var(--head);font-size:1.6rem;letter-spacing:.14em;text-align:center;padding:.2rem;border:3px solid currentColor;transform:rotate(-4deg);margin:.4rem auto;width:max-content}
+.coach{border:1px solid var(--amber);color:var(--amber);font-size:.85rem;padding:.12rem .3rem;line-height:1.1;flex:0 0 auto}
+.row.moving{background:#13303a;border-color:var(--cyan);color:var(--cyan)}
 .hint{font-size:.78rem;color:var(--dim);text-align:center;flex:0 0 auto}
 .scroll{overflow:hidden;position:relative}
 canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
@@ -70,10 +72,6 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 /* battle */
 .mapbox{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--line2);background:#081108}
 .mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.feed{position:absolute;right:.3rem;top:.3rem;width:42%;aspect-ratio:3/2;border:1px solid var(--green);background:#000;display:none}
-.feed canvas{width:100%;height:100%}
-.feed span{position:absolute;left:.2rem;top:.05rem;font-size:.7rem;color:var(--green);text-shadow:0 0 2px #000}
-.feed.on{display:block}
 .log{font-size:.88rem;line-height:1.1;height:100%;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
 .log div{white-space:normal}
 /* portraits */

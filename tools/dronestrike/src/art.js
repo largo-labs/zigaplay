@@ -37,64 +37,61 @@ function frontLine(g,W,H,t){const y=x=>H*(FRONT_Y+Math.sin(x/W*9+1)*.012+Math.si
 function baseIcon(g,W,H){const x=W*.5,y=H*.92,s=W*.035;g.strokeStyle=COL.friend;g.lineWidth=1.5;g.strokeRect(x-s*1.6,y-s*.8,s*3.2,s*1.6);
   g.beginPath();g.moveTo(x-s,y+s*.4);g.lineTo(x,y-s*.5);g.lineTo(x+s,y+s*.4);g.stroke();g.fillStyle=COL.friend;g.font=`${Math.round(W*.032)}px VT323, monospace`;g.textAlign='center';g.fillText('LAUNCH SITE',x,y+s*1.9);g.textAlign='left'}
 
-/* ---------- hostile unit symbol: a diamond with a sign for its kind ---------- */
-function unitSymbol(g,u,x,y,s,{focus=false,flash=0,t=0}={}){
-  g.save();g.translate(x,y);
-  if(u.hidden){g.strokeStyle='rgba(255,85,69,.7)';g.setLineDash([3,3]);g.lineWidth=1.5;g.beginPath();g.moveTo(0,-s);g.lineTo(s,0);g.lineTo(0,s);g.lineTo(-s,0);g.closePath();g.stroke();g.setLineDash([]);
-    g.fillStyle='rgba(255,85,69,.8)';g.font=`${Math.round(s*1.2)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('?',0,1);g.restore();return}
-  const col=u.dead?COL.dead:flash>0?'#ffffff':COL.enemy;
-  g.fillStyle=u.dead?'rgba(60,60,50,.6)':'rgba(255,85,69,.16)';g.strokeStyle=col;g.lineWidth=u.prim?2:1.3;
-  g.beginPath();g.moveTo(0,-s);g.lineTo(s,0);g.lineTo(0,s);g.lineTo(-s,0);g.closePath();g.fill();g.stroke();
-  g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1.2;const q=s*.42;
-  switch(u.cat){
-    case'inf':g.beginPath();g.moveTo(-q,-q);g.lineTo(q,q);g.moveTo(q,-q);g.lineTo(-q,q);g.stroke();break;
-    case'armor':g.beginPath();g.ellipse(0,0,q*1.2,q*.6,0,0,7);g.stroke();break;
-    case'arty':g.beginPath();g.arc(0,0,q*.45,0,7);g.fill();break;
-    case'logi':g.beginPath();g.moveTo(-q,q*.2);g.lineTo(q,q*.2);g.stroke();g.beginPath();g.arc(-q*.6,q*.55,q*.3,0,7);g.arc(q*.6,q*.55,q*.3,0,7);g.fill();break;
-    case'struct':g.strokeRect(-q*.8,-q*.6,q*1.6,q*1.2);g.beginPath();g.moveTo(-q*.8,-q*.6);g.lineTo(0,-q*1.1);g.lineTo(q*.8,-q*.6);g.stroke();break;
-    case'aa':g.beginPath();g.arc(0,q*.4,q*.9,Math.PI,0);g.stroke();g.beginPath();g.moveTo(0,q*.4);g.lineTo(q*.5,-q*.6);g.stroke();break;
-    case'ew':g.beginPath();g.moveTo(-q,q*.5);g.lineTo(-q*.3,-q*.5);g.lineTo(q*.3,q*.5);g.lineTo(q,-q*.5);g.stroke();break;
-    case'naval':g.beginPath();g.moveTo(-q,-q*.1);g.lineTo(q,-q*.1);g.lineTo(q*.6,q*.5);g.lineTo(-q*.6,q*.5);g.closePath();g.stroke();break}
-  if(u.dead){g.strokeStyle='#8d9878';g.lineWidth=1.5;g.beginPath();g.moveTo(-s*.8,-s*.8);g.lineTo(s*.8,s*.8);g.moveTo(s*.8,-s*.8);g.lineTo(-s*.8,s*.8);g.stroke()}
-  else{const w=s*1.8,f=Math.max(0,u.hp/u.max);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(-w/2,s+3,w,3);g.fillStyle=f>.5?'#93e46c':f>.25?'#ffb627':'#ff5545';g.fillRect(-w/2,s+3,w*f,3)}
-  if(u.prim&&!u.dead){g.fillStyle=COL.amber;g.font=`${Math.round(s*.9)}px VT323, monospace`;g.textAlign='center';g.fillText('★',s*.95,-s*.55)}
-  if(focus){const b=s*1.45+Math.sin(t/5)*1.5;g.strokeStyle=COL.amber;g.lineWidth=2;for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(sx*b,sy*b*.55);g.lineTo(sx*b,sy*b);g.lineTo(sx*b*.55,sy*b);g.stroke()}}
-  g.restore()}
-// a friendly drone on the map: a small cyan arrow
-function droneMark(g,x,y,ang,s,col=COL.friend){g.save();g.translate(x,y);g.rotate(ang);g.fillStyle=col;g.beginPath();g.moveTo(s,0);g.lineTo(-s*.7,s*.6);g.lineTo(-s*.35,0);g.lineTo(-s*.7,-s*.6);g.closePath();g.fill();g.restore()}
-
-/* ---------- the drone camera: a little thermal picture of the target ---------- */
-const FW=96,FH=64;
-function feedTarget(g,type,cx,cy,k,hot){const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(cx+x*k),Math.round(cy+y*k),Math.max(1,Math.round(w*k)),Math.max(1,Math.round(h*k)))};
-  const H=hot,M='#b8b8b8',D='#707070';
+/* ---------- enemy units: small top-down pictures, so a tank looks like a tank ---------- */
+const HOST={body:'#d0503c',dark:'#5e1a12',lite:'#ffa48a',line:'#1c0804'},DEAD={body:'#55544c',dark:'#2c2b27',lite:'#76746a',line:'#121210'};
+function unitArt(g,type,s,P){
+  // side-view silhouettes: x to the right, ground at y=+0.62
+  const poly=(pts,c)=>{g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x*s,y*s):g.moveTo(x*s,y*s));g.closePath();g.fillStyle=c;g.fill()};
+  const rect=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x*s,y*s,w*s,h*s)};
+  const circ=(x,y,r,c)=>{g.beginPath();g.arc(x*s,y*s,r*s,0,7);g.fillStyle=c;g.fill()};
+  const line=(x1,y1,x2,y2,w,c)=>{g.strokeStyle=c;g.lineWidth=Math.max(1.5,w*s);g.lineCap='round';g.beginPath();g.moveTo(x1*s,y1*s);g.lineTo(x2*s,y2*s);g.stroke();g.lineCap='butt'};
+  const wheels=(xs,r=.17)=>xs.forEach(x=>{circ(x,.45,r+.05,P.line);circ(x,.45,r,P.dark);circ(x,.45,r*.4,P.lite)});
+  const cab=(x0)=>{poly([[x0,.32],[x0,-.25],[x0+.28,-.25],[x0+.42,.0],[x0+.42,.32]],P.body);poly([[x0+.06,-.18],[x0+.26,-.18],[x0+.36,.0],[x0+.06,.0]],P.lite)};
+  // a dark outline: draw everything once in the outline colour, slightly bigger, by stroking the shapes afterwards is costly, so shapes get a drop line under them
   switch(type){
-    case'tank':R(-7,-4,14,8,M);R(-6,-5,12,1,D);R(-6,4,12,1,D);R(-2,-2,5,4,H);R(3,-.5,7,1,M);R(-7,-3,2,6,H);break;
-    case'apc':R(-7,-3,14,6,M);R(-7,-3,3,6,H);R(2,-2,3,4,D);break;
-    case'truck':case'fuel':R(-8,-2.5,4,5,H);R(-4,-3,12,6,type==='fuel'?'#d8d8d8':M);if(type==='fuel')R(-3,-1,10,2,'#f0f0f0');break;
-    case'arty':case'coastal':R(-5,-3,10,6,M);R(-1,-1,10,2,H);R(-6,-4,3,8,D);break;
-    case'mlrs':R(-8,-2.5,4,5,H);R(-4,-3,12,6,M);for(let i=0;i<4;i++)R(-3+i*3,-2,2,4,D);break;
-    case'aagun':R(-4,-4,8,8,M);R(0,-1,7,1,H);R(0,1,7,1,H);R(-2,-2,4,4,H);break;
-    case'sam':R(-6,-4,12,8,M);for(let i=0;i<3;i++)R(-5+i*4,-3,3,6,'#d0d0d0');R(-7,-5,2,2,H);break;
-    case'ew':R(-8,-2.5,4,5,H);R(-4,-3,12,6,M);g.strokeStyle=H;g.beginPath();g.arc(cx+2*k,cy,3*k,0,7);g.stroke();break;
-    case'squad':for(let i=0;i<5;i++)R(-6+i*3,-1+((i*7)%3)-1,1.6,1.6,H);break;
-    case'trench':for(let i=0;i<8;i++)R(-10+i*2.6,(i%2?1:-1)*1.2,2.6,1.4,D);for(let i=0;i<4;i++)R(-8+i*5,-.5,1.4,1.4,H);break;
-    case'depot':case'cp':case'hq':R(-9,-6,18,12,D);R(-8,-5,16,10,M);R(-3,-2,6,4,H);if(type==='hq'){R(7,-9,1,5,H)}break;
-    case'bridge':R(-12,-6,24,12,'#202020');R(-12,-2,24,4,M);R(-12,-2,24,1,'#d0d0d0');break;
-    case'hive':R(-8,-5,16,10,D);for(let i=0;i<4;i++){R(-6+i*4,-1,3,1,H);R(-5+i*4,-2,1,3,H)}break;
-    case'boat':R(-8,-2,14,4,M);R(6,-1,3,2,M);R(-4,-1,4,2,H);break;
-    case'lship':R(-12,-4,22,8,M);R(10,-2,3,4,M);R(-10,-2,6,4,H);R(0,-3,8,6,D);break;
-    default:R(-4,-4,8,8,H)}}
-function drawFeed(c,type,t,seed,{boom=false,sea=false}={}){const g=c.getContext('2d');const r=srng(seed);
-  // ground: dark grey noise, cooler water if at sea
-  g.fillStyle=sea?'#0e0e10':'#1c1c1c';g.fillRect(0,0,FW,FH);const k=1.4+t*2.6;const ox=FW/2,oy=FH/2;
-  for(let i=0;i<260;i++){const x=(r()-.5)*FW*1.5,y=(r()-.5)*FH*1.5;g.fillStyle=r()<.5?'#262626':'#141414';g.fillRect(Math.round(ox+x*k*.6),Math.round(oy+y*k*.6),Math.ceil(k),Math.ceil(k))}
-  if(!sea){g.fillStyle='#2c2c2c';g.fillRect(0,Math.round(oy+6*k*.6),FW,Math.ceil(3*k))}
-  const wob=(1-t)*3;feedTarget(g,type,ox+Math.sin(t*20)*wob,oy+Math.cos(t*17)*wob,k*.9,'#ffffff');
-  // crosshair and frame
-  g.strokeStyle='rgba(147,228,108,.9)';g.lineWidth=1;g.beginPath();g.moveTo(ox-14,oy+.5);g.lineTo(ox-5,oy+.5);g.moveTo(ox+5,oy+.5);g.lineTo(ox+14,oy+.5);g.moveTo(ox+.5,oy-12);g.lineTo(ox+.5,oy-4);g.moveTo(ox+.5,oy+4);g.lineTo(ox+.5,oy+12);g.stroke();
-  for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(ox+sx*20,oy+sy*10);g.lineTo(ox+sx*24,oy+sy*10);g.lineTo(ox+sx*24,oy+sy*6);g.stroke()}
-  if(boom){const p=Math.min(1,(t-.82)/.18);if(p>0){g.fillStyle=`rgba(255,255,255,${1-p*.4})`;g.fillRect(0,0,FW,FH);if(p>.4){for(let i=0;i<500;i++){g.fillStyle=r()<.5?'#fff':'#000';g.fillRect(r()*FW|0,r()*FH|0,2,1)}}}}
-  g.fillStyle='rgba(0,0,0,.25)';for(let y=0;y<FH;y+=2)g.fillRect(0,y,FW,1)}
+    case'tank':poly([[-1,.3],[-.85,.62],[.85,.62],[1,.3]],P.line);poly([[-.95,.3],[-.82,.56],[.82,.56],[.95,.3]],P.dark);[-.6,-.3,0,.3,.6].forEach(x=>circ(x,.43,.11,P.lite));
+      poly([[-.95,.3],[-.85,-.02],[.9,-.02],[.98,.3]],P.body);poly([[-.45,-.02],[-.38,-.32],[.25,-.32],[.38,-.02]],P.body);rect(-.38,-.32,.6,.08,P.lite);line(.3,-.18,1.12,-.24,.13,P.line);line(.3,-.18,1.1,-.24,.07,P.lite);break;
+    case'apc':poly([[-.95,.35],[-.95,-.25],[.55,-.25],[.95,.05],[.95,.35]],P.body);rect(-.95,-.25,1.5,.1,P.lite);rect(-.2,-.42,.3,.17,P.dark);line(.1,-.35,.55,-.38,.07,P.line);wheels([-.65,-.2,.25,.65],.15);break;
+    case'truck':rect(-.95,-.45,1.35,.77,P.body);rect(-.95,-.45,1.35,.1,P.lite);for(let i=0;i<3;i++)rect(-.82+i*.42,-.33,.04,.62,P.dark);cab(.45);wheels([-.65,-.25,.7]);break;
+    case'fuel':g.beginPath();g.roundRect(-.95*s,-.35*s,1.35*s,.62*s,.3*s);g.fillStyle=P.lite;g.fill();rect(-.95,.15,1.35,.08,P.dark);cab(.45);wheels([-.65,-.25,.7]);break;
+    case'arty':line(-.2,.3,-1,.62,.1,P.dark);poly([[-.35,.3],[-.25,-.15],[.25,-.15],[.35,.3]],P.body);line(0,-.05,.95,-.8,.16,P.line);line(0,-.05,.93,-.78,.09,P.lite);circ(0,.4,.25,P.line);circ(0,.4,.2,P.dark);circ(0,.4,.08,P.lite);break;
+    case'coastal':poly([[-1,.62],[-.85,-.1],[.6,-.1],[.8,.62]],P.dark);rect(-.85,-.1,1.45,.1,P.lite);line(0,-.25,1.05,-.6,.16,P.line);line(0,-.25,1.03,-.58,.09,P.lite);poly([[-.35,-.1],[-.25,-.4],[.25,-.4],[.35,-.1]],P.body);break;
+    case'mlrs':poly([[-.9,-.05],[-.75,-.6],[.35,-.25],[.25,.2]],P.body);for(let i=0;i<3;i++)for(let j=0;j<2;j++)circ(-.62+i*.28+j*.07,-.44+i*.09+j*.2,.07,P.line);rect(-.95,.05,1.4,.27,P.dark);cab(.45);wheels([-.65,-.25,.7]);break;
+    case'aagun':poly([[-.8,.6],[-.6,.1],[.6,.1],[.8,.6]],P.dark);poly([[-.4,.1],[-.3,-.25],[.3,-.25],[.4,.1]],P.body);line(-.1,-.2,.55,-.95,.11,P.line);line(.12,-.2,.77,-.95,.11,P.line);line(-.1,-.2,.53,-.93,.06,P.lite);line(.12,-.2,.75,-.93,.06,P.lite);break;
+    case'sam':rect(-.95,.0,1.4,.32,P.dark);cab(.45);wheels([-.65,-.25,.7]);for(const o of [0,.22]){line(-.85,.0-o*.3,.25,-.75-o,.16,P.line);line(-.83,-.01-o*.3,.22,-.74-o,.1,P.body);circ(.24,-.75-o,.07,P.lite)}break;
+    case'ew':rect(-.95,-.2,1.35,.52,P.body);cab(.45);wheels([-.65,-.25,.7]);line(-.3,-.2,-.3,-.85,.06,P.line);g.beginPath();g.ellipse(-.3*s,-.75*s,.42*s,.18*s,-.4,0,7);g.fillStyle=P.lite;g.fill();g.strokeStyle=P.line;g.lineWidth=1;g.stroke();circ(-.3,-.75,.06,P.dark);break;
+    case'squad':for(const x of [-.6,0,.6]){circ(x,-.45,.17,P.line);circ(x,-.45,.13,P.body);poly([[x-.15,-.3],[x+.15,-.3],[x+.13,.2],[x-.13,.2]],P.body);line(x-.07,.2,x-.12,.6,.1,P.dark);line(x+.07,.2,x+.12,.6,.1,P.dark);line(x+.05,-.15,x+.38,-.42,.06,P.line)}break;
+    case'trench':rect(-1,.3,2,.32,P.dark);for(let i=0;i<6;i++){g.beginPath();g.roundRect((-1+i*.34)*s,.05*s,.32*s,.27*s,.08*s);g.fillStyle=i%2?P.body:P.lite;g.fill()}
+      for(const x of [-.55,.15,.7]){circ(x,-.02,.14,P.line);circ(x,-.02,.11,P.dark)}break;
+    case'depot':for(const [x,y] of [[-.9,.0],[-.35,.0],[.2,.0],[-.62,-.55],[-.07,-.55]]){rect(x-.02,y-.02,.54,.58,P.line);rect(x,y,.5,.54,P.body);line(x,y,x+.5,y+.54,.04,P.dark);line(x+.5,y,x,y+.54,.04,P.dark)}
+      g.beginPath();g.roundRect(.75*s,-.1*s,.25*s,.7*s,.06*s);g.fillStyle=P.lite;g.fill();break;
+    case'bridge':rect(-1.05,.35,2.1,.27,'#1c4a5e');g.beginPath();g.moveTo(-1.05*s,-.1*s);g.quadraticCurveTo(0,-.6*s,1.05*s,-.1*s);g.lineTo(1.05*s,.05*s);g.quadraticCurveTo(0,-.42*s,-1.05*s,.05*s);g.closePath();g.fillStyle=P.body;g.fill();
+      rect(-1.05,-.2,2.1,.1,P.lite);for(const x of [-.6,0,.6])rect(x-.05,-.15,.1,.5,P.dark);break;
+    case'cp':poly([[-.85,.6],[0,-.4],[.85,.6]],P.body);poly([[-.2,.6],[0,.15],[.2,.6]],P.dark);line(.5,.6,.5,-.95,.06,P.line);poly([[.5,-.95],[.95,-.85],[.5,-.72]],P.lite);break;
+    case'hq':rect(-.95,-.4,1.9,1.02,P.line);rect(-.9,-.35,1.8,.95,P.body);rect(-.9,-.35,1.8,.12,P.lite);for(const x of [-.65,-.25,.25,.65])rect(x-.1,-.1,.2,.22,P.dark);rect(-.15,.25,.3,.35,P.dark);
+      line(0,-.35,0,-1.05,.06,P.line);poly([[0,-1.05],[.5,-.93],[0,-.8]],P.lite);break;
+    case'hive':rect(-.9,.2,1.8,.42,P.dark);for(const x of [-.55,0,.55]){line(x,.2,x,-.05,.06,P.line);circ(x,-.25,.08,P.lite);line(x-.25,-.25,x+.25,-.25,.06,P.body);circ(x-.25,-.25,.07,P.line);circ(x+.25,-.25,.07,P.line)}break;
+    case'boat':poly([[-1,-.05],[.85,-.05],[1.05,-.3],[.9,.35],[-.85,.35]],P.body);rect(-.95,.25,1.85,.1,P.dark);poly([[-.45,-.05],[-.35,-.5],[.15,-.5],[.25,-.05]],P.lite);line(.4,-.12,.85,-.2,.07,P.line);line(-.1,-.5,-.1,-.85,.04,P.line);break;
+    case'lship':poly([[-1.1,-.1],[1.0,-.1],[1.15,-.35],[1.0,.45],[-1.0,.45]],P.body);rect(-1.05,.33,2.05,.12,P.dark);poly([[-.85,-.1],[-.75,-.75],[-.2,-.75],[-.1,-.1]],P.lite);rect(-.65,-.62,.32,.12,P.dark);line(-.5,-.75,-.5,-1.05,.04,P.line);
+      rect(.1,-.3,.8,.2,P.dark);break;
+    default:circ(0,0,.6,P.body)}}
+function unitSymbol(g,u,x,y,s,{focus=false,flash=0,t=0}={}){
+  g.save();g.translate(Math.round(x),Math.round(y));
+  if(u.hidden){g.strokeStyle='rgba(255,85,69,.75)';g.setLineDash([3,3]);g.lineWidth=1.5;g.beginPath();g.arc(0,0,s*.8,0,7);g.stroke();g.setLineDash([]);
+    g.fillStyle='rgba(255,85,69,.9)';g.font=`${Math.round(s*1.1)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('?',0,1);g.restore();return}
+  // a soft shadow pad under the unit so it reads on any terrain
+  g.fillStyle=u.dead?'rgba(0,0,0,.25)':'rgba(255,85,69,.12)';g.beginPath();g.arc(0,0,s*1.15,0,7);g.fill();
+  const P=u.dead?DEAD:flash>0&&flash%4<2?{body:'#ffffff',dark:'#ffd0c0',lite:'#ffffff',line:'#ffffff'}:HOST;
+  unitArt(g,u.type,s,P);
+  if(u.dead){g.fillStyle='rgba(30,30,28,.6)';g.beginPath();g.arc(s*.1,-s*.3,s*.45,0,7);g.arc(-s*.25,-s*.55,s*.3,0,7);g.fill()}
+  else{const w=s*1.9,f=Math.max(0,u.hp/u.max);g.fillStyle='rgba(0,0,0,.7)';g.fillRect(-w/2,s*1.2,w,3);g.fillStyle=f>.5?'#93e46c':f>.25?'#ffb627':'#ff5545';g.fillRect(-w/2,s*1.2,w*f,3)}
+  if(u.prim&&!u.dead){g.fillStyle='#ffb627';g.font=`${Math.round(s*1.05)}px VT323, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText('★',s*1.05,-s*.95)}
+  if(focus){const b=s*1.45+Math.sin(t/5)*1.5;g.strokeStyle='#ffb627';g.lineWidth=2;for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(sx*b,sy*b*.55);g.lineTo(sx*b,sy*b);g.lineTo(sx*b*.55,sy*b);g.stroke()}}
+  g.restore()}
+// a friendly drone on the map, drawn with its own silhouette and turned to its heading
+const dronePics=new Map();
+function droneMark(g,x,y,ang,s,type='fpv',col){const k=type+(col||'');let c=dronePics.get(k);if(!c){c=droneIcon(type,16,col);dronePics.set(k,c)}
+  g.save();g.translate(x,y);g.rotate(ang+Math.PI/2);g.drawImage(c,-s,-s,s*2,s*2);g.restore()}
 
 /* ---------- portraits of the generals: small pixel busts in green phosphor ---------- */
 function portrait(look,{tint=true,w=32,h=40}={}){const c=mk(w,h),g=c.getContext('2d');const R=(x,y,ww,hh,col)=>{g.fillStyle=col;g.fillRect(x,y,ww,hh)};
@@ -121,7 +118,7 @@ function shade(c,k){const n=parseInt(c.slice(1),16);const f=v=>Math.max(0,Math.m
 const CO_LOOK={skin:'#d8a888',hat:'beret',hatc:'#2f4a3a',mous:0,hair:'#5a3a2a',scar:0};
 
 /* ---------- small drone icons for lists ---------- */
-function droneIcon(d,s=16){const c=mk(s,s),g=c.getContext('2d');g.strokeStyle='#5fd8ff';g.fillStyle='#5fd8ff';g.lineWidth=1;const m=s/2;
+function droneIcon(d,s=16,col='#5fd8ff'){const c=mk(s,s),g=c.getContext('2d');g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1;const m=s/2;
   const quad=()=>{for(const [x,y] of [[3,3],[s-4,3],[3,s-4],[s-4,s-4]]){g.beginPath();g.arc(x+.5,y+.5,2.2,0,7);g.stroke()}g.beginPath();g.moveTo(3,3);g.lineTo(s-4,s-4);g.moveTo(s-4,3);g.lineTo(3,s-4);g.stroke();g.fillRect(m-2,m-2,4,4)};
   const plane=(span,len)=>{g.fillRect(m-.5,m-len,2,len*2);g.fillRect(m-span,m-1,span*2,2);g.fillRect(m-span*.45,m+len-3,span*.9,2)};
   switch(d){case'fpv':case'fiber':quad();if(d==='fiber'){g.strokeStyle='#ffb627';g.beginPath();g.moveTo(m,m);g.quadraticCurveTo(s,s*.8,s,s);g.stroke()}break;
