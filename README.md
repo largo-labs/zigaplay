@@ -4,9 +4,9 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 
 | Cartridge | What it is | Controls |
 |---|---|---|
-| **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 146 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
-| **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
-| **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
+| **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 166 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
+| **Chip City** | A casino with blackjack, roulette, slots, video poker, hi-lo, Rocket (cash out before it blows up) and The Track (horse racing), plus Downtown: buildings to buy that earn chips while you're away. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
+| **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. Every blow slides you in to meet the robot in front, and a launch can be chased into the air. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Strike at Night** | A 16-bit style RPG. Lift was a tech worker in 2026 until a car hit him; he wakes up as a farm boy in Larkfield, is framed for his new parents' murder, and lives as a bandit with a price on his head. Beat strong foes to take their power as new forms. Prologue and two chapters. | D-pad move · A talk/confirm · B back · START menu · SELECT change form |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
@@ -19,6 +19,8 @@ Lynties draws its world in 3D: a little diorama seen from behind and above, with
 - The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.
 - `tools/lynties-3d/src/w3d.js` is the 3D world. `tools/lynties-3d/build.py` adds it to the game to make the cartridge: `python3 tools/lynties-3d/build.py tools/lynties-3d/lynties-2d.html games/lynties/index.html`.
 - If WebGL or three.js can't load, the cartridge falls back to the pixel-art world.
+- Every Warden Hall sits behind a labyrinth with three trainers standing right on the way through, so each one has to be beaten; a beaten trainer steps into the nook beside it.
+- Lynties #147 to #166 are the newer ones: six lines (otters, frogs, hedgehogs, penguins, moths and raccoons) and two loners that never evolve (Chestle, found only in caves, and Moonhare).
 
 ## Strike at Night
 
