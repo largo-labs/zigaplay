@@ -8,6 +8,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Chip City** | A casino with blackjack, roulette, slots, video poker and hi-lo. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Drowned Moon** | *Tides of the Drowned Moon*, a 16-bit style RPG. The moon fell into the sea; Marin can pull the tide out and let it back in, to sail, walk the seabed and solve dungeons. A party of three, turn-based battles, four dungeons and six bosses. | D-pad move · A talk/confirm · B back · START menu · SELECT turn the tide |
+| **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 
 ## Lynties in 3D
 
@@ -27,6 +28,16 @@ Lynties draws its world in 3D: a little diorama seen from behind and above, with
 - Towns with shops and inns, gear for each hero, three save slots (in this browser), chiptune music and an ending.
 - The game is built from `tools/drownedmoon/src/` (art, maps, story, battle and so on, all in code): `python3 tools/drownedmoon/build.py` writes `games/drownedmoon/index.html`. `tools/drownedmoon/make-cart.js` redraws its label.
 - Played on its own on a phone, the game shows its own touch buttons.
+
+## Pitchfork Rising
+
+A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. Twelve battles in four acts take the revolt from the village manor, past the Earl's sheriff and the Earl himself, to the king's palace yard, and then you choose what replaces the crown.
+
+- **Before each battle (camp):** spend plunder to arm unarmed folk (pitchforks, slings, scythes, flails, bows, firebrands, pikes, crossbows), buy traps (stake pits, snares, caltrops, hay & pitch, beehives, deadfalls, barricades), pick one scheme (spike the ale, ring the bell, spread rumours, night attack and more) and improve Wat.
+- **Deployment:** squads start in the green area; traps can go anywhere that isn't right on top of the enemy. Everything is placed for you to start with, so START is always ready.
+- **Battle:** you play Wat on the field. A strikes, B rolls, SELECT shouts HOLD / CHARGE / FOLLOW ME to every squad. Folk hidden in wheat or brush strike for double damage; folk near Wat hit harder and never run; fire spreads through wheat; pikes break cavalry charges; nobles only really fear Wat's own blade.
+- **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
+- Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
 
 ## Playing it
 
@@ -51,6 +62,7 @@ tools/build-offline.py      builds the offline edition: python3 tools/build-offl
 tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
 tools/lynties-3d/           the Lynties game, its 3D world and the script that builds the cartridge
 tools/drownedmoon/          Drowned Moon's source (src/*.js) and its build script
+tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 ```
 
 ## How the console works

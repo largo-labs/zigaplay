@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pitchfork Rising</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap">
+<style>
+/* Pitchfork Rising: lead a peasant revolt from a village barn to the king's palace.
+   The field is a 320x180 canvas scaled to fit; menus, dialogue and the battle HUD are HTML laid over it,
+   sized in game pixels through --u so they line up with the picture at any size. */
+:root{color-scheme:dark;--u:2px;--ink:#f6ecd6;--dim:#bfae8c;--gold:#ffd05a;--red:#ff5a46;--green:#9ae07a;--blue:#8ac8ff;
+  --p1:#3a2818;--p2:#22160c;--edge:#e6cf9c;--ui:'Pixelify Sans',ui-monospace,monospace}
+*,::before,::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#0c0806;color:var(--ink);font-family:var(--ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-action:none}
+#app{position:absolute;inset:0;display:flex;flex-direction:column}
+#field{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}
+#cv{position:absolute;image-rendering:pixelated;image-rendering:crisp-edges}
+#ui{position:absolute;overflow:hidden;font-size:calc(var(--u)*7.5);line-height:1.2;pointer-events:none}
+#ui *{pointer-events:none}
+.panel{position:absolute;background:linear-gradient(180deg,rgba(58,40,24,.96),rgba(34,22,12,.97));border:calc(var(--u)*1) solid var(--edge);border-radius:calc(var(--u)*3);
+  box-shadow:0 0 0 calc(var(--u)*1) #120a04,inset 0 0 0 calc(var(--u)*1) #6a4a2a;padding:calc(var(--u)*5) calc(var(--u)*7)}
+.gold{color:var(--gold)}.dim{color:var(--dim)}.red{color:var(--red)}.green{color:var(--green)}.blue{color:var(--blue)}
+h1,h2,h3,p{margin:0}
+/* title */
+.title{position:absolute;left:0;right:0;top:calc(var(--u)*14);text-align:center;text-shadow:0 calc(var(--u)*1) 0 #000,0 0 calc(var(--u)*6) #000}
+.title h1{font-size:calc(var(--u)*20);font-weight:700;letter-spacing:.04em;color:var(--gold);line-height:1;-webkit-text-stroke:calc(var(--u)*.5) #3a1a08}
+.title p{font-size:calc(var(--u)*8);color:#ffe8c0;margin-top:calc(var(--u)*3)}
+.tmenu{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*14);width:calc(var(--u)*120)}
+.item{padding:calc(var(--u)*1.5) calc(var(--u)*4) calc(var(--u)*1.5) calc(var(--u)*10);position:relative;white-space:nowrap;display:flex;gap:calc(var(--u)*4);align-items:baseline}
+.item.sel{background:rgba(255,208,90,.16);border-radius:calc(var(--u)*2)}
+.item.sel::before{content:'';position:absolute;left:calc(var(--u)*3);top:50%;margin-top:calc(var(--u)*-2.5);border:calc(var(--u)*2.5) solid transparent;border-left:calc(var(--u)*4) solid var(--gold);border-right:0;animation:nudge .5s steps(2) infinite}
+@keyframes nudge{50%{transform:translateX(calc(var(--u)*1))}}
+.item.dis{color:#8a7a60}
+.item .r{margin-left:auto;color:var(--dim)}
+.item .c{color:var(--gold);min-width:calc(var(--u)*24);text-align:right}
+.foot{position:absolute;left:0;right:0;bottom:calc(var(--u)*2);text-align:center;font-size:calc(var(--u)*6);color:#e8d8b8;text-shadow:0 calc(var(--u)*1) 0 #000}
+/* dialogue */
+.dlg{left:calc(var(--u)*8);right:calc(var(--u)*8);bottom:calc(var(--u)*6);min-height:calc(var(--u)*42);font-size:calc(var(--u)*8.5);line-height:1.3}
+.dlg .who{position:absolute;top:calc(var(--u)*-9);left:calc(var(--u)*8);padding:calc(var(--u)*1) calc(var(--u)*5);font-size:calc(var(--u)*7);color:var(--gold);background:var(--p2);border:calc(var(--u)*1) solid var(--edge);border-bottom:0;border-radius:calc(var(--u)*2) calc(var(--u)*2) 0 0}
+.dlg .more{position:absolute;right:calc(var(--u)*6);bottom:calc(var(--u)*4);border:calc(var(--u)*3) solid transparent;border-top:calc(var(--u)*4) solid var(--gold);border-bottom:0;animation:bob .6s steps(2) infinite}
+.dlg.narr{font-style:italic;color:#f0e0c0}
+@keyframes bob{50%{transform:translateY(calc(var(--u)*1.5))}}
+/* act card */
+.act{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 calc(var(--u)*1) 0 #000}
+.act small{font-size:calc(var(--u)*8);color:var(--dim);letter-spacing:.3em}
+.act h2{font-size:calc(var(--u)*20);color:var(--gold);margin:calc(var(--u)*3) 0}
+.act p{font-size:calc(var(--u)*8);color:#f0e0c0}
+.fadein{animation:fadein .8s both}@keyframes fadein{from{opacity:0;transform:translateY(calc(var(--u)*4))}}
+/* camp */
+.camp{left:calc(var(--u)*4);right:calc(var(--u)*4);top:calc(var(--u)*4);bottom:calc(var(--u)*4);padding:calc(var(--u)*3) calc(var(--u)*5);display:flex;flex-direction:column}
+.chead{display:flex;align-items:baseline;gap:calc(var(--u)*4);font-size:calc(var(--u)*7)}
+.chead b{color:var(--gold);font-size:calc(var(--u)*8.5)}
+.chead .r{margin-left:auto;white-space:nowrap}
+.tabs{display:flex;gap:calc(var(--u)*2);margin:calc(var(--u)*2.5) 0 calc(var(--u)*2);font-size:calc(var(--u)*6.5)}
+.tabs span{padding:calc(var(--u)*1) calc(var(--u)*4);border:calc(var(--u)*.5) solid #6a4a2a;border-radius:calc(var(--u)*2);color:var(--dim)}
+.tabs span.on{background:var(--gold);color:#2a1808;border-color:var(--gold)}
+.clist{flex:1;min-height:0;overflow:hidden;font-size:calc(var(--u)*7)}
+.clist .item{padding-top:calc(var(--u)*1);padding-bottom:calc(var(--u)*1)}
+.cinfo{border-top:calc(var(--u)*.5) solid #6a4a2a;padding-top:calc(var(--u)*2);min-height:calc(var(--u)*22);font-size:calc(var(--u)*6.5);color:#e8dcc0;line-height:1.3}
+.chint{font-size:calc(var(--u)*5.5);color:var(--dim);text-align:center;margin-top:calc(var(--u)*1.5)}
+.brief{font-size:calc(var(--u)*7);line-height:1.35}
+.brief .obj{color:var(--gold);margin:calc(var(--u)*2) 0}
+.brief ul{margin:calc(var(--u)*1) 0 0;padding-left:calc(var(--u)*8);color:#e0d0b0;font-size:calc(var(--u)*6.5)}
+.pips{display:inline-flex;gap:calc(var(--u)*1)}.pips i{width:calc(var(--u)*3);height:calc(var(--u)*3);border-radius:50%;background:#5a4428}.pips i.on{background:var(--gold)}.pips i.cur{background:var(--red)}
+/* battle HUD */
+.hud{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);top:calc(var(--u)*2);display:flex;align-items:flex-start;gap:calc(var(--u)*4);font-size:calc(var(--u)*6);text-shadow:0 calc(var(--u)*.6) 0 #000,calc(var(--u)*.6) 0 0 #000}
+.hp{width:calc(var(--u)*56)}
+.hp b{font-size:calc(var(--u)*6);color:var(--gold)}
+.bar{height:calc(var(--u)*4);background:#2a0a08;border:calc(var(--u)*.6) solid #000;border-radius:calc(var(--u)*1);overflow:hidden;margin-top:calc(var(--u)*.5)}
+.bar i{display:block;height:100%;background:linear-gradient(#a0ff70,#3aa020)}
+.bar.boss i{background:linear-gradient(#ff70d0,#a01870)}.bar.obj i{background:linear-gradient(#ffe070,#c08010)}
+.ord{display:inline-block;margin-top:calc(var(--u)*1.5);padding:0 calc(var(--u)*3);border-radius:calc(var(--u)*2);font-size:calc(var(--u)*5.5);background:#2a4a8a;color:#fff}
+.ord.charge{background:#a02818}.ord.follow{background:#2a7a3a}
+.goal{flex:1;text-align:center;font-size:calc(var(--u)*6.5)}
+.goal .bar{width:calc(var(--u)*70);margin:calc(var(--u)*1) auto 0}
+.stat{text-align:right;font-size:calc(var(--u)*6);white-space:nowrap}
+.bossbar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*4);width:calc(var(--u)*150);text-align:center;font-size:calc(var(--u)*6.5);text-shadow:0 calc(var(--u)*.6) 0 #000}
+.bossbar .bar{height:calc(var(--u)*4)}
+.banner{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:calc(var(--u)*13);font-weight:700;color:#fff;text-shadow:0 calc(var(--u)*1) 0 #000,0 0 calc(var(--u)*5) #000;animation:pop .25s both}
+.banner.small{font-size:calc(var(--u)*8);top:24%;color:#ffd8a0}
+.banner.order{font-size:calc(var(--u)*11);top:26%;color:var(--gold)}
+.banner.big{font-size:calc(var(--u)*24);color:var(--gold)}.banner.bad{color:var(--red)}
+@keyframes pop{from{transform:scale(1.5);opacity:0}}
+.hint{position:absolute;left:0;right:0;bottom:calc(var(--u)*3);text-align:center;font-size:calc(var(--u)*6);color:#fff;text-shadow:0 calc(var(--u)*.6) 0 #000,calc(var(--u)*.6) 0 0 #000}
+.dbar{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);bottom:calc(var(--u)*3);padding:calc(var(--u)*2.5) calc(var(--u)*5);font-size:calc(var(--u)*6.5);display:flex;gap:calc(var(--u)*5);align-items:center}
+.dbar b{color:var(--gold);white-space:nowrap}.dbar .r{margin-left:auto;color:var(--dim);font-size:calc(var(--u)*5.5);text-align:right}
+.dtop{position:absolute;left:calc(var(--u)*3);right:calc(var(--u)*3);top:calc(var(--u)*3);padding:calc(var(--u)*2) calc(var(--u)*5);font-size:calc(var(--u)*6.5)}
+.warn{position:absolute;left:0;right:0;top:45%;text-align:center;color:var(--red);font-size:calc(var(--u)*7);text-shadow:0 calc(var(--u)*.6) 0 #000}
+/* result and pause */
+.res{left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--u)*200);font-size:calc(var(--u)*7);line-height:1.35}
+.res h2{font-size:calc(var(--u)*13);color:var(--gold);text-align:center;margin-bottom:calc(var(--u)*3)}
+.res h2.bad{color:var(--red)}
+.res .row{display:flex;justify-content:space-between;gap:calc(var(--u)*6)}
+.res .unl{margin-top:calc(var(--u)*3);color:var(--green);font-size:calc(var(--u)*6.5)}
+.res .menu{margin-top:calc(var(--u)*4)}
+.howto{left:calc(var(--u)*6);right:calc(var(--u)*6);top:calc(var(--u)*6);bottom:calc(var(--u)*6);font-size:calc(var(--u)*6.5);line-height:1.35}
+.howto h3{color:var(--gold);font-size:calc(var(--u)*8);margin-bottom:calc(var(--u)*2)}
+.howto b{color:var(--gold)}
+.end{left:calc(var(--u)*12);right:calc(var(--u)*12);top:50%;transform:translateY(-50%);font-size:calc(var(--u)*7)}
+.end h2{color:var(--gold);font-size:calc(var(--u)*11);text-align:center;margin-bottom:calc(var(--u)*3)}
+.end .item small{color:var(--dim);font-size:calc(var(--u)*6)}
+
+/* touch controls, only when the game runs on its own on a touch screen */
+#pad{display:none}
+body.touch #pad{display:block;position:absolute;inset:0;pointer-events:none}
+#pad b{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;font:600 14px var(--ui);color:#ffe8c0;background:rgba(60,40,20,.55);border:2px solid rgba(230,207,156,.6);border-radius:12px}
+#pad b.on{background:rgba(255,208,90,.55)}
+#pad .u,#pad .d,#pad .l,#pad .r{width:52px;height:52px}
+#pad .u{left:62px;bottom:122px}#pad .d{left:62px;bottom:18px}#pad .l{left:10px;bottom:70px}#pad .r{left:114px;bottom:70px}
+#pad .a,#pad .bb{width:62px;height:62px;border-radius:50%;font-size:20px}
+#pad .a{right:14px;bottom:84px;background:rgba(160,40,24,.6)}#pad .bb{right:86px;bottom:30px;background:rgba(40,70,140,.6)}
+#pad .st,#pad .se{height:30px;width:72px;border-radius:15px;font-size:11px;top:8px}
+#pad .se{left:calc(50% - 80px)}#pad .st{left:calc(50% + 8px)}
+@media (orientation:portrait){body.touch #field{flex:none;height:56.25vw}body.touch #pad{position:relative;flex:1;inset:auto}
+  body.touch #pad .st,body.touch #pad .se{top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+  body.touch #pad .u{bottom:calc(50% + 8px)}body.touch #pad .d{bottom:calc(50% - 96px)}body.touch #pad .l,body.touch #pad .r{bottom:calc(50% - 44px)}
+  body.touch #pad .a{bottom:calc(50% - 10px)}body.touch #pad .bb{bottom:calc(50% - 70px)}}
+</style>
+</head><body>
+<div id="app">
+  <div id="field"><canvas id="cv" width="320" height="180"></canvas><div id="ui"></div></div>
+  <div id="pad"><b class="u" data-b="up">▲</b><b class="d" data-b="down">▼</b><b class="l" data-b="left">◀</b><b class="r" data-b="right">▶</b>
+    <b class="a" data-b="a">A</b><b class="bb" data-b="b">B</b><b class="se" data-b="select">SELECT</b><b class="st" data-b="start">START</b></div>
+</div>
+<script>
+'use strict';
+/*@@SCRIPTS@@*/
+</script>
+</body></html>
