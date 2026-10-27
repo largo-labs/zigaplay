@@ -1038,6 +1038,54 @@ const CHARS={
   weapon:{kind:'bow',name:'Foxfire',parts:{Limbs:'Recurve',Tips:'Feathers',Grip:'Wrapped',Charm:'Feather'},c4:'Orange'}},
 };
 const MAXLV=40;
+/* ---------- roles, the wish roster and who works well together ---------- */
+const ROLES={tank:{n:'Tank',s:'T',c:'#7ab8ff'},healer:{n:'Healer',s:'H',c:'#8aff9a'},dps:{n:'DPS',s:'D',c:'#ff9a7a'}};
+Object.assign(CHARS.hero,{role:'dps'});Object.assign(CHARS.mira,{role:'dps'});Object.assign(CHARS.bram,{role:'tank'});Object.assign(CHARS.kit,{role:'dps'});
+const _T={tank:[{hp:80,mp:12,atk:12,mag:4,def:13,spd:7},{hp:11.8,mp:1.6,atk:1.9,mag:.8,def:1.85,spd:.55}],
+  healer:[{hp:52,mp:28,atk:4,mag:13,def:6,spd:9},{hp:7.6,mp:3.6,atk:.7,mag:2.2,def:1.1,spd:.7}],
+  dps:[{hp:58,mp:18,atk:12,mag:5,def:7,spd:12},{hp:8.6,mp:2.4,atk:1.95,mag:.9,def:1.15,spd:.9}]};
+function mkChar(id,n,role,rar,look,weapon){const k=rar===5?1.07:1,[b,g]=_T[role],sc=o=>Object.fromEntries(Object.entries(o).map(([a,v])=>[a,a==='hp'||a==='mp'?v:+(v*k).toFixed(2)]));
+  CHARS[id]={n,role,rar,base:sc(b),grow:sc(g),look,weapon}}
+mkChar('ferro','Ferro','tank',4,{skin:'Umber',eyes:'Fierce',eyeC:'Brown',brows:'Thick',mouth:'Calm',hair:'Locs',hairC:'Black',hat:'Spartan Helm',hatC1:'Bronze',top:'Full Plate',topC1:'Steel',topC2:'Crimson',bot:'Greaves',botC1:'Steel',shoes:'Sabatons',shoeC:'Steel',back:'Long Cape',backC1:'Crimson',face:'Scar',faceC:'Maroon'},{kind:'greatsword',name:'Ironwall',c1:'Steel',c2:'Bronze'});
+mkChar('hildr','Hildr','tank',4,{skin:'Fair',eyes:'Sharp',eyeC:'Sky',brows:'Angled',mouth:'Smirk',hair:'Braid',hairC:'Blonde',hat:'Winged Helm',hatC1:'Silver',hatC2:'Gold',top:'Chainmail',topC1:'Silver',topC2:'Navy',bot:'Kilt',botC1:'Forest',shoes:'Tall Boots',shoeC:'Brown',back:'Shield',backC1:'Royal',backC2:'Gold',face:'War Paint',faceC:'Sky'},{kind:'warhammer',name:'Aegis Maul',c1:'Slate',c2:'Gold'});
+mkChar('gorm','Gorm','tank',5,{skin:'Bronze',eyes:'Fierce',eyeC:'Amber',brows:'Thick',mouth:'Grin',hair:'Mohawk',hairC:'Crimson',hat:'Viking Helm',hatC1:'Steel',top:'Leather Armor',topC1:'Brown',topC2:'Rust',bot:'Leather Pants',botC1:'Chocolate',shoes:'Boots',shoeC:'Brown',back:'Tattered Cape',backC1:'Maroon',face:'Full Beard',faceC:'Ginger'},{kind:'greataxe',name:'Mountainsplit',c1:'Steel',c2:'Bronze'});
+mkChar('lumi','Lumi','healer',4,{skin:'Porcelain',eyes:'Sparkle',eyeC:'Mint',brows:'Soft',mouth:'Smile',hair:'Twintails',hairC:'Pink',hat:'Halo',hatC1:'Gold',top:'Priest Vestment',topC1:'White',topC2:'Gold',bot:'Long Skirt',botC1:'White',shoes:'Mary Janes',shoeC:'White',back:'Fairy Wings',backC1:'Mint'},{kind:'staff',name:'Dawnlight',c1:'Gold',c2:'Gold'});
+mkChar('sana','Sana','healer',4,{skin:'Honey',eyes:'Happy',eyeC:'Brown',brows:'Soft',mouth:'Smile',hair:'Long Straight',hairC:'Black',hat:'Flower Crown',hatC1:'Rose',hatC2:'Lemon',top:'Kimono',topC1:'Sakura',topC2:'White',bot:'Hakama',botC1:'Lilac',shoes:'Geta',shoeC:'Chocolate'},{kind:'staff',name:'Blossom Rod',c1:'Rose',c2:'Gold'});
+mkChar('olive','Olive','healer',5,{skin:'Tan',eyes:'Sleepy',eyeC:'Forest',brows:'Soft',mouth:'Calm',hair:'Wavy',hairC:'Forest',hat:'Laurel Wreath',hatC1:'Green',top:'Mage Robe',topC1:'Forest',topC2:'Gold',bot:'Wrap Skirt',botC1:'Teal',shoes:'Sandals',shoeC:'Tan',back:'Butterfly Wings',backC1:'Lime'},{kind:'staff',name:'Verdant Crown',c1:'Forest',c2:'Gold'});
+mkChar('vex','Vex','dps',4,{skin:'Fair',eyes:'Cat',eyeC:'Violet',brows:'Angled',mouth:'Smirk',hair:'Undercut',hairC:'Platinum',top:'Ninja Garb',topC1:'Charcoal',topC2:'Crimson',bot:'Leggings',botC1:'Black',shoes:'Ninja Tabi',shoeC:'Charcoal',face:'Ninja Mask',faceC:'Charcoal'},{kind:'dual',name:'Twin Eclipse',c1:'Platinum',c4:'Violet'});
+mkChar('juno','Juno','dps',4,{skin:'Peach',eyes:'Fierce',eyeC:'Amber',brows:'Angled',mouth:'Grin',hair:'Ponytail',hairC:'Ginger',hat:'Headband',hatC1:'Red',top:'Tank Top',topC1:'Crimson',topC2:'White',bot:'Shorts',botC1:'Charcoal',shoes:'Sneakers',shoeC:'Crimson'},{kind:'fists',name:'Sunbreakers',c1:'Steel',c2:'Gold'});
+mkChar('taro','Taro','dps',5,{skin:'Tan',eyes:'Sharp',eyeC:'Brown',brows:'Angled',mouth:'Calm',hair:'Top Knot',hairC:'Black',top:'Samurai Armor',topC1:'Crimson',topC2:'Charcoal',bot:'Hakama',botC1:'Charcoal',shoes:'Geta',shoeC:'Chocolate',back:'Long Scarf',backC1:'Crimson'},{kind:'katana',name:'Moonpetal',c1:'Platinum',c2:'Brass'});
+mkChar('cass','Cass','dps',4,{skin:'Ebony',eyes:'Star',eyeC:'Gold',brows:'Soft',mouth:'Grin',hair:'Afro',hairC:'Black',hat:'Witch Hat',hatC1:'Purple',hatC2:'Gold',top:'Mage Robe',topC1:'Purple',topC2:'Gold',bot:'Long Skirt',botC1:'Plum',shoes:'Boots',shoeC:'Brown'},{kind:'grimoire',name:'Night Tome',c1:'Navy',c2:'Silver',parts:{Symbol:'Moon'}});
+const WISH_IDS=['ferro','hildr','gorm','lumi','sana','olive','vex','juno','taro','cass'];
+const WISH={cost:100,pity:30,rate5:.06,dupe:50};
+/* pairs that fight better side by side: a tank with a healer, a healer with a damage dealer, a tank with a damage dealer */
+const SYN=[
+ {n:"Gatekeeper's Prayer",ids:['bram','lumi'],b:{bram:{def:.14},lumi:{mag:.12}}},
+ {n:'Ember Ward',ids:['bram','mira'],b:{bram:{hp:.1},mira:{mag:.12}}},
+ {n:'Shield and Sword',ids:['bram','hero'],b:{bram:{def:.1},hero:{atk:.1}}},
+ {n:'Fox and Fawn',ids:['kit','sana'],b:{kit:{spd:.12},sana:{spd:.1}}},
+ {n:'Ironwall Vow',ids:['ferro','sana'],b:{ferro:{def:.16},sana:{mag:.12}}},
+ {n:'Hearth and Hammer',ids:['hildr','olive'],b:{hildr:{hp:.12},olive:{mag:.12}}},
+ {n:'Mountain Pact',ids:['gorm','juno'],b:{gorm:{atk:.1},juno:{atk:.12}}},
+ {n:'Blade in the Light',ids:['lumi','hero'],b:{lumi:{mag:.1},hero:{atk:.12}}},
+ {n:'Moonlit Bloom',ids:['olive','cass'],b:{olive:{mag:.1},cass:{mag:.14}}},
+ {n:'Veil and Vow',ids:['sana','vex'],b:{sana:{spd:.08},vex:{atk:.12}}},
+ {n:'Petal Guard',ids:['hildr','taro'],b:{hildr:{def:.12},taro:{atk:.14}}},
+ {n:'Cinder Bulwark',ids:['gorm','cass'],b:{gorm:{hp:.12},cass:{mag:.12}}},
+ {n:"Hunter's Rest",ids:['ferro','kit'],b:{ferro:{hp:.1},kit:{atk:.12}}},
+ {n:'Grove Song',ids:['lumi','kit'],b:{lumi:{spd:.1},kit:{atk:.1}}}];
+const roleOf=m=>(CHARS[m.id]||CHARS.hero).role||'dps';
+const allMembers=()=>G.party.concat(G.roster||[]);
+const hero=()=>allMembers().find(m=>m.id==='hero')||G.party[0];
+const owned=id=>allMembers().some(m=>m.id===id);
+const avgLv=()=>Math.max(1,Math.round(allMembers().reduce((a,m)=>a+m.lv,0)/allMembers().length));
+const wishes=()=>Math.floor((G.gems||0)/WISH.cost);
+/* the bonuses the party in front of you is getting right now */
+function synActive(P){const ids=P.map(x=>x.id),out=[];if(new Set(P.map(roleOf)).size===3)out.push({n:'Balanced party',t:'Tank + Healer + DPS: everyone +8% HP, +6% DEF',all:{hp:.08,def:.06}});
+  for(const y of SYN)if(y.ids.every(i=>ids.includes(i)))out.push({n:y.n,t:Object.entries(y.b).map(([i,o])=>`${CHARS[i].n} ${Object.entries(o).map(([k,v])=>`+${Math.round(v*100)}% ${k.toUpperCase()}`).join(', ')}`).join(' · '),b:y.b});return out}
+function synOf(m){if(typeof G==='undefined'||!G||!G.party)return{};const P=G.party.slice(0,3);if(!P.includes(m))return{};const out={},add=(k,v)=>out[k]=(out[k]||0)+v;
+  for(const y of synActive(P)){for(const[k,v]of Object.entries(y.all||{}))add(k,v);for(const[k,v]of Object.entries((y.b||{})[m.id]||{}))add(k,v)}return out}
+const gainCP=(u,n)=>{BT.cp=Math.min(BT.cpMax,BT.cp+n);num(u,'+'+n+' CP','mp');SND.fx('buff')};
 const needXP=L=>Math.round(12*L*L+20*L);
 /* ---------- weapon arts: [id, name, mp, level, target, kind, power, extra] ---------- */
 const A=(id,n,mp,lv,tgt,kind,pow,x={})=>Object.assign({id,n,mp,lv,tgt,kind,pow},x);
@@ -1072,8 +1120,8 @@ const ITEMS={
  potion:{n:'Potion',price:30,desc:'Heals 60 HP.',use:'heal',amt:60,tgt:'ally'},
  hipotion:{n:'Hi-Potion',price:120,desc:'Heals 250 HP.',use:'heal',amt:250,tgt:'ally'},
  megapotion:{n:'Mega Potion',price:420,desc:'Heals 800 HP.',use:'heal',amt:800,tgt:'ally'},
- ether:{n:'Ether',price:90,desc:'Restores 25 MP.',use:'mp',amt:25,tgt:'ally'},
- hiether:{n:'Hi-Ether',price:320,desc:'Restores 80 MP.',use:'mp',amt:80,tgt:'ally'},
+ ether:{n:'Ether',price:90,desc:'Gives the party 1 CP in battle.',use:'mp',amt:25,tgt:'ally'},
+ hiether:{n:'Hi-Ether',price:320,desc:'Gives the party 4 CP in battle.',use:'mp',amt:80,tgt:'ally'},
  elixir:{n:'Elixir',price:0,desc:'Fully restores HP and MP.',use:'full',tgt:'ally',rare:1},
  feather:{n:'Revive Feather',price:150,desc:'Revives a fallen ally with a third of their HP.',use:'revive',amt:.33,tgt:'dead'},
  remedy:{n:'Remedy',price:45,desc:'Cures poison, burns, bleeding, stun and slow.',use:'cure',tgt:'ally'},
@@ -1440,6 +1488,7 @@ function statsOf(m){const C=CHARS[m.id]||CHARS.hero,L=m.lv,ws=weaponStats(m.weap
   const g=k=>Math.round(C.base[k]+C.grow[k]*(L-1));
   const s={hp:g('hp'),mp:g('mp'),atk:g('atk')+ws.atk,mag:g('mag')+ws.mag,def:g('def')+ws.def,spd:Math.max(3,g('spd')+ws.spd)};
   for(const k of['hp','mp','atk','mag','def','spd'])if(ch[k])s[k]=Math.round(s[k]*(1+ch[k]));
+  const sy=synOf(m);for(const k in sy)if(s[k]!=null)s[k]=Math.round(s[k]*(1+sy[k]));
   s.mdef=Math.round((s.def+s.mag)/2);s.crit=.05+(ch.crit||0);s.limitGain=1+(ch.limit||0);s.xpMul=1+(ch.xp||0);s.goldMul=1+(ch.gold||0);s.regen=!!ch.regen;
   s.hp=Math.min(9999,s.hp);s.mp=Math.min(999,s.mp);return s}
 /* the arts a member knows with the weapon in hand */
@@ -1461,9 +1510,9 @@ const addItem=(id,n=1)=>{G.inv[id]=Math.min(99,(G.inv[id]||0)+n);if(G.inv[id]<=0
 const hasItem=id=>(G.inv[id]||0)>0;
 const addCharm=(id,n=1)=>{G.charms[id]=(G.charms[id]||0)+n};
 /* how many of a charm are free to put on */
-const charmFree=id=>(G.charms[id]||0)-G.party.filter(m=>m.charm===id).length;
-function healAll(){for(const m of G.party){const s=statsOf(m);m.hp=s.hp;m.mp=s.mp}}
-function clampParty(){for(const m of G.party){const s=statsOf(m);m.hp=Math.min(m.hp,s.hp);m.mp=Math.min(m.mp,s.mp)}}
+const charmFree=id=>(G.charms[id]||0)-allMembers().filter(m=>m.charm===id).length;
+function healAll(){for(const m of allMembers()){const s=statsOf(m);m.hp=s.hp;m.mp=s.mp}}
+function clampParty(){for(const m of allMembers()){const s=statsOf(m);m.hp=Math.min(m.hp,s.hp);m.mp=Math.min(m.mp,s.mp)}}
 /* ---------- the wardrobe: almost everything is yours from the start; a few pieces are found or bought ---------- */
 const CAT_LIST={hair:()=>HAIRS,hat:()=>HATS,top:()=>TOPS,bot:()=>BOTTOMS,shoes:()=>SHOES,back:()=>BACKS,face:()=>FACES};
 const FOUND={'hat:Flower Crown':'Found in Whisperwood','top:Sailor Top':'Found on Saltwind Road','face:Eye Goggles':'Found in the Tide Grotto','hat:Ushanka':'Found on Frostpeak Pass','back:Mech Wings':'Found on the Stormbreak Plains','hat:Crown':'Found in the Grey Citadel'};
@@ -1476,7 +1525,7 @@ const TAILOR={
 const LOCKED={};for(const k in FOUND)LOCKED[k]=FOUND[k];for(const[t,l]of Object.entries(TAILOR))for(const[c,n,p]of l)LOCKED[c+':'+n]=`Sold by the ${ZONES[t].n} tailor (${p}g)`;
 const owns=(cat,name)=>!LOCKED[cat+':'+name]||!!(G&&G.owned[cat+':'+name]);
 /* a new game */
-function newGameState(look,weapon,name){G={v:1,party:[makeMember('hero',1,look,weapon,name||'Hero')],gold:150,inv:{potion:4,ether:1},charms:{},owned:{},flags:{},opened:{},
+function newGameState(look,weapon,name){G={v:1,party:[makeMember('hero',1,look,weapon,name||'Hero')],roster:[],gems:0,pity:0,gold:150,inv:{potion:4,ether:1},charms:{},owned:{},flags:{},opened:{},
   zone:'emberwick',x:96,dir:1,time:0,steps:0,battles:0};G.party[0].weapon.name=weapon&&weapon.name||'Spellsteel';return G}
 /* play time as text */
 const playTime=()=>{const s=Math.floor(G.time),h=Math.floor(s/3600),m=Math.floor(s/60)%60;return h+':'+String(m).padStart(2,'0')};
@@ -1932,11 +1981,11 @@ function banner(txt,col){if(!txt){BT.ban.style.display='none';return}BT.ban.styl
 /* ---------- starting a battle ---------- */
 function battle(foeIds,o={}){return new Promise(res=>{const back=S_SCENE,snap=document.createElement('canvas');snap.width=cv.width;snap.height=cv.height;snap.getContext('2d').drawImage(cv,0,0);
   const pre=JSON.stringify({party:G.party.map(m=>({hp:m.hp,mp:m.mp,limit:m.limit})),inv:G.inv,gold:G.gold});
-  const begin=()=>{BT={o,res,back,units:[],P:[],E:[],queue:[],ready:[],fx:[],tweens:[],timers:[],busy:false,cur:null,over:false,t:0,shake:0,flash:0,intro:0,snap,pre,modals:[],cursor:null,stolen:0};
+  const begin=()=>{BT={o,res,back,units:[],P:[],E:[],queue:[],ready:[],fx:[],tweens:[],timers:[],busy:false,cur:null,over:false,t:0,shake:0,flash:0,intro:0,snap,pre,modals:[],cursor:null,stolen:0,cp:3,cpMax:6};
     const counts={};for(const id of foeIds)counts[id]=(counts[id]||0)+1;const seen={};
-    BT.P=G.party.slice(0,4).map((m,i)=>unitP(m,i));BT.E=foeIds.map((id,i)=>{seen[id]=(seen[id]||0)+1;return unitE(id,i,counts[id]>1?'ABC'[seen[id]-1]:'')});BT.units=BT.P.concat(BT.E);bLayout();
+    BT.P=G.party.slice(0,3).map((m,i)=>unitP(m,i));BT.E=foeIds.map((id,i)=>{seen[id]=(seen[id]||0)+1;return unitE(id,i,counts[id]>1?'ABC'[seen[id]-1]:'')});BT.units=BT.P.concat(BT.E);bLayout();
     BT.layer=el('div','blayer');UI.appendChild(BT.layer);
-    BT.ban=winEl('banner',{x:Math.round(W/2-90),y:4,w:180},BT.layer);BT.ban.style.display='none';
+    BT.ban=winEl('banner',{x:Math.round(W/2-90),y:4,w:180},BT.layer);BT.ban.style.display='none';BT.cpw=winEl('plain',{x:3,y:3,w:96,h:13},BT.layer);
     const ew=Math.round(W*.34);BT.ewin=winEl('benemy',{x:3,y:123,w:ew,h:54},BT.layer);BT.pwin=winEl('bparty',{x:ew+6,y:123,w:W-ew-9,h:54},BT.layer);
     BT.prow=BT.P.map(u=>{const r=el('div','pr');r.innerHTML=`<span class="nm"></span><span class="num hp"></span><span class="num mp"></span><span class="gg"><span class="bar atb"><i></i></span><span class="bar lim"><i></i></span></span>`;BT.pwin.appendChild(r);return r});
     SND.play(o.music||(o.boss?(o.final?'final':'boss'):'battle'));SND.fx('swirl');setScene(BATTLE_SCENE);
@@ -1986,10 +2035,11 @@ function drawMember(g,u){const m=u.m,x=u.hx+u.ox,y=u.hy+u.oy;
 function pips(g,u,x,y){const ks=Object.keys(u.st).filter(k=>STATUS[k]&&!(k==='regen'&&u.st[k]>500));if(!ks.length)return;let xx=Math.round(x-ks.length*2);for(const k of ks){g.fillStyle='#000';g.fillRect(xx-1,y-1,5,5);g.fillStyle=STATUS[k].c;g.fillRect(xx,y,3,3);xx+=4}}
 /* the windows at the bottom */
 function hud(){if(!BT.prow)return;
+  if(BT.cpw){const k=BT.cp+'/'+BT.cpMax;if(BT._cpk!==k){BT._cpk=k;BT.cpw.innerHTML=`<span class="tiny blue">CP</span> <span style="letter-spacing:1px;color:#8affff">${'●'.repeat(BT.cp)}<span class="dim">${'○'.repeat(BT.cpMax-BT.cp)}</span></span>`}}
   if(BT._ek!==BT.E.map(u=>u.alive+':'+Math.round(u.hp/u.mhp*20)).join()){BT._ek=BT.E.map(u=>u.alive+':'+Math.round(u.hp/u.mhp*20)).join();
     BT.ewin.innerHTML=BT.E.filter(u=>u.alive).map(u=>`<div class="en"><span>${esc(u.name)}</span><span class="bar ehp"><i style="width:${u.hp/u.mhp*100}%"></i></span></div>`).join('')}
   BT.P.forEach((u,i)=>{const r=BT.prow[i],c=r.children;const nm=esc(u.name);if(c[0].innerHTML!==nm)c[0].innerHTML=nm;
-    const hp=`${u.hp}<small>/${u.mhp}</small>`;if(c[1].innerHTML!==hp)c[1].innerHTML=hp;const mp=`${u.mp}`;if(c[2].textContent!==mp)c[2].textContent=mp;
+    const hp=`${u.hp}<small>/${u.mhp}</small>`;if(c[1].innerHTML!==hp)c[1].innerHTML=hp;const R=ROLES[roleOf(u.m)];if(c[2].textContent!==R.s){c[2].textContent=R.s;c[2].style.color=R.c}
     c[1].classList.toggle('low',u.alive&&u.hp<u.mhp*.25);c[1].classList.toggle('ko',!u.alive);
     const ab=c[3].children[0],lb=c[3].children[1];ab.firstChild.style.width=(u.alive?u.atb*100:0)+'%';ab.classList.toggle('full',u.alive&&u.atb>=1);lb.firstChild.style.width=u.m.limit+'%';lb.classList.toggle('full',u.m.limit>=100);
     r.classList.toggle('turn',BT.cur===u);r.classList.toggle('ko',!u.alive)})}
@@ -2007,12 +2057,14 @@ function foeChoose(u){const F=u.F;
   let tot=0;for(const[wt]of F.moves)tot+=wt;let r=rnd()*tot,mv='atk';for(const[wt,id]of F.moves){r-=wt;if(r<=0){mv=id;break}}
   if(FMOVES[mv].self&&u.st[FMOVES[mv].st])mv='atk';
   return{u,type:'foe',mv}}
-function randomTarget(list,lowBias=.3){const a=alive(list);if(!a.length)return null;if(rnd()<lowBias)return a.slice().sort((x,y)=>x.hp/x.mhp-y.hp/y.mhp)[0];return pick1(a)}
+function randomTarget(list,lowBias=.3){const a=alive(list);if(!a.length)return null;if(rnd()<lowBias)return a.slice().sort((x,y)=>x.hp/x.mhp-y.hp/y.mhp)[0];
+  if(a[0].side==='p'){let tot=0;const w=a.map(u=>{const x=(roleOf(u.m)==='tank'?2.4:1)*(u.i===0?1.5:1);tot+=x;return x});let r=rnd()*tot;for(let i=0;i<a.length;i++){r-=w[i];if(r<=0)return a[i]}}
+  return pick1(a)}
 const pick1=a=>a[Math.floor(rnd()*a.length)];
 /* ---------- the command windows ---------- */
 function openCommand(u){if(!u.alive){BT.ready=BT.ready.filter(x=>x!==u);return}BT.cur=u;SND.fx('cur');tween(u,{ox:-10},120);
   const m=u.m,lim=m.limit>=100,L=limitOf(m);
-  const rows=[{label:lim?L.n:'Attack',html:lim?`<span style="color:#ffa0e0">✦ ${esc(L.n)}</span>`:'<span>Attack</span>',c:'attack'},{label:artLabel(m),c:'arts'},{label:'Item',c:'item',off:!battleItems().length},{label:'Guard',c:'guard'},{label:'Flee',c:'flee',off:!!BT.o.boss||!!BT.o.noFlee}];
+  const rows=[{label:lim?L.n:'Attack',html:lim?`<span style="color:#ffa0e0">✦ ${esc(L.n)}</span>`:'<span>Attack</span>',r:lim?'':'<span class="tiny blue">+1</span>',c:'attack'},{label:artLabel(m),r:`<span class="tiny ${BT.cp<2?'red':'blue'}">−2</span>`,off:BT.cp<2,c:'arts'},{label:'Item',c:'item',off:!battleItems().length},{label:'Guard',c:'guard'},{label:'Flee',c:'flee',off:!!BT.o.boss||!!BT.o.noFlee}];
   const ew=Math.round(W*.34);const box=winEl('cmd pop',{x:3,y:119,w:Math.max(ew,96),h:58},BT.layer);
   const lw=new ListWin({el:box,rows,vis:5,quiet:true,
     pick:async row=>{SND.fx('ok');
@@ -2039,8 +2091,8 @@ function chooseTargets(u,tgt){return new Promise(res=>{let list,i=0,all=false;
   BT.modals.push(m);pushModal(m);show()})}
 function artsMenu(u){return new Promise(res=>{const m=u.m,list=artsOf(m);
   const box=winEl('pop',{x:3,y:96,w:W-6,h:81},BT.layer);
-  const rows=list.map(a=>{const dead=a.tgt==='dead'&&!BT.P.some(p=>!p.alive);return{label:a.n,r:`<span class="${u.mp<a.mp?'red':'blue'}">${a.mp}</span>`,off:u.mp<a.mp||dead,a}});
-  const lw=new ListWin({el:box,rows,cols:2,vis:5,title:`<span class="small">${esc(artLabel(m))}</span> <span class="tiny dim">MP ${u.mp}/${u.mmp}</span>`,
+  const rows=list.map(a=>{const dead=a.tgt==='dead'&&!BT.P.some(p=>!p.alive);return{label:a.n,r:`<span class="${BT.cp<2?'red':'blue'}">2 CP</span>`,off:BT.cp<2||dead,a}});
+  const lw=new ListWin({el:box,rows,cols:2,vis:5,title:`<span class="small">${esc(artLabel(m))}</span> <span class="tiny dim">CP ${BT.cp}/${BT.cpMax}</span>`,
     render:row=>{if(row)banner(`<span class="small">${esc(artDesc(row.a))}</span>`)},
     pick:async row=>{const t=await chooseTargets(u,row.a.tgt);if(t){close();commit(u,{type:'art',art:row.a,t})}else banner(`<span class="small">${esc(artDesc(row.a))}</span>`)},
     back:()=>{close()}});
@@ -2065,7 +2117,7 @@ async function runAction(a){const u=a.u;if(BT.over)return;if(!u.alive&&a.type!==
   if(a.type==='item')return useItemB(u,a.id,a.t);
   if(a.type==='counter'){if(!a.t.alive)return;banner('Counter');await melee(u,[a.t],1,{kind:'phys',pow:.8});banner('');return}
   if(a.type==='attack'){let t=retarget(u,a.t,'e');if(!t.length)return;const w=u.m.weapon;
-    if(w.kind==='bow')await ranged(u,t,1,{kind:'phys',pow:1});else await melee(u,t,w.kind==='dual'?2:w.kind==='fists'?2:1,{kind:'phys',pow:w.kind==='dual'||w.kind==='fists'?.55:1});return}
+    if(w.kind==='bow')await ranged(u,t,1,{kind:'phys',pow:1});else await melee(u,t,w.kind==='dual'?2:w.kind==='fists'?2:1,{kind:'phys',pow:w.kind==='dual'||w.kind==='fists'?.55:1});gainCP(u,1);return}
   if(a.type==='art'||a.type==='limit')return artAct(u,a.art,a.t,a.type==='limit')}
 /* stepping in to strike, once or many times */
 async function melee(u,targets,hits,o,heavy){const w=u.m.weapon,col=dyeOf(w.glow,'Sky'),T=WTYPES[w.kind],big=T.hold==='two';
@@ -2084,7 +2136,7 @@ async function cast(u,targets,o){const w=u.m?u.m.weapon:null,col=w?dyeOf(w.glow,
   const fx=ELEM_FX[o.elem||'']||null;for(const t of targets){if(!t.alive)continue;if(fx)fx(t);else ELEM_FX.Shadow(t)}await bwait(320);
   for(const t of targets)strike(u,t,o);await bwait(220);u.pose=null}
 async function artAct(u,a,tg,isLimit){const m=u.m;
-  if(!isLimit){if(u.mp<a.mp){num(u,'No MP','miss');return}u.mp-=a.mp}else m.limit=0;
+  if(!isLimit){if(BT.cp<2){num(u,'No CP','miss');return}BT.cp-=2}else m.limit=0;
   banner(isLimit?`<span style="color:#ffa0e0">✦ ${esc(a.n)} ✦</span>`:esc(a.n));
   if(isLimit){SND.fx('limit');BT.flash=.6;u.pose='win';await bwait(450)}
   const o={kind:a.kind,pow:a.pow,elem:a.elem,crit:a.crit,sure:a.sure,st:a.st,chance:a.chance,turns:a.turns,execute:a.execute,drain:a.drain,rand:a.tgt==='rand'};
@@ -2102,12 +2154,12 @@ async function artAct(u,a,tg,isLimit){const m=u.m;
     for(const p of t){fxRing(p,STATUS[a.st].c);giveStatus(p,a.st,a.turns||3)}await bwait(380);u.pose=null}
   if(a.after==='regen')for(const p of alive(BT.P)){p.st.regen=Math.max(p.st.regen||0,4);fxRing(p,STATUS.regen.c)}
   if(a.refund)u.mp=Math.min(u.mmp,u.mp+Math.round(a.mp*a.refund));banner('')}
-async function useItemB(u,id,tg){const I=ITEMS[id];if(!hasItem(id)){num(u,'None left','miss');return}addItem(id,-1);banner(esc(I.n));u.pose='cast';await bwait(220);
+async function useItemB(u,id,tg){let cpDone=false;const I=ITEMS[id];if(!hasItem(id)){num(u,'None left','miss');return}addItem(id,-1);banner(esc(I.n));u.pose='cast';await bwait(220);
   if(I.use==='bomb'){const lv=G.party.reduce((s,m)=>s+m.lv,0)/G.party.length,t=alive(BT.E);for(const e of t)(ELEM_FX[I.elem]||ELEM_FX.Fire)(e);await bwait(380);
     for(const e of t){let d=I.amt*(1+lv*.12)*(.92+rnd()*.16);if(e.F.weak.includes(I.elem))d*=1.5;else if(e.F.res.includes(I.elem))d*=.5;d=Math.round(d);hurt(e,d);num(e,d)}}
   else if(I.use==='flee'){banner('');u.pose=null;return flee(u,true)}
   else for(const p of tg){if(I.use==='revive'){if(p.alive){num(p,'Miss','miss');continue}p.alive=true;p.hp=0;p.atb=0;healU(p,p.mhp*I.amt);fxHeal(p);SND.fx('heal');continue}if(!p.alive){num(p,'Miss','miss');continue}
-    if(I.use==='heal'){healU(p,I.amt);fxHeal(p);SND.fx('heal')}else if(I.use==='mp'){const v=Math.min(p.mmp-p.mp,I.amt);p.mp+=v;num(p,v,'mp');fxHeal(p);SND.fx('heal')}
+    if(I.use==='heal'){healU(p,I.amt);fxHeal(p);SND.fx('heal')}else if(I.use==='mp'){if(!cpDone){cpDone=true;gainCP(u,Math.max(1,Math.round(I.amt/20)))}fxHeal(p);SND.fx('heal')}
     else if(I.use==='full'){healU(p,p.mhp);p.mp=p.mmp;fxHeal(p);SND.fx('heal')}else if(I.use==='cure'){for(const k of['poison','burn','bleed','stun','slow','atkDown','defDown'])delete p.st[k];num(p,'Cured','st');fxRing(p,'#ffffff');SND.fx('heal')}}
   await bwait(380);u.pose=null;banner('')}
 async function flee(u,sure){if(BT.o.boss){banner('There is no escape!');SND.fx('no');await bwait(700);banner('');return}
@@ -2134,14 +2186,15 @@ async function victory(){BT.over=true;closeAllModals();banner('');await bwait(45
   let xp=0,gold=0;const drops={};for(const u of BT.E){const s=u.s;xp+=s.xp;gold+=s.gold;const F=u.F;
     if(rnd()<.12)drops.potion=(drops.potion||0)+1;if(F.lv>=5&&rnd()<.1)drops.ore=(drops.ore||0)+1;if(F.lv>=12&&rnd()<.06)drops.hipotion=(drops.hipotion||0)+1;if(F.lv>=10&&rnd()<.06)drops.ether=(drops.ether||0)+1;
     if(F.boss){drops.ore=(drops.ore||0)+3;drops.starsteel=(drops.starsteel||0)+1;drops[F.lv>=20?'megapotion':'hipotion']=(drops[F.lv>=20?'megapotion':'hipotion']||0)+2}}
-  const gm=Math.max(...BT.P.map(u=>u.s.goldMul));gold=Math.round(gold*gm)+BT.stolen;G.gold+=gold;for(const[k,n]of Object.entries(drops))addItem(k,n);
+  const gm=Math.max(...BT.P.map(u=>u.s.goldMul));gold=Math.round(gold*gm)+BT.stolen;G.gold+=gold;let gems=0;for(const u of BT.E)gems+=Math.ceil(4+u.F.lv*1.4)*(u.F.boss?8:1);const w0=wishes();G.gems=(G.gems||0)+gems;for(const[k,n]of Object.entries(drops))addItem(k,n);
   writeBack(true);G.battles++;
+  for(const m of G.roster||[])giveXP(m,Math.round(xp*.6*statsOf(m).xpMul));
   const ups=G.party.map(m=>{const st=statsOf(m),n=Math.round(xp*st.xpMul);return{m,n,ups:giveXP(m,n)}});clampParty();
   await bwait(600);
   /* the results */
   const box=winEl('pop results',{x:Math.round(W/2-120),y:14,w:240},BT.layer);
   const dropTxt=Object.entries(drops).map(([k,n])=>`${ITEMS[k].n}${n>1?' ×'+n:''}`).join(', ');
-  box.innerHTML=`<div class="ttl">Victory!</div><div class="small">EXP <b class="gold">${fmt(xp)}</b> · Gold <b class="gold">${fmt(gold)}</b>${BT.stolen?` <span class="dim">(${BT.stolen} won back)</span>`:''}</div>${dropTxt?`<div class="small">Found: <span class="blue">${esc(dropTxt)}</span></div>`:''}`+
+  box.innerHTML=`<div class="ttl">Victory!</div><div class="small">EXP <b class="gold">${fmt(xp)}</b> · Gold <b class="gold">${fmt(gold)}</b> · Gems <b class="blue">◆${gems}</b>${wishes()>w0?' <span class="green">A wish is ready!</span>':''}${BT.stolen?` <span class="dim">(${BT.stolen} won back)</span>`:''}</div>${dropTxt?`<div class="small">Found: <span class="blue">${esc(dropTxt)}</span></div>`:''}`+
     ups.map(({m,n,ups})=>`<div class="rr">${portraitHTML(m)}<div style="flex:1"><div class="small">${esc(m.name)} <span class="dim">Lv</span> ${m.lv}${ups.length?' <span class="gold lvup">LEVEL UP!</span>':''}</div>${barHTML(m.xp,needXP(m.lv),'xp',90)}${ups.flatMap(x=>x.learned).map(a=>`<div class="tiny green">Learned ${esc(a)}!</div>`).join('')}</div></div>`).join('')+
     `<div class="tiny dim" style="text-align:right;margin-top:${px(2)}"><i class="k a">A</i>continue</div>`;
   if(ups.some(x=>x.ups.length))setTimeout(()=>SND.fx('level'),300);
@@ -2253,8 +2306,8 @@ async function bossEvent(ev){WD.busy=true;WD.moving=false;const Z=ZONES[WD.zone]
   autosave();WD.busy=false}
 async function runScene(ev){WD.busy=true;WD.moving=false;G.flags[ev.once||ev.id]=1;try{await runStory(ev.id)}catch(e){if(e===ABORT)return;throw e}autosave();WD.busy=false}
 /* a member joins */
-function join(id,lv){if(G.party.some(m=>m.id===id))return;const C=CHARS[id],L=lv||Math.max(1,Math.round(G.party.reduce((s,m)=>s+m.lv,0)/G.party.length));
-  const m=makeMember(id,L,C.look,C.weapon,C.n);m.weapon.tier=G.party[0].weapon.tier||0;G.party.push(m);G.flags[id]=1;SND.fx('level')}
+function join(id,lv){if(owned(id))return;const C=CHARS[id],L=lv||avgLv();
+  const m=makeMember(id,L,C.look,C.weapon,C.n);m.weapon.tier=hero().weapon.tier||0;(G.party.length<3?G.party:G.roster).push(m);G.flags[id]=1;SND.fx('level')}
 
 /* ================= the story: the people you meet and what they say ================= */
 const NPC_LOOKS={
@@ -2272,7 +2325,7 @@ const NPC_LOOKS={
  r10:{skin:'Fair',eyes:'Happy',eyeC:'Teal',mouth:'Grin',hair:'Twin Buns',hairC:'Pink',hat:'Goggles',hatC1:'Leather',hatC2:'Cyan',top:'Overalls',topC1:'Teal',topC2:'White',bot:'Pants',botC1:'Teal',shoes:'Sneakers',shoeC:'Orange',face:'Freckles',faceC:'Rust'},
 };
 const NPC_LOOK=ev=>ev.look==='bram'?CHARS.bram.look:NPC_LOOKS[ev.look||ev.id]||NPC_LOOKS.r2;
-const HN=()=>G.party[0].name,has=id=>G.party.some(m=>m.id===id),FL=k=>!!G.flags[k];
+const HN=()=>hero().name,has=id=>owned(id),FL=k=>!!G.flags[k];
 const joined=(n)=>()=>say('',`${n} joined the party!`);
 /* ---------- talking ---------- */
 const TALK={
@@ -2308,7 +2361,7 @@ const STORY={
    ['Hessa','Press START for your menu. You can change your clothes, and reshape that weapon, any time you like. Spellsteel listens to its bearer.'],
    ['Hessa','A forge can do more: reforge it stronger with ore, and once you bring back an Ember, infuse it with that Ember\'s element.'],['Hessa','Buy some potions at the shop, then out the east gate. And come back in one piece.'],()=>{G.flags.hessa=1}]),
  mira_meet:async()=>{const x=WD.x;WD.actors=[{look:CHARS.mira.look,weapon:charWeapon('mira'),x:x+92,flip:true,pose:'guard'},{foe:'wolf',x:x+58},{foe:'wolf',x:x+128,flip:true}];await talk(['A girl with a heavy book is backed against a tree. Two Briar Wolves circle her, their fur the colour of ash.',['Girl','Don\'t just stand there! Grey-touched wolves don\'t stop, they just keep coming!']]);
-   join('mira',Math.max(2,G.party[0].lv));WD.actors=WD.actors.filter(a=>a.foe);await say('','The girl steps up beside you, book open.');
+   join('mira',Math.max(2,hero().lv));WD.actors=WD.actors.filter(a=>a.foe);await say('','The girl steps up beside you, book open.');
    await startFight(['wolf','wolf'],{theme:'forest',grey:isGrey(ZONES.wood1),noFlee:true});WD.actors=[];
    await talk([['Mira','Thank you. I\'m Mira, from the academy at Stormwatch. I study the Grey.'],['Mira','That weapon of yours, it\'s spellsteel, isn\'t it? It was humming the whole fight.'],
      ['Mira','The Grey in this forest is pouring out of a den to the east. I think something swallowed the Ember of Flame.'],['Mira','If we take it back, the colour should come back with it. Let me come with you. My spells hit hard, I promise.'],joined('Mira'),
@@ -2321,7 +2374,7 @@ const STORY={
  tide_post:()=>talk(['The Tidecaller sinks. Far off, the sea gives a great sigh, and the tide begins to run again.',['Bram','Hear that? That\'s the harbor waking up.'],'Weapons can now be infused with Bolt at a forge.',
    ['Mira','Two Embers. The Ember of Frost must be up on Frostpeak. The pass has been snowed shut since spring.']]),
  kit_meet:async()=>{await talk(['Paw prints in the snow. Then a voice, from somewhere above you.',()=>{WD.actors=[{look:CHARS.kit.look,weapon:charWeapon('kit'),x:WD.x+64,flip:true}]},['???','Hold it right there. You\'re walking straight into a wolf den, you know.'],['Kit','Name\'s Kit. I track things on this mountain. Lately the things have been tracking me.'],'The snow bursts open!']);
-   join('kit',Math.max(9,G.party[0].lv));WD.actors=[];await startFight(['snowwolf','snowwolf','icebat'],{theme:'snow',grey:isGrey(ZONES.frost1),noFlee:true});
+   join('kit',Math.max(9,hero().lv));WD.actors=[];await startFight(['snowwolf','snowwolf','icebat'],{theme:'snow',grey:isGrey(ZONES.frost1),noFlee:true});
    await talk([['Kit','Not bad. You lot are after the Colossus? It\'s up on the glacier, sitting on a light so cold it burns.'],['Kit','I\'m in. Somebody has to stop you walking into dens.'],joined('Kit')])},
  col_pre:()=>talk(['A mountain of ice stands up. In its chest, a white light burns cold.',['Kit','There it is. Go for the cracks, and bring fire if you have it.']]),
  col_post:()=>talk(['The Colossus shatters into powder snow. The Ember of Frost drifts down like a flake that never melts.',['Kit','The glacier\'s singing. Hear it? Ice is supposed to sound like that.'],'Weapons can now be infused with Ice at a forge.',
@@ -2344,32 +2397,66 @@ async function runStory(id){const f=STORY[id];if(f)await f()}
 
 /* ================= the menu (START), shops, inns, the forge and the tailor ================= */
 function screenRoot(dark=true){const r=el('div','screen fade'+(dark?' darken':''));UI.appendChild(r);return r}
-function memberCard(m,wide){const s=statsOf(m);return`<div class="card">${portraitHTML(m)}<div class="cb"><div><span class="gold">${esc(m.name)}</span> <span class="dim small">Lv</span> ${m.lv}${m.hp<=0?' <span class="red small">KO</span>':''}</div>
+function memberCard(m,wide){const s=statsOf(m);return`<div class="card">${portraitHTML(m)}<div class="cb"><div><span class="gold">${esc(m.name)}</span> <span class="tiny" style="color:${ROLES[roleOf(m)].c}">${ROLES[roleOf(m)].n}</span> <span class="dim small">Lv</span> ${m.lv}${m.hp<=0?' <span class="red small">KO</span>':''}</div>
   <div class="small"><span class="dim">HP</span> ${m.hp}<span class="dim">/${s.hp}</span> ${barHTML(m.hp,s.hp,'',wide?34:24)} <span class="dim">MP</span> ${m.mp}<span class="dim">/${s.mp}</span></div>
   <div class="tiny dim">${esc(m.weapon.name||WTYPES[m.weapon.kind].n)} · ${WTYPES[m.weapon.kind].n}${m.weapon.tier?' · '+TIERS[m.weapon.tier]:''}</div></div></div>`}
 /* choose a member in a window: resolves with the member or null */
-function pickMember(parent,box,title,o={}){return pick(Object.assign({el:winEl('pop',box,parent),title,vis:4,rows:G.party.map(m=>({html:memberCard(m,box.w>200),m,off:o.off?o.off(m):false}))},o.extra||{})).then(i=>i<0?null:G.party[i])}
+function pickMember(parent,box,title,o={}){return pick(Object.assign({el:winEl('pop',box,parent),title,vis:4,rows:(o.pool||G.party).map(m=>({html:memberCard(m,box.w>200),m,off:o.off?o.off(m):false}))},o.extra||{})).then(i=>i<0?null:(o.pool||G.party)[i])}
 /* a menu that stays open while its choices run */
 function menuLoop(o){return new Promise(res=>{let busy=false;const lw=new ListWin(Object.assign({},o,{pick:async(r,i)=>{if(busy)return;busy=true;lw.dim=true;lw.render();let out;
     try{out=await o.act(r,i,lw)}catch(e){console.error(e)}busy=false;lw.dim=false;if(out==='close'){popModal(lw);res(out);return}lw.render()},back:()=>{if(busy)return;popModal(lw);res()}}));pushModal(lw)})}
 async function mainMenu(){WD.busy=true;const root=screenRoot();const pw=W-98;
   const party=winEl('',{x:4,y:4,w:pw,h:142},root);const drawParty=()=>{party.innerHTML=G.party.map(m=>memberCard(m,pw>200)).join('')};drawParty();
-  const info=winEl('plain',{x:4,y:150,w:W-8,h:26},root);info.innerHTML=`<span class="gold">${fmt(G.gold)}</span><span class="dim">g</span>&nbsp;&nbsp; <span class="dim">Time</span> ${playTime()}&nbsp;&nbsp; <span class="dim">${esc(ZONES[G.zone].n)}</span>`;
-  const cmds=['Items','Arts','Status','Wardrobe','Forge','Charms','Order','Save','Settings','Title'];
-  const r=await menuLoop({el:winEl('',{x:W-91,y:4,w:87,h:142},root),rows:cmds.map(c=>({label:c})),vis:10,act:async(row,i)=>{const c=cmds[i];const box={x:4,y:4,w:pw,h:142};
+  const info=winEl('plain',{x:4,y:150,w:W-8,h:26},root);info.innerHTML=`<span class="gold">${fmt(G.gold)}</span><span class="dim">g</span>&nbsp;&nbsp; <span class="blue">◆${fmt(G.gems||0)}</span> <span class="dim">·</span> <span class="dim">Time</span> ${playTime()}&nbsp;&nbsp; <span class="dim">${esc(ZONES[G.zone].n)}</span>`;
+  const cmds=['Items','Arts','Status','Wardrobe','Forge','Charms','Party','Wish','Save','Settings','Title'];
+  const r=await menuLoop({el:winEl('',{x:W-91,y:4,w:87,h:142},root),rows:cmds.map(c=>({label:c})),vis:11,act:async(row,i)=>{const c=cmds[i];const box={x:4,y:4,w:pw,h:142};
     if(c==='Items')await itemsMenu(root,box);
     else if(c==='Arts'){const m=await pickMember(root,box,'Whose arts?');if(m)await fieldArts(root,m)}
     else if(c==='Status'){const m=await pickMember(root,box,'Status');if(m)await statusScreen(m)}
-    else if(c==='Wardrobe'){const m=await pickMember(root,box,'Who changes?');if(m){root.style.visibility='hidden';await wardrobe(m);root.style.visibility=''}}
-    else if(c==='Forge'){const m=await pickMember(root,box,'Whose weapon?');if(m){root.style.visibility='hidden';await forgeDesign(m,{heading:'Reshape'});root.style.visibility='';clampParty()}}
+    else if(c==='Wardrobe'){root.style.visibility='hidden';await wardrobe(hero());root.style.visibility=''}
+    else if(c==='Forge'){root.style.visibility='hidden';await forgeDesign(hero(),{heading:'Reshape'});root.style.visibility='';clampParty()}
     else if(c==='Charms'){const m=await pickMember(root,box,'Who wears a charm?');if(m)await charmMenu(root,m)}
-    else if(c==='Order'){if(G.party.length<2){SND.fx('no');return}const a=await pickMember(root,box,'Move who?');if(a){const b=await pickMember(root,box,`Swap ${esc(a.name)} with?`);if(b&&b!==a){const ia=G.party.indexOf(a),ib=G.party.indexOf(b);G.party[ia]=b;G.party[ib]=a;SND.fx('ok')}}}
+    else if(c==='Party'){root.style.visibility='hidden';await partyMenu();root.style.visibility=''}
+    else if(c==='Wish'){root.style.visibility='hidden';await wishMenu();root.style.visibility=''}
     else if(c==='Save'){autosave(true);SND.fx('save');toast('Your journey is saved.')}
     else if(c==='Settings')await settingsMenu(root);
     else if(c==='Title'){if(await confirmBox('Return to the title?<br><span class="small dim">Anything since your last save is lost.</span>'))return 'close'}
     drawParty()}});
   if(r==='close'){root.remove();WD.busy=false;toTitle();return}
   root.remove();WD.busy=false}
+
+/* ---------- your party of three, in order: the front slot draws the most attacks ---------- */
+async function partyMenu(){
+  const root=screenRoot(),box={x:4,y:4,w:W-98,h:142},win=winEl('',box,root),syn=winEl('plain',{x:4,y:150,w:W-8,h:26},root);
+  const draw=()=>{win.innerHTML=[0,1,2].map(i=>G.party[i]?memberCard(G.party[i],false):`<div class="card"><div class="cb dim small">Empty slot</div></div>`).join('');
+    const a=synActive(G.party.slice(0,3));syn.innerHTML=a.length?`<span class="gold small">${a.map(x=>esc(x.n)).join(' · ')}</span>`:`<span class="tiny dim">Tip: a Tank, a Healer and a DPS work best together. Put your Tank in front.</span>`};draw();
+  const names=['Front','Middle','Back','Done'];
+  await menuLoop({el:winEl('',{x:W-91,y:4,w:87,h:142},root),rows:names.map(l=>({label:l})),vis:4,act:async(row,i)=>{if(i===3)return 'close';
+    const c=await pickMember(root,box,`Who takes the ${names[i].toLowerCase()} slot?`,{pool:allMembers()});if(!c)return;
+    const cur=G.party[i],j=G.party.indexOf(c);
+    if(c===cur){}else if(j>=0){if(cur){G.party[j]=cur;G.party[i]=c}else{G.party.splice(j,1);G.party.push(c)}SND.fx('ok')}
+    else{if(cur&&cur.id==='hero'){await say('',`${esc(cur.name)} has to stay in the party.`);return}
+      if(cur){G.roster.push(cur);G.party[i]=c}else G.party.push(c);G.roster=G.roster.filter(x=>x!==c);SND.fx('ok')}
+    clampParty();draw()}});
+  root.remove()}
+/* ---------- wishes: 100 gems each, a new friend every time ---------- */
+function wishPull(){G.pity=(G.pity||0)+1;const five=G.pity>=WISH.pity||rnd()<WISH.rate5;if(five)G.pity=0;
+  const ids=WISH_IDS.filter(id=>CHARS[id].rar===(five?5:4)),id=ids[Math.floor(rnd()*ids.length)],had=owned(id);
+  if(had)G.gems+=WISH.dupe;else join(id);return{id,five,had}}
+async function wishMenu(){
+  const root=screenRoot(),info=winEl('plain',{x:4,y:4,w:W-8,h:24},root),side=winEl('plain',{x:W-124,y:32,w:120,h:144},root);
+  const draw=()=>{info.innerHTML=`<span class="blue">◆ ${fmt(G.gems||0)}</span> <span class="dim">gems</span> · <span class="gold">${wishes()}</span> <span class="dim">wish${wishes()===1?'':'es'}</span> · <span class="dim">5★ guaranteed in</span> ${Math.max(1,WISH.pity-(G.pity||0))}`;
+    side.innerHTML=WISH_IDS.map(id=>{const C=CHARS[id],R=ROLES[C.role];return`<div class="tiny" style="color:${owned(id)?'#fff':'#7a82a8'}">${C.rar===5?'<span class="gold">★5</span>':'<span class="blue">★4</span>'} ${esc(C.n)} <span style="color:${R.c}">${R.s}</span>${owned(id)?' ✓':''}</div>`}).join('')};draw();
+  const one=winEl('plain',{x:4,y:32,w:W-132,h:60},root);one.innerHTML='<div class="small dim">Defeat enemies to earn gems. Every 100 gems is one wish. A repeat character turns into 50 gems.</div>';
+  await menuLoop({el:winEl('',{x:4,y:96,w:W-132,h:80},root),rows:[{label:'Wish ×1'},{label:'Wish ×10'},{label:'Back'}],vis:3,act:async(row,i)=>{if(i===2)return 'close';
+    const n=i?10:1;if(wishes()<n){SND.fx('no');await say('',`You need ${n*WISH.cost} gems for that.`);return}
+    G.gems-=n*WISH.cost;const res=[];for(let k=0;k<n;k++)res.push(wishPull());draw();
+    const fresh=res.filter(r=>!r.had),dupes=res.length-fresh.length,box=winEl('pop results',{x:Math.round(W/2-120),y:8,w:240},root);
+    box.innerHTML=`<div class="ttl">${n===1?'A wish comes true!':'Ten wishes!'}</div>`+fresh.slice(0,5).map(r=>{const m=allMembers().find(x=>x.id===r.id),R=ROLES[CHARS[r.id].role];return`<div class="rr">${portraitHTML(m)}<div style="flex:1"><div class="small">${esc(CHARS[r.id].n)} <span class="${r.five?'gold':'blue'}">★${CHARS[r.id].rar}</span> <span style="color:${R.c}">${R.n}</span></div><div class="tiny green">Joined your roster!</div></div></div>`}).join('')
+      +(dupes?`<div class="small dim">${dupes} repeat${dupes>1?'s':''} → ◆${dupes*WISH.dupe} back</div>`:'')+`<div class="tiny dim" style="text-align:right"><i class="k a">A</i>continue</div>`;
+    SND.fx(res.some(r=>r.five)?'limit':'level');
+    await new Promise(r=>{const m={el:box,input(b){if(b==='a'||b==='b'){popModal(m);box.remove();r()}}};setTimeout(()=>pushModal(m),250)});draw()}});
+  root.remove()}
 /* ---------- items ---------- */
 async function itemsMenu(root,box){let sel=0;for(;;){const ids=Object.keys(G.inv).filter(k=>ITEMS[k]&&G.inv[k]>0);
     const desc=winEl('plain',{x:4,y:150,w:W-8,h:26},root);
@@ -2447,7 +2534,7 @@ async function forgeMenu(zone){const root=screenRoot();const upd=goldBar(root);c
       if(els.length<2){await say('Smith','Infusing takes an Ember\'s light. Bring one back and I\'ll show you.');return}
       const j=await pick({el:winEl('pop',box,root),title:'Element (100 gold)',vis:6,sel:Math.max(0,els.indexOf(m.weapon.elem)),rows:els.map(e=>({label:e,html:`<span style="color:${ELEMS[e].c}">${e==='None'?'No element':e}</span>`,r:e===m.weapon.elem?'<span class="gold">now</span>':''}))});
       if(j<0||els[j]===m.weapon.elem)return;if(G.gold<100){SND.fx('no');await say('Smith','That\'s 100 gold for the coal alone.');return}G.gold-=100;m.weapon.elem=els[j];SND.fx('fire');upd();toast(`${esc(m.weapon.name)} is ${els[j]==='None'?'plain spellsteel again':'infused with '+els[j]}.`)}
-    else if(i===2){const m=await pickMember(root,box,'Reshape whose weapon?');if(!m)return;root.style.visibility='hidden';await forgeDesign(m,{heading:'Reshape'});root.style.visibility=''}}});
+    else if(i===2){const m=hero();root.style.visibility='hidden';await forgeDesign(m,{heading:'Reshape'});root.style.visibility=''}}});
   root.remove()}
 /* the tailor: rare pieces for sale, and a mirror */
 async function tailorMenu(zone){const root=screenRoot();const upd=goldBar(root);const head=winEl('plain',{x:4,y:4,w:W-100,h:18},root);head.innerHTML=`<span class="gold">${esc(ZONES[zone].n)} Tailor</span>`;
@@ -2458,7 +2545,7 @@ async function tailorMenu(zone){const root=screenRoot();const upd=goldBar(root);
       await new Promise(res=>{lw=new ListWin({el:winEl('pop',{x:108,y:26,w:W-112,h:120},root),title:'Rare pieces',rows:rows(),vis:8,empty:'Nothing today.',
         render:r=>{desc.innerHTML=r?`<span class="small">A ${CATN[r.c].toLowerCase()} piece. Once bought, everyone in the party can wear it.</span>`:''},
         pick:r=>{if(r.own||G.gold<r.p){SND.fx('no');return}G.gold-=r.p;G.owned[r.c+':'+r.n]=1;SND.fx('buy');upd();lw.set(rows());toast(`${esc(r.n)} added to the wardrobe!`)},back:()=>{popModal(lw);desc.remove();res()}});pushModal(lw)})}
-    else{const m=await pickMember(root,{x:108,y:26,w:W-112,h:150},'Who changes?');if(m){root.style.visibility='hidden';await wardrobe(m);root.style.visibility=''}}}});
+    else{root.style.visibility='hidden';await wardrobe(hero());root.style.visibility=''}}});
   root.remove()}
 
 /* ================= the title, making your hero, the prologue and the ending; saves; the console ================= */
@@ -2468,6 +2555,8 @@ function autosave(){if(!G||!WD.zone)return;G.x=WD.x;G.zone=WD.zone;G.dir=WD.dir;
 /* fill in anything an older save is missing */
 function migrate(d){const g=Object.assign({v:1,party:[],gold:0,inv:{},charms:{},owned:{},flags:{},opened:{},zone:'emberwick',x:96,dir:1,time:0,steps:0,battles:0},d);
   g.party=g.party.map(m=>{const base=makeMember(m.id||'hero',m.lv||1,m.look,m.weapon,m.name);return Object.assign(base,m,{look:Object.assign({},DEFAULT_LOOK,m.look||{}),weapon:Object.assign(base.weapon,m.weapon||{},{parts:Object.assign({},base.weapon.parts,(m.weapon||{}).parts||{})})})});
+  const fixM=m=>{const base=makeMember(m.id||'hero',m.lv||1,m.look,m.weapon,m.name);return Object.assign(base,m,{look:Object.assign({},DEFAULT_LOOK,m.look||{}),weapon:Object.assign(base.weapon,m.weapon||{},{parts:Object.assign({},base.weapon.parts,(m.weapon||{}).parts||{})})})};
+  g.roster=(g.roster||[]).filter(m=>CHARS[m.id]).map(fixM);g.gems=g.gems|0;g.pity=g.pity|0;while(g.party.length>3)g.roster.push(g.party.pop());
   if(!g.party.length)g.party=[makeMember('hero',1,DEFAULT_LOOK,null,'Ren')];if(!ZONES[g.zone]){g.zone='emberwick';g.x=96}delete g.zoneName;delete g.savedAt;return g}
 async function loadGame(data){clearUI();const d=data||await readBest();if(!d){toTitle();return}G=migrate(d);setScene(WORLD_SCENE);enterZone(G.zone,G.x,G.dir);await fadeIn(200)}
 function clearUI(){while(MODAL.length)popModal(MODAL[MODAL.length-1]);TEXT_HOOK=null;for(const c of[...UI.children])if(c.id!=='fader')c.remove();WD.busy=false}
