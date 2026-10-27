@@ -705,7 +705,7 @@ const WTYPES={
   stat:{atk:12,mag:1,def:0,spd:3},col:{c1:'Platinum',c2:'Brass',c3:'Navy',c4:'Crimson',glow:'Sakura',gemC:'Crimson'},
   blurb:'A keen edge. Arts aim for criticals and cut deep.'},
  dual:{n:'Dual Katana',hold:'dual',parts:{Blade:['Uchigatana','Tachi','Wakizashi','Serpent'],Tsuba:['Round','Square','Flower','Lotus','Cloud','Crescent'],Hamon:['Wave','Straight','Flame','None'],Wrap:['Diamond','Plain','Spiral'],Charm:['Tassel','None','Bell','Ribbon']},
-  stat:{atk:9,mag:1,def:-1,spd:5},col:{c1:'Platinum',c5:'Charcoal',c2:'Brass',c3:'Charcoal',c4:'Violet',glow:'Violet',gemC:'Violet'},
+  stat:{atk:9,mag:1,def:-1,spd:5},col:{c1:'Platinum',c5:'Platinum',c2:'Brass',c3:'Charcoal',c4:'Violet',glow:'Violet',gemC:'Violet'},
   blurb:'Two blades, many hits. Arts strike again and again.'},
  greataxe:{n:'Great Axe',hold:'two',parts:{Head:['Crescent','Double','Bearded','Halberd','Moon','Saw'],Haft:['Wood','Iron','Bone','Twisted'],Top:['Spike','None','Blade','Gem'],Wrap:['Plain','Leather','Spiral'],Charm:['None','Tassel','Chain','Fur']},
   stat:{atk:17,mag:0,def:1,spd:-2},col:{c1:'Steel',c2:'Bronze',c3:'Brown',c4:'Crimson',glow:'Red',gemC:'Crimson'},
@@ -975,9 +975,12 @@ const WDRAW={
   return{buf:b,gx:x0+W/2+1*k,gy:y0+H-2*k}},
 };
 WDRAW.dual=(w,k)=>WDRAW.katana(w,k);
+/* both katanas together, hilts close and blades spread in a V: how a Dual Katana is shown on its own */
+function pairKatana(w,k){const a=WDRAW.katana(w,k),l=WDRAW.katana(w,k,true),W=Math.ceil(a.buf.w*3.6),B=new Buf(W,a.buf.h+4),cx=W/2,ty=a.gy+2;
+  B.blitRot(l.buf,l.gx,l.gy,-.5,cx-2*k,ty);B.blitRot(a.buf,a.gx,a.gy,.5,cx+2*k,ty);return{buf:B,gx:cx,gy:ty}}
 const _wcache=new Map();
 function weaponBuf(w,k=1,variant=0){const key=JSON.stringify([w.kind,w.parts,w.c1,w.c2,w.c3,w.c4,w.c5,w.gemC,w.engr,w.elem,k,variant]);let r=_wcache.get(key);
-  if(!r){r=w.kind==='dual'&&variant==='left'?WDRAW.katana(w,k,true):w.kind==='bow'?WDRAW.bow(w,k,variant==='drawn'?1:0):w.kind==='grimoire'?WDRAW.grimoire(w,k,variant==='open'?1:0):WDRAW[w.kind](w,k);
+  if(!r){r=w.kind==='dual'&&variant==='pair'?pairKatana(w,k):w.kind==='dual'&&variant==='left'?WDRAW.katana(w,k,true):w.kind==='bow'?WDRAW.bow(w,k,variant==='drawn'?1:0):w.kind==='grimoire'?WDRAW.grimoire(w,k,variant==='open'?1:0):WDRAW[w.kind](w,k);
     if(variant!=='raw'){r.buf.softline()}if(_wcache.size>400)_wcache.clear();_wcache.set(key,r)}return r}
 
 /* ---------- how each kind is held, pose by pose ----------
@@ -987,7 +990,7 @@ const HOLDS={
   strike:{na:[1.55,.05],fa:[-.4,-.4],w:1.85,wl:'front',lean:2},win:{na:[-2.95,.05],fa:[.2,-.6],w:-.05,wl:'front'},guard:{na:[1.05,-1.9],fa:[.6,-1.6],w:.08,wl:'front',crouch:1},cast:{na:[1.1,-1.4],fa:[.6,-1.2],w:.4,wl:'front'}},
  two:{idle:{na:[.55,-2.05],fa:[.7,-1.9],w:-.75,wl:'back'},ready:{na:[.85,-1.45],fa:[.95,-1.2],w:.5,wl:'front',lean:1},wind:{na:[-2.5,.4],fa:[-2.3,.2],w:-2.25,wl:'back',lean:-1},
   strike:{na:[1.35,.25],fa:[1.25,.35],w:2.05,wl:'front',lean:2,crouch:1},win:{na:[-2.95,.05],fa:[-2.8,.1],w:-.02,wl:'front'},guard:{na:[1,-1.7],fa:[1.1,-1.5],w:.1,wl:'front',crouch:1},cast:{na:[.85,-1.45],fa:[.95,-1.2],w:.5,wl:'front'}},
- dual:{idle:{na:[.2,-1.1],fa:[.25,-1],w:.8,w2:.55,wl:'front'},ready:{na:[.8,-1.6],fa:[.6,-1.8],w:.25,w2:-.45,wl:'front',lean:1},wind:{na:[-2.2,.3],fa:[-1.6,.1],w:-1.95,w2:-1.5,wl:'back',lean:-1},
+ dual:{idle:{na:[.2,-1.1],fa:[.25,-1],w:.7,w2:-.5,wl:'front'},ready:{na:[.8,-1.6],fa:[.6,-1.8],w:.25,w2:-.45,wl:'front',lean:1},wind:{na:[-2.2,.3],fa:[-1.6,.1],w:-1.95,w2:-1.5,wl:'back',lean:-1},
   strike:{na:[1.55,.1],fa:[1.2,.4],w:1.9,w2:2.3,wl:'front',lean:2},win:{na:[-2.9,.05],fa:[-2.5,.2],w:-.05,w2:-.4,wl:'front'},guard:{na:[1,-1.9],fa:[.9,-2],w:.2,w2:-.3,wl:'front',crouch:1},cast:{na:[.8,-1.6],fa:[.6,-1.8],w:.25,w2:-.45,wl:'front'}},
  bow:{idle:{na:[.15,-.35],fa:[-.1,-.3],w:.15,wl:'front',hand:'n'},ready:{na:[1.15,-2.3],fa:[1.5,0],w:0,wl:'mid',hand:'f',drawn:1},wind:{na:[1.0,-2.6],fa:[1.55,0],w:0,wl:'mid',hand:'f',drawn:1,lean:-1},
   strike:{na:[1.3,-1.6],fa:[1.55,0],w:0,wl:'mid',hand:'f'},win:{na:[-2.9,.05],fa:[.1,-.4],w:-.1,wl:'front',hand:'n'},guard:{na:[.9,-1.8],fa:[1.2,-.6],w:.3,wl:'mid',hand:'f',crouch:1},cast:{na:[1.15,-2.3],fa:[1.5,0],w:0,wl:'mid',hand:'f',drawn:1}},
@@ -1056,7 +1059,16 @@ mkChar('vex','Vex','dps',4,{skin:'Fair',eyes:'Cat',eyeC:'Violet',brows:'Angled',
 mkChar('juno','Juno','dps',4,{skin:'Peach',eyes:'Fierce',eyeC:'Amber',brows:'Angled',mouth:'Grin',hair:'Ponytail',hairC:'Ginger',hat:'Headband',hatC1:'Red',top:'Tank Top',topC1:'Crimson',topC2:'White',bot:'Shorts',botC1:'Charcoal',shoes:'Sneakers',shoeC:'Crimson'},{kind:'fists',name:'Sunbreakers',c1:'Steel',c2:'Gold'});
 mkChar('taro','Taro','dps',5,{skin:'Tan',eyes:'Sharp',eyeC:'Brown',brows:'Angled',mouth:'Calm',hair:'Top Knot',hairC:'Black',top:'Samurai Armor',topC1:'Crimson',topC2:'Charcoal',bot:'Hakama',botC1:'Charcoal',shoes:'Geta',shoeC:'Chocolate',back:'Long Scarf',backC1:'Crimson'},{kind:'katana',name:'Moonpetal',c1:'Platinum',c2:'Brass'});
 mkChar('cass','Cass','dps',4,{skin:'Ebony',eyes:'Star',eyeC:'Gold',brows:'Soft',mouth:'Grin',hair:'Afro',hairC:'Black',hat:'Witch Hat',hatC1:'Purple',hatC2:'Gold',top:'Mage Robe',topC1:'Purple',topC2:'Gold',bot:'Long Skirt',botC1:'Plum',shoes:'Boots',shoeC:'Brown'},{kind:'grimoire',name:'Night Tome',c1:'Navy',c2:'Silver',parts:{Symbol:'Moon'}});
-const WISH_IDS=['ferro','hildr','gorm','lumi','sana','olive','vex','juno','taro','cass'];
+mkChar('tilda','Tilda','tank',4,{skin:'Honey',eyes:'Round',eyeC:'Brown',brows:'Thick',mouth:'Smile',hair:'Ponytail',hairC:'Copper',hat:'Knight Helm',hatC1:'Silver',top:'Breastplate',topC1:'Silver',topC2:'Teal',bot:'Greaves',botC1:'Silver',shoes:'Knight Greaves',shoeC:'Silver',back:'Shield',backC1:'Teal',backC2:'Gold'},{kind:'warhammer',name:'Clocktower',c1:'Slate',c2:'Brass'});
+mkChar('orrin','Orrin','tank',4,{skin:'Peach',eyes:'Sleepy',eyeC:'Azure',brows:'Soft',mouth:'Calm',hair:'Short Crop',hairC:'Ash',hat:'None',top:'Full Plate',topC1:'Slate',topC2:'Royal',bot:'Greaves',botC1:'Slate',shoes:'Sabatons',shoeC:'Slate',back:'Royal Cape',backC1:'Royal',backC2:'Gold',face:'Mustache',faceC:'Ash'},{kind:'greatsword',name:'Quiet Bastion',c1:'Slate',c2:'Gold'});
+mkChar('mei','Mei','healer',4,{skin:'Peach',eyes:'Happy',eyeC:'Brown',brows:'Soft',mouth:'Grin',hair:'Twin Buns',hairC:'Black',hat:'Ribbon Bow',hatC1:'Pink',top:'Dress',topC1:'Sky',topC2:'White',bot:'Pleated Skirt',botC1:'Navy',shoes:'Loafers',shoeC:'Chocolate'},{kind:'staff',name:'Teahouse Cane',c1:'Brown',c2:'Gold'});
+mkChar('bel','Bel','healer',5,{skin:'Porcelain',eyes:'Sparkle',eyeC:'Lavender',brows:'Soft',mouth:'Smile',hair:'Very Long',hairC:'Platinum',hat:'Tiara',hatC1:'Silver',top:'Ball Gown',topC1:'Lilac',topC2:'Silver',bot:'Long Skirt',botC1:'Lilac',shoes:'Winged Boots',shoeC:'White',back:'Angel Wings',backC1:'White'},{kind:'staff',name:'Moonwell',c1:'Silver',c2:'Gold'});
+mkChar('thea','Thea','healer',4,{skin:'Umber',eyes:'Sleepy',eyeC:'Forest',brows:'Soft',mouth:'Calm',hair:'Bun',hairC:'Silver',hat:'Hood',hatC1:'Forest',top:'Tunic',topC1:'Forest',topC2:'Cream',bot:'Pants',botC1:'Brown',shoes:'Boots',shoeC:'Brown',back:'Backpack',backC1:'Tan',face:'Round Glasses',faceC:'Gold'},{kind:'staff',name:'Herbalist Branch',c1:'Brown',c2:'Forest'});
+mkChar('dax','Dax','dps',4,{skin:'Tan',eyes:'Sharp',eyeC:'Brown',brows:'Angled',mouth:'Smirk',hair:'Messy',hairC:'Brown',hat:'Cowboy Hat',hatC1:'Leather',top:'Vest',topC1:'Brown',topC2:'Tan',bot:'Jeans',botC1:'Azure',shoes:'Cowboy Boots',shoeC:'Leather',face:'Stubble',faceC:'Brown'},{kind:'bow',name:'Dustwind',c1:'Leather',c4:'Forest'});
+mkChar('rue','Rue','dps',5,{skin:'Fair',eyes:'Fierce',eyeC:'Red',brows:'Angled',mouth:'Fang',hair:'Wolf Cut',hairC:'Black',top:'Kimono',topC1:'Crimson',topC2:'Black',bot:'Hakama',botC1:'Black',shoes:'Geta',shoeC:'Charcoal',face:'Domino Mask',faceC:'Crimson'},{kind:'dual',name:'Crimson Twins',c1:'Steel',c5:'Steel',c4:'Crimson',glow:'Red',gemC:'Crimson'});
+mkChar('zed','Zed','dps',4,{skin:'Bronze',eyes:'Wide',eyeC:'Azure',brows:'Thick',mouth:'Grin',hair:'Tall Spikes',hairC:'Azure',top:'Leather Jacket',topC1:'Black',topC2:'Silver',bot:'Cargo Pants',botC1:'Olive',shoes:'Boots',shoeC:'Black',back:'Short Cape',backC1:'Azure'},{kind:'sword',name:'Stormcaller',c1:'Steel',c2:'Azure'});
+mkChar('brisa','Brisa','dps',4,{skin:'Honey',eyes:'Fierce',eyeC:'Amber',brows:'Thick',mouth:'Grin',hair:'Wild Mane',hairC:'Ginger',top:'Tank Top',topC1:'Rust',topC2:'White',bot:'Shorts',botC1:'Brown',shoes:'Sandals',shoeC:'Tan',face:'War Paint',faceC:'Red'},{kind:'greataxe',name:'Cinderfang',c1:'Steel',c2:'Rust'});
+const WISH_IDS=['ferro','hildr','gorm','tilda','orrin','lumi','sana','olive','mei','bel','thea','vex','juno','taro','cass','dax','rue','zed','brisa'];
 const WISH={cost:100,pity:30,rate5:.06,dupe:50};
 /* pairs that fight better side by side: a tank with a healer, a healer with a damage dealer, a tank with a damage dealer */
 const SYN=[
@@ -1073,7 +1085,21 @@ const SYN=[
  {n:'Petal Guard',ids:['hildr','taro'],b:{hildr:{def:.12},taro:{atk:.14}}},
  {n:'Cinder Bulwark',ids:['gorm','cass'],b:{gorm:{hp:.12},cass:{mag:.12}}},
  {n:"Hunter's Rest",ids:['ferro','kit'],b:{ferro:{hp:.1},kit:{atk:.12}}},
- {n:'Grove Song',ids:['lumi','kit'],b:{lumi:{spd:.1},kit:{atk:.1}}}];
+ {n:'Grove Song',ids:['lumi','kit'],b:{lumi:{spd:.1},kit:{atk:.1}}},
+ {n:'Clockwork Guard',ids:['tilda','mei'],b:{tilda:{def:.14},mei:{mag:.12}}},
+ {n:'Quiet Watch',ids:['orrin','thea'],b:{orrin:{hp:.12},thea:{spd:.1}}},
+ {n:'Frontier Bond',ids:['tilda','dax'],b:{tilda:{hp:.1},dax:{atk:.12}}},
+ {n:'Crimson Vow',ids:['orrin','rue'],b:{orrin:{def:.1},rue:{atk:.14}}},
+ {n:'Starlit Shield',ids:['bel','tilda'],b:{bel:{mag:.14},tilda:{def:.12}}},
+ {n:'Lantern and Edge',ids:['mei','zed'],b:{mei:{spd:.08},zed:{atk:.12}}},
+ {n:'Greenwood Oath',ids:['thea','dax'],b:{thea:{mag:.1},dax:{atk:.12}}},
+ {n:'Moon and Blades',ids:['bel','rue'],b:{bel:{mag:.1},rue:{atk:.16}}},
+ {n:'Hearthfire',ids:['orrin','brisa'],b:{orrin:{def:.1},brisa:{atk:.12}}},
+ {n:'Stormhold',ids:['tilda','zed'],b:{tilda:{hp:.1},zed:{spd:.1}}},
+ {n:'Herb and Hammer',ids:['hildr','thea'],b:{hildr:{def:.1},thea:{mag:.1}}},
+ {n:'Sunlit Duet',ids:['mei','juno'],b:{mei:{mag:.1},juno:{atk:.12}}},
+ {n:'Ashen Pact',ids:['gorm','brisa'],b:{gorm:{hp:.1},brisa:{atk:.1}}},
+ {n:'Twin Fangs',ids:['vex','rue'],b:{vex:{spd:.12},rue:{spd:.12}}}];
 const roleOf=m=>(CHARS[m.id]||CHARS.hero).role||'dps';
 const allMembers=()=>G.party.concat(G.roster||[]);
 const hero=()=>allMembers().find(m=>m.id==='hero')||G.party[0];
@@ -1841,7 +1867,7 @@ const COLOR_LABELS={
  staff:{c1:'Head',c2:'Fittings',c3:'Shaft',c4:'Trim',gemC:'Gem in the middle',glow:'Magic light'},grimoire:{c1:'Cover',c2:'Symbol & metal',c3:'Pages',c4:'Ribbon',gemC:'Gems',glow:'Magic light'}};
 const ENGR_MAX={sword:12,greatsword:12,katana:12,dual:12,greataxe:8,warhammer:8,bow:4,fists:2,staff:12,grimoire:10};
 /* the biggest whole scale a weapon fits the window at */
-function weaponFit(w,maxW,maxH){for(let k=4;k>=1;k--){const r=weaponBuf(w,k,'raw');if(r.buf.w<=maxW&&r.buf.h<=maxH)return k}return 1}
+function weaponFit(w,maxW,maxH){for(let k=4;k>=1;k--){const r=weaponBuf(w,k,w.kind==='dual'?'pair':'raw');if(r.buf.w<=maxW&&r.buf.h<=maxH)return k}return 1}
 function swapKind(w,kind){const n=newWeapon(kind);n.name=(!w.name||w.name===(WTYPES[w.kind]||{}).n)?WTYPES[kind].n:w.name;n.engr=String(w.engr||'').slice(0,ENGR_MAX[kind]);n.elem=w.elem||'None';n.tier=w.tier||0;return n}
 /* mode: 'free' (anywhere: shape, colour, words, kind) or 'creator' */
 function forgeDesign(m,o={}){return new Promise(res=>{let w=JSON.parse(JSON.stringify(m.weapon));const start=JSON.stringify(w);let view=0;
@@ -1850,7 +1876,7 @@ function forgeDesign(m,o={}){return new Promise(res=>{let w=JSON.parse(JSON.stri
   const nm=el('div','small gold');nm.style.cssText=`position:absolute;left:${px(6)};right:${px(4)};top:${px(2)};overflow:hidden;white-space:nowrap`;left.appendChild(nm);
   const info=el('div','tiny');info.style.cssText=`position:absolute;left:${px(6)};right:${px(4)};bottom:${px(3)}`;left.appendChild(info);
   const paint=()=>{pg.clearRect(0,0,112,124);
-    if(view===0){const k=weaponFit(w,108,120),r=weaponBuf(w,k),c=r.buf.canvas(1);pg.drawImage(c,Math.round(56-c.width/2),Math.round(62-c.height/2))}
+    if(view===0){const k=weaponFit(w,108,120),r=weaponBuf(w,k,w.kind==='dual'?'pair':0),c=r.buf.canvas(1);pg.drawImage(c,Math.round(56-c.width/2),Math.round(62-c.height/2))}
     else paintDoll(pg,m.look,w,['ready','strike','cast','win'][view-1],[30,12,56,62],2);
     const s=weaponStats(w),T=WTYPES[w.kind];nm.textContent=w.name||T.n;
     info.innerHTML=`<span class="dim">${T.n} · ${TIERS[w.tier||0]}${w.elem&&w.elem!=='None'?` · <span style="color:${ELEMS[w.elem].c}">${w.elem}</span>`:''}</span><br>ATK ${s.atk} MAG ${s.mag} DEF ${s.def} SPD ${s.spd>=0?'+':''}${s.spd}<br><i class="k">SELECT</i>view`};
@@ -2444,11 +2470,11 @@ function wishPull(){G.pity=(G.pity||0)+1;const five=G.pity>=WISH.pity||rnd()<WIS
   const ids=WISH_IDS.filter(id=>CHARS[id].rar===(five?5:4)),id=ids[Math.floor(rnd()*ids.length)],had=owned(id);
   if(had)G.gems+=WISH.dupe;else join(id);return{id,five,had}}
 async function wishMenu(){
-  const root=screenRoot(),info=winEl('plain',{x:4,y:4,w:W-8,h:24},root),side=winEl('plain',{x:W-124,y:32,w:120,h:144},root);
+  const root=screenRoot(),info=winEl('plain',{x:4,y:4,w:W-8,h:24},root),side=winEl('plain',{x:W-168,y:32,w:164,h:144},root);
   const draw=()=>{info.innerHTML=`<span class="blue">◆ ${fmt(G.gems||0)}</span> <span class="dim">gems</span> · <span class="gold">${wishes()}</span> <span class="dim">wish${wishes()===1?'':'es'}</span> · <span class="dim">5★ guaranteed in</span> ${Math.max(1,WISH.pity-(G.pity||0))}`;
-    side.innerHTML=WISH_IDS.map(id=>{const C=CHARS[id],R=ROLES[C.role];return`<div class="tiny" style="color:${owned(id)?'#fff':'#7a82a8'}">${C.rar===5?'<span class="gold">★5</span>':'<span class="blue">★4</span>'} ${esc(C.n)} <span style="color:${R.c}">${R.s}</span>${owned(id)?' ✓':''}</div>`}).join('')};draw();
-  const one=winEl('plain',{x:4,y:32,w:W-132,h:60},root);one.innerHTML='<div class="small dim">Defeat enemies to earn gems. Every 100 gems is one wish. A repeat character turns into 50 gems.</div>';
-  await menuLoop({el:winEl('',{x:4,y:96,w:W-132,h:80},root),rows:[{label:'Wish ×1'},{label:'Wish ×10'},{label:'Back'}],vis:3,act:async(row,i)=>{if(i===2)return 'close';
+    side.innerHTML='<div style="column-count:2;column-gap:4px">'+WISH_IDS.map(id=>{const C=CHARS[id],R=ROLES[C.role];return`<div class="tiny" style="break-inside:avoid;color:${owned(id)?'#fff':'#7a82a8'}">${C.rar===5?'<span class="gold">★5</span>':'<span class="blue">★4</span>'} ${esc(C.n)} <span style="color:${R.c}">${R.s}</span>${owned(id)?'✓':''}</div>`}).join('')+'</div>'};draw();
+  const one=winEl('plain',{x:4,y:32,w:W-176,h:60},root);one.innerHTML='<div class="tiny dim">Defeat enemies for gems. Every 100 gems is a wish. A repeat turns into 50 gems.</div>';
+  await menuLoop({el:winEl('',{x:4,y:96,w:W-176,h:80},root),rows:[{label:'Wish ×1'},{label:'Wish ×10'},{label:'Back'}],vis:3,act:async(row,i)=>{if(i===2)return 'close';
     const n=i?10:1;if(wishes()<n){SND.fx('no');await say('',`You need ${n*WISH.cost} gems for that.`);return}
     G.gems-=n*WISH.cost;const res=[];for(let k=0;k<n;k++)res.push(wishPull());draw();
     const fresh=res.filter(r=>!r.had),dupes=res.length-fresh.length,box=winEl('pop results',{x:Math.round(W/2-120),y:8,w:240},root);
