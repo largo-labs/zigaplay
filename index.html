@@ -362,6 +362,50 @@ html.wide .console.widegame .grille{display:none}
 .fx-drownedmoon svg rect{fill:#ffc46a}
 .fx-drownedmoon b{bottom:20px;width:3px;height:3px;border-radius:50%;background:#ffb050;box-shadow:0 0 6px 2px rgba(255,110,30,.75);opacity:0;animation:zember 7s linear infinite}
 
+/* Drone Strike: army-olive body with amber trim, a radar sweep and little quadcopters drifting across the screen */
+.console[data-shell=dronestrike]{--b1:#66794a;--b2:#4d5e36;--b3:#34411f;--edge:#141c0a;--print:#f4e8b4;--print2:#ffd070;
+  --ab1:#ffe28a;--ab2:#ffb627;--ab3:#b8780a;--abedge:#4a2e02;--abshadow:#2a1a02;--groove1:#2c3a1a;--groove2:#3c4c26;
+  --pill1:#7a8a5a;--pill2:#505e38;--pilledge:#161e0a;--grille:#2c3a1a;--bez1:#1a2210;--bez2:#0e140a;--bezink:#ffb627;--st1:#ffb627;--st2:#9be06a;
+  --dp1:#3e4a2c;--dp2:#262e1a;--dpa:#9aaa74;--dpa2:#ffb627;--dpsh:#10160a;--kn1:#7a8a5a;--kn2:#505e38;--kn3:#323d22;
+  --lcd0:#0e2410;--lcd1:#2c6a2a;--lcd2:#8cc860;--lcd3:#c8f0a0;
+  background:repeating-linear-gradient(45deg,rgba(0,0,0,.05) 0 6px,rgba(255,255,255,0) 6px 12px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
+.console[data-shell=dronestrike] .bezel .stripes{height:6px;background:repeating-linear-gradient(135deg,#ffb627 0 6px,#141c0a 6px 12px)}
+.fx-dronestrike .rad{left:50%;top:84%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(140,255,110,0) 0deg,rgba(140,255,110,.22) 60deg,rgba(140,255,110,0) 62deg);animation:zspin 6s linear infinite}
+.fx-dronestrike .ring{left:50%;top:84%;border-radius:50%;border:1px solid rgba(140,255,110,.2)}
+.fx-dronestrike .r1{width:120px;height:120px;margin:-60px 0 0 -60px}.fx-dronestrike .r2{width:220px;height:220px;margin:-110px 0 0 -110px}
+.fx-dronestrike .dr{width:34px;height:20px;opacity:.5;animation:zdrone 22s linear infinite}
+.fx-dronestrike .dr path{fill:none;stroke:#0c1406;stroke-width:3;stroke-linecap:round}.fx-dronestrike .dr circle{fill:#ffb627}
+@keyframes zdrone{0%{transform:translate(-60px,0)}25%{transform:translate(120px,-14px)}50%{transform:translate(260px,6px)}75%{transform:translate(380px,-10px)}100%{transform:translate(520px,0)}}
+.fx-dronestrike .blip{width:5px;height:5px;border-radius:50%;background:#ffb627;box-shadow:0 0 7px 2px rgba(255,182,39,.8);animation:ztwk 2.6s ease-in-out infinite}
+
+/* Pitchfork Rising: barn-red planks with straw-gold trim, crossed pitchforks and torch sparks rising */
+.console[data-shell=pitchfork]{--b1:#b8502e;--b2:#933a22;--b3:#6c2814;--edge:#240a04;--print:#ffeab4;--print2:#ffd05a;
+  --ab1:#ffe48a;--ab2:#f0b830;--ab3:#a87208;--abedge:#4a2c02;--abshadow:#2e1a02;--groove1:#5a200e;--groove2:#722c16;
+  --pill1:#c8a468;--pill2:#8a6a36;--pilledge:#3a2606;--grille:#5a200e;--bez1:#2e1c10;--bez2:#1a0e08;--bezink:#ffd05a;--st1:#ffd05a;--st2:#e8482a;
+  --dp1:#5a3a24;--dp2:#36200e;--dpa:#b89468;--dpa2:#ffd05a;--dpsh:#1e0a04;--kn1:#9a7a50;--kn2:#6a4e2c;--kn3:#42301a;
+  --lcd0:#3a1a08;--lcd1:#8a5020;--lcd2:#e0b060;--lcd3:#ffe4a0;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.09) 0 2px,rgba(255,255,255,0) 2px 34px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
+.fx-pitchfork .glow{left:-20%;right:-20%;bottom:-70px;height:170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,150,40,.42),rgba(255,150,40,0));animation:zpulse 3s ease-in-out infinite}
+.fx-pitchfork .pf{bottom:26px;width:52px;height:150px;opacity:.34;transform-origin:50% 100%}
+.fx-pitchfork .pf path{fill:none;stroke:#2a0e04;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.fx-pitchfork .p1{left:calc(50% - 62px);animation:zsway 7s ease-in-out infinite}.fx-pitchfork .p2{left:calc(50% + 10px);animation:zsway2 7s ease-in-out infinite}
+@keyframes zsway{0%,100%{transform:rotate(-17deg)}50%{transform:rotate(-12deg)}}
+@keyframes zsway2{0%,100%{transform:rotate(17deg)}50%{transform:rotate(12deg)}}
+.fx-pitchfork b{bottom:18px;width:3px;height:3px;border-radius:50%;background:#ffd05a;box-shadow:0 0 6px 2px rgba(255,150,30,.8);opacity:0;animation:zember 6s linear infinite}
+
+/* Spellsteel: cool steel-blue with gold trim and violet spell buttons, five Embers aglow and a glint of steel */
+.console[data-shell=spellsteel]{--b1:#6482b4;--b2:#46649a;--b3:#2e4572;--edge:#0c1a34;--print:#fff0c0;--print2:#ffd86a;
+  --ab1:#f0c4ff;--ab2:#a850e4;--ab3:#5e1c98;--abedge:#2a0a4a;--abshadow:#1c0630;--groove1:#2a4070;--groove2:#385688;
+  --pill1:#d0b868;--pill2:#9a8038;--pilledge:#3e3010;--grille:#2a4070;--bez1:#161e3c;--bez2:#0a0f24;--bezink:#ffd86a;--st1:#ffd86a;--st2:#c07aff;
+  --dp1:#3a4a7a;--dp2:#222c52;--dpa:#9aaad8;--dpa2:#ffd86a;--dpsh:#0a1226;--kn1:#8a9ad0;--kn2:#5a6aa4;--kn3:#38457a;
+  --lcd0:#101a4a;--lcd1:#3a52b0;--lcd2:#9ab0f0;--lcd3:#d0dcff;
+  background:linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);box-shadow:inset 0 0 0 3px #e2c068,inset 0 0 0 5px #6a5018,inset 0 3px 0 4px rgba(255,255,255,.12),0 16px 34px rgba(0,0,0,.6)}
+.fx-spellsteel .em{bottom:54px;width:22px;height:22px;border-radius:50%;margin-left:-11px;background:radial-gradient(circle at 38% 34%,#fff6c8,var(--c) 45%,rgba(0,0,0,0) 72%);box-shadow:0 0 16px 6px var(--c);animation:zbob 4s ease-in-out infinite}
+@keyframes zbob{0%,100%{transform:translateY(0);opacity:.7}50%{transform:translateY(-10px);opacity:1}}
+.fx-spellsteel .spk{width:var(--s);height:var(--s);background:#ffe9a0;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:ztwk 2.8s ease-in-out infinite}
+.fx-spellsteel .gloss{top:-30%;bottom:-30%;left:0;width:34%;will-change:transform;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.22) 50%,rgba(255,255,255,0));animation:zsweep 8s ease-in-out infinite 2s}
+
 /* the home screen's EDIT mode and the library */
 .lcd-top .tr{display:flex;align-items:center;gap:8px}
 .editbtn{font-family:var(--pix);font-size:12px;letter-spacing:.1em;line-height:1.25;padding:1px 7px 0;border:2px solid var(--lcd0);border-radius:4px;background:transparent;color:var(--lcd0);cursor:pointer}
@@ -533,12 +577,15 @@ const CARTS=[
   {id:'drownedmoon',title:'Strike at Night',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',
    lib:true,blurb:'Lift was a tech worker in 2026, until a car. Now he\'s a farm boy in a world of swords, framed for his parents\' murder, with a price on his head. Beat strong foes to take their power. Chapters 1 and 2.',
    note:'A talk · B back · START menu'},
-  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',lib:true,
+  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',skin:'dronestrike',lib:true,
    blurb:'A giant neighbor has invaded. Command your country\'s drone unit: research, build and choose what flies against five enemy generals.',
    note:'D-pad choose · ◀ ▶ amounts · A confirm · B back'},
-  {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',stick:true,wide:true,lib:true,
+  {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',skin:'pitchfork',stick:true,wide:true,lib:true,
    blurb:'Lead a peasant revolt from the village barn to the king\'s throne: arm your folk, set traps, and fight on the field yourself.',
    note:'A strike · B roll · SELECT orders · START pause'},
+  {id:'spellsteel',title:'Spellsteel',file:'games/spellsteel/index.html',art:'games/spellsteel/cart.png',label:'#1a2470',ink:'#ffd86a',skin:'spellsteel',wide:true,
+   blurb:'Win back five stolen Embers in an active-time RPG. Dress up from 200+ pieces; forge 10 weapon kinds part by part.',
+   note:'A choose · B back (hold to run) · START menu · SELECT pose'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -548,6 +595,9 @@ const SKINS=[
   {id:'chipcity',name:'Chip City',tag:'GAME',ed:'CHIP CITY EDITION',sw:['#1a6c3e','#d8262e']},
   {id:'gearfist',name:'Gearfist',tag:'GAME',ed:'GEARFIST EDITION',sw:['#b25522','#56565f']},
   {id:'drownedmoon',name:'Strike at Night',tag:'GAME',ed:'STRIKE AT NIGHT EDITION',sw:['#141a3a','#d8342a']},
+  {id:'dronestrike',name:'Drone Strike',tag:'GAME',ed:'DRONE STRIKE EDITION',sw:['#4d5e36','#ffb627']},
+  {id:'pitchfork',name:'Pitchfork Rising',tag:'GAME',ed:'PITCHFORK RISING EDITION',sw:['#933a22','#f0b830']},
+  {id:'spellsteel',name:'Spellsteel',tag:'GAME',ed:'SPELLSTEEL EDITION',sw:['#46649a','#a850e4']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
   {id:'lava',name:'Lava',tag:'LIVE',sw:['#271c1a','#ff7a1a']},
@@ -584,6 +634,14 @@ const SKINFX={
   gearfist:()=>gearSvg('g1',12)+gearSvg('g2',9)+gearSvg('g3',8)+'<i class="haz"></i>'+[['8px','8px'],['calc(100% - 16px)','8px'],['8px','calc(100% - 24px)']].map(([x,y])=>`<i class="rv" style="left:${x};top:${y}"></i>`).join(''),
   drownedmoon:()=>{const r=prng(31);let h='<i class="glow"></i><i class="moon"></i><svg viewBox="0 0 200 46" preserveAspectRatio="none"><path d="M0 46 V30 H10 L18 22 L26 30 H34 V26 H40 L48 16 L56 26 H62 V32 H72 L80 20 L88 32 H98 V28 H106 L116 14 L126 28 H134 V31 H142 L150 21 L158 31 H166 V27 H172 L182 17 L192 27 H200 V46 Z"/><rect x="45" y="30" width="3" height="3"/><rect x="113" y="28" width="3" height="3"/><rect x="178" y="31" width="3" height="3"/><rect x="77" y="34" width="3" height="3"/></svg>';
     for(let i=0;i<9;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(5+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+  dronestrike:()=>{const r=prng(41),dr=(t,d)=>`<svg class="dr" style="top:${t}%;animation-delay:${d}s" viewBox="0 0 34 20"><path d="M7 11 H27 M17 11 V6 M4 5 H10 M24 5 H30"/><circle cx="17" cy="12" r="3"/></svg>`;
+    let h='<i class="rad"></i><i class="ring r1"></i><i class="ring r2"></i>'+dr(76,-3)+dr(88,-12)+dr(93,-18);
+    for(let i=0;i<6;i++)h+=`<i class="blip" style="left:${pct(8+r()*84)};top:${pct(10+r()*70)};animation-delay:${sec(-r()*3)}"></i>`;return h},
+  pitchfork:()=>{const r=prng(53),f=c=>`<svg class="pf PFC" viewBox="0 0 52 150"><path d="M26 148 V50 M8 8 V34 Q8 50 26 50 Q44 50 44 34 V8 M26 50 V6"/></svg>`.replace('PFC',c);let h='<i class="glow"></i>'+f('p1')+f('p2');
+    for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+  spellsteel:()=>{const r=prng(67),C=['#ff5a3a','#ffb030','#6ae0ff','#9aff7a','#c88aff'];let h='<i class="gloss"></i>';
+    C.forEach((c,i)=>h+=`<i class="em" style="left:${10+i*20}%;--c:${c};animation-delay:${sec(-i*.8)}"></i>`);
+    for(let i=0;i<10;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(6+r()*8).toFixed(0)}px;animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
 };
 const DEFKEYS={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',a:'z',b:'x',c:'c',d:'v',start:'Enter',select:'Shift'};
 const KEYINFO={ArrowUp:['ArrowUp',38],ArrowDown:['ArrowDown',40],ArrowLeft:['ArrowLeft',37],ArrowRight:['ArrowRight',39],Enter:['Enter',13],Shift:['ShiftLeft',16],' ':['Space',32],Escape:['Escape',27],Backspace:['Backspace',8],Tab:['Tab',9]};
@@ -702,7 +760,8 @@ function libInput(b){if(!libUI)return;const n=libCarts().length;
   else if(b==='b'){if(libUI.edit)setLibEdit(false);else closeLib()}}
 /* the console's shape: upright, or sideways (see the CSS); a wide game turns it sideways */
 function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide);
-  const turned=wideGame&&!land,wide=turned||(land&&(H<=600||wideGame));
+  /* on a PC (mouse and keyboard) the console never turns itself a quarter turn: a window is not a phone you can rotate */
+  const pc=matchMedia('(hover:hover) and (pointer:fine)').matches,turned=wideGame&&!land&&!pc,wide=turned||(wideGame&&pc)||(land&&(H<=600||wideGame));
   de.classList.toggle('wide',wide);de.classList.toggle('turned',turned);
   /* the console's own width and height (a turned console is the screen's height wide), and how big its controls can be:
      the columns must hold the D-pad (or stick) and A and B */
@@ -970,5 +1029,5 @@ setTimeout(skinFromAccount,400);
 window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},lib:{open:openLib,close:closeLib,edit:setEditing,libEdit:setLibEdit,home:()=>homeCarts().map(c=>c.id),inLib:()=>libCarts().map(c=>c.id),get sel(){return sel},get libSel(){return libUI&&libUI.i}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
 })();
 </script>
-</body>
-</html>
+
+</body></html>
