@@ -141,6 +141,13 @@ html.touch:not(.zp) #touch{display:block}
 .prol{position:absolute;left:12%;right:12%;top:52%;text-align:center;font-size:calc(var(--u)*8);line-height:1.45;color:#e8eeff;text-shadow:0 calc(var(--u)*.8) 0 #000}
 .credit{position:absolute;left:8%;right:8%;top:24%;text-align:center;text-shadow:0 calc(var(--u)*1) 0 #000,0 0 calc(var(--u)*6) rgba(0,0,0,.6)}
 .credit>div+div{margin-top:calc(var(--u)*3)}
+.eld{display:inline-block;width:calc(var(--u)*4);height:calc(var(--u)*4);border-radius:50%;margin-right:calc(var(--u)*1.6);vertical-align:middle;box-shadow:0 0 0 calc(var(--u)*.6) #05071c}
+.bparty .pr{grid-template-columns:minmax(0,1fr) calc(var(--u)*44) calc(var(--u)*36);padding:calc(var(--u)*1.2) calc(var(--u)*2);gap:calc(var(--u)*3.5)}
+.bparty .gg{gap:calc(var(--u)*1)}.bparty .gg .bar{height:calc(var(--u)*2)}.bparty .gg .bar.hpb{height:calc(var(--u)*2.6)}.bparty .gg .bar.hpb i{background:linear-gradient(#a0ffb0,#30b050)}.bparty .gg .bar.hpb.low i{background:linear-gradient(#ffe8a0,#e0a020)}
+.benemy,.bparty{padding:calc(var(--u)*3.5) calc(var(--u)*4)}.benemy .en{margin-bottom:calc(var(--u)*2.4)}
+.win{padding:calc(var(--u)*5) calc(var(--u)*7)}
+.roomy .row{padding-top:calc(var(--u)*2.6);padding-bottom:calc(var(--u)*2.6)}
+.roomy .row.sel{background:rgba(255,255,255,.13)}
 </style></head><body>
 <div id="app"><div id="field"><canvas id="cv"></canvas><div id="ui"></div></div>
 <div id="touch"><div class="pad" id="tpad"></div><div class="tb b" style="right:76px" data-b="b">B</div><div class="tb" style="right:14px;bottom:56px" data-b="a">A</div><div class="tb s" style="right:150px;bottom:14px" data-b="select">SEL</div><div class="tb s" style="right:150px;bottom:46px" data-b="start">START</div></div></div>
@@ -690,7 +697,7 @@ function itemDyes(cat,name){if(cat==='top')return byName(TOPS,name)[2];if(cat===
    Each weapon is drawn pointing up, at a scale k (1 in the hand, 3 on the forge's anvil), with its grip point
    (gx, gy) where the hand holds it. Colours: c1 the blade or head, c2 the metal fittings, c3 the grip or wood,
    c4 an accent (tassels, ribbons, fletching, the second blade), glow the light it leaves when it swings. */
-const ELEMS={None:{c:'#c8ccd8',n:'None'},Fire:{c:'#ff6a2a',n:'Fire'},Ice:{c:'#78d8ff',n:'Ice'},Bolt:{c:'#ffe04a',n:'Bolt'},Holy:{c:'#fff2b0',n:'Holy'},Shadow:{c:'#a070ff',n:'Shadow'}};
+const ELEMS={None:{c:'#c8ccd8',n:'None'},Fire:{c:'#ff6a2a',n:'Fire'},Ice:{c:'#78d8ff',n:'Ice'},Bolt:{c:'#ffe04a',n:'Bolt'},Holy:{c:'#fff2b0',n:'Holy'},Shadow:{c:'#a070ff',n:'Shadow'},Water:{c:'#3aa8ff',n:'Water'}};
 const ELEM_LIST=Object.keys(ELEMS);
 const GLYPHS=['Star','Eye','Moon','Sun','Rune','Skull','Heart','Flame','Leaf','Snowflake','Bolt','Spiral','Rose','Key','Crown','Sigil'];
 /* [kind id, name, hold, parts {part:[choices]}, base stats, default parts, default colours] */
@@ -1068,6 +1075,12 @@ mkChar('dax','Dax','dps',4,{skin:'Tan',eyes:'Sharp',eyeC:'Brown',brows:'Angled',
 mkChar('rue','Rue','dps',5,{skin:'Fair',eyes:'Fierce',eyeC:'Red',brows:'Angled',mouth:'Fang',hair:'Wolf Cut',hairC:'Black',top:'Kimono',topC1:'Crimson',topC2:'Black',bot:'Hakama',botC1:'Black',shoes:'Geta',shoeC:'Charcoal',face:'Domino Mask',faceC:'Crimson'},{kind:'dual',name:'Crimson Twins',c1:'Steel',c5:'Steel',c4:'Crimson',glow:'Red',gemC:'Crimson'});
 mkChar('zed','Zed','dps',4,{skin:'Bronze',eyes:'Wide',eyeC:'Azure',brows:'Thick',mouth:'Grin',hair:'Tall Spikes',hairC:'Azure',top:'Leather Jacket',topC1:'Black',topC2:'Silver',bot:'Cargo Pants',botC1:'Olive',shoes:'Boots',shoeC:'Black',back:'Short Cape',backC1:'Azure'},{kind:'sword',name:'Stormcaller',c1:'Steel',c2:'Azure'});
 mkChar('brisa','Brisa','dps',4,{skin:'Honey',eyes:'Fierce',eyeC:'Amber',brows:'Thick',mouth:'Grin',hair:'Wild Mane',hairC:'Ginger',top:'Tank Top',topC1:'Rust',topC2:'White',bot:'Shorts',botC1:'Brown',shoes:'Sandals',shoeC:'Tan',face:'War Paint',faceC:'Red'},{kind:'greataxe',name:'Cinderfang',c1:'Steel',c2:'Rust'});
+/* every character fights with an element: when two different ones meet on an enemy they react */
+for(const[id,e]of Object.entries({hero:'Holy',mira:'Bolt',bram:'Water',kit:'Fire',ferro:'Ice',hildr:'Bolt',gorm:'Fire',tilda:'Water',orrin:'Shadow',lumi:'Holy',sana:'Water',olive:'Ice',mei:'Fire',bel:'Holy',thea:'Water',vex:'Shadow',juno:'Fire',taro:'Ice',cass:'Shadow',dax:'Water',rue:'Shadow',zed:'Bolt',brisa:'Fire'}))CHARS[id].el=e;
+const innateEl=m=>(CHARS[m.id]||{}).el||null;
+const RX={'Fire+Water':{n:'Vaporize',m:2.2,c:'#bfefff'},'Fire+Ice':{n:'Melt',m:1.9,st:'defDown',c:'#ffd2a0'},'Bolt+Fire':{n:'Overload',m:1.5,aoe:.7,c:'#ff9a3a'},'Bolt+Water':{n:'Electro-Charge',m:1.4,aoe:.5,stun:1,c:'#7ae0ff'},'Ice+Water':{n:'Freeze',m:1.3,stun:2,c:'#c8f4ff'},'Bolt+Ice':{n:'Superconduct',m:1.5,st:'defDown',c:'#d8c8ff'},'Holy+Shadow':{n:'Eclipse',m:3,aoe:.8,c:'#ffeaff'}};
+const rxKey=(a,b)=>[a,b].sort().join('+');
+function reactionsFor(P){const out=[];for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const a=innateEl(P[i]),b=innateEl(P[j]),R=a&&b&&a!==b?RX[rxKey(a,b)]:null;if(R)out.push({n:R.n,c:R.c,who:`${P[i].name} (${a}) + ${P[j].name} (${b})`})}return out}
 const WISH_IDS=['ferro','hildr','gorm','tilda','orrin','lumi','sana','olive','mei','bel','thea','vex','juno','taro','cass','dax','rue','zed','brisa'];
 const WISH={cost:100,pity:30,rate5:.06,dupe:50};
 /* pairs that fight better side by side: a tank with a healer, a healer with a damage dealer, a tank with a damage dealer */
@@ -1932,8 +1945,8 @@ function addFx(life,draw,o={}){const e=Object.assign({t:0,life,draw},o);BT.fx.pu
 /* ---------- the fighters ---------- */
 function unitP(m,i){const s=statsOf(m);return{side:'p',m,name:m.name,hp:clamp(m.hp,0,s.hp),mhp:s.hp,mp:clamp(m.mp,0,s.mp),mmp:s.mp,s,atb:.15+rnd()*.55,st:s.regen?{regen:999}:{},alive:m.hp>0,i,ox:0,oy:0,pose:null,poseT:0,nk:0,guard:false}}
 function unitE(id,i,tag){const F=FOE[id],s=foeStats(F);if(F.boss)s.hp=Math.round(s.hp*.85);return{side:'e',F,name:F.n+(tag?' '+tag:''),hp:s.hp,mhp:s.hp,mp:0,mmp:0,s,atb:rnd()*.45,st:{},alive:true,i,ox:0,oy:0,flash:0,nk:0,phased:{},spr:foeSprite(F),dying:-1}}
-function bLayout(){const P=BT.P,n=P.length,ys={1:[104],2:[92,112],3:[84,101,118],4:[72,88,104,120]}[n]||[100];
-  P.forEach((u,i)=>{u.hx=W-(n>3?74:n>2?64:58)+i*14;u.hy=ys[i]});
+function bLayout(){const P=BT.P,n=P.length,ys={1:[104],2:[92,112],3:[80,97,114],4:[72,88,104,120]}[n]||[100];
+  P.forEach((u,i)=>{u.hx=W-(n>2?96:n>1?80:60)+i*(n>1?26:0);u.hy=ys[i]});
   const E=BT.E,m=E.length,sp=BT.o.boss?[[.27,118]]:{1:[[.28,112]],2:[[.17,100],[.37,116]],3:[[.14,92],[.37,100],[.23,120]]}[m]||[[.27,110]];
   E.forEach((u,i)=>{const s=sp[Math.min(i,sp.length-1)];u.hx=Math.max(u.spr.fx+4,Math.round(W*s[0]+(BT.o.boss?0:0)));u.hy=s[1]-(u.F.fly?26:0)})}
 /* the middle of a fighter, for effects and numbers */
@@ -1949,7 +1962,7 @@ function calc(src,t,o){const phys=o.kind!=='mag';const A=stat(src,phys?'atk':'ma
   const r={dmg:0,crit:false,miss:false,weak:false,resist:false};
   if(phys&&!o.sure){let miss=.04;if(t.st.evade)miss+=.5;if(rnd()<miss){r.miss=true;return r}}
   let d=A*(o.pow||1)*(src.side==='p'?2.4:2.0)*(55/(55+D))*(.92+rnd()*.16);
-  const el=o.elem||(phys&&src.side==='p'&&src.m.weapon.elem!=='None'?src.m.weapon.elem:null);
+  const el=o.elem||(phys&&src.side==='p'&&src.m.weapon.elem!=='None'?src.m.weapon.elem:null)||(src.side==='p'?innateEl(src.m):null);
   if(el&&t.side==='e'){if(t.F.weak.includes(el)){d*=1.5;r.weak=true}else if(t.F.res.includes(el)){d*=.5;r.resist=true}}
   if(phys){let cc=(src.s.crit||.05)+(o.crit||0);if(src.st.focus)cc=1;if(rnd()<cc){d*=1.75;r.crit=true}}
   if(t.guard)d*=.5;if(o.execute&&t.side==='e'){if(t.hp/t.mhp<.3&&!t.F.boss)d=t.hp;else d*=1.3}
@@ -1967,13 +1980,24 @@ function knockOut(u){u.alive=false;u.atb=0;u.st={};u.guard=false;
 /* a hit from src on t: shows it, applies it, returns the result */
 function strike(src,t,o){if(!t.alive)return null;const r=calc(src,t,o);
   if(r.miss){num(t,'Miss','miss');SND.fx('miss');return r}
-  hurt(t,r.dmg);num(t,r.dmg,r.crit?'crit':'');if(r.weak)num(t,'Weak!','tag');
+  hurt(t,r.dmg);num(t,r.dmg,r.crit?'crit':'');if(r.weak)num(t,'Weak!','tag');if(r.elem&&src.side==='p')applyAura(src,t,r);
   if(r.crit)SND.fx('crit');if(src.side==='p')src.m.limit=Math.min(100,src.m.limit+1.5*src.s.limitGain);
   if(src.st.focus&&o.kind!=='mag')delete src.st.focus;
   if(o.drain&&src.alive){const v=Math.round(r.dmg*o.drain);if(v>0)healU(src,v)}
   if(o.st&&t.alive&&rnd()<(o.chance||1))giveStatus(t,o.st,o.turns||3);
   if(t.alive&&t.side==='p'&&t.st.counter&&o.kind!=='mag'&&src.alive&&src.side==='e')BT.queue.unshift({u:t,type:'counter',t:src});
   BT.shake=Math.max(BT.shake,r.crit?.25:.12);return r}
+/* an enemy hit by an element carries it for a while; a different element landing on it sets off a reaction */
+function applyAura(src,t,r){if(t.side!=='e'||!t.alive||!ELEMS[r.elem]||r.elem==='None')return;const a=t.aura;
+  if(!a||a.el===r.elem){t.aura={el:r.elem,t:4};return}
+  const R=RX[rxKey(a.el,r.elem)];if(!R){t.aura={el:r.elem,t:4};return}
+  t.aura=null;const x=midX(t),y=midY(t),extra=Math.max(1,Math.round(r.dmg*(R.m-1)));
+  hurt(t,extra);num(t,extra,'crit');num(t,R.n+'!','tag');BT.flash=Math.max(BT.flash,.4);BT.shake=Math.max(BT.shake,.35);SND.fx('crit');fxRing(t,R.c);fxSparks(x,y,R.c,18);
+  if(R.aoe)for(const e of alive(BT.E)){if(e===t)continue;const d=Math.max(1,Math.round(extra*R.aoe));hurt(e,d);num(e,d,'');fxSparks(midX(e),midY(e),R.c,8)}
+  if(t.alive&&R.stun)giveStatus(t,'stun',R.stun);if(t.alive&&R.st)giveStatus(t,R.st,3);
+  addFx(1.2,(g,k)=>{g.save();g.globalAlpha=k<.7?1:1-(k-.7)/.3;g.textAlign='center';g.font='bold 15px ui-monospace,monospace';g.lineWidth=3;g.strokeStyle='#0a0c2a';g.strokeText(R.n.toUpperCase()+'!',W/2,34-k*6);g.fillStyle=R.c;g.fillText(R.n.toUpperCase()+'!',W/2,34-k*6);
+    g.font='8px ui-monospace,monospace';g.lineWidth=2;g.strokeText(`${ELEMS[a.el].n} + ${ELEMS[r.elem].n}`,W/2,44-k*6);g.fillStyle='#ffffff';g.fillText(`${ELEMS[a.el].n} + ${ELEMS[r.elem].n}`,W/2,44-k*6);g.restore()})}
+function drawAura(g,u){const a=u.aura;if(!a||!u.alive)return;const x=midX(u),y=topY(u)-2+Math.round(Math.sin(BT.t*4)*1.2),c=ELEMS[a.el].c;g.fillStyle='#0a0c2a';g.beginPath();g.arc(x,y,4.2,0,7);g.fill();g.fillStyle=c;g.beginPath();g.arc(x,y,3,0,7);g.fill();g.fillStyle='rgba(255,255,255,.8)';g.fillRect(x-1.4,y-1.6,1.2,1.2)}
 function giveStatus(t,st,turns){if(!t.alive)return;if(t.side==='e'&&t.F.boss&&st==='stun'&&rnd()<.6){num(t,'Resist','miss');return}
   t.st[st]=Math.max(t.st[st]||0,turns);num(t,STATUS[st].n,'st');SND.fx(STATUS[st].bad?'debuff':'buff')}
 /* ---------- effects ---------- */
@@ -1992,6 +2016,7 @@ const ELEM_FX={
    g.strokeStyle='rgba(255,240,170,'+(1-k)+')';g.lineWidth=2;g.beginPath();g.ellipse(x,y+14,6+k*22,2+k*6,0,0,7);g.stroke()})},
  Shadow:t=>{const x=midX(t),y=midY(t),z=tsz(t);SND.fx('shadow');for(let i=0;i<9;i++){const a=i/9*Math.PI*2;addFx(.6,(g,k)=>{const r=(1-k)*28*z;g.fillStyle=k<.8?'#a070ff':'#ffffff';g.globalAlpha=.9;g.beginPath();g.arc(x+Math.cos(a+k*4)*r,y+Math.sin(a+k*4)*r*.7,3.2-k*1.5,0,7);g.fill();g.globalAlpha=1})}
    addFx(.6,(g,k)=>{if(k<.75)return;g.fillStyle=`rgba(40,0,80,${1-(k-.75)/.25})`;g.beginPath();g.arc(x,y,10+(k-.75)*60,0,7);g.fill()})},
+ Water:t=>{const x=midX(t),y=midY(t),z=tsz(t);SND.fx('ice');for(let i=0;i<10;i++){const ox=(rnd()*26-13)*z,d=rnd()*.25;addFx(.55,(g,k)=>{const kk=clamp((k-d)/(1-d),0,1);if(kk<=0)return;g.globalAlpha=1-kk*.5;g.fillStyle=kk<.5?'#bfe8ff':'#3aa8ff';g.beginPath();g.arc(x+ox*(1-kk*.4),y-12+kk*26,Math.max(.6,2.6-kk*1.6),0,7);g.fill();g.globalAlpha=1})}fxRing(t,'#3aa8ff')},
  Grey:t=>{const x=midX(t),y=midY(t);SND.fx('shadow');addFx(.6,(g,k)=>{g.fillStyle=`rgba(150,150,160,${.7*(1-k)})`;g.beginPath();g.arc(x,y,8+k*26,0,7);g.fill();g.fillStyle=`rgba(40,40,48,${.8*(1-k)})`;g.beginPath();g.arc(x,y,4+k*16,0,7);g.fill()})},
  Wind:t=>{const x=midX(t),y=midY(t);SND.fx('swirl');for(let i=0;i<3;i++)addFx(.5,(g,k)=>{g.strokeStyle=`rgba(230,250,255,${1-k})`;g.lineWidth=2;g.beginPath();g.arc(x,y-8+i*8,6+k*16,k*6+i,k*6+i+2.4);g.stroke()})},
  Poison:t=>{const x=midX(t),y=midY(t);for(let i=0;i<8;i++){const ox=rnd()*22-11,d=rnd()*.3;addFx(.6,(g,k)=>{const kk=clamp((k-d)/(1-d),0,1);if(!kk)return;g.strokeStyle='#9ae050';g.fillStyle='rgba(154,224,80,.4)';g.beginPath();g.arc(x+ox,y+10-kk*26,2+kk*2,0,7);g.fill();g.stroke()})}},
@@ -2011,9 +2036,9 @@ function battle(foeIds,o={}){return new Promise(res=>{const back=S_SCENE,snap=do
     const counts={};for(const id of foeIds)counts[id]=(counts[id]||0)+1;const seen={};
     BT.P=G.party.slice(0,3).map((m,i)=>unitP(m,i));BT.E=foeIds.map((id,i)=>{seen[id]=(seen[id]||0)+1;return unitE(id,i,counts[id]>1?'ABC'[seen[id]-1]:'')});BT.units=BT.P.concat(BT.E);bLayout();
     BT.layer=el('div','blayer');UI.appendChild(BT.layer);
-    BT.ban=winEl('banner',{x:Math.round(W/2-90),y:4,w:180},BT.layer);BT.ban.style.display='none';BT.cpw=winEl('plain',{x:3,y:3,w:96,h:13},BT.layer);
-    const ew=Math.round(W*.34);BT.ewin=winEl('benemy',{x:3,y:123,w:ew,h:54},BT.layer);BT.pwin=winEl('bparty',{x:ew+6,y:123,w:W-ew-9,h:54},BT.layer);
-    BT.prow=BT.P.map(u=>{const r=el('div','pr');r.innerHTML=`<span class="nm"></span><span class="num hp"></span><span class="num mp"></span><span class="gg"><span class="bar atb"><i></i></span><span class="bar lim"><i></i></span></span>`;BT.pwin.appendChild(r);return r});
+    BT.ban=winEl('banner',{x:Math.round(W/2-90),y:4,w:180},BT.layer);BT.ban.style.display='none';BT.cpw=winEl('plain',{x:3,y:3,w:62,h:13},BT.layer);
+    const ew=Math.round(W*.36);BT.ewin=winEl('benemy',{x:3,y:118,w:ew,h:59},BT.layer);BT.pwin=winEl('bparty',{x:ew+6,y:118,w:W-ew-9,h:59},BT.layer);
+    BT.prow=BT.P.map(u=>{const r=el('div','pr');r.innerHTML=`<span class="nm"></span><span class="num hp"></span><span class="gg"><span class="bar hpb"><i></i></span><span class="bar atb"><i></i></span><span class="bar lim"><i></i></span></span>`;BT.pwin.appendChild(r);return r});
     SND.play(o.music||(o.boss?(o.final?'final':'boss'):'battle'));SND.fx('swirl');setScene(BATTLE_SCENE);
     for(const u of BT.P)u.ox=70;for(const u of BT.E)u.ox=-80;
     tween(BT,{intro:1},520).then(()=>{});for(const u of BT.P)tween(u,{ox:0},420,easeOut);for(const u of BT.E)tween(u,{ox:0},420,easeOut);
@@ -2037,7 +2062,7 @@ const BATTLE_SCENE={
    drawBackdrop(g,BT.o.theme||'forest',0,!!BT.o.grey,TIME,true);
    g.fillStyle='rgba(6,8,24,.55)';g.fillRect(-4,121,W+8,60);
    const list=BT.units.slice().sort((a,b)=>a.hy-b.hy);
-   for(const u of list){if(u.side==='e')drawFoe(g,u);else drawMember(g,u)}
+   for(const u of list){if(u.side==='e'){drawFoe(g,u);drawAura(g,u)}else drawMember(g,u)}
    for(const e of BT.fx)e.draw(g,Math.min(1,e.t/e.life),e);
    if(BT.cursor&&Math.floor(BT.t*4)%2===0||BT.cursor&&BT.cursor.length===1)for(const u of BT.cursor){const x=u.side==='p'?u.hx+u.ox-24:midX(u)-Math.min(u.spr.w/2,30)-10,y=midY(u)-3+(Math.floor(BT.t*5)%2);g.drawImage(HAND,Math.round(x),Math.round(y))}
    g.restore();if(BT.flash>0){g.fillStyle=`rgba(255,255,255,${BT.flash})`;g.fillRect(0,0,W,H)}
@@ -2062,15 +2087,17 @@ function pips(g,u,x,y){const ks=Object.keys(u.st).filter(k=>STATUS[k]&&!(k==='re
 /* the windows at the bottom */
 function hud(){if(!BT.prow)return;
   if(BT.cpw){const k=BT.cp+'/'+BT.cpMax;if(BT._cpk!==k){BT._cpk=k;BT.cpw.innerHTML=`<span class="tiny blue">CP</span> <span style="letter-spacing:1px;color:#8affff">${'●'.repeat(BT.cp)}<span class="dim">${'○'.repeat(BT.cpMax-BT.cp)}</span></span>`}}
-  if(BT._ek!==BT.E.map(u=>u.alive+':'+Math.round(u.hp/u.mhp*20)).join()){BT._ek=BT.E.map(u=>u.alive+':'+Math.round(u.hp/u.mhp*20)).join();
-    BT.ewin.innerHTML=BT.E.filter(u=>u.alive).map(u=>`<div class="en"><span>${esc(u.name)}</span><span class="bar ehp"><i style="width:${u.hp/u.mhp*100}%"></i></span></div>`).join('')}
-  BT.P.forEach((u,i)=>{const r=BT.prow[i],c=r.children;const nm=esc(u.name);if(c[0].innerHTML!==nm)c[0].innerHTML=nm;
-    const hp=`${u.hp}<small>/${u.mhp}</small>`;if(c[1].innerHTML!==hp)c[1].innerHTML=hp;const R=ROLES[roleOf(u.m)];if(c[2].textContent!==R.s){c[2].textContent=R.s;c[2].style.color=R.c}
+  if(BT._ek!==BT.E.map(u=>u.alive+':'+Math.round(u.hp/u.mhp*20)+(u.aura?u.aura.el:'')).join()){BT._ek=BT.E.map(u=>u.alive+':'+Math.round(u.hp/u.mhp*20)+(u.aura?u.aura.el:'')).join();
+    BT.ewin.innerHTML=BT.E.filter(u=>u.alive).map(u=>`<div class="en"><span>${u.aura?`<i class="eld" style="background:${ELEMS[u.aura.el].c}"></i>`:''}${esc(u.name)}</span><span class="bar ehp"><i style="width:${u.hp/u.mhp*100}%"></i></span></div>`).join('')}
+  BT.P.forEach((u,i)=>{const r=BT.prow[i],c=r.children,e=ELEMS[innateEl(u.m)]||ELEMS.None,R=ROLES[roleOf(u.m)];
+    const nm=`<b style="color:${R.c}">${R.s}</b> <i class="eld" style="background:${e.c}"></i>${esc(u.name)}`;if(c[0].innerHTML!==nm)c[0].innerHTML=nm;
+    const hp=`${u.hp}<small>/${u.mhp}</small>`;if(c[1].innerHTML!==hp)c[1].innerHTML=hp;
     c[1].classList.toggle('low',u.alive&&u.hp<u.mhp*.25);c[1].classList.toggle('ko',!u.alive);
-    const ab=c[3].children[0],lb=c[3].children[1];ab.firstChild.style.width=(u.alive?u.atb*100:0)+'%';ab.classList.toggle('full',u.alive&&u.atb>=1);lb.firstChild.style.width=u.m.limit+'%';lb.classList.toggle('full',u.m.limit>=100);
+    const g=c[2].children,hb=g[0],ab=g[1],lb=g[2];hb.firstChild.style.width=(u.mhp?u.hp/u.mhp*100:0)+'%';hb.classList.toggle('low',u.alive&&u.hp<u.mhp*.25);
+    ab.firstChild.style.width=(u.alive?u.atb*100:0)+'%';ab.classList.toggle('full',u.alive&&u.atb>=1);lb.firstChild.style.width=u.m.limit+'%';lb.classList.toggle('full',u.m.limit>=100);
     r.classList.toggle('turn',BT.cur===u);r.classList.toggle('ko',!u.alive)})}
 /* ---------- turns ---------- */
-function turnReady(u){u.guard=false;const st=u.st;
+function turnReady(u){u.guard=false;const st=u.st;if(u.aura&&--u.aura.t<=0)u.aura=null;
   if(st.stun){delete st.stun;num(u,'Stunned','st');u.atb=0;return}
   let d=0;if(st.poison)d+=u.mhp*.06;if(st.burn)d+=u.mhp*.08;if(st.bleed)d+=u.mhp*.05;
   if(d>0){d=Math.max(1,Math.round(Math.min(d,u.side==='e'&&u.F.boss?250:9999)));hurt(u,d);num(u,d,'');if(st.poison)ELEM_FX.Poison(u);if(!u.alive){checkEnd();return}}
@@ -2091,7 +2118,7 @@ const pick1=a=>a[Math.floor(rnd()*a.length)];
 function openCommand(u){if(!u.alive){BT.ready=BT.ready.filter(x=>x!==u);return}BT.cur=u;SND.fx('cur');tween(u,{ox:-10},120);
   const m=u.m,lim=m.limit>=100,L=limitOf(m);
   const rows=[{label:lim?L.n:'Attack',html:lim?`<span style="color:#ffa0e0">✦ ${esc(L.n)}</span>`:'<span>Attack</span>',r:lim?'':'<span class="tiny blue">+1</span>',c:'attack'},{label:artLabel(m),r:`<span class="tiny ${BT.cp<2?'red':'blue'}">−2</span>`,off:BT.cp<2,c:'arts'},{label:'Item',c:'item',off:!battleItems().length},{label:'Guard',c:'guard'},{label:'Flee',c:'flee',off:!!BT.o.boss||!!BT.o.noFlee}];
-  const ew=Math.round(W*.34);const box=winEl('cmd pop',{x:3,y:119,w:Math.max(ew,96),h:58},BT.layer);
+  BT.ewin.style.visibility='hidden';const box=winEl('cmd pop',{x:3,y:118,w:Math.max(Math.round(W*.36),104),h:59},BT.layer);
   const lw=new ListWin({el:box,rows,vis:5,quiet:true,
     pick:async row=>{SND.fx('ok');
       if(row.c==='attack'){if(lim){const t=await chooseTargets(u,L.tgt);if(t)commit(u,{type:'limit',art:L,t})}else{const t=await chooseTargets(u,'one');if(t)commit(u,{type:'attack',t})}}
@@ -2100,7 +2127,7 @@ function openCommand(u){if(!u.alive){BT.ready=BT.ready.filter(x=>x!==u);return}B
     back:()=>{if(BT.ready.length>1){BT.ready.push(BT.ready.shift());closeCommand(false,true)}},
     key:b=>{if(b==='select'&&BT.ready.length>1){BT.ready.push(BT.ready.shift());closeCommand(false,true)}}});
   BT.cmd=lw;BT.modals.push(lw);pushModal(lw)}
-function closeCommand(dead,keepReady){const u=BT.cur;if(!u)return;for(const m of BT.modals.slice()){popModal(m);if(m.el)m.el.remove()}BT.modals=[];BT.cursor=null;banner('');
+function closeCommand(dead,keepReady){const u=BT.cur;if(!u)return;for(const m of BT.modals.slice()){popModal(m);if(m.el)m.el.remove()}BT.modals=[];BT.cursor=null;banner('');if(BT.ewin)BT.ewin.style.visibility='';if(BT.pwin)BT.pwin.style.visibility='';
   if(!keepReady)BT.ready=BT.ready.filter(x=>x!==u);if(!dead){tween(u,{ox:0},100)}else u.ox=0;BT.cur=null}
 function commit(u,a){a.u=u;u.atb=0;BT.queue.push(a);closeCommand()}
 /* choosing who: returns a list of units, or null */
@@ -2116,23 +2143,23 @@ function chooseTargets(u,tgt){return new Promise(res=>{let list,i=0,all=false;
   const done=v=>{popModal(m);BT.modals=BT.modals.filter(x=>x!==m);BT.cursor=null;banner('');res(v)};
   BT.modals.push(m);pushModal(m);show()})}
 function artsMenu(u){return new Promise(res=>{const m=u.m,list=artsOf(m);
-  const box=winEl('pop',{x:3,y:96,w:W-6,h:81},BT.layer);
+  const box=winEl('pop',{x:3,y:118,w:W-6,h:59},BT.layer);BT.pwin.style.visibility='hidden';if(BT.cmd)BT.cmd.el.style.visibility='hidden';
   const rows=list.map(a=>{const dead=a.tgt==='dead'&&!BT.P.some(p=>!p.alive);return{label:a.n,r:`<span class="${BT.cp<2?'red':'blue'}">2 CP</span>`,off:BT.cp<2||dead,a}});
-  const lw=new ListWin({el:box,rows,cols:2,vis:5,title:`<span class="small">${esc(artLabel(m))}</span> <span class="tiny dim">CP ${BT.cp}/${BT.cpMax}</span>`,
+  const lw=new ListWin({el:box,rows,cols:2,vis:3,title:`<span class="small">${esc(artLabel(m))}</span> <span class="tiny dim">CP ${BT.cp}/${BT.cpMax}</span>`,
     render:row=>{if(row)banner(`<span class="small">${esc(artDesc(row.a))}</span>`)},
-    pick:async row=>{const t=await chooseTargets(u,row.a.tgt);if(t){close();commit(u,{type:'art',art:row.a,t})}else banner(`<span class="small">${esc(artDesc(row.a))}</span>`)},
+    pick:async row=>{box.style.visibility='hidden';BT.pwin.style.visibility='';const t=await chooseTargets(u,row.a.tgt);BT.pwin.style.visibility='hidden';box.style.visibility='';if(t){close();commit(u,{type:'art',art:row.a,t})}else banner(`<span class="small">${esc(artDesc(row.a))}</span>`)},
     back:()=>{close()}});
-  const close=()=>{popModal(lw);BT.modals=BT.modals.filter(x=>x!==lw);banner('');res()};
+  const close=()=>{popModal(lw);BT.modals=BT.modals.filter(x=>x!==lw);banner('');BT.pwin.style.visibility='';if(BT.cmd)BT.cmd.el.style.visibility='';box.remove();res()};
   BT.modals.push(lw);pushModal(lw)})}
 const battleItems=()=>Object.keys(G.inv).filter(k=>ITEMS[k]&&!ITEMS[k].mat&&!ITEMS[k].field&&G.inv[k]>0);
 function itemMenu(u){return new Promise(res=>{const ids=battleItems();
-  const box=winEl('pop',{x:3,y:96,w:W-6,h:81},BT.layer);
+  const box=winEl('pop',{x:3,y:118,w:W-6,h:59},BT.layer);BT.pwin.style.visibility='hidden';if(BT.cmd)BT.cmd.el.style.visibility='hidden';
   const rows=ids.map(id=>{const I=ITEMS[id],off=(I.use==='revive'&&!BT.P.some(p=>!p.alive))||(I.use==='flee'&&BT.o.boss);return{label:I.n,r:'×'+G.inv[id],id,off}});
-  const lw=new ListWin({el:box,rows,cols:2,vis:5,title:'<span class="small">Items</span>',empty:'Nothing to use.',
+  const lw=new ListWin({el:box,rows,cols:2,vis:3,title:'<span class="small">Items</span>',empty:'Nothing to use.',
     render:row=>{if(row)banner(`<span class="small">${esc(ITEMS[row.id].desc)}</span>`)},
-    pick:async row=>{const I=ITEMS[row.id],tg=I.tgt==='none'?'self':I.tgt;const t=await chooseTargets(u,tg);if(t){close();commit(u,{type:'item',id:row.id,t})}},
+    pick:async row=>{const I=ITEMS[row.id],tg=I.tgt==='none'?'self':I.tgt;box.style.visibility='hidden';BT.pwin.style.visibility='';const t=await chooseTargets(u,tg);BT.pwin.style.visibility='hidden';box.style.visibility='';if(t){close();commit(u,{type:'item',id:row.id,t})}},
     back:()=>close()});
-  const close=()=>{popModal(lw);BT.modals=BT.modals.filter(x=>x!==lw);banner('');res()};
+  const close=()=>{popModal(lw);BT.modals=BT.modals.filter(x=>x!==lw);banner('');BT.pwin.style.visibility='';if(BT.cmd)BT.cmd.el.style.visibility='';box.remove();res()};
   BT.modals.push(lw);pushModal(lw)})}
 /* ---------- doing things ---------- */
 function retarget(u,t,side){const pool=side==='e'?BT.E:BT.P;return t.filter(x=>x.alive).length?t.filter(x=>x.alive):(alive(pool).length?[randomTarget(pool,0)]:[])}
@@ -2423,7 +2450,7 @@ async function runStory(id){const f=STORY[id];if(f)await f()}
 
 /* ================= the menu (START), shops, inns, the forge and the tailor ================= */
 function screenRoot(dark=true){const r=el('div','screen fade'+(dark?' darken':''));UI.appendChild(r);return r}
-function memberCard(m,wide){const s=statsOf(m);return`<div class="card">${portraitHTML(m)}<div class="cb"><div><span class="gold">${esc(m.name)}</span> <span class="tiny" style="color:${ROLES[roleOf(m)].c}">${ROLES[roleOf(m)].n}</span> <span class="dim small">Lv</span> ${m.lv}${m.hp<=0?' <span class="red small">KO</span>':''}</div>
+function memberCard(m,wide){const s=statsOf(m);return`<div class="card">${portraitHTML(m)}<div class="cb"><div><span class="gold">${esc(m.name)}</span> <span class="tiny" style="color:${ROLES[roleOf(m)].c}">${ROLES[roleOf(m)].n}</span> <span class="tiny" style="color:${(ELEMS[innateEl(m)]||ELEMS.None).c}">● ${innateEl(m)||''}</span> <span class="dim small">Lv</span> ${m.lv}${m.hp<=0?' <span class="red small">KO</span>':''}</div>
   <div class="small"><span class="dim">HP</span> ${m.hp}<span class="dim">/${s.hp}</span> ${barHTML(m.hp,s.hp,'',wide?34:24)} <span class="dim">MP</span> ${m.mp}<span class="dim">/${s.mp}</span></div>
   <div class="tiny dim">${esc(m.weapon.name||WTYPES[m.weapon.kind].n)} · ${WTYPES[m.weapon.kind].n}${m.weapon.tier?' · '+TIERS[m.weapon.tier]:''}</div></div></div>`}
 /* choose a member in a window: resolves with the member or null */
@@ -2434,12 +2461,15 @@ function menuLoop(o){return new Promise(res=>{let busy=false;const lw=new ListWi
 async function mainMenu(){WD.busy=true;const root=screenRoot();const pw=W-98;
   const party=winEl('',{x:4,y:4,w:pw,h:142},root);const drawParty=()=>{party.innerHTML=G.party.map(m=>memberCard(m,pw>200)).join('')};drawParty();
   const info=winEl('plain',{x:4,y:150,w:W-8,h:26},root);info.innerHTML=`<span class="gold">${fmt(G.gold)}</span><span class="dim">g</span>&nbsp;&nbsp; <span class="blue">◆${fmt(G.gems||0)}</span> <span class="dim">·</span> <span class="dim">Time</span> ${playTime()}&nbsp;&nbsp; <span class="dim">${esc(ZONES[G.zone].n)}</span>`;
-  const cmds=['Items','Arts','Status','Wardrobe','Forge','Charms','Party','Wish','Save','Settings','Title'];
-  const r=await menuLoop({el:winEl('',{x:W-91,y:4,w:87,h:142},root),rows:cmds.map(c=>({label:c})),vis:11,act:async(row,i)=>{const c=cmds[i];const box={x:4,y:4,w:pw,h:142};
+  const cmds=['Items','Arts','Status','Style','Charms','Party','Wish','System'];
+  const sub=names=>new Promise(res=>{const w=winEl('roomy',{x:W-91,y:4,w:87,h:16+names.length*16},root);menuLoop({el:w,rows:names.map(l=>({label:l})),vis:names.length,act:async(row,i)=>{res(names[i]);return 'close'}}).then(()=>{w.remove();res(null)})});
+  const r=await menuLoop({el:winEl('roomy',{x:W-91,y:4,w:87,h:142},root),rows:cmds.map(c=>({label:c})),vis:8,act:async(row,i)=>{let c=cmds[i];const box={x:4,y:4,w:pw,h:142};
+    if(c==='Style'){const k=await sub(['Wardrobe','Weapon shape']);if(!k)return;c=k==='Wardrobe'?'Wardrobe':'Forge'}
+    else if(c==='System'){const k=await sub(['Save','Settings','Title']);if(!k)return;c=k}
     if(c==='Items')await itemsMenu(root,box);
     else if(c==='Arts'){const m=await pickMember(root,box,'Whose arts?');if(m)await fieldArts(root,m)}
     else if(c==='Status'){const m=await pickMember(root,box,'Status');if(m)await statusScreen(m)}
-    else if(c==='Wardrobe'){root.style.visibility='hidden';await wardrobe(hero());root.style.visibility=''}
+    if(c==='Wardrobe'){root.style.visibility='hidden';await wardrobe(hero());root.style.visibility=''}
     else if(c==='Forge'){root.style.visibility='hidden';await forgeDesign(hero(),{heading:'Reshape'});root.style.visibility='';clampParty()}
     else if(c==='Charms'){const m=await pickMember(root,box,'Who wears a charm?');if(m)await charmMenu(root,m)}
     else if(c==='Party'){root.style.visibility='hidden';await partyMenu();root.style.visibility=''}
@@ -2453,11 +2483,13 @@ async function mainMenu(){WD.busy=true;const root=screenRoot();const pw=W-98;
 
 /* ---------- your party of three, in order: the front slot draws the most attacks ---------- */
 async function partyMenu(){
-  const root=screenRoot(),box={x:4,y:4,w:W-98,h:142},win=winEl('',box,root),syn=winEl('plain',{x:4,y:150,w:W-8,h:26},root);
+  const root=screenRoot(),box={x:4,y:4,w:W-98,h:110},win=winEl('',box,root),syn=winEl('plain',{x:4,y:118,w:W-8,h:58},root);
   const draw=()=>{win.innerHTML=[0,1,2].map(i=>G.party[i]?memberCard(G.party[i],false):`<div class="card"><div class="cb dim small">Empty slot</div></div>`).join('');
-    const a=synActive(G.party.slice(0,3));syn.innerHTML=a.length?`<span class="gold small">${a.map(x=>esc(x.n)).join(' · ')}</span>`:`<span class="tiny dim">Tip: a Tank, a Healer and a DPS work best together. Put your Tank in front.</span>`};draw();
+    const P=G.party.slice(0,3),a=synActive(P),rx=reactionsFor(P);
+    syn.innerHTML=`<div class="tiny dim">BONDS</div>`+(a.length?`<div class="small gold">${a.map(x=>esc(x.n)).join(' · ')}</div>`:`<div class="tiny dim">A Tank, a Healer and a DPS together give everyone a boost.</div>`)
+      +`<div class="tiny dim" style="margin-top:calc(var(--u)*1.5)">ELEMENT REACTIONS</div>`+(rx.length?rx.slice(0,3).map(x=>`<div class="small"><b style="color:${x.c}">${x.n}</b> <span class="tiny dim">${esc(x.who)}</span></div>`).join(''):`<div class="tiny dim">Mix elements, like Fire with Water, to blow up enemies.</div>`)};draw();
   const names=['Front','Middle','Back','Done'];
-  await menuLoop({el:winEl('',{x:W-91,y:4,w:87,h:142},root),rows:names.map(l=>({label:l})),vis:4,act:async(row,i)=>{if(i===3)return 'close';
+  await menuLoop({el:winEl('roomy',{x:W-91,y:4,w:87,h:110},root),rows:names.map(l=>({label:l})),vis:4,act:async(row,i)=>{if(i===3)return 'close';
     const c=await pickMember(root,box,`Who takes the ${names[i].toLowerCase()} slot?`,{pool:allMembers()});if(!c)return;
     const cur=G.party[i],j=G.party.indexOf(c);
     if(c===cur){}else if(j>=0){if(cur){G.party[j]=cur;G.party[i]=c}else{G.party.splice(j,1);G.party.push(c)}SND.fx('ok')}
@@ -2474,7 +2506,7 @@ async function wishMenu(){
   const draw=()=>{info.innerHTML=`<span class="blue">◆ ${fmt(G.gems||0)}</span> <span class="dim">gems</span> · <span class="gold">${wishes()}</span> <span class="dim">wish${wishes()===1?'':'es'}</span> · <span class="dim">5★ guaranteed in</span> ${Math.max(1,WISH.pity-(G.pity||0))}`;
     side.innerHTML='<div style="column-count:2;column-gap:4px">'+WISH_IDS.map(id=>{const C=CHARS[id],R=ROLES[C.role];return`<div class="tiny" style="break-inside:avoid;color:${owned(id)?'#fff':'#7a82a8'}">${C.rar===5?'<span class="gold">★5</span>':'<span class="blue">★4</span>'} ${esc(C.n)} <span style="color:${R.c}">${R.s}</span>${owned(id)?'✓':''}</div>`}).join('')+'</div>'};draw();
   const one=winEl('plain',{x:4,y:32,w:W-176,h:60},root);one.innerHTML='<div class="tiny dim">Defeat enemies for gems. Every 100 gems is a wish. A repeat turns into 50 gems.</div>';
-  await menuLoop({el:winEl('',{x:4,y:96,w:W-176,h:80},root),rows:[{label:'Wish ×1'},{label:'Wish ×10'},{label:'Back'}],vis:3,act:async(row,i)=>{if(i===2)return 'close';
+  await menuLoop({el:winEl('roomy',{x:4,y:96,w:W-176,h:80},root),rows:[{label:'Wish ×1'},{label:'Wish ×10'},{label:'Back'}],vis:3,act:async(row,i)=>{if(i===2)return 'close';
     const n=i?10:1;if(wishes()<n){SND.fx('no');await say('',`You need ${n*WISH.cost} gems for that.`);return}
     G.gems-=n*WISH.cost;const res=[];for(let k=0;k<n;k++)res.push(wishPull());draw();
     const fresh=res.filter(r=>!r.had),dupes=res.length-fresh.length,box=winEl('pop results',{x:Math.round(W/2-120),y:8,w:240},root);
