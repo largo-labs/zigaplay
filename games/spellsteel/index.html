@@ -2493,8 +2493,7 @@ async function partyMenu(){
     const c=await pickMember(root,box,`Who takes the ${names[i].toLowerCase()} slot?`,{pool:allMembers()});if(!c)return;
     const cur=G.party[i],j=G.party.indexOf(c);
     if(c===cur){}else if(j>=0){if(cur){G.party[j]=cur;G.party[i]=c}else{G.party.splice(j,1);G.party.push(c)}SND.fx('ok')}
-    else{if(cur&&cur.id==='hero'){await say('',`${esc(cur.name)} has to stay in the party.`);return}
-      if(cur){G.roster.push(cur);G.party[i]=c}else G.party.push(c);G.roster=G.roster.filter(x=>x!==c);SND.fx('ok')}
+    else{if(cur){G.roster.push(cur);G.party[i]=c}else G.party.push(c);G.roster=G.roster.filter(x=>x!==c);SND.fx('ok')}
     clampParty();draw()}});
   root.remove()}
 /* ---------- wishes: 100 gems each, a new friend every time ---------- */
