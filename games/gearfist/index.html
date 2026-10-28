@@ -921,10 +921,14 @@ function howScreen(back=titleScreen){const o=showOv(true),pn=el('div','panel');c
     <p>Bolts buy upgrades and new robots in the <b>Garage</b>. ${ZP?'START':'Pause'} stops the fight.</p><p>Your run saves after every fight you win, so you can quit any time${ZP?' (pause, or just flip the power switch)':''} and pick it up later from the title screen.</p>`;
   const bk=el('button','btn','Back');bk.addEventListener('click',()=>back());pn.append(t,bk);o.append(pn);backFn=()=>back();focusFirst(bk)}
 function keysScreen(back=titleScreen){const o=showOv(true),pn=el('div','panel'),B=BOT();pn.innerHTML=`<h2>PC CONTROLS</h2><p class="sub">Keyboard</p>`;const t=el('div','scroll text');
-  const alt=a=>ZP?'':`<small> or ${a}</small>`,mk=r=>`<div class="mv">${r.map(([k,v])=>`<i>${k}</i><span>${v}</span>`).join('')}</div>`;
-  const kb=s=>s.replace(/\bA\b/g,'Z').replace(/\bB\b/g,'X');
-  t.innerHTML=mk([['← →',`Walk${alt('A / D')}`],['↑',`Jump${alt('W')}`],['hold ↓',`Guard${alt('S')}`],['Z',`Light attack (A). Tap or hold for the combo${alt('J / Space')}`],['X',`Heavy attack (B), or the finisher mid-combo${alt('K')}`],['Shift',`Gear Burst, when the blue meter is full${alt('C / L')}`],['Enter',`Pause${alt('P / Esc')}`]])
-    +`<p><b>In menus:</b> arrow keys${ZP?'':' (or W A S D)'} move, Z${ZP?'':' (or Space)'} picks, Esc goes back.</p><p><b>${B.name}'s moves:</b></p>`+mk(B.help().map(([k,v])=>[kb(k),v]));
+  /* inside ZigaPlay the player can change the keys (KEYS on its home screen), so read what they are right now */
+  const live=ZP&&ZP.keys?ZP.keys:null,nice=k=>({ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',' ':'Space',Enter:'Enter',Shift:'Shift',Escape:'Esc'})[k]||String(k).toUpperCase(),
+    ks=b=>(live?live[b]:{left:['ArrowLeft','a'],right:['ArrowRight','d'],up:['ArrowUp','w'],down:['ArrowDown','s'],a:['z',' '],b:['x','Escape'],start:['Enter',null],select:['Shift',null]}[b]).filter(Boolean).map(nice),
+    pk=b=>ks(b)[0]||'—',ak=(...bs)=>{const a=[].concat(...bs.map(b=>ks(b).slice(1)));return a.length?`<small> or ${a.join(' / ')}</small>`:''},
+    mk=r=>`<div class="mv">${r.map(([k,v])=>`<i>${k}</i><span>${v}</span>`).join('')}</div>`;
+  const kb=s=>s.replace(/\bA\b/g,pk('a')).replace(/\bB\b/g,pk('b'));
+  t.innerHTML=mk([[`${pk('left')} ${pk('right')}`,`Walk${ak(['left'],['right'])}`],[pk('up'),`Jump${ak(['up'])}`],[`hold ${pk('down')}`,`Guard${ak(['down'])}`],[pk('a'),`Light attack (A). Tap or hold for the combo${ak(['a'])}`],[pk('b'),`Heavy attack (B), or the finisher mid-combo${ak(['b'])}`],[pk('select'),`Gear Burst, when the blue meter is full${ak(['select'])}`],[pk('start'),`Pause${ak(['start'])}`]])
+    +`<p><b>In menus:</b> ${pk('up')} ${pk('down')} move, ${pk('a')} picks, ${pk('b')} goes back.</p>${ZP?'<p class="sub">Change any key with KEYS on the ZigaPlay home screen.</p>':''}<p><b>${B.name}'s moves:</b></p>`+mk(B.help().map(([k,v])=>[kb(k),v]));
   const bk=el('button','btn','Back');bk.addEventListener('click',()=>back());pn.append(t,bk);o.append(pn);backFn=()=>back();focusFirst(bk)}
 function botIcon(k){const B=BOTS[k],c=document.createElement('canvas');c.width=28;c.height=30;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
   const fake={state:'idle',anim:0,T:{legH:B.o.legH||7,th:B.o.th||9,s:B.o.s||1}};cg.clearRect(0,0,BUF,BUF);humanoid(cg,1,pose(fake),PAL[B.pal],B.o);

@@ -455,6 +455,15 @@ html.wide .console.widegame .grille{display:none}
 html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .head{padding:4px 8px 1px;font-size:13px}
 @media (prefers-reduced-motion:reduce){.skinfx *{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#boot .logo{animation:none;transform:none}.cart{transition:none}.cart.sel::before{animation:none}}
+
+/* the keyboard controls screen: each console button with two keys you can change */
+.keylist .row{cursor:pointer}.keylist .row em{display:flex;gap:5px;opacity:1}
+.keylist .cap{display:inline-block;min-width:26px;padding:0 6px;border:2px solid currentColor;border-radius:5px;text-align:center;font-family:var(--num);font-size:14px;letter-spacing:.04em;opacity:.7;font-style:normal;line-height:18px}
+.keylist .cap.on{opacity:1;background:var(--lcd3);color:var(--lcd0);border-color:var(--lcd3)}
+.keylist .row[aria-selected=true] .cap.on{background:var(--lcd3);color:var(--lcd0)}
+.keylist .cap.wait{animation:capblink .5s steps(2) infinite}@keyframes capblink{50%{opacity:.35}}
+.keylist .row.reset{justify-content:center;margin-top:3px;font-size:14px;letter-spacing:.1em;opacity:.85}
+html.wide .keylist .cap{line-height:15px;font-size:12px;min-width:22px}
 </style>
 
 <div id="zp">
@@ -467,7 +476,7 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
       <span class="stripes" aria-hidden="true"></span><span class="led" aria-hidden="true"></span><span class="ledlbl" aria-hidden="true">POWER</span>
       <div class="screen" id="screen">
         <div class="lcd" id="home" hidden>
-          <div class="lcd-top"><b>ZIGAPLAY</b><span class="tr"><span id="count"></span><button class="editbtn" id="editBtn" tabindex="-1">EDIT</button></span></div>
+          <div class="lcd-top"><b>ZIGAPLAY</b><span class="tr"><span id="count"></span><button class="editbtn" id="keysBtn" tabindex="-1" title="Keyboard controls (K)">KEYS</button><button class="editbtn" id="editBtn" tabindex="-1">EDIT</button></span></div>
           <div class="shelf" id="shelf" role="listbox" aria-label="Games"></div>
           <div class="info" aria-live="polite"><h2 id="gTitle"></h2><p id="gBlurb"></p><small id="gNote"></small><button class="libact" id="libAct" tabindex="-1" hidden>ADD TO LIBRARY</button></div>
           <div class="lcd-help" id="homeHelp"></div>
@@ -482,6 +491,11 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
           <div class="lcd-top"><b>SKINS</b><span id="skinPos"></span></div>
           <div class="skinlist" id="skinList" role="listbox" aria-label="Console skins"></div>
           <div class="lcd-help"><span><i>▲▼</i> CHOOSE</span><span><i>A</i> WEAR</span><span><i>B</i> BACK</span></div>
+        </div>
+        <div class="lcd" id="keys" hidden>
+          <div class="lcd-top"><b>KEYBOARD</b><span id="keyHint"></span></div>
+          <div class="skinlist keylist" id="keyList" aria-label="Keyboard controls"></div>
+          <div class="lcd-help"><span><i>▲▼◀▶</i> PICK</span><span><i>A</i> CHANGE</span><span><i>B</i> BACK</span></div>
         </div>
         <div class="lcd" id="boot" hidden><div class="logo">ZIGAPLAY<small>POCKET CONSOLE</small></div></div>
         <div class="lcd" id="loading" hidden><b id="loadName"></b><span class="dots">LOADING</span></div>
@@ -643,6 +657,13 @@ const SKINFX={
     C.forEach((c,i)=>h+=`<i class="em" style="left:${10+i*20}%;--c:${c};animation-delay:${sec(-i*.8)}"></i>`);
     for(let i=0;i<10;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(6+r()*8).toFixed(0)}px;animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
 };
+/* the keyboard the player can change: every console button has two keys (a slot may be empty) */
+const BTNS=[['up','UP'],['down','DOWN'],['left','LEFT'],['right','RIGHT'],['a','A'],['b','B'],['c','C'],['d','D'],['start','START'],['select','SELECT']];
+const DEFBINDS={up:['ArrowUp','w'],down:['ArrowDown','s'],left:['ArrowLeft','a'],right:['ArrowRight','d'],a:['z',' '],b:['x','Escape'],c:['c',null],d:['v',null],start:['Enter',null],select:['Shift',null]};
+const normKey=k=>typeof k==='string'&&k.length===1?k.toLowerCase():k;
+function loadBinds(){let o=null;try{o=store.get('keys',null)}catch(e){}const out={};for(const[b]of BTNS){const v=o&&Array.isArray(o[b])?o[b]:DEFBINDS[b];out[b]=[normKey(v[0])||null,normKey(v[1])||null]}return out}
+let binds=null,KB={};
+function buildKB(){KB={};for(const[b]of BTNS)for(const k of binds[b]){if(!k)continue;KB[k]=b;if(k.length===1)KB[k.toUpperCase()]=b}}
 const DEFKEYS={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',a:'z',b:'x',c:'c',d:'v',start:'Enter',select:'Shift'};
 const KEYINFO={ArrowUp:['ArrowUp',38],ArrowDown:['ArrowDown',40],ArrowLeft:['ArrowLeft',37],ArrowRight:['ArrowRight',39],Enter:['Enter',13],Shift:['ShiftLeft',16],' ':['Space',32],Escape:['Escape',27],Backspace:['Backspace',8],Tab:['Tab',9]};
 const keyInfo=k=>KEYINFO[k]?{key:k,code:KEYINFO[k][0],keyCode:KEYINFO[k][1]}:{key:k,code:/^[a-z]$/i.test(k)?'Key'+k.toUpperCase():/^\d$/.test(k)?'Digit'+k:k,keyCode:k.length===1?k.toUpperCase().charCodeAt(0):0};
@@ -704,7 +725,7 @@ async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r
     if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib()}}catch(e){}}
 wearSkin(skinChoice);
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
-function show(id){for(const x of['home','lib','boot','loading','skins'])$('#'+x).hidden=x!==id}
+function show(id){for(const x of['home','lib','boot','loading','skins','keys'])$('#'+x).hidden=x!==id}
 
 /* ---------- the library shelf ---------- */
 function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();sel=Math.max(0,Math.min(sel,all.length-1));
@@ -748,6 +769,7 @@ function libActivate(){const c=libCarts()[libUI.i];if(!c){SFX.buzz();return}if(l
 async function toHome(c){state='moving';SFX.pick();const r=$$('#libList .row')[libCarts().indexOf(c)];if(r){r.classList.add('out');await sleep(300)}
   libPlace[c.id]='home';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='lib';renderLib();toast(c.title.toUpperCase()+' → HOME')}
 function setLibEdit(on){if(state!=='lib'||!libUI)return;libUI.edit=on;SFX[on?'pick':'eject']();renderLib()}
+$('#keysBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')openKeys()});
 $('#editBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')setEditing(!editing)});
 $('#libEdit').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='lib'&&libUI)setLibEdit(!libUI.edit)});
 $('#libAct').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home'&&editing)toLibrary(items()[sel])});
@@ -813,7 +835,7 @@ async function eject(){if(state!=='game')return;state='ejecting';SFX.eject();$('
 let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
   if(state==='off'){SFX.click();await boot(false);return}
-  if(state==='skins')closeSkins(false);
+  if(state==='skins')closeSkins(false);if(state==='keys')closeKeys();
   if(state==='home'||state==='lib'){editing=false;libUI=null;await powerOff();return}
   if(state!=='game')return;
   releaseAll();const w=cartWin();let r='ask';
@@ -841,6 +863,41 @@ function skinsInput(b){if(!skinUI)return;
   else if(b==='b')closeSkins(false)}
 function keepSkin(){const k=SKINS[skinUI.i];chooseSkin(k.id);closeSkins(true);toast('SKIN: '+k.name.toUpperCase())}
 function closeSkins(kept){if(!kept)SFX.eject();skinUI=null;state='home';show('home');wearSkin(skinChoice);requestAnimationFrame(layoutShelf)}
+
+
+/* ---------- keyboard controls screen ---------- */
+let keyUI=null,keyCap=null;
+const KEYNAME={ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',' ':'SPACE',Enter:'ENTER',Shift:'SHIFT',Escape:'ESC',Backspace:'BKSP',Tab:'TAB',Delete:'DEL'};
+const keyLabel=k=>!k?'—':KEYNAME[k]||(k.length===1?k.toUpperCase():k.toUpperCase());
+function openKeys(){if(state!=='home')return;if(editing){editing=false;markEdit()}keyUI={r:0,s:0};state='keys';show('keys');renderKeys();SFX.pick()}
+function closeKeys(){keyCap=null;keyUI=null;SFX.eject();state='home';show('home');requestAnimationFrame(layoutShelf)}
+function renderKeys(){const L=$('#keyList');L.innerHTML='';
+  BTNS.forEach(([b,name],r)=>{const row=document.createElement('button');row.className='row';row.tabIndex=-1;
+    row.innerHTML=`<span>${name}</span><em>${[0,1].map(s=>`<i class="cap" data-s="${s}"></i>`).join('')}</em>`;
+    row.querySelectorAll('.cap').forEach(c=>c.addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state!=='keys')return;keyUI.r=r;keyUI.s=+c.dataset.s;markKeys();beginCap()}));
+    row.addEventListener('click',()=>{sfxUnlock();if(state!=='keys')return;keyUI.r=r;markKeys();SFX.tick()});L.append(row)});
+  const rs=document.createElement('button');rs.className='row reset';rs.tabIndex=-1;rs.textContent='RESET TO DEFAULTS';rs.addEventListener('click',()=>{sfxUnlock();if(state!=='keys')return;keyUI.r=BTNS.length;resetKeys()});L.append(rs);markKeys()}
+function markKeys(){const rows=$$('#keyList .row');rows.forEach((row,r)=>{row.setAttribute('aria-selected',String(r===keyUI.r));
+    row.querySelectorAll('.cap').forEach(c=>{const s=+c.dataset.s,b=BTNS[r]&&BTNS[r][0],on=r===keyUI.r&&s===keyUI.s;c.textContent=keyCap&&on?'PRESS…':keyLabel(b?binds[b][s]:null);c.classList.toggle('on',on);c.classList.toggle('wait',!!keyCap&&on)})});
+  const r=rows[keyUI.r],L=$('#keyList');if(r){if(r.offsetTop<L.scrollTop+4)L.scrollTop=Math.max(0,r.offsetTop-4);else if(r.offsetTop+r.offsetHeight>L.scrollTop+L.clientHeight-4)L.scrollTop=r.offsetTop+r.offsetHeight-L.clientHeight+6}
+  $('#keyHint').textContent=keyCap?'PRESS A KEY · ESC CANCELS':'';}
+function beginCap(){keyCap={r:keyUI.r,s:keyUI.s};markKeys();SFX.pick()}
+function capKey(e){if(e.key==='Escape'){keyCap=null;markKeys();SFX.back&&SFX.back();return}
+  if(e.key==='Backspace'||e.key==='Delete'){const b=BTNS[keyCap.r][0];binds[b][keyCap.s]=null;saveBinds();keyCap=null;markKeys();SFX.tick();return}
+  if(['Meta','Control','Alt','CapsLock','Tab','Dead','Unidentified','F5','F11','F12'].includes(e.key)||/^F\d+$/.test(e.key))return;
+  const k=normKey(e.key),b=BTNS[keyCap.r][0];let moved=null;
+  for(const[b2]of BTNS)for(let s2=0;s2<2;s2++)if(binds[b2][s2]===k&&!(b2===b&&s2===keyCap.s)){binds[b2][s2]=null;moved=b2}
+  binds[b][keyCap.s]=k;saveBinds();keyCap=null;markKeys();SFX.pick();if(moved&&moved!==b)toast(keyLabel(k)+' MOVED FROM '+moved.toUpperCase())}
+function saveBinds(){buildKB();store.set('keys',binds)}
+function resetKeys(){binds=JSON.parse(JSON.stringify(DEFBINDS));saveBinds();renderKeys();SFX.pick();toast('KEYBOARD RESET')}
+function keysInput(b){if(!keyUI||keyCap)return;
+  const n=BTNS.length;
+  if(b==='up'){if(keyUI.r>0){keyUI.r--;markKeys();SFX.tick()}else SFX.buzz()}
+  else if(b==='down'){if(keyUI.r<n){keyUI.r++;markKeys();SFX.tick()}else SFX.buzz()}
+  else if(b==='left'||b==='right'){keyUI.s=b==='left'?0:1;markKeys();SFX.tick()}
+  else if(b==='a'||b==='start'){if(keyUI.r===n)resetKeys();else beginCap()}
+  else if(b==='select'){if(keyUI.r<n){binds[BTNS[keyUI.r][0]][keyUI.s]=null;saveBinds();markKeys();SFX.tick()}}
+  else if(b==='b')closeKeys()}
 
 /* ---------- questions on the LCD ---------- */
 let askState=null;
@@ -871,6 +928,9 @@ function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}cat
       break;
     case 'lib':libInput(b);
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='lib'){libInput(d);repT=setTimeout(again,140)}},420)}
+      break;
+    case 'keys':keysInput(b);
+      if(/up|down/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='keys'){keysInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'skins':skinsInput(b);
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='skins'){skinsInput(d);repT=setTimeout(again,140)}},420)}
@@ -923,9 +983,14 @@ for(const el of $$('[data-btn]')){const b=el.dataset.btn;
   el.addEventListener('contextmenu',e=>e.preventDefault())}
 $('#power').addEventListener('click',()=>{sfxUnlock();powerSwitch()});
 /* keyboard, for when the console itself has focus (a game that has focus reads the keys itself) */
-const KB={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',z:'a',Z:'a',' ':'a',x:'b',X:'b',c:'c',C:'c',v:'d',V:'d',Escape:'b',Backspace:'b',Enter:'start',Shift:'select'};
-addEventListener('keydown',e=>{const b=KB[e.key];if(!b||e.metaKey||e.ctrlKey||e.altKey)return;e.preventDefault();if(e.repeat)return;pressBtn(b)});
-addEventListener('keyup',e=>{const b=KB[e.key];if(b)releaseBtn(b)});
+binds=loadBinds();buildKB();
+const FALLBACK={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'a',Escape:'b'};
+addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(keyCap){e.preventDefault();e.stopPropagation();capKey(e);return}
+  let b=KB[e.key];if(!b&&state==='keys')b=FALLBACK[e.key];            /* the controls screen always answers to arrows, Enter and Esc, so it can never lock you out */
+  if(!b){if(state==='home'&&(e.key==='k'||e.key==='K')){e.preventDefault();openKeys()}return}
+  e.preventDefault();if(e.repeat)return;pressBtn(b)});
+addEventListener('keyup',e=>{const b=KB[e.key]||(state==='keys'?FALLBACK[e.key]:null);if(b)releaseBtn(b)});
 addEventListener('blur',()=>{if(state!=='game')releaseAll()});
 for(const ev of['pointerdown','keydown'])addEventListener(ev,sfxUnlock,{capture:true,passive:true});
 
@@ -1015,6 +1080,7 @@ window.ZIGAPLAY=Object.freeze({
   takeRestore(id){const r=restore[id];delete restore[id];return r||null},
   cartReady(api){},
   get cart(){return cur&&cur.id},
+  get keys(){const o={};for(const[b]of BTNS)o[b]=binds[b].slice();return Object.freeze(o)},
 });
 
 /* ---------- start, and come back to the same game after this page is updated ---------- */
