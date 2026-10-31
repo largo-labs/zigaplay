@@ -1,138 +1,168 @@
-/* ================= the field: walking side to side through each place ================= */
-const FEET=161,WALK_SPD=62,RUN_SPD=112;
-const WD={actors:[],zone:null,x:0,dir:1,moving:false,cam:0,trail:[],busy:false,enc:400,near:null,ban:null,banT:0,walkT:0,stepAcc:0,bump:0,
-  pose:null,hidden:new Set(),arm:{},shake:0,lights:null,auto:null,hideParty:0,fx:[]};
-/* chests */
-const FSPR={};
-{const chest=open=>{const b=new Buf(16,14);b.rect(1,5,14,8,'#8a5a32');b.rect(1,5,14,1,'#a8763e');b.rect(1,9,14,1,'#c8a04a');b.rect(7,7,2,4,'#f2c84a');
-   if(open){b.rect(1,1,14,4,'#5a3a20');b.rect(2,2,12,3,'#2a1a10');b.px(5,3,'#ffe88a');b.px(9,2,'#ffe88a')}else{b.rect(1,2,14,4,'#a06a3a');b.rect(1,2,14,1,'#c8884a');b.rect(7,4,2,3,'#f2c84a')}b.outline(INK);return b.canvas(1)};
- FSPR.chest=chest(0);FSPR.chestOpen=chest(1)}
-/* people without weapons, in plain poses */
-const PLAIN={kneel:{crouch:6,lean:1,nl:[1.3,-1.3],fl:[.1,-1.67]},kneelsad:{crouch:6,lean:1.5,nl:[1.3,-1.3],fl:[.1,-1.67],na:[.6,-.4],fa:[.5,-.3],face:'closed'},
-  ko:{face:'ko'},hurt:{lean:-2,face:'hurt'},guard:{na:[1,-1.9],fa:[.6,-1.6],crouch:1},wave:{na:[-2.6,-.4]},point:{na:[1.5,0]}};
-const _npcC=new Map();
-function npcSprite(L,pose,flip){const k=JSON.stringify(L)+pose+flip;let c=_npcC.get(k);if(!c){c=drawDoll(L,PLAIN[pose]||POSES[pose]||{},null).canvas(1,flip);_npcC.set(k,c);if(_npcC.size>300)_npcC.delete(_npcC.keys().next().value)}return c}
-/* who someone is: a look, and a weapon if they carry one */
-const charWeapon=id=>{const C=CHARS[id],w=newWeapon(C.weapon.kind);return Object.assign(w,C.weapon,{parts:Object.assign(w.parts,C.weapon.parts)})};
-const _who={};
-function whoLook(key){if(_who[key])return _who[key];let r;
-  if(CHARS[key]&&CHARS[key].look)r={look:CHARS[key].look,weapon:charWeapon(key)};
-  else if(NPC_LOOKS[key])r={look:NPC_LOOKS[key],weapon:null};
-  else if(FOE_LOOKS[key]){const L=FOE_LOOKS[key],w=newWeapon(L.weapon.kind);r={look:L.look,guard:1,weapon:Object.assign(w,L.weapon,{parts:Object.assign(w.parts,L.weapon.parts)})}}
-  else r={look:NPC_LOOKS.townsman||DEFAULT_LOOK,weapon:null};
-  return _who[key]=r}
-function drawPerson(g,who,pose,sx,flip,lying){const W2=whoLook(who);
-  if(lying){const c=npcSprite(W2.look,'ko',false);g.save();g.translate(Math.round(sx+(lying>0?22:-22)),FEET-8);g.rotate(lying>0?-Math.PI/2:Math.PI/2);g.drawImage(c,-DOLL_FX,-DOLL_FY);g.restore();return}
-  shadow(g,sx);if(W2.weapon&&!PLAIN[pose])drawHeroAt(g,W2.look,W2.weapon,W2.guard&&!pose.startsWith('walk')?'ready':pose,sx,FEET,flip);else g.drawImage(npcSprite(W2.look,pose,flip),Math.round(sx-(flip?DOLL_W-DOLL_FX:DOLL_FX)),FEET-DOLL_FY)}
-const shadow=(g,sx,w=9)=>{g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(sx,FEET+1,w,2,0,0,7);g.fill()};
-/* is this thing here right now? */
-const shown=ev=>(!ev.if||ev.if())&&!(ev.id&&WD.hidden.has(ev.id));
-const evArt=ev=>typeof ev.art==='function'?ev.art():ev.art;
-/* ---------- moving between places ---------- */
-function enterZone(id,x,dir){const Z=ZONES[id];WD.actors=[];WD.hidden=new Set();WD.arm={};WD.lights=null;WD.auto=null;WD.pose=null;WD.fx=[];WD.zone=id;G.zone=id;WD.x=x;G.x=x;WD.dir=dir||1;G.dir=WD.dir;
-  WD.trail=[];for(let i=120;i>0;i--)WD.trail.push(x-WD.dir*i);for(const ev of Z.ev)if(ev.k==='scene'&&Math.abs(ev.x-x)<18)WD.arm[ev.id]=false;
-  WD.enc=320+rnd()*260;WD.bump=0;WD.ban=Z.n;WD.banT=2.4;SND.play(Z.music||'field');camTo(true)}
-function camTo(snap){const Z=ZONES[WD.zone],t=Z.len<=W?(Z.len-W)/2:clamp(WD.x-W/2+WD.dir*20,0,Z.len-W);WD.cam=snap?t:lerp(WD.cam,t,.12);if(Math.abs(WD.cam-t)<.3)WD.cam=t}
-async function goZone(id,x,dir){WD.busy=true;await fadeOut(220);enterZone(id,x,dir);if(!ZONES[id].noSave)autosave();await fadeIn(240);WD.busy=false}
-/* the edge of a place: go through, or be told why not */
-function edge(E,dir){if(!E)return false;if(E.to&&(!E.if||E.if())){goZone(E.to,E.x!=null?E.x:(dir>0?16:ZONES[E.to].len-16),dir);return true}
-  if(E.block&&WD.bump<=0){WD.bump=1;runTalk(E.block)}return false}
-/* step back from a closed way */
-function pushBack(n=12){const Z=ZONES[WD.zone];WD.x=clamp(WD.x-WD.dir*n,6,Z.len-6);G.x=WD.x;WD.trail.push(WD.x)}
-/* ---------- people in a scene ---------- */
-function actorAdd(o){const a=Object.assign({x:WD.x,flip:false,pose:'idle',walkT:0},o);WD.actors=WD.actors.filter(b=>b.id!==a.id);WD.actors.push(a);return a}
-function actorDel(...ids){WD.actors=WD.actors.filter(a=>!ids.includes(a.id))}
-const actor=id=>WD.actors.find(a=>a.id===id);
-function actorTo(id,x,sp=60){const a=actor(id);if(!a)return Promise.resolve();return new Promise(r=>{a.tx=x;a.sp=sp;a.done=r;if(a.prop){}else if(!a.foe)a.flip=x<a.x;else a.flip=x>a.x})}
-/* an npc standing in the place steps out to move about in a scene */
-function npcOut(id){const Z=ZONES[WD.zone],ev=Z.ev.find(e=>e.id===id);if(!ev)return null;WD.hidden.add(id);return actorAdd({id,who:ev.look||id,x:ev.x,flip:WD.x<ev.x})}
-function heroTo(x,sp=WALK_SPD){return new Promise(r=>{if(Math.abs(x-WD.x)<1){r();return}WD.auto={x,sp,done:r};WD.dir=x<WD.x?-1:1})}
-const face=d=>{WD.dir=d};
+/* ================= the field, top-down: walking the classic Strike at Night maps tile by tile ================= */
+const TS=16;
+const DIRV={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+const WD={map:null,m:null,x:0,y:0,px:0,py:0,ox:0,oy:0,dir:'down',moving:0,mp:0,walkF:0,run:0,npcs:[],lock:0,busy:false,trail:[],
+  pose:null,hidePlayer:0,lights:null,fx:[],shake:0,steps:0,noEnc:14,ban:null,banT:0,scripted:0,qT:0,
+  get zone(){return this.map}};
+/* ---------- people: any Spellsteel outfit as a 16x24 top-down sprite ---------- */
+const HAIR_STYLE={long:['Long Straight','Very Long','Side Swept Long','Hime Cut','Wavy','Locs','Half Up','Drill Curls'],pony:['Ponytail','Low Ponytail'],bun:['Bun','Top Knot'],
+  bald:['Bald','Buzz Cut'],spiky:['Spiky Hero','Long Spiky','Tall Spikes'],messy:['Messy','Shaggy','Wild Mane','Wolf Cut','Mullet','Emo Fringe','Fluffy','Antenna'],
+  braid:['Braid'],twin:['Twintails','Twin Buns'],curly:['Curly','Afro','Royal Curls'],mohawk:['Mohawk']};
+const HAT_STYLE={'hw-hood':['Hood','Cat-Ear Hood'],'hw-cap':['Cap','Backwards Cap','Beanie','Pom Beanie','Ushanka','Beret','Bucket Hat','Nightcap','Graduation Cap','Propeller Cap','Chef Hat','Goggles','Headphones'],
+  'hw-helmet':['Knight Helm','Viking Helm','Winged Helm','Spartan Helm','Samurai Kabuto'],'hw-bandana':['Bandana'],
+  'hw-headband':['Headband','Crown','Tiara','Circlet','Royal Circlet','Laurel Wreath','Flower Crown','Halo','Ribbon Bow'],
+  hat:['Wizard Hat','Witch Hat','Top Hat','Bowler','Cowboy Hat','Straw Hat','Adventurer Hat','Pirate Tricorn','Jester Hat','Party Hat','Mushroom Cap','Frog Hat']};
+const styleOf=(T,v)=>Object.keys(T).find(k=>T[k].includes(v));
+const _topC=new Map();
+function topLook(L0){const L=Object.assign({},DEFAULT_LOOK,L0||{}),k=JSON.stringify(L);let t=_topC.get(k);if(t)return t;
+  const st=[],hs=styleOf(HAIR_STYLE,L.hair);if(hs)st.push(hs);
+  const hat=L.hat&&L.hat!=='None'?styleOf(HAT_STYLE,L.hat):null;if(hat)st.push(hat);
+  const f=L.face||'None';if(f==='Full Beard'||f==='Goatee')st.push('beard');else if(f==='Mustache')st.push('mustache');else if(f==='Stubble')st.push('stubble');else if(['Mouth Mask','Ninja Mask','Fox Mask','Domino Mask'].includes(f))st.push('mask');
+  const top=L.top||'',bot=L.bot||'';
+  if(['Dress','Ball Gown','Apron Dress','Kimono'].includes(top)||['Skirt','Pleated Skirt','Long Skirt','Kilt','Wrap Skirt','Tutu','Hakama'].includes(bot))st.push('dress');
+  else if(['Mage Robe','Sorcerer Robe','Priest Vestment'].includes(top))st.push('robe');
+  if(['Long Coat','Trench Coat','Pirate Coat'].includes(top))st.push('o-coat');else if(['Vest','Ranger Vest','Noble Doublet'].includes(top))st.push('o-vest');
+  else if(['Full Plate','Breastplate','Chainmail','Scale Mail','Samurai Armor'].includes(top))st.push('o-armor');
+  if(['Short Cape','Long Cape','Tattered Cape','Royal Cape'].includes(L.back))st.push('cape');
+  const TT=byName(TOPS,top),c=(n,d)=>dyeOf(n,d);
+  t={id:'ss'+_topC.size,skin:skinOf(L),hair:c(L.hairC,'Chocolate'),top:c(L.topC1,TT[2][0]),acc:c(L.topC2,TT[2][1]),bot:c(L.botC1,'Brown'),boot:c(L.shoeC,'Chocolate'),
+    hwc:hat==='hw-headband'&&['Crown','Tiara','Circlet','Royal Circlet','Halo'].includes(L.hat)?c(L.hatC1,'Gold'):c(L.hatC1,'Crimson'),cape:c(L.backC1,'Crimson'),style:st};
+  if(hat==='hat')t.acc=c(L.hatC1,'Leather');if(st.includes('mask'))t.acc=c(L.faceC,'Charcoal');
+  _topC.set(k,t);return t}
+/* who an npc is drawn as: one of the classic people, or a member of the party in their own clothes */
+const npcLook=n=>n.party?topLook((allMembers().find(m=>m.id===n.party)||{look:CHARS[n.party].look}).look):n.ss?topLook(n.ss):TD.LOOKS[n.look]||TD.LOOKS.villager;
+/* ---------- the map ---------- */
+const F=k=>!!(G&&G.flags[k]),setF=k=>{G.flags[k]=1};
+function tileAt(m,x,y){if(x<0||y<0||x>=m.w||y>=m.h)return m.border;return m.rows[y][x]}
+const solidCh=ch=>{const t=TD.TILE[ch];return!t||!!t.solid||!!t.deep};
+const npcAt=(x,y)=>WD.npcs.find(n=>n.visible&&n.x===x&&n.y===y);
+const chestAt=(x,y)=>WD.m.chests.find(c=>c.x===x&&c.y===y&&(!c.cond||c.cond()));
+function canEnter(x,y){const m=WD.m;if(x<0||y<0||x>=m.w||y>=m.h)return m.edge?'edge':null;if(npcAt(x,y)||chestAt(x,y))return null;return solidCh(tileAt(m,x,y))?null:'foot'}
+const npc=id=>WD.npcs.find(n=>n.id===id);
+function refreshNpcs(){for(const n of WD.npcs)n.visible=!n.cond||n.cond()}
+function initTrail(){WD.trail=[];const [dx,dy]=DIRV[WD.dir]||[0,1];let px=WD.x,py=WD.y;
+  for(let k=1;k<=3;k++){const nx=WD.x-dx*k,ny=WD.y-dy*k;if(nx>=0&&ny>=0&&nx<WD.m.w&&ny<WD.m.h&&!solidCh(tileAt(WD.m,nx,ny))&&px===WD.x-dx*(k-1)&&py===WD.y-dy*(k-1)){px=nx;py=ny}WD.trail.push({x:px,y:py})}}
+function pushTrail(x,y){WD.trail.unshift({x,y});if(WD.trail.length>4)WD.trail.length=4}
+function loadMap(id,x,y,dir){const m=MAPS[id];WD.map=id;WD.m=m;G.zone=id;WD.x=x;WD.y=y;WD.px=x;WD.py=y;WD.ox=WD.oy=0;WD.moving=0;WD.dir=dir||WD.dir;
+  G.x=x;G.y=y;G.dir=WD.dir;WD.pose=null;WD.hidePlayer=0;WD.lights=null;WD.fx=[];WD.shake=0;
+  if(m.onLoad)m.onLoad(m);
+  WD.npcs=m.npcs.map(n=>({...n,hx:n.x,hy:n.y,ox:0,oy:0,dir:n.dir||'down',wt:60+rnd()*120,mv:0,visible:true}));
+  refreshNpcs();initTrail();WD.steps=0;WD.noEnc=14;WD.ban=m.indoor?null:m.name;WD.banT=m.indoor?0:2.6;SND.play(m.music||'field')}
+/* enter a map at a spot, or at its default spot if that one is no good (an old save, say) */
+function enterZone(id,x,y,dir){const m=MAPS[id];if(typeof dir!=='string')dir=null;
+  if(x==null||y==null||x<0||y<0||x>=m.w||y>=m.h||solidCh(tileAt(m,x,y))){[x,y,dir]=m.spawn}loadMap(id,x,y,dir||'down')}
+async function goto(id,x,y,dir,o={}){WD.lock++;try{if(!o.silent){SND.fx('door');await fadeOut(240)}loadMap(id,x,y,dir);if(!MAPS[id].noSave)autosave();if(!o.silent)await fadeIn(260)}finally{WD.lock=Math.max(0,WD.lock-1)}
+  await onArrive()}
+const goZone=goto;
+async function onArrive(){const m=WD.m;const tr=m.triggers.find(t=>t.onArrive&&WD.x>=t.x&&WD.x<t.x+(t.w||1)&&WD.y>=t.y&&WD.y<t.y+(t.h||1)&&(!t.cond||t.cond()));if(tr)await runScript(tr.run)}
+/* stories run one at a time; while one runs the hero stands still */
+async function runScript(key,arg){const fn=STORY[key];if(!fn){console.warn('no script',key);return}
+  WD.lock++;WD.moving=0;try{await fn(arg)}catch(e){if(e!==ABORT)console.error(e)}finally{WD.lock=Math.max(0,WD.lock-1);if(!WD.lock)WD.dlg=null;if(WD.m)refreshNpcs()}}
+const runStoryFn=runScript;
+/* step back onto the tile you came from */
+function pushBack(){WD.x=WD.px;WD.y=WD.py;WD.ox=WD.oy=0;WD.moving=0;G.x=WD.x;G.y=WD.y}
+const free=()=>!WD.lock&&!WD.busy&&!MODAL.length&&S_SCENE===WORLD_SCENE;
+/* ---------- moving ---------- */
+function heldDir(){for(const d of['up','down','left','right'])if(held.has(d))return d;return null}
+function tryMove(d){WD.dir=d;const [dx,dy]=DIRV[d],tx=WD.x+dx,ty=WD.y+dy,how=canEnter(tx,ty);
+  if(how==='edge'){leaveByEdge();return}if(!how)return;
+  WD.px=WD.x;WD.py=WD.y;pushTrail(WD.x,WD.y);WD.x=tx;WD.y=ty;WD.moving=1;WD.mp=0;WD.ox=-dx*TS;WD.oy=-dy*TS}
+async function leaveByEdge(){const e=WD.m.edge;WD.lock++;try{await goto(e.to,e.x,e.y,e.dir||'down')}finally{WD.lock=Math.max(0,WD.lock-1)}}
+async function afterStep(){const m=WD.m;G.x=WD.x;G.y=WD.y;G.dir=WD.dir;G.steps=(G.steps||0)+1;
+  const ex=m.exits.find(e=>e.x===WD.x&&e.y===WD.y&&(!e.cond||e.cond()));
+  if(ex){WD.lock++;try{await goto(ex.to,ex.tx,ex.ty,ex.dir)}finally{WD.lock=Math.max(0,WD.lock-1)}return}
+  const tr=m.triggers.find(t=>!t.onArrive&&WD.x>=t.x&&WD.x<t.x+(t.w||1)&&WD.y>=t.y&&WD.y<t.y+(t.h||1)&&(!t.cond||t.cond()));
+  if(tr){await runScript(tr.run);return}
+  if(m.enc&&!G.flags.noenc){WD.steps++;if(WD.noEnc>0)WD.noEnc--;else if(rnd()<1/(m.rate||30)){WD.noEnc=18;encounter(m)}}}
 /* ---------- the scene ---------- */
 const WORLD_SCENE={
- enter(){const Z=ZONES[WD.zone];if(Z)SND.play(Z.music||'field');WD.busy=false},
- update(dt){const Z=ZONES[WD.zone];if(!Z)return;G.time+=dt;WD.qT=(WD.qT||0)+dt;if(WD.qT>1.5){WD.qT=0;if(!WD.busy&&!MODAL.length)checkQuests()}if(WD.banT>0)WD.banT-=dt;
-   if(WD.shake>0)WD.shake=Math.max(0,WD.shake-dt);
-   for(const a of WD.actors){if(a.tx==null)continue;const d=a.tx-a.x,st=a.sp*dt;a.walkT+=dt;if(Math.abs(d)<=st){a.x=a.tx;a.tx=null;const r=a.done;a.done=null;if(r)r()}else a.x+=Math.sign(d)*st}
-   if(WD.auto){const A=WD.auto,d=A.x-WD.x,st=A.sp*dt;WD.moving=true;WD.walkT+=dt;if(Math.abs(d)<=st){WD.x=A.x;WD.auto=null;WD.moving=false;A.done()}else{WD.x+=Math.sign(d)*st;WD.dir=Math.sign(d)}G.x=WD.x;WD.trail.push(WD.x);if(WD.trail.length>200)WD.trail.shift();camTo(false);return}
-   const free=!WD.busy&&!MODAL.length;let d=0;if(free){if(held.has('left'))d-=1;if(held.has('right'))d+=1}
-   WD.moving=d!==0;if(d){WD.dir=d;const sp=(held.has('b')?RUN_SPD:WALK_SPD)*dt;let nx=WD.x+d*sp;
-     if(nx>Z.len-6){if(edge(Z.right,1))return;nx=Z.len-6}
-     if(nx<6){if(edge(Z.left,-1))return;nx=6}
-     const moved=Math.abs(nx-WD.x);WD.x=nx;G.x=nx;WD.walkT+=dt*(held.has('b')?1.6:1);WD.stepAcc+=moved;if(WD.stepAcc>15){WD.stepAcc=0;SND.fx('step')}
-     WD.trail.push(WD.x);if(WD.trail.length>200)WD.trail.shift();
-     for(const ev of Z.ev){if(ev.k!=='scene')continue;const dd=Math.abs(WD.x-ev.x);if(dd>18)WD.arm[ev.id]=true;else if(dd<10&&WD.arm[ev.id]!==false&&shown(ev)){WD.arm[ev.id]=false;runScene(ev);return}}
-     if(Z.enc&&!WD.busy){WD.enc-=moved;if(WD.enc<=0){WD.enc=280+rnd()*300;encounter(Z);return}}}
-   if(WD.bump>0&&!(d>0&&WD.x>=Z.len-7)&&!(d<0&&WD.x<=7))WD.bump=0;
-   WD.near=null;let best=18;for(const ev of Z.ev){if(!['npc','spot','house','chest','fire'].includes(ev.k)||!shown(ev))continue;if(ev.k==='chest'&&G.opened[ev.id])continue;const dd=Math.abs(ev.x-WD.x)-(ev.k==='house'?6:0);if(dd<best){best=dd;WD.near=ev}}
-   camTo(false)},
- draw(){const Z=ZONES[WD.zone];if(!Z)return;const g=ctx,cam=Math.round(WD.cam),nv=Z.night?Z.night():false,nt=!!nv;
-   const sh=WD.shake>0?Math.round((rnd()-.5)*WD.shake*14):0;g.save();g.translate(sh,0);
-   drawBackdrop(g,Z.theme,cam,false,TIME,false,nv);
-   /* what stands on the ground */
-   for(const ev of Z.ev){if(!shown(ev))continue;const sx=Math.round(ev.x-cam);if(sx<-90||sx>W+90)continue;
-     if(ev.k==='house')drawHouse(g,sx,{roof:ev.roof,wall:ev.wall,sign:ev.sign,lit:ev.lit?ev.lit():false,w:ev.w,h:ev.h});
-     else if(ev.k==='prop'||(ev.k==='spot'&&ev.art))drawProp(g,evArt(ev),sx,TIME,ev.flip);
-     else if(ev.k==='fire')drawFire(g,sx,TIME);
-     else if(ev.k==='chest')g.drawImage(G.opened[ev.id]?FSPR.chestOpen:FSPR.chest,sx-8,FEET-14)}
-   /* people who live here */
-   for(const ev of Z.ev){if(ev.k!=='npc'||!shown(ev))continue;const sx=ev.x-cam;if(sx<-60||sx>W+60)continue;
-     const f=ev.face!=null?ev.face<0:WD.x<ev.x;drawPerson(g,ev.look||ev.id,Math.floor(TIME*1.5+ev.x)%4===0?'breathe':(ev.pose||'idle'),sx,f)}
-   /* people and creatures in a scene */
-   for(const a of WD.actors){const sx=a.x-cam;if(sx<-80||sx>W+80)continue;
-     if(a.prop){drawProp(g,a.prop,sx,TIME,a.flip);continue}
-     if(a.foe){const F=FOE[a.foe],s=foeSprite(F),fly=F.fly?-24+Math.round(Math.sin(TIME*2+a.x)*2):0;shadow(g,sx,12);g.save();g.translate(Math.round(sx),0);if(a.flip)g.scale(-1,1);g.drawImage(s.cv,-s.fx,FEET-s.fy+fly);g.restore();continue}
-     const mv=a.tx!=null,pose=mv?'walk'+(Math.floor(a.walkT*8)%4):a.pose||'idle';
-     if(a.look){shadow(g,sx);drawHeroAt(g,a.look,a.weapon||null,pose,sx,FEET,!!a.flip)}else drawPerson(g,a.who,pose,sx,!!a.flip,a.lying)}
-   /* the party, last one first */
-   const P=G.party,n=WD.hideParty?0:P.length,walking=WD.moving;
-   for(let i=n-1;i>=0;i--){const m=P[i];let x=WD.x,dir=WD.dir,mv=walking;
-     if(i>0){const idx=WD.trail.length-1-i*16;x=idx>=0?WD.trail[idx]:WD.x-WD.dir*i*16;const nx=idx+1<WD.trail.length&&idx>=0?WD.trail[idx+1]:x;if(nx!==x)dir=nx>x?1:-1;else dir=WD.dir}
-     const sx=x-cam;if(sx<-40||sx>W+40)continue;shadow(g,sx);
-     const w=m.id==='hero'&&!G.flags.knife?null:m.weapon;
-     const pose=mv?'walk'+(Math.floor(WD.walkT*8+i*2)%4):i===0&&WD.pose?WD.pose:(m.hp<=0?'hurt':'idle');drawHeroAt(g,m.look,w,pose,sx,FEET,dir<0)}
-   /* night: everything darker, then the lights */
-   if(nt){g.fillStyle=Z.tint?Z.tint():'rgba(8,10,36,.5)';g.fillRect(-8,0,W+16,H);g.globalCompositeOperation='lighter';
-     const glow=(x,y,r,c)=>{const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2)};
-     for(const ev of Z.ev){if(!shown(ev))continue;const sx=ev.x-cam;if(sx<-90||sx>W+90)continue;
-       if(ev.k==='fire')glow(sx,FEET-8,54+Math.sin(TIME*9)*2,'rgba(255,140,50,.42)');
-       else if(ev.glow)glow(sx,FEET-14,48+Math.sin(TIME*7)*2,ev.glow==='#ff9a4a'?'rgba(255,140,60,.4)':'rgba(255,220,140,.32)');
-       else if(ev.k==='house'&&ev.lit&&ev.lit()){glow(sx-18,GROUND_Y-30,18,'rgba(255,200,110,.35)');glow(sx+18,GROUND_Y-30,18,'rgba(255,200,110,.35)')}}
-     if(Z.theme==='tollhouse'||Z.theme==='city'){}else glow(WD.x-cam,FEET-24,30,'rgba(120,130,180,.12)');
-     g.globalCompositeOperation='source-over'}
-   if(WD.lights){g.globalCompositeOperation='lighter';for(const L of WD.lights){const x=L.x-cam,y=L.y,gr=g.createRadialGradient(x,y,0,x,y,L.r);gr.addColorStop(0,L.c);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(x-L.r,y-L.r,L.r*2,L.r*2)}g.globalCompositeOperation='source-over'}
-   for(const f of WD.fx.slice())f(g,cam);
-   g.restore();
-   /* what you could do here */
-   if(WD.near&&!WD.busy&&!MODAL.length){const ev=WD.near,sx=Math.round(ev.x-cam),y=FEET-(ev.k==='house'?82:ev.k==='npc'?62:ev.art==='idoor'||ev.art==='gate'?66:ev.art==='hearth'?50:36)+(Math.floor(TIME*3)%2);
-     g.fillStyle='#160f24';g.fillRect(sx-5,y-1,11,10);g.fillStyle='#c8283c';g.fillRect(sx-4,y,9,8);g.fillStyle='#ffffff';g.font='bold 7px monospace';g.textAlign='center';g.fillText('A',sx+.5,y+7);g.textAlign='left';
-     if(ev.label){g.font='7px "Pixelify Sans",monospace';const tw=g.measureText(ev.label).width+6;g.fillStyle='rgba(14,10,30,.75)';g.fillRect(Math.round(sx-tw/2),y-11,Math.round(tw),9);g.fillStyle='#ffe9a8';g.textAlign='center';g.fillText(ev.label,sx,y-4);g.textAlign='left'}}
-   if(WD.banT>0&&WD.ban){const a=Math.min(1,WD.banT*2,(2.4-WD.banT)*4);g.globalAlpha=a;const t=WD.ban;g.font='9px "Pixelify Sans",monospace';const tw=g.measureText(t).width+20;
-     g.fillStyle='rgba(14,22,84,.9)';g.fillRect(Math.round(W/2-tw/2),8,Math.round(tw),15);g.fillStyle='#e8eeff';g.fillRect(Math.round(W/2-tw/2),8,Math.round(tw),1);g.fillRect(Math.round(W/2-tw/2),22,Math.round(tw),1);
-     g.fillStyle='#ffd86a';g.textAlign='center';g.fillText(t,W/2,19);g.textAlign='left';g.globalAlpha=1}},
- input(b){if(WD.busy)return;if(b==='a'||b==='up'){if(WD.near)interact(WD.near)}else if(b==='start'){SND.fx('ok');mainMenu()}},
+ enter(){if(WD.m)SND.play(WD.m.music||'field');WD.busy=false},
+ update(dt){if(!WD.m)return;G.time+=dt;WD.qT+=dt;if(WD.qT>1.5){WD.qT=0;if(free())checkQuests()}if(WD.banT>0)WD.banT-=dt;if(WD.shake>0)WD.shake=Math.max(0,WD.shake-dt);
+   const k=Math.min(3,dt*60);
+   for(const n of WD.npcs){if(!n.visible)continue;
+     if(n.mv){const [dx,dy]=DIRV[n.dir];n.mvp+=(n.sp||1)*k;const p=Math.min(16,n.mvp);n.ox=dx*(p-16);n.oy=dy*(p-16);n.frame=(n.mvp/8|0)%2+1;if(n.mvp>=16){n.mv=0;n.ox=n.oy=0;n.frame=0}}
+     else if(n.wander&&free()){n.wt-=k;if(n.wt<=0){n.wt=90+rnd()*160;const d=['up','down','left','right'][ri(0,3)],[dx,dy]=DIRV[d],tx=n.x+dx,ty=n.y+dy;n.dir=d;
+       if(Math.abs(tx-n.hx)<=2&&Math.abs(ty-n.hy)<=2&&tx>=0&&ty>=0&&tx<WD.m.w&&ty<WD.m.h&&!solidCh(tileAt(WD.m,tx,ty))&&!npcAt(tx,ty)&&!chestAt(tx,ty)&&!(tx===WD.x&&ty===WD.y)&&!(WD.moving&&tx===WD.x&&ty===WD.y)){n.x=tx;n.y=ty;n.mv=1;n.mvp=0;n.ox=-dx*16;n.oy=-dy*16}}}}
+   if(WD.moving){const sp=(!WD.scripted&&held.has('b')?4:2)*k;WD.mp+=sp;const [dx,dy]=DIRV[WD.dir];const p=Math.min(16,WD.mp);WD.ox=dx*(p-16);WD.oy=dy*(p-16);
+     if(Math.floor((WD.mp-sp)/8)!==Math.floor(WD.mp/8)){WD.walkF++;if(WD.walkF%2===0)SND.fx('step')}
+     if(WD.mp>=16){WD.moving=0;WD.ox=WD.oy=0;if(!WD.scripted)afterStep()}return}
+   if(!free())return;const d=heldDir();if(d)tryMove(d)},
+ draw(){drawField()},
+ input(b){if(!free()||WD.moving)return;if(b==='a')interact();else if(b==='start'){SND.fx('ok');mainMenu()}},
 };
-/* ---------- things you can touch ---------- */
-async function interact(ev){WD.busy=true;WD.moving=false;try{
-  if(ev.k==='npc'||ev.k==='spot'||ev.k==='fire'||ev.k==='house'&&ev.talk){if(ev.k==='npc'&&Math.abs(ev.x-WD.x)>2)WD.dir=ev.x<WD.x?-1:1;await runStoryFn(ev.talk,ev)}
-  else if(ev.k==='house'){SND.fx('door');await openPlace(ev.to,WD.zone)}
-  else if(ev.k==='chest'){await openChest(ev)}
- }catch(e){if(e!==ABORT)console.error(e)}finally{if(S_SCENE===WORLD_SCENE)WD.busy=false}}
-async function runStoryFn(id,ev){const f=STORY[id];if(f)await f(ev);else await say('','...')}
-async function runTalk(id){WD.busy=true;WD.moving=false;try{await runStoryFn(id)}catch(e){if(e!==ABORT)console.error(e)}finally{if(S_SCENE===WORLD_SCENE)WD.busy=false}}
+const heroScreenY=()=>{const [,cy]=camera();return WD.y*TS+WD.oy-cy+8};
+function camera(){const m=WD.m,px=WD.x*TS+WD.ox+8,py=WD.y*TS+WD.oy+8,mw=m.w*TS,mh=m.h*TS;
+  let cx=px-W/2,cy=py-Math.round(H*.42);cx=mw<=W?(mw-W)/2:clamp(cx,0,mw-W);cy=mh<=H?(mh-H)/2:clamp(cy,0,mh-H);return[Math.round(cx),Math.round(cy)]}
+function drawField(){const m=WD.m;if(!m)return;const g=ctx;let [cx,cy]=camera();const af=Math.floor(TIME*3.75)%4;
+  if(WD.shake>0){cx+=ri(-2,2);cy+=ri(-2,2)}
+  g.fillStyle='#000';g.fillRect(0,0,W,H);
+  const x0=Math.floor(cx/TS),y0=Math.floor(cy/TS),x1=Math.ceil((cx+W)/TS),y1=Math.ceil((cy+H)/TS);
+  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)g.drawImage(TD.tileImg(tileAt(m,tx,ty),af,'flood'),tx*TS-cx,ty*TS-cy);
+  const list=[];
+  for(const c of m.chests){if(c.cond&&!c.cond())continue;list.push({y:c.y*TS,draw:()=>g.drawImage(TD.ART.chest[G.opened[c.id]?1:0],c.x*TS-cx,c.y*TS-cy)})}
+  for(const n of WD.npcs){if(!n.visible)continue;const nx=n.x*TS+n.ox-cx,ny=n.y*TS+n.oy-cy;
+    list.push({y:n.y*TS+n.oy+(n.big?-2:0),draw:()=>{
+      if(n.mon){const im=TD.monImg(n.mon[0],n.mon[1]);const bob=Math.sin(TIME*3+n.x)*1.5;g.save();if(n.dir==='left'){g.translate(Math.round(nx+8),0);g.scale(-1,1);g.drawImage(im,Math.round(-im.width/2),Math.round(ny+16-im.height+bob))}else g.drawImage(im,Math.round(nx+8-im.width/2),Math.round(ny+16-im.height+bob));g.restore()}
+      else if(n.big){const im=n.big();g.drawImage(im,Math.round(nx+8-im.width/2+(n.dx||0)),n.stand?Math.round(ny+15-im.height):Math.round(ny+8-im.height/2))}
+      else if(n.lying){const im=TD.personImg(npcLook(n),'down',0);g.save();g.translate(Math.round(nx+8),Math.round(ny+10));g.rotate(n.lying<0?Math.PI/2:-Math.PI/2);g.drawImage(im,-8,-14);g.restore()}
+      else g.drawImage(TD.personImg(npcLook(n),n.dir,n.mv?n.frame:(n.pose||0)),Math.round(nx),Math.round(ny-9))}})}
+  const px=WD.x*TS+WD.ox-cx,py=WD.y*TS+WD.oy-cy;
+  if(!WD.hidePlayer)list.push({y:WD.y*TS+WD.oy,draw:()=>{const wf=WD.pose||(WD.moving?[1,0,2,0][WD.walkF%4]:0);g.drawImage(TD.personImg(topLook(hero().look),WD.dir,wf),Math.round(px),Math.round(py-9))}});
+  const fl=m.noFollow||WD.hidePlayer?[]:G.party.filter(x=>x.id!=='hero').slice(0,2);
+  if(fl.length){const p=WD.moving?Math.min(1,WD.mp/16):1;
+    fl.forEach((mem,k)=>{const to=WD.trail[k]||{x:WD.x,y:WD.y},fr=WD.trail[k+1]||to,at=WD.moving?fr:to;
+      const fx=(at.x+(to.x-at.x)*p)*TS,fy=(at.y+(to.y-at.y)*p)*TS;
+      const dir=fr.x!==to.x||fr.y!==to.y?(to.x>fr.x?'right':to.x<fr.x?'left':to.y>fr.y?'down':'up'):WD.dir;
+      const walking=WD.moving&&(fr.x!==to.x||fr.y!==to.y);const wf=walking?[1,0,2,0][(WD.walkF+k+1)%4]:0;
+      list.push({y:fy-.5-k*.01,draw:()=>g.drawImage(TD.personImg(topLook(mem.look),dir,wf),Math.round(fx-cx),Math.round(fy-cy)-9)})})}
+  list.sort((a,b)=>a.y-b.y);for(const s of list)s.draw();
+  const nt=m.night&&m.night();if(nt)drawNight(m,cx,cy);else if(WD.lights)drawLights(cx,cy,WD.lights);
+  if(m.over)m.over(g,cx,cy);
+  for(const f of WD.fx.slice())f(g,cx,cy);
+  if(WD.banT>0&&WD.ban){const a=Math.min(1,WD.banT*2,(2.6-WD.banT)*4);g.globalAlpha=a;const t=WD.ban;g.font='9px "Pixelify Sans",monospace';const tw=g.measureText(t).width+20;
+    g.fillStyle='rgba(14,22,84,.9)';g.fillRect(Math.round(W/2-tw/2),8,Math.round(tw),15);g.fillStyle='#e8eeff';g.fillRect(Math.round(W/2-tw/2),8,Math.round(tw),1);g.fillRect(Math.round(W/2-tw/2),22,Math.round(tw),1);
+    g.fillStyle='#ffd86a';g.textAlign='center';g.fillText(t,W/2,19);g.textAlign='left';g.globalAlpha=1}}
+/* night: a deep wash over everything, then warm light added back around every lit window, fire and lamp */
+function nightLights(m){if(m._lights)return m._lights;const L=[];for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const ch=m.rows[y][x],t=TD.TILE[ch];
+    if(ch==='+')L.push({x:x*16+8,y:y*16+8,r:20,c:'rgba(255,200,110,.55)'});else if(t&&t.fire)L.push({x:x*16+8,y:y*16+8,r:44,c:'rgba(255,120,40,.7)',fire:1});
+    else if(t&&t.lamp){const l=t.lamp;L.push({x:x*16+8+(l.dx||0),y:y*16+8+(l.dy||0),r:l.r,c:l.c,fire:l.flicker?1:0})}}
+  return m._lights=L}
+function drawLights(cx,cy,list){const g=ctx;g.save();g.globalCompositeOperation='lighter';
+  for(const l of list){const x=l.x-cx,y=l.y-cy,r=l.r*(l.fire?.88+Math.sin(TIME*15+l.x)*.08+rnd()*.05:1);if(x<-r||y<-r||x>W+r||y>H+r)continue;
+    const gr=g.createRadialGradient(x,y,1,x,y,r);gr.addColorStop(0,l.c);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2)}g.restore()}
+function drawNight(m,cx,cy){const g=ctx;g.fillStyle=m.nightTint||'rgba(6,10,36,.58)';g.fillRect(0,0,W,H);drawLights(cx,cy,[...nightLights(m),...(WD.lights||[])])}
+/* ---------- the A button ---------- */
+const OPP={up:'down',down:'up',left:'right',right:'left'};
+async function interact(){const [dx,dy]=DIRV[WD.dir];let tx=WD.x+dx,ty=WD.y+dy;const m=WD.m;
+  let n=npcAt(tx,ty);if(!n&&[')',']','c'].includes(tileAt(m,tx,ty)))n=npcAt(tx+dx,ty+dy);
+  if(n&&n.talk){if(!n.mon&&!n.big&&!n.lying&&n.turn!==false)n.dir=OPP[WD.dir];await runScript(n.talk,n);return}
+  const c=chestAt(tx,ty);if(c&&!G.opened[c.id]){WD.lock++;try{await openChest(c)}finally{WD.lock=Math.max(0,WD.lock-1)}return}
+  const ins=m.inspect.find(i=>i.x===tx&&i.y===ty);if(ins){await runScript(ins.talk,ins)}}
 async function openChest(ev){SND.fx('chest');G.opened[ev.id]=1;let txt;
   if(ev.item){addItem(ev.item,ev.n||1);txt=`${ITEMS[ev.item].n}${ev.n>1?' ×'+ev.n:''}`}
   else if(ev.charm){addCharm(ev.charm);txt=CHARMS[ev.charm].n+' (a charm)'}
   else if(ev.cos){G.owned[ev.cos[0]+':'+ev.cos[1]]=1;txt=`${ev.cos[1]}, new for the wardrobe!`}
   else if(ev.gold){G.gold+=ev.gold;txt=`${ev.gold} gold`}
   await say('',`Found ${txt}`)}
-function encounter(Z){let tot=0;for(const f of Z.enc)tot+=f[1];let r=rnd()*tot,form=Z.enc[0][0];for(const f of Z.enc){r-=f[1];if(r<=0){form=f[0];break}}
-  startFight(form,{theme:Z.bt||Z.theme,night:!!(Z.night&&Z.night())}).catch(e=>{if(e!==ABORT)console.error(e)})}
+/* ---------- fights ---------- */
+function encounter(m){let tot=0;for(const f of m.enc)tot+=f[1];let r=rnd()*tot,form=m.enc[0][0];for(const f of m.enc){r-=f[1];if(r<=0){form=f[0];break}}
+  WD.lock++;startFight(form,{}).catch(e=>{if(e!==ABORT)console.error(e)}).finally(()=>{WD.lock=Math.max(0,WD.lock-1)})}
 /* a fight; if the party falls and you choose to load or quit, whatever was running stops */
-async function startFight(form,o){const was=WD.busy;WD.busy=true;const Z=ZONES[WD.zone];o=Object.assign({theme:Z.bt||Z.theme,night:!!(Z.night&&Z.night())},o);
+async function startFight(form,o){const was=WD.busy;WD.busy=true;const m=WD.m;o=Object.assign({theme:m.bt||'forest',night:!!(m.night&&m.night())},o);
   const r=await battle(form,o);if(r==='load'||r==='title'){await afterFight(r);throw ABORT}WD.busy=was;return r}
 async function afterFight(r){if(r==='load'){await loadGame();return}if(r==='title'){toTitle();return}}
-async function runScene(ev){WD.busy=true;WD.moving=false;try{await runStoryFn(ev.run)}catch(e){if(e===ABORT)return;throw e}finally{if(S_SCENE===WORLD_SCENE)WD.busy=false}if(!ZONES[WD.zone].noSave)autosave()}
+/* ---------- helpers for scenes ---------- */
+const charWeapon=id=>{const C=CHARS[id],w=newWeapon(C.weapon.kind);return Object.assign(w,C.weapon,{parts:Object.assign(w.parts,C.weapon.parts)})};
+const frames=n=>new Promise(r=>{let k=0;const f=()=>{if(++k>=n)r();else requestAnimationFrame(f)};requestAnimationFrame(f)});
+function spawn(def){const n={hx:def.x,hy:def.y,ox:0,oy:0,dir:'down',wt:999,mv:0,visible:true,fixed:1,...def};WD.npcs=WD.npcs.filter(o=>o.id!==n.id);WD.npcs.push(n);return n}
+function despawn(...ids){WD.npcs=WD.npcs.filter(n=>!ids.includes(n.id))}
+/* walk someone along a path of steps; they stay out (and visible) afterwards until despawned */
+async function walkNpc(id,path,sp=1){const n=npc(id);if(!n)return;n.cond=null;n.visible=true;n.sp=sp;for(const d of path){const [dx,dy]=DIRV[d];n.dir=d;n.x+=dx;n.y+=dy;n.mv=1;n.mvp=0;n.ox=-dx*16;n.oy=-dy*16;while(n.mv)await frames(1)}}
+async function walkMe(path){for(const d of path){const [dx,dy]=DIRV[d];WD.dir=d;pushTrail(WD.x,WD.y);WD.px=WD.x;WD.py=WD.y;WD.x+=dx;WD.y+=dy;WD.moving=1;WD.mp=0;WD.scripted=1;WD.ox=-dx*16;WD.oy=-dy*16;while(WD.moving)await frames(1)}
+  WD.scripted=0;G.x=WD.x;G.y=WD.y}
+/* walk the hero to a column (and row) one tile at a time */
+async function walkMeTo(x,y){const p=[];let cx=WD.x,cy=WD.y;while(cx<x){p.push('right');cx++}while(cx>x){p.push('left');cx--}if(y!=null){while(cy<y){p.push('down');cy++}while(cy>y){p.push('up');cy--}}if(p.length)await walkMe(p)}
+function face(id,d){if(id==='me')WD.dir=d;else{const n=npc(id);if(n)n.dir=d}}
 /* a member joins */
 function join(id,lv){if(owned(id))return;const C=CHARS[id],L=lv||avgLv();
-  const m=makeMember(id,L,C.look,C.weapon,C.n);m.weapon.tier=hero().weapon.tier||0;(G.party.length<3?G.party:G.roster).push(m);G.flags[id]=1;SND.fx('level')}
+  const m=makeMember(id,L,C.look,C.weapon,C.n);m.weapon.tier=hero().weapon.tier||0;(G.party.length<3?G.party:G.roster).push(m);G.flags[id]=1;SND.fx('level');if(WD.m)initTrail()}

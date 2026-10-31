@@ -4,7 +4,7 @@
 import os,sys
 HERE=os.path.dirname(os.path.abspath(__file__))
 REPO=os.path.dirname(os.path.dirname(HERE))
-ORDER=['buf','doll','weapons','data','foes','scenery','props','party','core','audio','ui','dress','battle','world','story','menus','quests','main']
+ORDER=['buf','doll','weapons','data','foes','scenery','props','tiles','maps','party','core','audio','ui','dress','battle','world','story','menus','quests','main']
 shell=open(os.path.join(HERE,'src','shell.html'),encoding='utf8').read()
 js='\n'.join(open(os.path.join(HERE,'src',n+'.js'),encoding='utf8').read() for n in ORDER)
 assert '</script' not in js.lower()

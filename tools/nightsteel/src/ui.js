@@ -43,7 +43,9 @@ async function confirmBox(text,yes='Yes',no='No'){const e=winEl('pop',{x:W/2-80,
 function toast(msg,ms=1700){const e=winEl('toast pop');e.innerHTML=msg;setTimeout(()=>{e.style.transition='opacity .3s';e.style.opacity=0;setTimeout(()=>e.remove(),320)},ms)}
 /* ---------- dialogue ---------- */
 let DLG_FAST=false;
-function say(who,text,o={}){return new Promise(res=>{const e=winEl('dlg pop');const tb=el('div','txt');e.appendChild(tb);
+/* on the field dialogue sits at the bottom, under the hero, unless he stands low on the screen (near the bottom of a map) */
+const dlgLow=()=>typeof WD!=='undefined'&&S_SCENE===WORLD_SCENE&&!!WD.m&&(WD.dlg?WD.dlg==='low':heroScreenY()<H*.62);
+function say(who,text,o={}){return new Promise(res=>{const e=winEl('dlg pop'+(dlgLow()?' low':''));const tb=el('div','txt');e.appendChild(tb);
     if(who){const w=el('div','win who',esc(who));e.appendChild(w)}
     const more=el('div','more','▼');more.style.display='none';e.appendChild(more);
     const full=String(text);let n=0,acc=0,done=false;const shown=()=>{tb.innerHTML=esc(full.slice(0,Math.floor(n))).replace(/\n/g,'<br>')+'<span style="opacity:0">'+esc(full.slice(Math.floor(n))).replace(/\n/g,'<br>')+'</span>'};
@@ -51,8 +53,8 @@ function say(who,text,o={}){return new Promise(res=>{const e=winEl('dlg pop');co
       input(b){if(b!=='a'&&b!=='b')return;if(!done){n=full.length;done=true;shown();more.style.display='';return}popModal(m);res()}};
     shown();pushModal(m)})}
 /* a question with choices at the end of a line */
-async function ask(who,text,opts){const e=winEl('dlg');if(who)e.appendChild(el('div','win who',esc(who)));e.appendChild(el('div','txt',esc(text).replace(/\n/g,'<br>')));
-  const n=opts.length,box=winEl('pop',{r:8,y:62,w:Math.min(180,Math.max(70,...opts.map(s=>s.length*4.7+30)))});
+async function ask(who,text,opts){const low=dlgLow(),e=winEl('dlg'+(low?' low':''));if(who)e.appendChild(el('div','win who',esc(who)));e.appendChild(el('div','txt',esc(text).replace(/\n/g,'<br>')));
+  const n=opts.length,box=winEl('pop',{r:8,y:low?Math.max(4,H-70-opts.length*15):62,w:Math.min(180,Math.max(70,...opts.map(s=>s.length*4.7+30)))});
   const r=await pick({el:box,rows:opts.map(s=>({label:s})),vis:n,noBack:true});box.remove();e.remove();return r}
 /* a script: lines are [who, text] or async functions */
 async function talk(lines){for(const l of lines){if(typeof l==='function'){await l();continue}if(typeof l==='string'){await say('',l);continue}await say(l[0],l[1])}}

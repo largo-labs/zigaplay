@@ -7,7 +7,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 166 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker, hi-lo, Rocket (cash out before it blows up) and The Track (horse racing), plus Downtown: buildings to buy that earn chips while you're away. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. Every blow slides you in to meet the robot in front, and a launch can be chased into the air. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
-| **Strike at Night** | Strike at Night's story played in Spellsteel's engine. Lift dies in 2026 and wakes as a farm boy in Larkfield, framed for his new parents' murder. The hooded man's knife turns out to be spellsteel, so you reshape it at any anvil; beating Garrick and Sir Kell gives Lift their powers as new Specials. Shared-CP battles, wishes for 19 more heroes, quests, 200+ outfits. Chapters 1 and 2. Played sideways. | D-pad move · A talk/confirm · B back (hold to run) · START menu |
+| **Strike at Night** | A top-down RPG with active-time battles. Lift dies in 2026 and wakes as a farm boy in Larkfield, framed for his new parents' murder. Explore the classic Strike at Night maps tile by tile in any of 200+ outfits; the hooded man's knife is spellsteel, reshaped at any anvil; beating Garrick and Sir Kell gives Lift their powers. Shared-CP battles, wishes for 19 more heroes, quests. Chapters 1 and 2. | D-pad move · A talk/look · B back (hold to run) · START menu |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 
@@ -45,14 +45,16 @@ A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. 
 
 ## Strike at Night
 
-Strike at Night's story, rebuilt on Spellsteel's engine. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.
+Strike at Night's story and its top-down world, with Spellsteel's battles, wardrobe and forge. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.
 
+- **Top-down, tile by tile:** the field is the classic game's: its maps, its 16-bit tiles and its little four-way characters, all drawn in code (`tiles.js` holds the classic art in its own scope; `maps.js` the eight maps; `world.js` walking, people, triggers and night light). Whatever you wear in the wardrobe shows on the top-down Lift, and on anyone in your party.
 - **One body, yours to dress:** the wash basin on the first morning opens the full Spellsteel wardrobe (the face in the water is whoever you make it). After that it is in the START menu under Style.
 - **The knife is spellsteel:** Wick, the Crows' fence, spots it at the camp anvil. From then on it reshapes into any of the ten weapon kinds, part by part, and anvils reforge it with ore and infuse it with the elements Lift has learned (Electro, Dendro, Pyro, Geo, Cryo, one per story beat).
 - **Taking powers:** beating Garrick the Hound gives Lift his speed and the Hunt special; beating Sir Kell gives him Kell's weight and Iron Wall. Garrick's nose also finds the hooded man's trail in Greyford.
 - **A different face:** Greyford's gate guard knows the face from the posters. Put on a hood, a helm or a mask and he waves you through.
 - **Spellsteel's systems:** shared CP, Ults, elements and reactions, a party of three, gems from foes and quests, wishes for 19 heroes, the best-heroes list, charms and the tailors.
-- **Night:** Larkfield at sundown and by night, the camp, and Hangman's Bend are drawn dark, with firelight, lit windows and lanterns; fights at night happen under the same sky.
+- **Night:** the city street, Larkfield at sundown and by night, the camp and Hangman's Bend are washed dark with light added back around fires, lit windows and lamps; fights at night happen under the same sky.
+- **Battles** keep Spellsteel's side-on, active-time look.
 - Built from `tools/nightsteel/src/` with `python3 tools/nightsteel/build.py`, which writes `games/nightsteel/index.html`.
 
 ## Playing it
@@ -79,7 +81,7 @@ tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
 tools/lynties-3d/           the Lynties game, its 3D world and the script that builds the cartridge
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
-tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell, on Spellsteel's engine), build script and label maker
+tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell), build script and label maker
 ```
 
 ## How the console works
