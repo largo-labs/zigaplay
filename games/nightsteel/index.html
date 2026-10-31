@@ -720,6 +720,15 @@ function drawDoll(L,pose,w){L=Object.assign({},DEFAULT_LOOK,L||{});const P=rig(t
   if(WEAPON_HOOK)lay(t=>WEAPON_HOOK(t,P,L,w,'mid'));
   lay(t=>drawArm(t,P.nArm,T,t1,t2,sk,glove));
   if(WEAPON_HOOK)lay(t=>WEAPON_HOOK(t,P,L,w,'front'));
+  /* the hands close over the grip, so a weapon is held rather than pasted on: a fist on top of the handle, knuckles showing */
+  if(w&&typeof WTYPES!=='undefined'&&WTYPES[w.kind]){const p=P.p,hold=WTYPES[w.kind].hold,wl=p.wl||'front';
+    const fist=(t,A,far)=>{const c0=glove||sk,c=far?shade(c0,-1):c0,[hx,hy]=A.H,dx=Math.sin(A.a1+A.a2),dy=Math.cos(A.a1+A.a2);
+      t.ell(hx,hy,2.5,2.4,c,1);t.ell(hx+dx*.9,hy+dy*.9,1.5,1.4,shade(c,1),1);
+      for(const k of[-1,0,1])t.px(hx-dy*k*1.1+dx*1.6,hy+dx*k*1.1+dy*1.6,shade(c,-1))};
+    if(hold!=='fists'&&hold!=='book')lay(t=>{
+      if(hold==='bow'){if(p.hand==='f')fist(t,P.fArm,true)}
+      else if(hold==='dual'){fist(t,P.nArm,false)}
+      else{if(wl==='front'&&p.hand!=='f')fist(t,P.nArm,false);if(hold==='two'&&(wl==='front'||wl==='mid'))fist(t,P.fArm,true)}})}
   /* the outer edge in ink; anything still unedged gets an ink ring */
   for(let y=0;y<DOLL_H;y++)for(let x=0;x<DOLL_W;x++){const i=y*DOLL_W+x;if(b.d[i]===null||!ring[i])continue;
     if(x===0||y===0||x===DOLL_W-1||y===DOLL_H-1||b.d[i-1]===null||b.d[i+1]===null||b.d[i-DOLL_W]===null||b.d[i+DOLL_W]===null)b.d[i]=INK}
@@ -3325,10 +3334,12 @@ function addFx(life,draw,o={}){const e=Object.assign({t:0,life,draw},o);BT.fx.pu
 function unitP(m,i){const s=statsOf(m);return{side:'p',m,name:m.name,hp:clamp(m.hp,0,s.hp),mhp:s.hp,mp:clamp(m.mp,0,s.mp),mmp:s.mp,s,atb:.15+rnd()*.55,st:s.regen?{regen:999}:{},alive:m.hp>0,i,ox:0,oy:0,pose:null,poseT:0,nk:0,guard:false}}
 function unitE(id,i,tag){const F=FOE[id],s=foeStats(F);if(F.boss)s.hp=Math.round(s.hp*.85);return{side:'e',F,name:F.n+(tag?' '+tag:''),hp:s.hp,mhp:s.hp,mp:0,mmp:0,s,atb:rnd()*.45,st:{},alive:true,i,ox:0,oy:0,flash:0,nk:0,phased:{},spr:foeSprite(F),dying:-1}}
 const HUD_Y=149;
-function bLayout(){const P=BT.P,n=P.length,sl={1:[[64,128]],2:[[92,118],[56,138]],3:[[104,124],[66,108],[62,141]],4:[[106,124],[72,108],[66,142],[34,126]]}[n]||[[64,128]];
-  P.forEach((u,i)=>{u.hx=W-sl[i][0];u.hy=sl[i][1]});
+/* the field is laid out in the space left of the command box in the bottom right corner */
+const FIELD_W=()=>W-88;
+function bLayout(){const P=BT.P,n=P.length,F=FIELD_W(),sl={1:[[40,128]],2:[[58,118],[26,136]],3:[[70,122],[34,106],[30,139]],4:[[74,122],[40,106],[34,140],[8,124]]}[n]||[[40,128]];
+  P.forEach((u,i)=>{u.hx=F-sl[i][0];u.hy=sl[i][1]});
   const E=BT.E,m=E.length,sp=BT.o.boss?[[.27,140]]:{1:[[.28,132]],2:[[.17,116],[.39,138]],3:[[.15,108],[.39,120],[.23,142]]}[m]||[[.27,132]];
-  E.forEach((u,i)=>{const s=sp[Math.min(i,sp.length-1)];u.hx=Math.max(u.spr.fx+4,Math.round(W*s[0]));u.lift=u.F.fly?Math.round(Math.max(28,u.spr.h*.45)):0;u.hy=s[1]-u.lift})}
+  E.forEach((u,i)=>{const s=sp[Math.min(i,sp.length-1)];u.hx=Math.max(u.spr.fx+4,Math.round(F*s[0]));u.lift=u.F.fly?Math.round(Math.max(28,u.spr.h*.45)):0;u.hy=s[1]-u.lift})}
 /* ---------- the camera: it leans in for Specials and Ults ---------- */
 function bcamTo(x,y,z,ms=260){const hw=W/(2*z),hh=H/(2*z);return tween(BT.cam,{x:clamp(x,hw,W-hw),y:clamp(y,hh,H-hh),z},ms,easeIO)}
 const camHome=(ms=300)=>BT&&BT.cam?tween(BT.cam,{x:W/2,y:H/2,z:1},ms,easeIO):Promise.resolve();
@@ -3511,16 +3522,16 @@ const pick1=a=>a[Math.floor(rnd()*a.length)];
 function openCommand(u){if(!u.alive){BT.ready=BT.ready.filter(x=>x!==u);return}BT.cur=u;SND.fx('cur');tween(u,{ox:-10},120);
   const m=u.m,lim=m.limit>=100,L=limitOf(m),cpOk=BT.cp>=2;
   const rows=[{label:lim?L.n:'Attack',html:lim?`<span style="color:#ffa0e0">★ ${esc(L.n)}</span>`:'<span>⚔ Attack</span>',r:lim?'<span style="color:#ffa0e0">ULT</span>':'<span class="tiny blue">+1</span>',c:'attack'},
-    {label:artLabel(m),html:`<span>✦ ${esc(artLabel(m))}</span>`,r:`<span class="tiny ${cpOk?'blue':'red'}">−2</span>`,off:!cpOk,c:'arts'},{label:'Item',html:'<span>◆ Item</span>',c:'item',off:!battleItems().length},{label:'Guard',html:'<span>⛨ Guard</span>',c:'guard'},{label:'Flee',html:'<span>➜ Flee</span>',c:'flee',off:!!BT.o.boss||!!BT.o.noFlee}];
-  /* the window opens just to the left of whoever's turn it is, in the open ground between the two sides */
-  const bw=92,bx=clamp(Math.round(u.hx-34-bw),3,W-bw-3),by=clamp(Math.round(u.hy-70),22,HUD_Y-62);
+    {label:artLabel(m),html:`<span>✦ ${esc(artLabel(m))}</span>`,r:`<span class="tiny ${cpOk?'blue':'red'}">−2</span>`,off:!cpOk,c:'arts'},{label:'Item',html:'<span>◆ Item</span>',c:'item',off:!battleItems().length},{label:'Flee',html:'<span>➜ Flee</span>',c:'flee',off:!!BT.o.boss||!!BT.o.noFlee}];
+  /* the commands sit in the bottom right corner, just above the party's health bars */
+  const bw=84,bx=W-bw-3,by=HUD_Y-52;
   const box=winEl('cmd pop',{x:bx,y:by,w:bw},BT.layer);box.appendChild(el('div','who2',esc(u.name)));
-  const lw=new ListWin({el:box,rows,vis:5,quiet:true,
+  const lw=new ListWin({el:box,rows,vis:4,quiet:true,
     render:row=>{if(!row)return;banner(row.c==='arts'?`<span class="small">${esc(artLabel(m))} cost 2 of the team's CP (${BT.cp}/${BT.cpMax})</span>`:row.c==='attack'?(lim?`<span class="small" style="color:#ffa0e0">Ult: ${esc(artDesc(L))}</span>`:'<span class="small">A plain attack earns the team 1 CP</span>'):'')},
     pick:async row=>{SND.fx('ok');
       if(row.c==='attack'){if(lim){const t=await chooseTargets(u,L.tgt);if(t)commit(u,{type:'limit',art:L,t})}else{const t=await chooseTargets(u,'one');if(t)commit(u,{type:'attack',t})}}
       else if(row.c==='arts')await artsMenu(u);else if(row.c==='item')await itemMenu(u);
-      else if(row.c==='guard')commit(u,{type:'guard'});else if(row.c==='flee')commit(u,{type:'flee'})},
+      else if(row.c==='flee')commit(u,{type:'flee'})},
     back:()=>{if(BT.ready.length>1){BT.ready.push(BT.ready.shift());closeCommand(false,true)}},
     key:b=>{if(b==='select'&&BT.ready.length>1){BT.ready.push(BT.ready.shift());closeCommand(false,true)}}});
   BT.cmd=lw;BT.modals.push(lw);pushModal(lw);lw.render()}
@@ -3540,10 +3551,11 @@ function chooseTargets(u,tgt){return new Promise(res=>{let list,i=0,all=false;
       else if(!all&&(b==='up'||b==='left')){i=(i+list.length-1)%list.length;SND.fx('cur');show()}else if(!all&&(b==='down'||b==='right')){i=(i+1)%list.length;SND.fx('cur');show()}}};
   const done=v=>{popModal(m);BT.modals=BT.modals.filter(x=>x!==m);BT.cursor=null;banner('');for(const e of hid)e.style.visibility='';res(v)};
   BT.modals.push(m);pushModal(m);show()})}
-function subBox(h){const c=BT.cmd&&BT.cmd.el,r=c.getBoundingClientRect(),ui=UI.getBoundingClientRect(),cx=(r.right-ui.left)/U,cy=(r.top-ui.top)/U,w=Math.min(180,W-8);
-  return winEl('pop sub',{x:clamp(Math.round(cx-w),3,W-w-3),y:clamp(Math.round(cy-4),20,HUD_Y-h-2),w,h},BT.layer)}
+/* a list that opens from the command box (Specials, Items): along the bottom, just left of the commands */
+function subBox(h){const c=BT.cmd&&BT.cmd.el,r=c.getBoundingClientRect(),ui=UI.getBoundingClientRect(),lx=(r.left-ui.left)/U,w=Math.min(170,Math.round(lx-5));
+  return winEl('pop sub',{x:Math.max(3,Math.round(lx-w-2)),y:HUD_Y-h-2,w,h},BT.layer)}
 function artsMenu(u){return new Promise(res=>{const m=u.m,list=artsOf(m);
-  const box=subBox(84);
+  const box=subBox(26+Math.min(5,list.length)*12);
   const rows=list.map(a=>{const dead=a.tgt==='dead'&&!BT.P.some(p=>!p.alive);return{label:a.n,r:`<span class="${BT.cp<2?'red':'blue'}">2 CP</span>`,off:BT.cp<2||dead,a}});
   const lw=new ListWin({el:box,rows,vis:5,title:`<span class="small">${esc(artLabel(m))}</span> <span class="tiny dim">team CP ${BT.cp}/${BT.cpMax}</span>`,
     render:row=>{if(row)banner(`<span class="small">${esc(artDesc(row.a))}</span>`)},
@@ -3551,9 +3563,9 @@ function artsMenu(u){return new Promise(res=>{const m=u.m,list=artsOf(m);
     back:()=>{close()}});
   const close=()=>{popModal(lw);BT.modals=BT.modals.filter(x=>x!==lw);banner('');box.remove();res()};
   BT.modals.push(lw);pushModal(lw)})}
-const battleItems=()=>Object.keys(G.inv).filter(k=>ITEMS[k]&&!ITEMS[k].mat&&!ITEMS[k].field&&G.inv[k]>0);
+const battleItems=()=>Object.keys(G.inv).filter(k=>ITEMS[k]&&!ITEMS[k].mat&&!ITEMS[k].field&&!ITEMS[k].key&&G.inv[k]>0);
 function itemMenu(u){return new Promise(res=>{const ids=battleItems();
-  const box=subBox(84);
+  const box=subBox(26+Math.max(1,Math.min(5,ids.length))*12);
   const rows=ids.map(id=>{const I=ITEMS[id],off=(I.use==='revive'&&!BT.P.some(p=>!p.alive))||(I.use==='flee'&&BT.o.boss);return{label:I.n,r:'×'+G.inv[id],id,off}});
   const lw=new ListWin({el:box,rows,vis:5,title:'<span class="small">Items</span>',empty:'Nothing to use.',
     render:row=>{if(row)banner(`<span class="small">${esc(ITEMS[row.id].desc)}</span>`)},

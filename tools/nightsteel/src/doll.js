@@ -445,6 +445,15 @@ function drawDoll(L,pose,w){L=Object.assign({},DEFAULT_LOOK,L||{});const P=rig(t
   if(WEAPON_HOOK)lay(t=>WEAPON_HOOK(t,P,L,w,'mid'));
   lay(t=>drawArm(t,P.nArm,T,t1,t2,sk,glove));
   if(WEAPON_HOOK)lay(t=>WEAPON_HOOK(t,P,L,w,'front'));
+  /* the hands close over the grip, so a weapon is held rather than pasted on: a fist on top of the handle, knuckles showing */
+  if(w&&typeof WTYPES!=='undefined'&&WTYPES[w.kind]){const p=P.p,hold=WTYPES[w.kind].hold,wl=p.wl||'front';
+    const fist=(t,A,far)=>{const c0=glove||sk,c=far?shade(c0,-1):c0,[hx,hy]=A.H,dx=Math.sin(A.a1+A.a2),dy=Math.cos(A.a1+A.a2);
+      t.ell(hx,hy,2.5,2.4,c,1);t.ell(hx+dx*.9,hy+dy*.9,1.5,1.4,shade(c,1),1);
+      for(const k of[-1,0,1])t.px(hx-dy*k*1.1+dx*1.6,hy+dx*k*1.1+dy*1.6,shade(c,-1))};
+    if(hold!=='fists'&&hold!=='book')lay(t=>{
+      if(hold==='bow'){if(p.hand==='f')fist(t,P.fArm,true)}
+      else if(hold==='dual'){fist(t,P.nArm,false)}
+      else{if(wl==='front'&&p.hand!=='f')fist(t,P.nArm,false);if(hold==='two'&&(wl==='front'||wl==='mid'))fist(t,P.fArm,true)}})}
   /* the outer edge in ink; anything still unedged gets an ink ring */
   for(let y=0;y<DOLL_H;y++)for(let x=0;x<DOLL_W;x++){const i=y*DOLL_W+x;if(b.d[i]===null||!ring[i])continue;
     if(x===0||y===0||x===DOLL_W-1||y===DOLL_H-1||b.d[i-1]===null||b.d[i+1]===null||b.d[i-DOLL_W]===null||b.d[i+DOLL_W]===null)b.d[i]=INK}
