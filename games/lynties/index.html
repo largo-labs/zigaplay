@@ -164,6 +164,8 @@ p{margin:0}
 .r-main{min-width:0;display:flex;flex-direction:column;gap:5px}
 .r-top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .r-name{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-sp{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.sum-sp{font-size:13px;color:var(--dim);margin:-2px 0 2px}
 .r-lv{font-family:var(--num);font-size:20px;line-height:1;color:var(--sand);margin-left:auto}
 .r-mid{display:flex;align-items:center;gap:8px}
 .num{font-family:var(--num);font-size:18px;color:var(--dim);line-height:1;font-variant-numeric:tabular-nums}
@@ -2872,7 +2874,7 @@ function learnMove(m,id){
 const stats=m=>{const b=SP[m.sp].base,L=m.lvl,f=v=>Math.floor(2*v*L/100)+5;return{hp:Math.floor(2*b[0]*L/100)+L+10,atk:f(b[1]),def:f(b[2]),spd:f(b[3])}};
 /* XP per level: every level costs a little more than the one before (about 4-7% more), so the climb to 60 gets steadily slower. */
 const need=L=>Math.round(1.75*(5*L+.2*L*L)*Math.pow(1.042,L));
-const nmOf=m=>SP[m.sp].name;
+const nmOf=m=>m.nick||SP[m.sp].name;
 function mkMon(id,lvl){const m={uid:S?S.uid++:Math.floor(rnd()*1e9),sp:id,lvl,xp:0,hp:0,moves:[]};for(const[l,mv]of learnset(id))if(l<=lvl)learnMove(m,mv);m.hp=stats(m).hp;return m}
 const wildMon=(id,lv)=>{const m=mkMon(id,lv);if(rnd()<SHINY_RATE)m.shiny=1;return m};
 function evolveFor(id,lvl){let s=id;while(SP[s].evo&&lvl>=SP[s].evo.at)s=SP[s].evo.to;return s}
@@ -3307,6 +3309,9 @@ T('hearth','#8a8f9a',(g,o,r,f)=>{fill(g,'#e8dcc4');g.rect(1,2,14,14,'#8a8f9a');f
 T('rug','#c4554a',(g,o,r)=>{fill(g,'#c4554a');for(const[x,y]of[[4,4],[12,4],[8,8],[4,12],[12,12]]){g.px(x,y-1,'#f1c66b');g.px(x-1,y,'#f1c66b');g.px(x+1,y,'#f1c66b');g.px(x,y+1,'#f1c66b');g.px(x,y,'#a8433a')}});
 T('labpc','#5a5f73',(g,o,r,f)=>{fill(g,'#e8dcc4');g.rect(1,2,14,13,'#5a5f73');g.rect(1,2,14,1,'#7a8094');g.rect(3,4,10,6,'#1b2a3a');g.rect(4,5,8,4,f?'#3fc1c9':'#2fa4ac');g.px(5,6,'#bff7f5');
   g.rect(3,12,2,1,f?'#66c659':'#2f6b2a');g.rect(6,12,2,1,'#f1c66b');g.rect(9,12,4,1,'#3b4a78')},{walk:0,anim:1});
+/* the long table in Wren's lab, where the three charms wait (labtop is its top in 3D) */
+T('labdesk','#e8eef4',(g,o,r)=>{fill(g,'#5f6b82');g.rect(0,0,16,9,'#eef3f7');g.rect(0,0,16,1,'#ffffff');g.rect(0,8,16,1,'#b9c3d1');g.rect(0,9,16,1,'#8e9ab0');g.rect(0,10,16,6,'#6c7890');g.rect(2,12,5,2,'#7f8ba3');g.rect(9,12,5,2,'#7f8ba3');g.px(4,12,'#c8d0dc');g.px(11,12,'#c8d0dc');speck(g,r,[['#dfe6ee',3]])},{walk:0});
+T('labtop','#eef3f7',(g,o,r)=>{fill(g,'#eef3f7');g.rect(0,0,16,1,'#ffffff');speck(g,r,[['#dfe6ee',5]])},{walk:0});
 T('rail','#8a8fa0',g=>{fill(g,'#5e6372');g.rect(0,2,16,10,'#8a8fa0');g.rect(0,2,16,2,'#b4bac8');g.rect(0,12,16,2,'#4a4e5c');for(const x of[1,7,13])g.rect(x,4,2,8,'#a3a9b8')},{walk:0});
 T('hfront','#9aa0ae',g=>{fill(g,'#9aa0ae');g.rect(0,0,16,2,'#7a8090');for(const x of[1,13])g.rect(x,2,2,14,'#c6cbd6');g.rect(0,14,16,2,'#7a8090')},{walk:0});
 T('hdoor','#5e3a22',g=>{fill(g,'#9aa0ae');g.rect(2,2,12,14,'#3a2a2a');g.rect(3,3,10,13,'#6e4a2c');g.rect(7,3,2,13,'#4a3020');g.px(6,9,'#f1c66b');g.px(9,9,'#f1c66b')},{walk:0});
@@ -3484,19 +3489,21 @@ function homeRoom(kind,id,name,tw,back){
   for(let x=0;x<9;x++){mS(m,x,0,'iwall');mS(m,x,7,'iwall')}for(let y=0;y<8;y++){mS(m,0,y,'iwall');mS(m,8,y,'iwall')}
   const put=(list,t)=>{for(const[x,y]of list)mS(m,x,y,t)};
   if(kind==='hall'){put([[1,1],[2,1],[6,1],[7,1]],'shelf');put([[2,3],[3,3],[4,3],[5,3],[6,3]],'counter');put([[1,5],[7,5]],'plant');put([[4,4],[4,5],[4,6]],'rug')}
-  else if(kind==='lab'){put([[1,1],[2,1],[3,1]],'shelf');put([[5,1],[6,1],[7,1]],'labpc');put([[2,4],[6,4]],'table');put([[1,6],[7,6]],'plant');put([[3,3],[4,3],[5,3],[3,4],[4,4],[5,4],[3,5],[4,5],[5,5]],'rug')}
+  else if(kind==='lab'){put([[1,1],[2,1],[3,1]],'shelf');put([[5,1],[6,1],[7,1]],'labpc');put([[3,3],[4,3],[5,3]],'labdesk');put([[1,4],[7,4]],'table');put([[1,6],[7,6]],'plant');put([[3,4],[4,4],[5,4],[3,5],[4,5],[5,5],[3,6],[4,6],[5,6]],'rug')}
   else if(kind==='post'){put([[1,1],[2,1],[3,1],[5,1],[6,1],[7,1]],'shelf');put([[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3]],'counter');put([[1,5],[7,5]],'plant')}
   else if(kind==='bar'){put([[1,2],[3,2],[6,2]],'bedT');put([[1,3],[3,3],[6,3]],'bedB');put([[7,1]],'shelf');put([[5,5]],'table');put([[7,6]],'plant')}
   else{/* a home: a bed, a fireplace, a bookcase, a table on a rug */put([[1,1],[2,1]],'shelf');mS(m,6,1,'hearth');mS(m,1,3,'bedT');mS(m,1,4,'bedB');mS(m,7,6,'plant');
     put([[4,3],[5,3],[6,3],[4,4],[6,4],[4,5],[5,5],[6,5]],'rug');mS(m,5,4,'table')}
   mS(m,4,7,'mat');m.warps.push({x:4,y:7,map:'world',tx:back[0],ty:back[1],dir:'down'});
   /* where people stand in each plan */
-  const SPOTS={hall:[[4,2,'down'],[2,5,'right']],lab:[[4,2,'down'],[6,5,'left']],post:[[4,2,'down']],bar:[[5,4,'down'],[2,5,'right']],home:[[3,4,'down'],[7,3,'left']]};
+  const SPOTS={hall:[[4,2,'down'],[2,5,'right']],lab:[[6,2,'down'],[1,5,'right']],post:[[4,2,'down']],bar:[[5,4,'down'],[2,5,'right']],home:[[3,4,'down'],[7,3,'left']]};
   const people=(HOMES[tw.id]||{})[id]||[],spots=SPOTS[kind]||SPOTS.home;
   people.forEach((v,k)=>{const pk=v.p&&PAL[v.p]?v.p:'h_'+tw.id+id+k;if(!PAL[pk])PAL[pk]=trainerPal(pk);
     /* whoever is fast asleep has nodded off at the table */
     const[x,y,d]=v.sleep?(kind==='bar'?[4,5,'right']:[5,3,'down']):spots[k%spots.length];
     const e=npcE(x,y,d,pk,v.n,null,{ci:0,c:v.c,a:v.a,sleep:v.sleep?1:0});e.talk=()=>villagerTalk(e);m.ents.push(e)});
+  /* Wren stands behind the table while you choose your partner, until you head out */
+  if(kind==='lab')m.ents.push(npcE(4,2,'down','prof','Prof. Wren',()=>labWrenTalk(),{show:()=>!!LAB}));
   return m}
 /* swap a locked door for a way in */
 function homeDoor(m,tw,x,y,kind,id,name){delete m.locked[`${x},${y}`];homeRoom(kind,id,name,tw,[x,y+1]);m.warps.push({x,y,door:1,map:'home_'+tw.id+'_'+id,tx:4,ty:6,dir:'up'})}
@@ -3533,7 +3540,7 @@ function buildTown(m,tw,i,top){
   }else{
     for(let x=18;x<=22;x++){mS(m,x,top+2,'roofT');mS(m,x,top+3,'roofT');mS(m,x,top+4,x===20?'door':'win')}
     homeDoor(m,tw,20,top+4,'lab','lab',"Prof. Wren's Lab");
-    m.ents.push(npcE(20,top+5,'down','prof','Prof. Wren',profTalk,{show:()=>S.crests.length<8&&!S.flags.champ}));
+    m.ents.push(npcE(21,top+5,'down','prof','Prof. Wren',profTalk,{show:()=>S.crests.length<8&&!S.flags.champ}));
     mS(m,11,top+8,'fountain');
   }
   for(let x=3;x<=6;x++){mS(m,x,top+8,'roofR');mS(m,x,top+9,'roofR');mS(m,x,top+10,x===5?'door':'win')}
@@ -4104,7 +4111,7 @@ function tryMove(d){P.dir=d;const[dx,dy]=DIRV[d],nx=P.x+dx,ny=P.y+dy;const w=war
   else if(!walkT(tAt(nx,ny))||e)return false;
   P.fx=P.x;P.fy=P.y;P.x=nx;P.y=ny;P.t=0;P.moving=true;P.step++;return true}
 function onStep(){
-  const w=warpAt(P.x,P.y);if(w&&!w.door){doWarp(w);return}
+  const w=warpAt(P.x,P.y);if(w&&!w.door){if(LAB&&LAB.phase!=='done'){labStay();return}doWarp(w);return}
   if(CM.puzzles)stepPuzzle(P.x,P.y);
   if(checkSpot())return;
   if(CM.interior)return;
@@ -4123,6 +4130,7 @@ function startWild(z){const g=z.wild||z.route,tot=g.pool.reduce((s2,[,w])=>s2+w,
 async function doWarp(w){if(mode!=='world')return;
   if(w.maze){const tw=townById(w.maze),wd=wardOf(tw.ward);if(hallDone(wd)){held.clear();const c=await choose(`You ${wd.id==='wren'?'are the Champion':'hold the '+EL[wd.el].n+' Crest'}, so the guards will let you skip the labyrinth.`,['Go straight to the Hall','Walk the labyrinth']);if(mode!=='world')return;if(c===0)w={map:'hall_'+tw.id,tx:5,ty:26,dir:'up'}}}
   mode='warp';held.clear();
+  if(LAB){LAB=null;const lm=labMap();lm.ents=lm.ents.filter(e=>e.kind!=='charm')}
   if(CM.id==='world')S.lastOut={x:P.x,y:P.y};
   await wipe(async()=>{setMap(w.map);syncMap(CM);Object.assign(P,{x:w.tx,y:w.ty,fx:w.tx,fy:w.ty,t:1,moving:false,dir:w.dir||P.dir})});
   mode='world';
@@ -4186,7 +4194,7 @@ async function simonTouch(pz,i){const c=pz.crys[i];c.glowT=performance.now()+320
 async function interact(){
   if(mode!=='world'||P.moving)return;
   const[dx,dy]=DIRV[P.dir];let x=P.x+dx,y=P.y+dy,e=entAt(x,y);
-  if(!e&&tAt(x,y)==='counter'){x+=dx;y+=dy;e=entAt(x,y)}
+  if(!e&&(tAt(x,y)==='counter'||tAt(x,y)==='labdesk')){x+=dx;y+=dy;e=entAt(x,y)}
   if(e){if(e.kind==='npc'&&!e.anim&&!e.sleep)e.dir=OPP[P.dir];await e.talk();if(e.kind==='npc'&&!e.rot&&!e.wander&&!e.anim)e.dir=(e.fighter||e.blocker||e.stepAside||e.aside)&&isBeaten(e)?e.adir:e.home;return}
   const t=tAt(x,y),lk=CM.locked[`${x},${y}`];
   if(lk){await talk([lk]);return}
@@ -4198,6 +4206,7 @@ async function interact(){
   else if(t==='deep')await talk(['The water is too deep to wade. Ocean Lynties gather in the bright shallows.']);
   else if(t==='lava')await talk(['Bubbling lava! Better keep your distance.']);
   else if(t==='shelf')await talk(['Shelves stacked with charms and salves. Talk to the clerk to buy something.']);
+  else if(t==='labdesk')await talk(["Professor Wren's work table, covered in notes about Lynties."]);
   else if(t==='saltar')await talk(S.flags.champ?['The altar is quiet now.','It gave you its one gift.']:['An ancient altar. It feels like it is waiting for a Champion.']);
   else if(t==='cavemouth')await talk(['A dark cave mouth. Cool air drifts out of it.']);
   else if(t&&t.startsWith('cp_'))await talk([t==='cp_magma'?'Bubbling lava! Better keep your distance.':'A still, glowing pool. Something glimmers far below the surface.']);
@@ -4224,6 +4233,7 @@ function drawWorld(now){
   /* caves are dark: only a pool of light around you */
   if(m.cave){const lx=Math.round(px-camX+8),ly=Math.round(py-camY+4),gr=ctx.createRadialGradient(lx,ly,30,lx,ly,140);
     gr.addColorStop(0,'rgba(5,6,16,0)');gr.addColorStop(.5,'rgba(5,6,16,.26)');gr.addColorStop(1,'rgba(5,6,16,.66)');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H)}
+  if(LAB)labHud(now,(x,y,h)=>[Math.round(x*16-camX+8),Math.round(y*16-camY+8-h*16)]);
 }
 const OBJ=(()=>{const mk=f=>{const b=new Buf(16,16);f(b);b.outline();return b.canvas(1)};return{
   stone:mk(b=>{b.rect(3,3,10,12,'#8e95a3');b.rect(4,2,8,1,'#8e95a3');b.rect(5,1,6,1,'#8e95a3');for(const[y,w]of[[4,8],[6,6],[8,7],[10,5]])b.rect(4,y,w,1,'#646b7a');b.rect(3,13,10,2,'#6b7180');b.px(4,3,'#c6cbd6');b.px(5,2,'#c6cbd6')}),
@@ -4268,6 +4278,8 @@ function drawEnt(e,sx,sy,now,k){
       ctx.drawImage(sprCanvas(id,true,!!S.flags.altarShiny),sx-12,sy-30+bob);
       if(Math.floor(now/180)%5===0){ctx.fillStyle='#ffffff';ctx.fillRect(sx+((now/37|0)%28)-6,sy-26+((now/53|0)%30),1,1)}
       if(S.flags.altarShiny)for(let k=0;k<3;k++){const ph=(now/700+k/3)%1,x=sx-8+((k*37+(now/700|0)*13)%32),y=sy-28+((k*23+(now/700|0)*7)%30),z=ph<.5?2:1;ctx.fillStyle=k%2?'#fff3c4':'#ffffff';ctx.fillRect(x-z,y,z*2+1,1);ctx.fillRect(x,y-z,1,z*2+1)}break}
+    case 'charm':{const on=labFaces(e),bob=Math.round(Math.sin(now/380+e.x*2));if(on){ctx.globalAlpha=.32+.12*Math.sin(now/200);pEll(sx+8,sy+3,10,7,'#bff7f5');ctx.globalAlpha=1}
+      ctx.globalAlpha=.3;pEll(sx+8,sy+7,4,1.5,'#1b1430');ctx.globalAlpha=1;ctx.drawImage(CHARM,sx+2,sy-5+bob);break}
     case 'crystal':{const lit=now<(e.glowT||0);if(lit){ctx.globalAlpha=.4;pEll(sx+8,sy+6,12,10,e.c);ctx.globalAlpha=1}ctx.drawImage(crysC(e.c,lit),sx,sy-3);break}
     default:{const fr=e.anim&&k<.5?(e.sn%2?1:2):0;ctx.drawImage(personCanvas(e.pal,e.dir,fr),sx,sy-4);if(e.sleep)drawZzz(sx+11,sy-6,now)}}
   if(e.alert)drawAlert(sx,sy-20)}
@@ -4555,6 +4567,7 @@ function w3block(t){
   if(t==='iwall')return{h:1.75};
   if(t==='shelf')return{h:1.3,side:'iwall',top:'counter',front:'shelf'};
   if(t==='counter')return{h:.62};
+  if(t==='labdesk')return{h:.62,top:'labtop'};
   if(t==='hearth')return{h:1,side:'iwall',top:'counter',front:'hearth'};
   if(t==='labpc')return{h:1.05,side:'counter',top:'counter',front:'labpc'};
   if(t==='rail')return{h:.5};
@@ -4960,6 +4973,16 @@ function w3entObj(e){const S2=[],add=(g,mx,hex)=>S2.push([g,mx,hex]);
       return{root:g,upd:now=>{const id=S.flags.altarSp;pl.visible=glow.visible=!!(id&&SP[id]);if(!pl.visible)return;const k2=id+(S.flags.altarShiny?'*':'');
         if(k2!==key){key=k2;if(mat.map)mat.map.dispose();mat.map=w3tex(sprCanvas(id,true,!!S.flags.altarShiny),{mip:false});mat.needsUpdate=true}
         pl.position.y=1.75+Math.sin(now/420)*.1;glow.material.opacity=.22+.1*Math.sin(now/300)}}}
+    /* a Bond Charm on Wren's table: a teal diamond with a gold heart, turning slowly on a little stand */
+    case 'charm':{const g=new THREE.Group(),oct=w3geo('oct',()=>new THREE.OctahedronGeometry(1,0));
+      const mo=new THREE.MeshToonMaterial({color:new THREE.Color('#3fc1c9'),gradientMap:w3grad(),emissive:new THREE.Color('#3fc1c9'),emissiveIntensity:.08});
+      const mi=new THREE.MeshToonMaterial({color:new THREE.Color('#f1c66b'),gradientMap:w3grad(),emissive:new THREE.Color('#f1c66b'),emissiveIntensity:.2});
+      const base=w3part(W3G.cyl(12),'#4a4e5c',{ol:.012});base.scale.set(.17,.04,.17);base.position.y=.64;g.add(base);
+      const gem=new THREE.Group();gem.position.y=.93;g.add(gem);
+      const o=new THREE.Mesh(oct,mo);o.scale.set(.19,.25,.085);o.castShadow=true;gem.add(o);o.add(new THREE.Mesh(oct,w3ink(.09)));
+      const i=new THREE.Mesh(oct,mi);i.scale.set(.095,.125,.105);gem.add(i);
+      const halo=new THREE.Mesh(new THREE.CircleGeometry(.4,20).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:'#bff7f5',transparent:true,opacity:0,depthWrite:false}));halo.position.y=.63;g.add(halo);
+      return{root:g,upd:(now,dt,e2)=>{const on=labFaces(e2);gem.rotation.y=now/900+e2.x*2;gem.position.y=.93+Math.sin(now/380+e2.x)*.025;mo.emissiveIntensity=on?.55+.15*Math.sin(now/200):.08;halo.material.opacity=on?.4:0}}}
   }
   return null}
 /* hall puzzles: lamps that light up, runes and pressure plates on the floor */
@@ -5045,7 +5068,8 @@ function draw3D(now){
   /* the pixel canvas on top stays clear, apart from "!" over anyone who has spotted you */
   ctx.clearRect(0,0,W,H);
   const v3=new THREE.Vector3();for(const r of alerts){v3.copy(r.position);v3.y+=1.3;v3.project(W3.cam);drawAlert(Math.round((v3.x+1)/2*W)-8,Math.round((1-v3.y)/2*H)-12)}
-  for(const r of sleepers){v3.copy(r.position);v3.y+=1.25;v3.x+=.15;v3.project(W3.cam);drawZzz(Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H),now)}}
+  for(const r of sleepers){v3.copy(r.position);v3.y+=1.25;v3.x+=.15;v3.project(W3.cam);drawZzz(Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H),now)}
+  if(LAB)labHud(now,(x,y,h)=>{v3.set(x+.5,h,y+.5);v3.project(W3.cam);return[Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H)]})}
 
 /* ---------- the trainer editor on the title screen shows your 3D figure, turning slowly ---------- */
 function w3look(now){const cv=$('#look3');if(!W3.ok||!cv)return false;
@@ -5119,7 +5143,7 @@ function popSilent(){SH.stack.pop();if(SH.stack.length)drawSheet();else hideShee
 function closeSheetAll(){while(SH.stack.length){const v=SH.stack.pop();if(v.onClose)v.onClose()}hideSheet()}
 const shinyTag=m=>m.shiny?'<span class="stag sh" title="Shiny: its colours are reversed">✦ Shiny</span>':'<span class="stag" title="Normal colours">Normal</span>';
 function teamRow(m){const s=SP[m.sp],st=stats(m),f=m.hp/st.hp;
-  return el('button','row',`<img class="px" src="${sprURL(m.sp,false,m.shiny)}" alt=""><span class="r-main"><span class="r-top"><span class="r-name">${s.name}</span><span class="r-lv">Lv ${m.lvl}</span></span><span class="r-mid">${chipH(s.el)}${shinyTag(m)}<span class="bar"><i style="width:${f*100}%;background:${hpColor(f)}"></i></span></span><span class="num">${m.hp>0?`${m.hp}/${st.hp} HP`:'Worn out'}</span></span>`)}
+  return el('button','row',`<img class="px" src="${sprURL(m.sp,false,m.shiny)}" alt=""><span class="r-main"><span class="r-top"><span class="r-name">${nmOf(m)}</span>${m.nick?`<span class="r-sp">${s.name}</span>`:''}<span class="r-lv">Lv ${m.lvl}</span></span><span class="r-mid">${chipH(s.el)}${shinyTag(m)}<span class="bar"><i style="width:${f*100}%;background:${hpColor(f)}"></i></span></span><span class="num">${m.hp>0?`${m.hp}/${st.hp} HP`:'Worn out'}</span></span>`)}
 function itemRow(k,n,note){const it=ITEMS[k];return el('button','irow',`<span class="ico" style="background:${it.c}"></span><span><b>${it.n}</b><small>${note||it.desc}</small></span><span class="num">×${n}</span>`)}
 function pickTeam({title,filter,cancel=true,note}){return new Promise(res=>{let done=false;
   openSheet({title,closable:cancel,onClose:()=>{if(!done){done=true;res(null)}},render:body=>{
@@ -5174,14 +5198,14 @@ function loadSaveCode(){const sv=readSaveCode($('#tCodeIn').value),msg=$('#tCode
   CLOUD.out[id]={json,savedAt:sv.savedAt};cloudWrite(id);
   $('#tCodeIn').value='';continueGame(sv,id);toast(`Loaded as ${saveName(id,sv)}.`)}
 function teamView(){openSheet({title:'Team',render:body=>{
-  S.team.forEach((m,i)=>{const b=teamRow(m);if(i===0)b.querySelector('.r-name').insertAdjacentHTML('afterend','<span class="tag">Lead</span>');b.onclick=()=>summary(m);body.append(b)});
+  S.team.forEach((m,i)=>{const b=teamRow(m);if(i===0)(b.querySelector('.r-sp')||b.querySelector('.r-name')).insertAdjacentHTML('afterend','<span class="tag">Lead</span>');b.onclick=()=>summary(m);body.append(b)});
   const d=el('button','btn',`Open the Den · ${S.den.length} resting`);d.onclick=denView;body.append(d)}})}
 function denView(){openSheet({title:'Den',render:body=>{
   body.append(el('p','lead',S.den.length?'Lynties you bond with while your team is full rest here. Tap one to bring it along.':'The Den is empty. When your team has 6 Lynties, new friends rest here.'));
   S.den.forEach(m=>{const b=teamRow(m);b.onclick=()=>summary(m);body.append(b)})}})}
-function summary(m){openSheet({title:SP[m.sp].name,render:body=>{
+function summary(m){openSheet({title:nmOf(m),render:body=>{
   const s=SP[m.sp],st=stats(m),f=m.hp/st.hp,inTeam=S.team.includes(m),idx=S.team.indexOf(m);
-  body.append(el('div','sum-head',`<img class="px" src="${sprURL(m.sp,false,m.shiny)}" alt=""><div class="sum-info"><div class="sum-name">${s.name}<span>Lv ${m.lvl}</span></div><div>${chipH(s.el)} ${shinyTag(m)}${s.leg?' <span class="tag leg">Legendary</span>':''}</div><div class="r-mid"><span class="bar"><i style="width:${f*100}%;background:${hpColor(f)}"></i></span></div><span class="num">${m.hp}/${st.hp} HP · ${m.lvl>=MAXL?'Max level':`${m.xp}/${need(m.lvl)} XP`}</span></div>`));
+  body.append(el('div','sum-head',`<img class="px" src="${sprURL(m.sp,false,m.shiny)}" alt=""><div class="sum-info"><div class="sum-name">${nmOf(m)}<span>Lv ${m.lvl}</span></div>${m.nick?`<div class="sum-sp">${s.name}</div>`:''}<div>${chipH(s.el)} ${shinyTag(m)}${s.leg?' <span class="tag leg">Legendary</span>':''}</div><div class="r-mid"><span class="bar"><i style="width:${f*100}%;background:${hpColor(f)}"></i></span></div><span class="num">${m.hp}/${st.hp} HP · ${m.lvl>=MAXL?'Max level':`${m.xp}/${need(m.lvl)} XP`}</span></div>`));
   body.append(el('div','stats',[['HP',st.hp],['ATK',st.atk],['DEF',st.def],['SPD',st.spd]].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join('')));
   body.append(el('p','sec','Moves'));
   body.append(el('div','moves',m.moves.map(id=>{const x=MV[id];return `<div><b>${x.n}</b><span class="r-mid">${chipH(x.el)}<span class="num">${x.p?'PWR '+x.p:FXD[x.fx]}</span></span></div>`}).join('')));
@@ -5189,9 +5213,13 @@ function summary(m){openSheet({title:SP[m.sp].name,render:body=>{
   body.append(el('p','desc',s.desc+(s.evo&&m.lvl<s.evo.at?` Evolves into ${SP[s.evo.to].name} at level ${s.evo.at}.`:'')+(nxt?` Learns ${MV[nxt[1]].n} at level ${nxt[0]}.`:'')+(m.lvl<MAXL?' Each level takes a little more XP than the last.':'')));
   if(!s.leg&&!s.loner)body.append(el('div','chain big',s.line.map((x,k)=>`${k?`<span class="arr">${EVO_AT[k-1]}</span>`:''}<span class="ch${x===m.sp?' on':''}"><img class="px" src="${sprURL(x,!S.seen[x]&&x!==m.sp,m.shiny&&(S.seen[x]||x===m.sp))}" alt=""><small>${S.seen[x]||x===m.sp?SP[x].name:'???'}</small></span>`).join('')));
   const a=el('div','acts');
-  if(inTeam&&idx>0){const b=el('button','btn sm','Make lead');b.onclick=()=>{S.team.splice(idx,1);S.team.unshift(m);save();toast(`${s.name} now leads the team.`);backSheet()};a.append(b)}
-  if(inTeam&&S.team.length>1){const b=el('button','btn sm','Send to Den');b.onclick=()=>{if(m.hp>0&&!S.team.some(x=>x!==m&&x.hp>0)){toast('Keep at least one Lynty that can battle on your team.');return}S.team.splice(idx,1);S.den.push(m);save();toast(`${s.name} is resting in the Den.`);backSheet()};a.append(b)}
-  if(!inTeam){const b=el('button','btn sm primary',S.team.length<6?'Bring along':'Team is full');b.disabled=S.team.length>=6;b.onclick=async()=>{S.den.splice(S.den.indexOf(m),1);S.team.push(m);save();toast(`${s.name} joined your team.`);backSheet();if(needsEvo(m)){closeSheetAll();await sleep(250);await runPendingEvos()}};a.append(b)}
+  if(inTeam&&idx>0){const b=el('button','btn sm','Make lead');b.onclick=()=>{S.team.splice(idx,1);S.team.unshift(m);save();toast(`${nmOf(m)} now leads the team.`);backSheet()};a.append(b)}
+  if(inTeam&&S.team.length>1){const b=el('button','btn sm','Send to Den');b.onclick=()=>{if(m.hp>0&&!S.team.some(x=>x!==m&&x.hp>0)){toast('Keep at least one Lynty that can battle on your team.');return}S.team.splice(idx,1);S.den.push(m);save();toast(`${nmOf(m)} is resting in the Den.`);backSheet()};a.append(b)}
+  if(!inTeam){const b=el('button','btn sm primary',S.team.length<6?'Bring along':'Team is full');b.disabled=S.team.length>=6;b.onclick=async()=>{S.den.splice(S.den.indexOf(m),1);S.team.push(m);save();toast(`${nmOf(m)} joined your team.`);backSheet();if(needsEvo(m)){closeSheetAll();await sleep(250);await runPendingEvos()}};a.append(b)}
+  {const b=el('button','btn sm',m.nick?'Rename':'Nickname');b.onclick=async()=>{const sh=$('#sheet');sh.hidden=true;
+    const v=await askName(`What will you call ${s.name}?`,'',{suggest:nickIdeas(m.sp),def:m.nick||'',skip:m.nick?'No nickname':null});sh.hidden=false;
+    if(v&&v.toLowerCase()!==s.name.toLowerCase())m.nick=v;else delete m.nick;save();const top=SH.stack[SH.stack.length-1];if(top)top.title=nmOf(m);drawSheet();
+    toast(m.nick?`${s.name} is now called ${m.nick}.`:`${s.name} goes by its own name again.`)};a.append(b)}
   if(a.children.length)body.append(a)}})}
 /* ---------- habitats: which wild areas each Lynty lives in, and how often it shows up ---------- */
 /* every route and side road, in the order you walk the Long Road north (a town's side road, then the route out of it) */
@@ -5472,11 +5500,20 @@ async function trainerIntro(){B.tr={dx:-120,a:1,f:'idle',t0:performance.now()};
   await tween(380,t=>B.tr.dx=-120*(1-t*t*(3-2*t)));await sleep(140);
   B.tr.f='reach';B.tr.t0=performance.now();MUS.sfx('chime');await sleep(560)}
 async function sendOut(first){
-  if(first&&B.tr){const m=cur();B.o.me=Object.assign(mkO(),{scale:.12,dx:-4,dy:-30});$('#hudMe').hidden=false;updateHUD();
-    await bmsg(`You're up, ${nmOf(m)}!`,200);
-    await tween(380,t=>{const e=1-(1-t)**3;B.o.me.scale=.12+.88*e;B.o.me.dx=-4*(1-e);B.o.me.dy=-30*(1-e);if(B.tr){B.tr.dx=-95*t;B.tr.a=1-t*1.2}});
-    B.tr=null;Object.assign(B.o.me,{scale:1,dx:0,dy:0});if(m.shiny)sparkle('me');return}
-  B.o.me=Object.assign(mkO(),{dx:-150});$('#hudMe').hidden=false;updateHUD();await bmsg(`You're up, ${nmOf(cur())}!`,200);await tween(360,t=>B.o.me.dx=-150*(1-t));if(cur().shiny)sparkle('me')}
+  const m=cur();B.o.me=Object.assign(mkO(),{hide:true});$('#hudMe').hidden=false;updateHUD();
+  await bmsg(`Go, ${nmOf(m)}!`,1);
+  /* your trainer steps in (if not already there), winds up and throws the charm */
+  if(!B.tr){B.tr={f:'idle',dx:-95,a:0,t0:performance.now()};await tween(240,t=>{const e=1-(1-t)**2;B.tr.dx=-95+87*e;B.tr.a=t})}
+  B.tr.thr=1;B.tr.f='wind';B.charm={ph:'held',k:'charm',rot:0,x:0,y:0,t:0,glow:.15,sq:1};MUS.sfx('tick',62);await sleep(230);
+  B.tr.f='toss';MUS.sfx('toss');const[sx,sy]=trainerHand(),[tx,ty]=monCenter('me');Object.assign(B.charm,{ph:'fly',x:sx,y:sy});
+  await tween(440,t=>{const c=B.charm;c.x=sx+(tx-sx)*t;c.y=sy+(ty-sy)*t-Math.sin(t*Math.PI)*42;c.rot=t*Math.PI*4;
+    if(B.tr){const u=clamp((t-.35)/.65,0,1);B.tr.dx=(B.tr.dx0==null?(B.tr.dx0=B.tr.dx):B.tr.dx0)-87*u*u;B.tr.a=1-u;if(u>0)B.tr.f='idle'}
+    if(rnd()<.5)B.fx.push({x:c.x+(rnd()-.5)*6,y:c.y+(rnd()-.5)*6,vx:(rnd()-.5)*.02,vy:.01+rnd()*.02,life:220+rnd()*160,c:pick(['#ffffff','#bff7f5']),s:1,tw:rnd()<.3})});
+  /* it opens in a flash, and out comes your Lynty */
+  B.tr=null;B.charm=null;B.flashW=performance.now();MUS.sfx('chime');burst('me','charm',20);B.rings.push({x:tx,y:ty,r:4,life:420,c:'#bff7f5'});
+  Object.assign(B.o.me,{hide:false,scale:.15,white:1});
+  await tween(340,t=>{const e=1-(1-t)**3;B.o.me.scale=.15+.85*e;B.o.me.white=1-t});
+  Object.assign(B.o.me,{scale:1,white:0});if(m.shiny)sparkle('me');await sleep(250)}
 /* shiny Lynties twinkle when they appear */
 function sparkle(side){if(!B)return;const[cx,cy]=monCenter(side);MUS.sfx('shiny');
   for(let i=0;i<14;i++){const a=i/14*6.283,r=14+rnd()*16;B.fx.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r*.9,vx:0,vy:-.005,life:500+i*45,tw:1,c:i%3?'#fff3c4':'#ffffff',s:1})}}
@@ -5507,7 +5544,7 @@ function battleBag(done){openSheet({title:'Inventory',render:body=>{
       if(idx==null)return;closeSheetAll();done({t:'item',item:k,idx})};
     body.append(b)}}})}
 function battleTeam(done){openSheet({title:'Switch Lynty',render:body=>{
-  S.team.forEach((m,i)=>{const b=teamRow(m);const act=i===B.me;b.disabled=m.hp<=0||act;if(act)b.querySelector('.r-name').insertAdjacentHTML('afterend','<span class="tag">In battle</span>');b.onclick=()=>{closeSheetAll();done({t:'switch',idx:i})};body.append(b)})}})}
+  S.team.forEach((m,i)=>{const b=teamRow(m);const act=i===B.me;b.disabled=m.hp<=0||act;if(act)(b.querySelector('.r-sp')||b.querySelector('.r-name')).insertAdjacentHTML('afterend','<span class="tag">In battle</span>');b.onclick=()=>{closeSheetAll();done({t:'switch',idx:i})};body.append(b)})}})}
 function aiPick(){const f=B.foe,me=cur(),ms=f.moves;
   if(rnd()<.18){const st=ms.filter(m=>MV[m].fx);if(st.length&&B.st.foe.a<2)return pick(st)}
   const dm=ms.filter(m=>MV[m].p);if(!dm.length)return ms[0];
@@ -5612,7 +5649,7 @@ async function throwCharm(item){
     await tween(700,t=>B.charm.glow=1.5-t);await sleep(250);B.charm=null;
     caughtMark(f.sp,f.shiny);f.xp=0;await bmsg(s.leg?`Bonded! The legendary ${s.name} has joined you!`:`Bonded! ${f.shiny?'The shiny ':''}${s.name} is your friend now.`,1100);
     if(S.team.length<6)S.team.push(f);else{S.den.push(f);await bmsg(`Your team is full, so ${s.name} went to rest in the Den.`,1100)}
-    B.over=true;B.result='caught';return true}
+    NICKQ.push(f);B.over=true;B.result='caught';return true}
   /* it breaks free with a pop */
   B.charm.ph='break';B.flashW=performance.now();B.shake=performance.now();MUS.sfx('buzz');burst('foe','neutral',18);const bx2=B.charm.x,by2=B.charm.y;B.charm=null;
   B.rings.push({x:bx2,y:by2,r:3,life:380,c:'#ffffff'});B.o.foe.hide=false;await tween(240,t=>B.o.foe.scale=t*1.15);await tween(140,t=>B.o.foe.scale=1.15-.15*t);B.o.foe.scale=1;
@@ -5623,6 +5660,7 @@ async function endBattle(){
   await wipe(async()=>{showBattlePanel(false);B=null;
     if(res==='lose'){lost=Math.floor(S.shells/2);S.shells-=lost;healAll();const r=S.respawn&&MAPS[S.respawn.map]?S.respawn:{map:'shop_lynhaven',x:2,y:4,dir:'up'};setMap(r.map);syncMap(CM);Object.assign(P,{x:r.x,y:r.y,fx:r.x,fy:r.y,dir:r.dir,t:1,moving:false});curZone=null;updTop()}});
   mode='world';held.clear();
+  while(NICKQ.length){const nm=NICKQ.shift();if(S.team.includes(nm)||S.den.includes(nm))await offerNick(nm)}
   if(res==='lose')await talk(['Your team is worn out...',`You hurry back to the ${CM.name}, dropping ${lost} shells on the way.`,'Your Lynties are rested and ready to try again.']);
   await runPendingEvos();
   updTop();save()}
@@ -5634,16 +5672,16 @@ async function evolve(m){
   const ov=$('#evo'),cap=$('#evoCap'),card=$('#evoCard');
   EVO={from,to,c,sh:!!m.shiny,t0:performance.now(),lt:performance.now(),bg:0,glow:0,charge:0,which:0,flash:0,lift:0,pulse:0,phase:'charge',revealed:false,parts:[],rings:[]};
   ov.style.setProperty('--ec',c);card.hidden=true;ov.hidden=false;$('#regionToast').classList.remove('show');
-  cap.textContent=`What's this? ${SP[from].name} is reacting!`;requestAnimationFrame(()=>cap.classList.add('on'));
+  cap.textContent=`What's this? ${m.nick||SP[from].name} is reacting!`;requestAnimationFrame(()=>cap.classList.add('on'));
   await tween(600,t=>EVO.bg=t);
   await tween(2100,t=>{EVO.charge=t;EVO.glow=t*t*.95});
-  cap.textContent=`${SP[from].name} is evolving!`;EVO.phase='morph';
+  cap.textContent=`${m.nick||SP[from].name} is evolving!`;EVO.phase='morph';
   let d=430;for(let i=0;i<18;i++){EVO.which=i%2;EVO.pulse=1;EVO.rings.push({r:24,life:380,c:i%2?'#ffffff':c,sp:.09});MUS.sfx('morph',62+i);await sleep(d);d=Math.max(55,d*.84)}
   EVO.which=1;await tween(170,t=>EVO.flash=t);
   const o=stats(m),oh=o.hp;m.sp=to;const n=stats(m);m.hp=Math.min(n.hp,m.hp+(n.hp-oh));caughtMark(to,m.shiny);
   EVO.phase='reveal';EVO.revealed=true;EVO.glow=1;evoBurst();MUS.jingle('fanfare');cap.classList.remove('on');
   await tween(750,t=>{EVO.flash=1-t;EVO.glow=1-t});EVO.glow=0;
-  $('#evoKick').textContent=`${SP[from].name} evolved into`;$('#evoName').textContent=SP[to].name;$('#evoChip').innerHTML=chipH(SP[to].el);
+  $('#evoKick').textContent=`${m.nick||SP[from].name} evolved into`;$('#evoName').textContent=SP[to].name;$('#evoChip').innerHTML=chipH(SP[to].el);
   $('#evoStats').innerHTML=[['HP','hp'],['ATK','atk'],['DEF','def'],['SPD','spd']].map(([a,k])=>`<div><small>${a}</small><b>${n[k]}</b><em>+${n[k]-o[k]}</em></div>`).join('');
   card.hidden=false;
   {const sc=ov.clientHeight/H,top=4,bot=card.offsetTop/sc-6;EVO.ly=Math.round((top+bot)/2);EVO.ls=Math.max(40,40*Math.floor((bot-top)/40))}
@@ -5666,7 +5704,7 @@ function press(k){
   if(mode==='dialog'){if(k==='a'){const ae=document.activeElement;if(ae&&$('#dlgChoices').contains(ae))ae.click()}return}
   if(mode==='battle'){if(k==='a'){const ae=document.activeElement;if(ae&&$('#bpanel').contains(ae)&&ae.tagName==='BUTTON')ae.click();else{const vis=[...$('#bpanel').querySelectorAll('button')].find(b=>b.offsetParent!==null);if(vis)vis.focus()}}
     else if(k==='b'&&!$('#bmoves').hidden)$('#bmoves .back').click();return}
-  if(mode==='world'){if(k==='a')interact();else if(k==='menu')openMenu();else if(k==='bag')bagView();else if(k==='map')mapView()}
+  if(mode==='world'){if(k==='a')interact();else if(LAB&&LAB.phase!=='done')return;else if(k==='menu')openMenu();else if(k==='bag')bagView();else if(k==='map')mapView()}
 }
 const typing=e=>{const t=e.target;return !!(t&&(t.tagName==='TEXTAREA'||t.tagName==='INPUT'))};
 addEventListener('keydown',e=>{if(typing(e))return;
@@ -5706,7 +5744,7 @@ addEventListener('resize',layout);
 function hideTitle(){$('#title').hidden=true}
 function locName(sv){const p=sv.pos||{};if(p.map&&MAPS[p.map]){const m=MAPS[p.map];return m.interior?m.name:zoneAt(m,p.y).name}let k=1;while(k<TOWNS.length-1&&(sv.crests||[]).includes(TOWNS[k].ward))k++;return TOWNS[k].name}
 function slotInfo(sv){const lead=sv.team.find(m=>SP[m.sp])||{sp:'snapfin',lvl:1},n=(sv.crests||[]).length;
-  return{img:sprURL(lead.sp,false,lead.shiny),line1:`${sv.name?cleanName(sv.name)+' · ':''}${SP[lead.sp].name} Lv ${lead.lvl} · ${n} crest${n===1?'':'s'}${sv.flags&&sv.flags.champ?' · Champion':''}`,line2:`${locName(sv)}${sv.savedAt?' · '+new Date(sv.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}`}}
+  return{img:sprURL(lead.sp,false,lead.shiny),line1:`${sv.name?cleanName(sv.name)+' · ':''}${lead.nick||SP[lead.sp].name} Lv ${lead.lvl} · ${n} crest${n===1?'':'s'}${sv.flags&&sv.flags.champ?' · Champion':''}`,line2:`${locName(sv)}${sv.savedAt?' · '+new Date(sv.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}`}}
 let tConfirm=null;
 const NAMES=['Ari','Bo','Cass','Dani','Eli','Finn','Gus','Hana','Ivy','Jo','Kit','Lu','Max','Nia','Ollie','Pip','Rae','Sol','Tam','Uma','Vic','Wes','Yuki','Zoe'];
 const cleanName=v=>String(v||'').replace(/[<>&"]/g,'').replace(/\s+/g,' ').trim().slice(0,12);
@@ -5738,14 +5776,14 @@ function introShow(who){if(INTRO){INTRO.who=who;INTRO.t0=performance.now()}}
 function lookStep(){return new Promise(res=>{const t=$('#title');t.classList.add('intro');t.hidden=false;$('#tMain').hidden=true;$('#tSlots').hidden=true;$('#tCodeBox').hidden=true;mode='title';
   lookPanel(()=>{t.hidden=true;t.classList.remove('intro');$('#tLookBack').hidden=false;mode='intro';res()},'intro')})}
 /* the professor asks for a name: type one, or take a random one */
-function askName(text,who,{suggest=NAMES,def=''}={}){return new Promise(res=>{const prev=mode;mode='dialog';held.clear();const d=$('#dialog');d.hidden=false;const w=$('#dlgWho');w.textContent=who||'';w.hidden=!who;$('#dlgCaret').hidden=true;const c=$('#dlgChoices');c.innerHTML='';
+function askName(text,who,{suggest=NAMES,def='',skip=null}={}){return new Promise(res=>{const prev=mode;mode='dialog';held.clear();const d=$('#dialog');d.hidden=false;const w=$('#dlgWho');w.textContent=who||'';w.hidden=!who;$('#dlgCaret').hidden=true;const c=$('#dlgChoices');c.innerHTML='';
   const t=typer($('#dlgTxt'),text);advanceFn=()=>t.finish();
   t.done.then(()=>{advanceFn=null;const row=el('div','ask-name'),inp=document.createElement('input');inp.maxLength=12;inp.value=def;inp.placeholder='Type a name';inp.autocomplete='off';inp.spellcheck=false;inp.setAttribute('autocapitalize','words');inp.setAttribute('enterkeyhint','done');inp.setAttribute('aria-label','Name');
     const rb=el('button','btn sm','Random'),ok=el('button','btn sm primary','OK');
     rb.onclick=()=>{let n;do n=pick(suggest);while(n===inp.value&&suggest.length>1);inp.value=n;MUS.sfx('tick')};
     const done=()=>{const v=cleanName(inp.value);if(!v){rb.onclick();inp.focus();return}c.innerHTML='';d.hidden=true;mode=prev==='dialog'?'world':prev;MUS.sfx('chime');res(v)};
     ok.onclick=done;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();done()}});inp.addEventListener('click',e=>e.stopPropagation());
-    row.append(inp);c.append(row,rb,ok);(def?ok:rb).focus({preventScroll:true})})})}
+    row.append(inp);c.append(row,rb);if(skip){const sb=el('button','btn sm',skip);sb.onclick=()=>{c.innerHTML='';d.hidden=true;mode=prev==='dialog'?'world':prev;MUS.sfx('tick');res('')};c.append(sb)}c.append(ok);(def?ok:rb).focus({preventScroll:true})})})}
 async function newGame(slot){
   const no=nextSaveNo();SLOT=String(slot);S=newState();S.saveNo=no;S.look=Object.assign({},LOOK);setMap('world');syncMap(CM);hideTitle();updTop();
   const lyn=pick(ORDER.filter(id=>!SP[id].leg&&!SP[id].cave)),W2='Prof. Wren';
@@ -5765,21 +5803,104 @@ async function newGame(slot){
   const rn=await askName("...Er, what was their name again?",W2,{suggest:RIVAL_NAMES,def:'Remy'});S.flags.rivalName=rn;
   await talk([`That's right! ${rn}!`],W2);
   introShow('you');await sleep(350);
-  await talk([`${nm}, your very own Lynty adventure is about to begin!`,"Come find me outside my lab, and I'll give you a partner of your own."],W2);
-  const ly=TOWNS[0].y0;
-  await wipe(async()=>{INTRO=null;Object.assign(P,{x:20,y:ly+6,fx:20,fy:ly+6,t:1,dir:'up',moving:false});S.flags.started=true;curZone='t0';updTop()});
-  mode='world';await sleep(300);
-  await talk(["There you are! Now, pick your partner!"],W2);
-  const id=await pickStarter();
-  S.team.push(mkMon(id,10));caughtMark(id);S.flags.starter=true;S.flags.rivalSp=RIVAL_PICK[id]||'shellby';S.flags.rivalN=0;
-  await talk([`${SP[id].name}! A wonderful choice.`,'When a wild Lynty is worn down in battle, toss a Bond Charm to befriend it. Here are a few to start.'],W2);
-  const r=S.flags.rivalSp,e=await rivalArrive();
-  await talk(["Professor! Did I miss it? You said I could pick a partner too!"],rn);
-  await talk([`Right on time, ${rn}.`],W2);
-  await talk([`Hey, ${nm}! You picked ${SP[id].name}? Then I'll take ${SP[r].name}. It's strong against yours!`,"Every time you beat a Warden, I'll come find you. Let's see whose partner gets stronger!"],rn);
-  await rivalLeave(e);
-  await talk([`Off you go, ${nm}!`],W2);
-  save();zoneToast(zoneAt(CM,P.y))}
+  await talk([`${nm}, your very own Lynty adventure is about to begin!`,"Meet me in my lab, and I'll give you a partner of your own."],W2);
+  await wipe(async()=>{INTRO=null;labSetup();setMap(labMap().id);syncMap(CM);Object.assign(P,{x:4,y:6,fx:4,fy:6,t:1,dir:'up',moving:false});S.flags.started=true;curZone=null;updTop()});
+  mode='dialog';held.clear();await sleep(250);interiorToast();await pWalk('up');await pWalk('up');await sleep(200);
+  await talk(["Welcome to my lab! Come in, come in.","On the table are three Bond Charms, and each one holds a Lynty.","I never know which Lynties will turn up. Every new trainer finds a different three!","Stand in front of a charm to see who's inside. Once you open one, that Lynty is yours for good. No changing your mind!"],W2);
+  LAB.phase='pick';mode='world';held.clear()}
+/* ---------- choosing your partner in Wren's lab: three charms on the table, a different three every game ----------
+   Any Lynty line can turn up (legends only rarely). Opening a charm is final. Then Remy bursts in and takes the
+   charm that's strongest against yours, and Wren keeps the last one. LAB is null except during this scene. */
+let LAB=null;const NICKQ=[];
+const labMap=()=>MAPS.home_lynhaven_lab;
+const NICKS={any:['Mochi','Biscuit','Pip','Nugget','Comet','Ziggy','Pixel','Taffy','Waffles','Bean','Noodle','Pudding','Rocket','Scout','Button','Jellybean','Maple','Sprocket','Doodle','Pickle'],
+ water:['Bubbles','Splash','Misty','Ripple','Tide'],fire:['Ember','Blaze','Sparky','Cinder','Toast'],earth:['Pebble','Rocky','Boulder','Dusty','Clay'],air:['Breezy','Gust','Feather','Zephyr','Puff'],
+ leaf:['Sprout','Clover','Fern','Basil','Twig'],spark:['Zap','Volt','Buzz','Flash','Static'],frost:['Frosty','Snowball','Flurry','Icicle','Chill'],shadow:['Shade','Midnight','Inky','Gloom','Ghost']};
+const nickIdeas=id=>NICKS.any.concat(NICKS[SP[id].el]||[]);
+/* three different Lynties (first forms), of three different elements when possible */
+function rollStarters(){const base=ORDER.filter(id=>SP[id].line&&SP[id].line[0]===id),legs=base.filter(id=>SP[id].leg),rest=base.filter(id=>!SP[id].leg);let first=null;
+  for(let t=0;t<60;t++){const out=[];while(out.length<3){const id=legs.length&&rnd()<1/30?pick(legs):pick(rest);if(!out.includes(id))out.push(id)}
+    if(new Set(out.map(id=>SP[id].el)).size===3)return out;first=first||out}return first}
+function labSetup(){const m=labMap();m.ents=m.ents.filter(e=>e.kind!=='charm');
+  const charms=rollStarters().map((id,i)=>{const e={kind:'charm',x:3+i,y:3,sp:id};e.show=()=>!!LAB&&!e.gone;e.talk=()=>pickCharm(e);return e});
+  LAB={phase:'intro',charms,reveal:null,pop:null};m.ents.push(...charms)}
+/* the charm right in front of you */
+function labFaced(){if(!LAB||CM!==labMap()||P.moving)return null;const[dx,dy]=DIRV[P.dir];return LAB.charms.find(e=>!e.gone&&e.x===P.x+dx&&e.y===P.y+dy)||null}
+const labFaces=e=>!!LAB&&LAB.phase==='pick'&&labFaced()===e;
+/* you take a step on your own (in cutscenes) */
+async function pWalk(d){const[dx,dy]=DIRV[d];P.dir=d;P.fx=P.x;P.fy=P.y;P.x+=dx;P.y+=dy;P.t=0;P.moving=true;P.step++;await tween(190,t=>P.t=t);P.t=1;P.moving=false}
+/* the shortest walk across a room, around people, for someone who isn't you */
+function labPath(m,from,to,block){const key=(x,y)=>x+','+y,prev=new Map([[key(from[0],from[1]),null]]),q=[from];
+  while(q.length){const[x,y]=q.shift();if(x===to[0]&&y===to[1]){const out=[];let k=key(x,y);while(prev.get(k)){const[d,pk]=prev.get(k);out.unshift(d);k=pk}return out}
+    for(const d of['up','left','right','down']){const[dx,dy]=DIRV[d],nx=x+dx,ny=y+dy,nk=key(nx,ny);if(prev.has(nk)||!walkT(mT(m,nx,ny))||block(nx,ny))continue;prev.set(nk,[d,key(x,y)]);q.push([nx,ny])}}
+  return null}
+async function labWrenTalk(){if(LAB&&LAB.phase==='pick'){await talk(["Take your time! Stand in front of a charm to see who's inside.","Once you open one, that Lynty is yours. No changing your mind!"],'Prof. Wren');return}await profTalk()}
+async function labStay(){mode='dialog';held.clear();running=false;await talk(["Hold on! Pick your partner before you go."],'Prof. Wren');mode='dialog';await pWalk('up');mode='world';held.clear()}
+/* give a Lynty a nickname, if you like */
+async function offerNick(m){const sp=SP[m.sp].name;
+  if(await choose(`Give ${sp} a nickname?`,['Yes','No'])!==0)return;
+  const v=await askName(`What will you call ${sp}?`,'',{suggest:nickIdeas(m.sp)});
+  if(v&&v.toLowerCase()!==sp.toLowerCase())m.nick=v;else delete m.nick;save()}
+/* you open a charm: no going back */
+async function pickCharm(e){
+  if(!LAB||LAB.phase!=='pick'){if(LAB&&!e.gone)await talk(['Professor Wren is keeping this charm safe.']);return}
+  LAB.phase='chosen';mode='dialog';held.clear();running=false;
+  /* talk() hands control back after each line; keep it until the scene is over */
+  const say=async(l,who)=>{await talk(l,who);mode='dialog';held.clear()};
+  const id=e.sp,s=SP[id],W2='Prof. Wren',nm=S.name||pname();
+  MUS.sfx('toss');e.gone=1;LAB.reveal={id,t0:performance.now(),x:e.x,y:e.y};await sleep(330);MUS.sfx('chime');await sleep(900);
+  const m=mkMon(id,10);S.team.push(m);caughtMark(id);S.flags.starter=true;S.flags.rivalN=0;updTop();
+  await say(s.leg?['A legendary Lynty?! In my lab?',`...Well, a promise is a promise. ${s.name} is yours!`]:[`It's ${s.name}, a ${EL[s.el].n} Lynty!`,`A wonderful choice. ${s.name} is yours now.`],W2);
+  await offerNick(m);mode='dialog';
+  if(m.nick)await say([`${m.nick}! What a fine name.`],W2);
+  LAB.reveal.out=performance.now();await sleep(380);LAB.reveal=null;
+  await say(['When a wild Lynty is worn down in battle, toss a Bond Charm to befriend it. Here are a few to start.'],W2);
+  /* Remy bursts in and takes the charm that's strongest against yours */
+  const rn=rivalName(),lab=labMap(),left=LAB.charms.filter(c=>!c.gone),myEl=s.el;
+  const score=c=>mult(SP[c.sp].el,myEl)*2-mult(myEl,SP[c.sp].el);
+  const rc=left.slice().sort((a,b)=>score(b)-score(a))[0],r=rc.sp,strong=mult(SP[r].el,myEl)>1;
+  const ri2=npcE(4,7,'up','rival',rn,()=>{},{rival:1});lab.ents.push(ri2);
+  const block=(x,y)=>(x===P.x&&y===P.y)||lab.ents.some(o=>o!==ri2&&vis(o)&&o.x===x&&o.y===y);
+  MUS.sfx('spot');ri2.alert=1;await sleep(550);ri2.alert=0;
+  await say(['Professor! Did I miss it? You said I could pick a partner too!'],rn);
+  await say([`Right on time, ${rn}. There are two charms left.`],W2);
+  let path=null,face='up';
+  for(const[x,y,d]of[[rc.x,rc.y+1,'up'],[rc.x-1,rc.y,'right'],[rc.x+1,rc.y,'left'],[rc.x,rc.y-1,'down']]){if(!walkT(mT(lab,x,y))||block(x,y))continue;const p=labPath(lab,[ri2.x,ri2.y],[x,y],block);if(p){path=p;face=d;break}}
+  if(path)for(const d of path)await entStep(ri2,d);ri2.dir=face;await sleep(200);
+  MUS.sfx('chime');rc.gone=1;LAB.pop={x:rc.x,y:rc.y,id:r,t0:performance.now()};await sleep(800);
+  await say([strong?`You picked ${s.name}? Then I'll take ${SP[r].name}. It's strong against yours!`:`You picked ${s.name}? Then ${SP[r].name} is mine!`,"Every time you beat a Warden, I'll come find you. Let's see whose partner gets stronger!"],rn);
+  LAB.pop=null;S.flags.rivalSp=r;
+  const back=labPath(lab,[ri2.x,ri2.y],[4,7],block);if(back)for(const d of back)await entStep(ri2,d);
+  const k=lab.ents.indexOf(ri2);if(k>=0)lab.ents.splice(k,1);await sleep(250);
+  const last=LAB.charms.find(c=>!c.gone);if(last){await say(['That rascal. Well, this last charm stays here with me.'],W2);last.gone=1;MUS.sfx('tick')}
+  await say([`Off you go, ${nm}! The Long Road starts right outside.`],W2);
+  LAB.phase='done';mode='world';held.clear();save()}
+/* what's drawn over the lab: the Lynty inside the charm you're facing, your charm opening, and Remy's */
+function labRR(x,y,w,h,r){const c=ctx;c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
+function labPill(text,y){const c=ctx;c.font='14px VT323, monospace';const tw=Math.ceil(c.measureText(text).width)+16,x=Math.round(W/2-tw/2);
+  c.globalAlpha=.88;c.fillStyle='#1b1430';labRR(x,y,tw,17,8);c.fill();c.globalAlpha=1;c.fillStyle='#fffaf0';c.textAlign='center';c.textBaseline='middle';c.fillText(text,W/2,y+9);c.textAlign='start';c.textBaseline='alphabetic'}
+function labHud(now,proj){if(!LAB||CM!==labMap())return;const c=ctx;
+  if(LAB.phase==='pick'&&mode==='world'){const e=labFaced();
+    if(e){const s=SP[e.sp],[x,y]=proj(e.x,e.y,1.3),bw=80,bh=74,bx=clamp(Math.round(x-bw/2),3,W-bw-3),by=Math.max(3,Math.round(y-bh-6)),ec=EL[s.el].c;
+      c.fillStyle='#1b1430';labRR(bx-2,by-2,bw+4,bh+4,8);c.fill();c.beginPath();c.moveTo(x-6,by+bh);c.lineTo(x+6,by+bh);c.lineTo(x,by+bh+7);c.closePath();c.fill();
+      c.fillStyle='#fffaf0';labRR(bx,by,bw,bh,6);c.fill();c.fillStyle=mix(ec,'#fffaf0',.7);labRR(bx+3,by+3,bw-6,44,4);c.fill();
+      const bob=Math.round(Math.sin(now/300)*1.5);c.drawImage(sprCanvas(e.sp,false,false),Math.round(bx+bw/2-20),by+5+bob,40,40);
+      /* the name shrinks to fit whichever font is loaded (the offline pixel font is wider) */
+      c.textAlign='center';c.textBaseline='middle';c.fillStyle='#1b1430';let fz=15;c.font=fz+'px VT323, monospace';while(fz>9&&c.measureText(s.name).width>bw-8){fz--;c.font=fz+'px VT323, monospace'}c.fillText(s.name,bx+bw/2,by+56);
+      const tag=s.leg?'Legendary':EL[s.el].n;c.font='11px VT323, monospace';const tw2=c.measureText(tag).width;c.fillStyle='#4a4560';c.fillText(tag,bx+bw/2+4,by+67);
+      c.fillStyle=ec;c.beginPath();c.arc(Math.round(bx+bw/2-tw2/2-1),by+67,2.5,0,7);c.fill();c.textAlign='start';c.textBaseline='alphabetic'}
+    labPill(e?'A · open this charm':"Face a charm to see who's inside",H-24)}
+  if(LAB.pop){const p=LAB.pop,k=clamp((now-p.t0)/400,0,1),[x,y]=proj(p.x,p.y,1.05),z=Math.round(40*(k<1?Math.sin(k*Math.PI*.6)/Math.sin(Math.PI*.6)*1.08:1));
+    c.globalAlpha=.35*(1-k*.5);pEll(x,y-14,26,22,'#fff3c4');c.globalAlpha=1;if(z>0)c.drawImage(sprCanvas(p.id,false,false),Math.round(x-z/2),Math.round(y-z+6),z,z)}
+  if(LAB.reveal){const R=LAB.reveal,k=clamp((now-R.t0)/1200,0,1),out=R.out?clamp((now-R.out)/350,0,1):0,a=1-out,cx=Math.round(W/2),cy=Math.round(H*.36);
+    c.save();c.globalAlpha=.6*Math.min(1,k*3)*a;c.fillStyle='#0a1026';c.fillRect(0,0,W,H);
+    const open=k>=.3,u=open?(k-.3)/.7:0;
+    if(open){c.globalAlpha=a*Math.min(1,u*2);const g=c.createRadialGradient(cx,cy,2,cx,cy,80);g.addColorStop(0,'rgba(255,248,210,.85)');g.addColorStop(1,'rgba(255,248,210,0)');c.fillStyle=g;c.fillRect(cx-80,cy-80,160,160);
+      c.fillStyle='#fff3c4';for(let i=0;i<10;i++){const an=now/1400+i*Math.PI/5;c.globalAlpha=a*.18*Math.min(1,u*2);c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+Math.cos(an-.08)*140,cy+Math.sin(an-.08)*140);c.lineTo(cx+Math.cos(an+.08)*140,cy+Math.sin(an+.08)*140);c.closePath();c.fill()}
+      const sc=u<.5?Math.sin(u/.5*Math.PI*.6)/Math.sin(Math.PI*.6)*1.08:1,z=Math.round(88*sc),bob=Math.round(Math.sin(now/420)*2);c.globalAlpha=a;if(z>0)c.drawImage(sprCanvas(R.id,false,false),cx-z/2,cy-z/2+bob,z,z);
+      if(u<.4){c.globalAlpha=a*(1-u/.4);c.strokeStyle='#ffffff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,10+u*120,0,7);c.stroke();c.fillStyle='#ffffff';c.globalAlpha=Math.max(0,.8-u*3);c.fillRect(0,0,W,H)}}
+    else{const v=k/.3,[sx,sy]=proj(R.x,R.y,.7),x=sx+(cx-sx)*v,y=sy+(cy-sy)*v-Math.sin(v*Math.PI)*30,z=Math.round(12+20*v);c.globalAlpha=1;c.translate(Math.round(x),Math.round(y));c.rotate(v*Math.PI*3);c.drawImage(CHARM,-z/2,-z/2,z,z)}
+    c.restore()}}
 /* the scene in pixel art (the 3D world draws its own) */
 const _ipx={};
 function drawIntro(now){const I=INTRO,g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#14204a');g.addColorStop(.6,'#35589a');g.addColorStop(1,'#7aa6d8');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -5837,7 +5958,7 @@ async function rivalChallenge(){if(!rivalDue()||!canFight())return;const k=(S.fl
   else{S.flags.rivalLost=k;await rivalLeave(e)}}
 
 function firstLocked(){for(let i=1;i<TOWNS.length-1;i++)if(!S.crests.includes(TOWNS[i].ward))return i;return TOWNS.length-1}
-function continueGame(sv,slot){
+function continueGame(sv,slot){LAB=null;NICKQ.length=0;
   if(slot)SLOT=String(slot);
   const base=newState();S=Object.assign(base,sv);S.flags=Object.assign({},sv.flags);S.bag=Object.assign(newState().bag,sv.bag);S.beaten=Object.assign({},sv.beaten);S.solved=Object.assign({},sv.solved);S.visited=Object.assign({lynhaven:1},sv.visited);
   if(!S.saveNo)S.saveNo=/^\d+$/.test(SLOT)?+SLOT:nextSaveNo();
@@ -5933,7 +6054,7 @@ buildTiles();load3D();buildWorld();buildMini();setMap('world');layout();sndLabel
 $('#tTag').textContent=`${ORDER.length} Lynties · 8 legends · 4 caves`;
 $('#parade').innerHTML=['thalassor','ignaroth','aethyra','fulgurion','nihilux'].map(id=>`<img class="px" src="${sprURL(id)}" alt="${SP[id].name}">`).join('');
 requestAnimationFrame(loop);
-window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt};
+window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt,get LAB(){return LAB},labFaced};
 const snap=()=>S&&S.flags.starter&&!B&&CM?{S:JSON.parse(JSON.stringify(Object.assign(S,{pos:{map:CM.id,x:P.x,y:P.y,dir:P.dir}}))),slot:SLOT,dirty}:null;
 const hot=!ZP&&window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(snap);

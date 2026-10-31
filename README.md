@@ -4,7 +4,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 
 | Cartridge | What it is | Controls |
 |---|---|---|
-| **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 166 Lynties, starting with Embrit, Shellby or Budrake. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
+| **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 166 Lynties, starting with a partner from one of three random charms in Prof. Wren's lab. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker, hi-lo, Rocket (cash out before it blows up) and The Track (horse racing), plus Downtown: buildings to buy that earn chips while you're away. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. Every blow slides you in to meet the robot in front, and a launch can be chased into the air. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Strike at Night** | A top-down RPG with active-time battles. Lift dies in 2026 and wakes as a farm boy in Larkfield, framed for his new parents' murder. Explore the classic Strike at Night maps tile by tile in any of 200+ outfits; the hooded man's knife is spellsteel, reshaped at any anvil; beating Garrick and Sir Kell gives Lift their powers. Shared-CP battles, wishes for 19 more heroes, quests. Chapters 1 and 2. | D-pad move · A talk/look · B back (hold to run) · START menu |
@@ -14,6 +14,10 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 ## Lynties in 3D
 
 Lynties draws its world in 3D: a little diorama seen from behind and above, with smooth-lit trees, houses, cliffs, walls and swaying tall grass. You and everyone you meet are small chibi figures, and every house in every town can be entered, with people inside to talk to. A new game opens with a cutscene: Prof. Wren explains Lynties with one of his own beside him, then asks what you look like, your name and your rival's name. The Lynties themselves keep their pixel art, and so do battles, where your trainer steps in to throw each charm.
+
+- **Choosing a partner:** after the cutscene you meet Wren in his lab, where three Bond Charms sit on his table. Each game rolls a different three from every Lynty line (first forms, three different elements when it can; legends turn up only rarely). Face a charm to see who's inside; pressing A opens it, and that choice is final. Remy then bursts in and takes the charm strongest against yours, and Wren keeps the last one. You can't leave the lab until you've chosen.
+- **Nicknames:** you're offered a nickname for your partner and for every Lynty you bond with, and each Lynty's page has a Nickname / Rename button ("No nickname" goes back to its own name). Battles, the team list and evolutions use the nickname; the team list shows the species beside it.
+- **Sending out:** every time a Lynty of yours enters a battle, the box says "Go, <name>!" while your trainer throws its charm, and it bursts out in a flash.
 
 - `games/lynties/3d/` holds three.js (r183, MIT). The offline edition packs it inside the page.
 - The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.

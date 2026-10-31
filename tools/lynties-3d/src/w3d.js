@@ -130,6 +130,7 @@ function w3block(t){
   if(t==='iwall')return{h:1.75};
   if(t==='shelf')return{h:1.3,side:'iwall',top:'counter',front:'shelf'};
   if(t==='counter')return{h:.62};
+  if(t==='labdesk')return{h:.62,top:'labtop'};
   if(t==='hearth')return{h:1,side:'iwall',top:'counter',front:'hearth'};
   if(t==='labpc')return{h:1.05,side:'counter',top:'counter',front:'labpc'};
   if(t==='rail')return{h:.5};
@@ -535,6 +536,16 @@ function w3entObj(e){const S2=[],add=(g,mx,hex)=>S2.push([g,mx,hex]);
       return{root:g,upd:now=>{const id=S.flags.altarSp;pl.visible=glow.visible=!!(id&&SP[id]);if(!pl.visible)return;const k2=id+(S.flags.altarShiny?'*':'');
         if(k2!==key){key=k2;if(mat.map)mat.map.dispose();mat.map=w3tex(sprCanvas(id,true,!!S.flags.altarShiny),{mip:false});mat.needsUpdate=true}
         pl.position.y=1.75+Math.sin(now/420)*.1;glow.material.opacity=.22+.1*Math.sin(now/300)}}}
+    /* a Bond Charm on Wren's table: a teal diamond with a gold heart, turning slowly on a little stand */
+    case 'charm':{const g=new THREE.Group(),oct=w3geo('oct',()=>new THREE.OctahedronGeometry(1,0));
+      const mo=new THREE.MeshToonMaterial({color:new THREE.Color('#3fc1c9'),gradientMap:w3grad(),emissive:new THREE.Color('#3fc1c9'),emissiveIntensity:.08});
+      const mi=new THREE.MeshToonMaterial({color:new THREE.Color('#f1c66b'),gradientMap:w3grad(),emissive:new THREE.Color('#f1c66b'),emissiveIntensity:.2});
+      const base=w3part(W3G.cyl(12),'#4a4e5c',{ol:.012});base.scale.set(.17,.04,.17);base.position.y=.64;g.add(base);
+      const gem=new THREE.Group();gem.position.y=.93;g.add(gem);
+      const o=new THREE.Mesh(oct,mo);o.scale.set(.19,.25,.085);o.castShadow=true;gem.add(o);o.add(new THREE.Mesh(oct,w3ink(.09)));
+      const i=new THREE.Mesh(oct,mi);i.scale.set(.095,.125,.105);gem.add(i);
+      const halo=new THREE.Mesh(new THREE.CircleGeometry(.4,20).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:'#bff7f5',transparent:true,opacity:0,depthWrite:false}));halo.position.y=.63;g.add(halo);
+      return{root:g,upd:(now,dt,e2)=>{const on=labFaces(e2);gem.rotation.y=now/900+e2.x*2;gem.position.y=.93+Math.sin(now/380+e2.x)*.025;mo.emissiveIntensity=on?.55+.15*Math.sin(now/200):.08;halo.material.opacity=on?.4:0}}}
   }
   return null}
 /* hall puzzles: lamps that light up, runes and pressure plates on the floor */
@@ -620,7 +631,8 @@ function draw3D(now){
   /* the pixel canvas on top stays clear, apart from "!" over anyone who has spotted you */
   ctx.clearRect(0,0,W,H);
   const v3=new THREE.Vector3();for(const r of alerts){v3.copy(r.position);v3.y+=1.3;v3.project(W3.cam);drawAlert(Math.round((v3.x+1)/2*W)-8,Math.round((1-v3.y)/2*H)-12)}
-  for(const r of sleepers){v3.copy(r.position);v3.y+=1.25;v3.x+=.15;v3.project(W3.cam);drawZzz(Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H),now)}}
+  for(const r of sleepers){v3.copy(r.position);v3.y+=1.25;v3.x+=.15;v3.project(W3.cam);drawZzz(Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H),now)}
+  if(LAB)labHud(now,(x,y,h)=>{v3.set(x+.5,h,y+.5);v3.project(W3.cam);return[Math.round((v3.x+1)/2*W),Math.round((1-v3.y)/2*H)]})}
 
 /* ---------- the trainer editor on the title screen shows your 3D figure, turning slowly ---------- */
 function w3look(now){const cv=$('#look3');if(!W3.ok||!cv)return false;
