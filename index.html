@@ -588,7 +588,7 @@ const CARTS=[
   {id:'gearfist',title:'Gearfist',file:'games/gearfist/index.html',art:'games/gearfist/cart.png',label:'#6a2a14',ink:'#ffd36a',skin:'gearfist',stick:true,
    blurb:'Punch through a junkyard city of robots, beat four bosses and buy new fighters with the bolts you win.',
    note:'A light · B heavy · ▲ jump · ▼ guard · SELECT burst'},
-  {id:'drownedmoon',title:'Strike at Night',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',
+  {id:'drownedmoon',title:'Strike at Night (classic)',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',
    lib:true,blurb:'Lift was a tech worker in 2026, until a car. Now he\'s a farm boy in a world of swords, framed for his parents\' murder, with a price on his head. Beat strong foes to take their power. Chapters 1 and 2.',
    note:'A talk · B back · START menu'},
   {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',skin:'dronestrike',lib:true,
@@ -597,9 +597,12 @@ const CARTS=[
   {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',skin:'pitchfork',stick:true,wide:true,lib:true,
    blurb:'Lead a peasant revolt from the village barn to the king\'s throne: arm your folk, set traps, and fight on the field yourself.',
    note:'A strike · B roll · SELECT orders · START pause'},
-  {id:'spellsteel',title:'Spellsteel',file:'games/spellsteel/index.html',art:'games/spellsteel/cart.png',label:'#1a2470',ink:'#ffd86a',skin:'spellsteel',wide:true,
+  {id:'spellsteel',title:'Spellsteel',file:'games/spellsteel/index.html',art:'games/spellsteel/cart.png',label:'#1a2470',ink:'#ffd86a',skin:'spellsteel',wide:true,lib:true,
    blurb:'Win back five stolen Embers in an active-time RPG. Dress up from 200+ pieces; forge 10 weapon kinds part by part.',
    note:'A choose · B back (hold to run) · START menu · SELECT pose'},
+  {id:'nightsteel',title:'Strike at Night',file:'games/nightsteel/index.html',art:'games/nightsteel/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',wide:true,
+   blurb:'Framed for murder, Lift fights back with a spellsteel knife. The story, retold in Spellsteel.',
+   note:'A talk · B back (hold to run) · START menu'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -1095,5 +1098,4 @@ setTimeout(skinFromAccount,400);
 window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},lib:{open:openLib,close:closeLib,edit:setEditing,libEdit:setLibEdit,home:()=>homeCarts().map(c=>c.id),inLib:()=>libCarts().map(c=>c.id),get sel(){return sel},get libSel(){return libUI&&libUI.i}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
 })();
 </script>
-
 </body></html>
