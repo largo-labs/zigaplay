@@ -3013,7 +3013,7 @@ const RTD=[
   TR8("Dragon Master Sira",[["scaldrake", 56], ["voltmoray", 56], ["shockscale", 57], ["blazemare", 58]],["The dragons of the Long Road answer only to the strong.", "Are you strong?"],"You are. The dragons agree.","A Calderon, a Voltwyrm and an Infernix... someday my team will be complete.")],
 ];
 
-/* ---------- town trainers: three per town, each standing in a gap in the town fences ---------- */
+/* ---------- town trainers: three per town, each watching a gap in the town fences ---------- */
 const TOWN_TR={
  greenvale:[TR8("Flower Girl Rosa",[["sporelet", 6], ["nibbud", 6]],["Welcome to Greenvale! Mind the flowerbeds.", "Nobody passes my gate without a battle. Town rules!"],"You can pass. Watch the tulips!","The Trading Post is back by the south gate. Heal up any time."),TR8("Gardener Finch",[["mantling", 7], ["sproutle", 7]],["These hedges took me ten years to grow.", "You'll have to battle your way past them."],"My hedges are sad now.","Fern's labyrinth uses the same hedges. I trimmed every one."),TR8("Town Guard Ollie",[["thornling", 8], ["fawnleaf", 8]],["Halt! The upper town is for strong trainers only.", "Prove it!"],"Strong enough. Welcome to Greenvale proper.","The Warden's labyrinth is just up the street.")],
  coral:[TR8("Lifeguard Jenna",[["shellby", 12], ["inkle", 12]],["No running on the boardwalk!", "...But battling is fine."],"Okay, you're a strong swimmer.","Shallows run right through town here. Lynties wash in with the tide."),TR8("Net Mender Sal",[["tidlet", 13], ["sparkeel", 13]],["My nets caught something big today.", "It was you. Battle!"],"Slipped right through the net.","Sparkeels tangle the nets. I spend all day untangling them."),TR8("Harbor Master Quinn",[["rayvel", 14], ["shellby", 14], ["inkle", 14]],["Every ship that docks pays a toll.", "Yours is a battle."],"Toll paid in full.","Marisol's labyrinth starts across the street.")],
@@ -3519,7 +3519,7 @@ function buildWorld(){
   CAVES.forEach((cv,k)=>placeCaveMouth(m,cv,buildCave(cv,k)));
   buildSanctum()}
 /* Towns are tall now. South end: the gate in from the road, a plaza and the Trading Post (healer and shop).
-   Middle: three fences cross the town with one gap each, tall grass in between, and a town trainer holding every gap.
+   Middle: three fences cross the town with one gap each, tall grass in between, and a town trainer watching every gap.
    North end: the old town center with the labyrinth gate, houses, townsfolk, the side road and the road north. */
 const TP_ROW=39,FENCES=[[35,24],[28,5],[21,15]];
 const townWild=i=>{const r=ROUTES[i-1];return{name:TOWNS[i].name+' Outskirts',theme:TOWNS[i].theme,lv:[Math.max(2,r.lv[1]-3),r.lv[1]+1],pool:r.pool}};
@@ -3581,8 +3581,8 @@ function buildTown(m,tw,i,top){
     for(let y=top+17;y<tp-3;y++)for(let x=2;x<OW_W-2;x++){if(fy.some(([r])=>r===y))continue;mS(m,x,y,rng()<.06?ob:enc)}
     for(const[r,gx]of fy){for(let x=2;x<OW_W-2;x++)if(x!==gx)mS(m,x,r,'fence_'+g);mS(m,gx,r,g);
       for(const dx of[-1,0,1]){mS(m,gx+dx,r-1,g);mS(m,gx+dx,r+1,enc==='shallows'?g:enc)}}
-    (TOWN_TR[tw.id]||[]).forEach((f,k)=>{const[r,gx]=fy[k],ax=gx+1<OW_W-2?gx+1:gx-1,e=placeTrainer(m,gx,r,'down',f,`tw${i}_${k}`,tw.theme);
-      Object.assign(e,{rot:0,blocker:1,ax,ay:r-1,adir:ax>gx?'left':'right'})});
+    /* each town trainer stands beside a gap and turns to look all around: battle them, or slip through while they look away */
+    (TOWN_TR[tw.id]||[]).forEach((f,k)=>{const[r,gx]=fy[k],ax=gx+1<OW_W-2?gx+1:gx-1;placeTrainer(m,ax,r-1,ax>gx?'left':'right',f,`tw${i}_${k}`,tw.theme)});
   }
   m.zones.push({key:'t'+i,kind:'town',town:tw,idx:i,y0:top,y1:bot+1,name:tw.name,theme:tw.theme,wild:i?townWild(i):null});
   buildShop(tw);if(tw.ward)buildHall(tw);
@@ -3621,7 +3621,7 @@ function buildRoute(m,rt,i,top,rng){
     for(let y=by;y<by+4;y++){const rr=rowRoad(y);if(!rr)continue;const[lo,hi]=rr;
       const cand=coral?[lo-2,lo-3,hi+2]:(k%2?[lo-2,hi+2,lo-3,hi+3]:[hi+2,lo-2,hi+3,lo-3]);let placed=false;
       for(const x of cand){if(x<2||x>OW_W-3)continue;const t=mT(m,x,y);if(t==='deep'||t==='shallows'||t==='lava')continue;if(m.ents.some(e=>Math.abs(e.x-x)+Math.abs(e.y-y)<3))continue;
-        carve(x,y,lo,hi);const tr=placeTrainer(m,x,y,x>hi?'left':'right',f,`rt${i}_${k}`,rt.theme);tr.rot=2;placed=true;break}
+        carve(x,y,lo,hi);placeTrainer(m,x,y,x>hi?'left':'right',f,`rt${i}_${k}`,rt.theme);placed=true;break}
       if(placed)break}});
   m.zones.push({key:'r'+i,kind:'route',route:rt,idx:i,y0:top,y1:bot+1,name:rt.name,theme:rt.theme});
 }
@@ -4315,7 +4315,7 @@ function onStep(){
   if(CM.interior)return;
   const z=zoneAt(CM,P.y);if(z.key!==curZone){curZone=z.key;enterZone(z)}
   stepsSince++;
-  if((z.kind==='route'||z.wild)&&TL[tAt(P.x,P.y)].enc&&stepsSince>3&&rnd()<.14&&S.team.some(m=>m.hp>0)){stepsSince=0;startWild(z)}
+  if((z.kind==='route'||z.wild)&&TL[tAt(P.x,P.y)].enc&&stepsSince>3&&rnd()<.1&&S.team.some(m=>m.hp>0)){stepsSince=0;startWild(z)}
 }
 function enterZone(z){if(z.kind==='town'&&!S.visited[z.town.id]){S.visited[z.town.id]=1;save()}zoneToast(z)}
 function startWild(z){const g=z.wild||z.route,tot=g.pool.reduce((s2,[,w])=>s2+w,0);let r=rnd()*tot,id=g.pool[0][0];for(const[s2,w]of g.pool){r-=w;if(r<=0){id=s2;break}}
@@ -6302,7 +6302,7 @@ function continueGame(sv,slot){LAB=null;NICKQ.length=0;
       ...(gift?[`The Wardens heard about your crests, so they sent you ${gift} Crown Charm${gift>1?'s':''}! Check your bag.`]:[]),
       ...(S.flags.champ?['Oh, and in the Champion Hall, a door behind me now leads to the Sky Sanctum. A legendary Lynty waits on its altar.']:['Become Champion, and a door behind the Champion Hall will open to the Sky Sanctum, where a legend waits.']),
       'One last thing: the game no longer saves by itself. Open the MENU and tap Save whenever you want to keep your progress!'],'Prof. Wren');await runPendingEvos()})();return}
-  if(S.mapNote){const big=S.mapNote===2;delete S.mapNote;const townLines=['Every town has grown, too. The Trading Post now stands right by each town\'s south gate, so you can heal as soon as you arrive.','Past it, tall grass fills the middle of town, and a town trainer guards every gap in the fences. You\'ll have to battle through them to reach the labyrinth and the road north.'];
+  if(S.mapNote){const big=S.mapNote===2;delete S.mapNote;const townLines=['Every town has grown, too. The Trading Post now stands right by each town\'s south gate, so you can heal as soon as you arrive.','Past it, tall grass fills the middle of town, and a town trainer watches every gap in the fences. Battle them, or slip past while they look the other way.'];
     (async()=>{await sleep(450);if(mode!=='world')return;await talk(big?['Welcome back, trainer! The Long Road has changed while you were away.','The routes between towns are much longer now, with wide fields of tall grass and more trainers watching the road.','Every Warden Hall now stands behind a labyrinth, and there are '+ORDER.length+' kinds of Lynties to find. Check the Lyndex to see where they live!',...townLines]:['Welcome back, trainer!',...townLines],'Prof. Wren');await runPendingEvos()})();return}
   if(S.lvNote){delete S.lvNote;(async()=>{await sleep(450);if(mode!=='world')return;await talk(['Big news, trainer!','Lynties can now train all the way to level 60. They evolve at level 30, and reach their final form at level 60.','Your team has been adjusted to the new levels, and every level now takes a little more XP than the last. Keep training!'],'Prof. Wren');await runPendingEvos()})();return}
   if([...S.team,...S.den].some(needsEvo))(async()=>{await sleep(500);if(mode==='world')await runPendingEvos()})()}

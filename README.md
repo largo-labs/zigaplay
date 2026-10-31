@@ -24,6 +24,8 @@ Lynties draws its world in 3D: a little diorama seen from behind and above, with
 - The game itself lives in `tools/lynties-3d/lynties-2d.html`: maps, battles, menus, story and saves. That file also plays on its own as the classic pixel-art version.
 - `tools/lynties-3d/src/w3d.js` is the 3D world. `tools/lynties-3d/build.py` adds it to the game to make the cartridge: `python3 tools/lynties-3d/build.py tools/lynties-3d/lynties-2d.html games/lynties/index.html`.
 - If WebGL or three.js can't load, the cartridge falls back to the pixel-art world.
+- Trainers on the roads and the three in each town (one beside each fence gap) turn to look in all four directions every few seconds. Step into one's line of sight and it challenges you; slip past while it looks away and you don't have to fight it.
+- Wild Lynties jump out on about 1 in 10 steps through tall grass (it was 1 in 7), and never in the first 3 steps after the last one.
 - Every Warden Hall sits behind a labyrinth with three trainers standing right on the way through, so each one has to be beaten; a beaten trainer steps into the nook beside it.
 - Lynties #147 to #166 are the newer ones: six lines (otters, frogs, hedgehogs, penguins, moths and raccoons) and two loners that never evolve (Chestle, found only in caves, and Moonhare).
 
