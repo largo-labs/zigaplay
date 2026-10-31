@@ -319,6 +319,10 @@ p{margin:0}
 .look-stage{position:relative;width:320px;max-width:100%;margin:0 auto}#look3{position:absolute;right:3%;top:3%;width:40%;height:94%;pointer-events:none}
 #lookCv{display:block;width:320px;max-width:100%;height:auto;aspect-ratio:160/88;image-rendering:pixelated;background:linear-gradient(180deg,#1d2a55 0%,#16365a 62%,#2a5e4a 62%,#24503f 100%);border:2px solid var(--line);border-radius:10px;box-shadow:0 3px 0 var(--line)}
 .look-rows{display:flex;flex-direction:column;gap:6px;width:100%}
+/* the preview stays in view while you scroll through the wardrobe */
+#tLook>#lookCv,#tLook>.look-stage{position:sticky;top:0;z-index:2}
+#tLook .look-row,#tLook .look-rand{scroll-margin-top:200px;scroll-margin-bottom:60px}
+.look-rand{align-self:center;padding:6px 18px}
 .look-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--deck);border:2px solid var(--line);border-radius:8px;box-shadow:0 2px 0 var(--line);padding:7px 10px;font-size:15px;color:var(--ink)}
 .look-row .lk-l{font-weight:600}
 .look-row .lk-v{display:flex;align-items:center;gap:8px}
@@ -3845,66 +3849,260 @@ const PAL={
   vil1:{hood:'#f1c66b',skin:'#e8b98f',coat:'#66c659',pants:'#5a3e38',boots:'#2a2340',bag:null},
   vil2:{hood:'#8a5a3c',skin:'#c98f63',coat:'#ff7a5c',pants:'#3b4a78',boots:'#2a2340',bag:'#9aa9d0'},
 };
-function person(p,dir,fr){const b=new Buf(16,16),side=dir==='left';
-  if(!side){const L=fr===1?2:3,R2=fr===2?2:3;b.rect(5,12,2,L,p.pants);b.rect(9,12,2,R2,p.pants);b.rect(5,11+L,2,1,p.boots);b.rect(9,11+R2,2,1,p.boots)}
-  else if(fr===0){b.rect(6,12,4,2,p.pants);b.rect(6,14,4,1,p.boots)}
-  else{b.rect(4,12,2,2,p.pants);b.rect(9,12,2,2,p.pants);b.rect(6,12,3,1,p.pants);b.rect(4,14,2,1,p.boots);b.rect(9,14,2,1,p.boots)}
-  if(dir==='down'){b.rect(4,8,8,4,p.coat);b.rect(3,8,1,3,p.coat);b.rect(12,8,1,3,p.coat);b.px(3,11,p.skin);b.px(12,11,p.skin);b.rect(8,8,1,4,dk(p.coat))}
-  else if(dir==='up'){b.rect(4,8,8,4,p.coat);b.rect(3,8,1,3,p.coat);b.rect(12,8,1,3,p.coat);b.px(3,11,p.skin);b.px(12,11,p.skin);if(p.bag)b.rect(5,8,6,4,p.bag)}
-  else{b.rect(5,8,6,4,p.coat);if(p.bag)b.rect(10,8,2,4,p.bag);b.rect(6,9,2,2,dk(p.coat));b.px(6,11,p.skin)}
-  const st=p.style||'hood',hr=p.hair||p.hood;
-  if(st==='hood'){b.rect(5,1,6,1,p.hood);b.rect(4,2,8,5,p.hood);b.rect(5,7,6,1,p.hood);
-    if(dir==='down'){b.rect(5,4,6,3,p.skin);b.px(6,5,INK);b.px(9,5,INK)}
-    else if(side){b.rect(4,4,4,3,p.skin);b.px(5,5,INK)}}
-  else{/* a cap, or the trainer's own hair */
-    const top=st==='cap'?p.hood:hr;b.rect(5,1,6,1,top);b.rect(4,2,8,2,top);
-    if(dir==='up'){b.rect(4,4,8,3,hr);b.rect(5,7,6,1,hr);if(st==='long')b.rect(4,8,8,3,hr)}
-    else if(dir==='down'){b.rect(4,4,1,3,hr);b.rect(11,4,1,3,hr);b.rect(5,4,6,3,p.skin);b.rect(5,7,6,1,p.skin);b.px(6,5,INK);b.px(9,5,INK);
-      if(st==='long'){b.rect(3,4,1,6,hr);b.rect(12,4,1,6,hr)}
-      if(st==='cap')b.rect(4,3,8,1,dk(p.hood))}
-    else{b.rect(4,4,4,3,p.skin);b.rect(5,7,3,1,p.skin);b.px(5,5,INK);b.rect(8,4,4,4,hr);if(st==='long')b.rect(9,8,3,3,hr);if(st==='cap')b.rect(2,3,4,1,dk(p.hood))}}
+/* ================= the wardrobe =================
+   A palette p is either one of the fixed ones the townsfolk wear (style hood/cap/short/long, hood = hood or cap
+   colour, coat, pants, boots, bag) or your trainer's full look, which also has head (what's on your head), top,
+   legs, pack (the kind of bag) and extra. wear(p) reads both the same way, so everyone else looks as before. */
+function wear(p){
+  if(p.head!==undefined)return{hairdo:p.style||'short',head:p.head||'none',hat:p.hood||'#2fb7b0',hair:p.hair||p.hood,skin:p.skin,top:p.top||'jacket',coat:p.coat,
+    legs:p.legs||'pants',pants:p.pants,boots:p.boots||'#2a2340',pack:p.pack||(p.bag?'backpack':'none'),bag:p.bag||'#9a6a3a',extra:p.extra||'none'};
+  const st=p.style||'hood';
+  return{hairdo:st==='long'?'long':'short',head:st==='hood'||st==='cap'?st:'none',hat:p.hood,hair:p.hair||p.hood,skin:p.skin,top:'jacket',coat:p.coat,
+    legs:'pants',pants:p.pants,boots:p.boots,pack:p.bag?'backpack':'none',bag:p.bag,extra:'none'}}
+const WHITE='#f4f1ea',GEAR='#3a3550';
+/* hats that cover the top of the head (the hair only shows underneath) */
+const HAT_COVERS=new Set(['hood','cap','backcap','beanie','bobble','bucket','beret','sunhat','cowboy','tophat','bandana','wizard']);
+/* the overworld sprite, 16x16, facing down, up or left (right is the left one mirrored) */
+function person(p,dir,fr){const b=new Buf(16,16),side=dir==='left',w=wear(p),SK=w.skin,C=w.coat,hr=w.hair,H=w.hat,P=w.pants,BG=w.bag,tp=w.top,pk=w.pack;
+  /* legs: trousers, shorts or a skirt */
+  const LP=y=>w.legs==='pants'?P:w.legs==='shorts'&&y<=12?P:SK;
+  const leg=(x,y,wd,h)=>{for(let j=0;j<h;j++)b.rect(x,y+j,wd,1,LP(y+j))};
+  if(!side){const L=fr===1?2:3,R2=fr===2?2:3;leg(5,12,2,L);leg(9,12,2,R2);b.rect(5,11+L,2,1,w.boots);b.rect(9,11+R2,2,1,w.boots)}
+  else if(fr===0){leg(6,12,4,2);b.rect(6,14,4,1,w.boots)}
+  else{leg(4,12,2,2);leg(9,12,2,2);leg(6,12,3,1);b.rect(4,14,2,1,w.boots);b.rect(9,14,2,1,w.boots)}
+  if(w.legs==='skirt'){if(side)b.rect(5,12,6,1,P);else{b.rect(4,12,8,1,P);b.px(4,12,dk(P));b.px(11,12,dk(P))}}
+  /* a cape flows behind you; long coats hang down over the legs */
+  const W2=tp==='labcoat'?WHITE:C,long=tp==='longcoat'||tp==='labcoat'||tp==='raincoat';
+  if(tp==='cape'&&side)b.rect(9,8,3,5,dk(C))
+  /* the top */
+  const T=tp==='labcoat'||tp==='vest'?WHITE:C,A=tp==='vest'||tp==='labcoat'?WHITE:C,arm=y=>tp==='tshirt'&&y>8?SK:A;
+  if(dir==='down'||dir==='up'){b.rect(4,8,8,4,T);for(const x of[3,12])for(let y=8;y<11;y++)b.px(x,y,arm(y));b.px(3,11,SK);b.px(12,11,SK)}
+  else{b.rect(5,8,6,4,T);b.rect(6,9,2,2,dk(arm(9)===SK?SK:A));if(arm(9)===SK)b.px(6,9,A);b.px(6,11,SK)}
+  if(long){if(side)b.rect(5,12,6,1,W2);else{b.rect(4,12,8,1,W2);if(dir==='down')b.px(8,12,dk(W2))}}
+  if(dir==='down'){
+    if(tp==='jacket'||tp==='raincoat'||tp==='tracksuit')b.rect(8,8,1,4,dk(C));
+    if(tp==='hoodie'){b.rect(6,8,4,1,dk(C));b.px(7,9,WHITE);b.px(9,9,WHITE);b.rect(6,10,4,1,dk(C))}
+    if(tp==='longcoat'){b.rect(8,8,1,4,dk(C));b.px(7,8,dk(C));b.px(9,8,dk(C));b.px(8,9,lt(C));b.px(8,11,lt(C))}
+    if(tp==='puffer'){b.rect(4,9,8,1,lt(C));b.rect(4,11,8,1,dk(C));b.px(3,9,lt(C));b.px(12,9,lt(C))}
+    if(tp==='tshirt'){b.px(7,8,SK);b.px(8,8,SK)}
+    if(tp==='sweater'){b.rect(6,8,4,1,dk(C));b.rect(4,10,8,1,lt(C))}
+    if(tp==='vest'){b.rect(4,8,3,4,C);b.rect(9,8,3,4,C);b.px(8,9,dk(WHITE))}
+    if(tp==='raincoat'){b.px(5,9,lt(C));b.px(5,10,lt(C))}
+    if(tp==='labcoat'){b.rect(7,8,2,3,C);b.px(5,10,dk(WHITE))}
+    if(tp==='tracksuit'){b.rect(4,8,1,4,WHITE);b.rect(11,8,1,4,WHITE)}
+    if(tp==='cape'){b.rect(3,8,10,1,dk(C));b.px(8,8,'#f1c66b')}
+    if(tp==='overalls'){b.rect(5,9,6,3,P);b.px(5,8,P);b.px(10,8,P);b.px(6,9,lt(P));b.px(9,9,lt(P))}}
+  else if(dir==='up'){
+    if(tp==='hoodie'){b.rect(5,8,6,2,dk(C));b.rect(6,10,4,1,dk(C))}
+    if(tp==='puffer'){b.rect(4,9,8,1,lt(C));b.rect(4,11,8,1,dk(C))}
+    if(tp==='sweater')b.rect(4,10,8,1,lt(C));
+    if(tp==='vest')b.rect(4,8,8,4,C);
+    if(tp==='tracksuit'){b.rect(4,8,1,4,WHITE);b.rect(11,8,1,4,WHITE)}
+    if(tp==='cape'){b.rect(3,8,10,4,C);b.rect(3,12,10,1,dk(C));b.rect(8,8,1,4,dk(C))}
+    if(tp==='overalls'){b.rect(5,10,6,2,P);b.line(5,8,10,10,P);b.line(10,8,5,10,P)}}
+  else{
+    if(tp==='hoodie'){b.rect(9,8,2,2,dk(C))}
+    if(tp==='puffer'){b.rect(5,9,6,1,lt(C))}
+    if(tp==='sweater')b.rect(5,10,6,1,lt(C));
+    if(tp==='vest'){b.rect(7,8,4,4,C);b.px(5,8,WHITE)}
+    if(tp==='labcoat')b.px(5,8,C);
+    if(tp==='tracksuit')b.rect(5,8,1,4,WHITE);
+    if(tp==='overalls'){b.rect(5,9,5,3,P);b.px(8,8,P)}}
+  /* the bag */
+  const BD=BG?dk(BG):null,BL=BG?lt(BG):null;
+  if(pk==='backpack'){if(dir==='up')b.rect(5,8,6,4,BG);else if(side)b.rect(10,8,2,4,BG)}
+  else if(pk==='bigpack'){if(dir==='up'){b.rect(4,8,8,4,BG);b.rect(4,8,8,1,BL)}else if(side){b.rect(10,7,3,5,BG);b.rect(10,7,3,1,BL)}b.rect(side?9:3,7,side?5:10,1,'#c4554a')}
+  else if(pk==='satchel'){if(dir==='down'){b.line(5,8,9,11,BD);b.rect(10,10,3,2,BG);b.rect(10,10,3,1,BL)}
+    else if(dir==='up'){b.line(10,8,6,11,BD);b.rect(3,10,3,2,BG);b.rect(3,10,3,1,BL)}else{b.px(8,8,BD);b.px(7,9,BD);b.rect(8,10,3,2,BG);b.rect(8,10,3,1,BL)}}
+  else if(pk==='shoulder'){if(dir==='down'){b.px(12,8,BD);b.rect(13,9,2,3,BG);b.px(13,9,BL)}else if(dir==='up'){b.px(3,8,BD);b.rect(1,9,2,3,BG);b.px(2,9,BL)}else{b.px(9,8,BD);b.rect(9,9,3,3,BG);b.rect(9,9,3,1,BL)}}
+  else if(pk==='waist'){if(side){b.rect(5,11,6,1,BD);b.rect(4,10,2,2,BG)}else{b.rect(4,11,8,1,BD);if(dir==='down'){b.rect(6,10,4,2,BG);b.rect(6,10,4,1,BL)}}}
+  else if(pk==='sling'){if(dir==='down'){b.line(10,8,6,11,BD);b.rect(9,8,3,2,BG)}else if(dir==='up'){b.line(5,8,9,11,BD);b.rect(4,8,4,3,BG);b.rect(4,8,4,1,BL)}else{b.rect(9,8,2,3,BG);b.px(9,8,BL)}}
+  /* the head */
+  const hd=w.hairdo,cov=HAT_COVERS.has(w.head);
+  if(w.head==='hood'){b.rect(5,1,6,1,H);b.rect(4,2,8,5,H);b.rect(5,7,6,1,H);
+    if(dir==='down'){b.rect(5,4,6,3,SK);b.px(6,5,INK);b.px(9,5,INK)}
+    else if(side){b.rect(4,4,4,3,SK);b.px(5,5,INK)}
+    hang(b,dir,hd,hr,true)}
+  else{headPix(b,dir,w,hd,hr,SK,cov);hatPix(b,dir,w.head,H,SK,hr)}
+  extraPix(b,dir,w.extra,H);
   return b.outline()}
-/* your trainer in battle: a bigger, side-on sprite that faces the other side. f: 'idle' (arm down) or 'reach' (arm held out) */
-function trainerBuf(p,f){const b=new Buf(32,44),st=p.style||'hood',hr=p.hair||p.hood,B2=p.boots,SK=p.skin;
+/* hair that hangs below the head (shown even under a hood) */
+function hang(b,dir,hd,hr,hood){const side=dir==='left',D=dk(hr);
+  if(hd==='long'){if(dir==='up')b.rect(4,8,8,3,hr);else if(dir==='down'){if(hood){b.rect(3,6,1,4,hr);b.rect(12,6,1,4,hr)}else{b.rect(3,4,1,6,hr);b.rect(12,4,1,6,hr)}}else b.rect(9,8,3,3,hr)}
+  else if(hd==='twintails'){if(side){b.rect(11,5,2,5,hr);b.px(11,5,lt(hr))}else{b.rect(2,4,2,5,hr);b.rect(12,4,2,5,hr);b.px(2,4,lt(hr));b.px(13,4,lt(hr))}}
+  else if(hd==='braid'){const seg=(x,y,i)=>b.px(x,y,i%2?D:hr);if(dir==='down'){[[11,7],[11,8],[12,9],[12,10]].forEach(([x,y],i)=>seg(x,y,i))}else if(dir==='up'){for(let i=0;i<4;i++)seg(8,8+i,i)}else{for(let i=0;i<4;i++)seg(11,7+i,i)}}
+  else if(hd==='ponytail'){if(dir==='up'){b.rect(7,8,2,3,hr);b.px(7,8,D);b.px(8,8,D)}else if(dir==='down'){b.px(12,5,hr);b.px(12,6,hr)}else{b.px(12,3,D);b.rect(13,4,1,3,hr);b.px(12,7,hr)}}}
+/* face and hair */
+function headPix(b,dir,w,hd,hr,SK,cov){const side=dir==='left',D=dk(hr),L2=lt(hr);
+  let top=hr;if(hd==='buzz')top=mix(hr,SK,.45);if(hd==='mohawk')top=SK;
+  b.rect(5,1,6,1,top);b.rect(4,2,8,2,top);
+  const sideHair=hd==='mohawk'||hd==='buzz'?(hd==='buzz'?top:SK):hr;
+  if(dir==='up'){b.rect(4,4,8,3,sideHair);b.rect(5,7,6,1,sideHair)}
+  else if(dir==='down'){b.rect(4,4,1,3,sideHair);b.rect(11,4,1,3,sideHair);b.rect(5,4,6,3,SK);b.rect(5,7,6,1,SK);b.px(6,5,INK);b.px(9,5,INK)}
+  else{b.rect(4,4,4,3,SK);b.rect(5,7,3,1,SK);b.px(5,5,INK);b.rect(8,4,4,4,sideHair)}
+  if(hd==='spiky'&&!cov){if(side){b.px(5,0,hr);b.px(8,0,hr);b.px(11,1,hr);b.px(12,2,hr)}else{b.px(5,0,hr);b.px(7,0,hr);b.px(10,0,hr);b.px(3,2,hr);b.px(12,2,hr)}}
+  if(hd==='buns'&&!cov){if(side){b.rect(10,0,3,2,hr);b.px(10,0,L2)}else{b.rect(3,0,2,2,hr);b.rect(11,0,2,2,hr);b.px(3,0,L2);b.px(11,0,L2)}}
+  if(hd==='bob'){if(dir==='down'){b.rect(4,4,1,4,hr);b.rect(11,4,1,4,hr);b.rect(3,3,1,4,hr);b.rect(12,3,1,4,hr)}else if(dir==='up'){b.rect(3,3,10,5,hr)}else{b.rect(8,4,4,4,hr);b.rect(12,3,1,4,hr)}}
+  if(hd==='curly'){const sp=(x,y)=>b.px(x,y,L2);
+    if(!cov){if(side){b.rect(4,0,8,1,hr);b.rect(3,1,10,3,hr);b.rect(8,4,5,4,hr);sp(5,1);sp(9,2);sp(11,5)}else{b.rect(5,0,6,1,hr);b.rect(3,1,10,3,hr);sp(5,1);sp(9,2);sp(4,3);sp(11,2)}}
+    if(dir==='down'){b.rect(3,4,2,3,hr);b.rect(11,4,2,3,hr);sp(3,5);sp(12,4)}else if(dir==='up'){b.rect(3,4,10,4,hr);sp(5,5);sp(9,6)}else if(cov){b.rect(8,4,5,4,hr);sp(11,5)}}
+  if(hd==='mohawk'&&!cov){if(side){b.rect(5,0,7,2,hr);b.px(6,0,L2)}else{b.rect(7,0,2,4,hr);b.px(7,0,L2)}if(dir==='up')b.rect(7,4,2,4,hr)}
+  if(hd==='swept'){if(dir==='down'){b.rect(5,4,3,1,hr);b.px(4,3,hr)}else if(side){b.px(3,4,hr);b.px(4,4,hr)}}
+  hang(b,dir,hd,hr,false)}
+/* what's on your head */
+function hatPix(b,dir,hd,H,SK,hr){if(hd==='none'||hd==='hood')return;const side=dir==='left',D=dk(H),L2=lt(H);
+  const crown=()=>{b.rect(5,1,6,1,H);b.rect(4,2,8,2,H)};
+  if(hd==='cap'){crown();if(dir==='down')b.rect(4,3,8,1,D);else if(side)b.rect(2,3,4,1,D)}
+  else if(hd==='backcap'){crown();if(dir==='down'){b.px(7,3,D);b.px(8,3,D)}else if(dir==='up')b.rect(4,3,8,1,D);else b.rect(12,3,3,1,D)}
+  else if(hd==='beanie'||hd==='bobble'){b.rect(5,0,6,1,H);b.rect(4,1,8,3,H);b.rect(4,3,8,1,D);for(const x of[5,7,9])b.px(x,1,L2);if(hd==='bobble'){b.px(7,0,WHITE);b.px(8,0,WHITE);b.px(7,-1,WHITE)}}
+  else if(hd==='bucket'){b.rect(5,1,6,2,H);b.px(6,1,L2);b.rect(side?3:3,3,10,1,D)}
+  else if(hd==='beret'){if(side){b.rect(4,1,8,2,H)}else{b.rect(5,1,8,1,H);b.rect(4,2,9,1,H)}b.px(side?7:9,0,D);b.px(5,1,L2)}
+  else if(hd==='sunhat'){b.rect(5,1,6,2,H);b.rect(5,2,6,1,D);b.rect(side?1:2,3,side?14:12,1,L2)}
+  else if(hd==='cowboy'){b.rect(5,0,2,1,H);b.rect(9,0,2,1,H);b.rect(5,1,6,2,H);b.rect(5,2,6,1,D);b.rect(3,3,10,1,H);b.px(2,2,H);b.px(13,2,H)}
+  else if(hd==='tophat'){b.rect(6,-1,4,3,H);b.rect(6,1,4,1,'#c4554a');b.rect(4,2,8,1,D)}
+  else if(hd==='headband'){b.rect(4,3,8,1,H);if(side)b.px(12,3,D)}
+  else if(hd==='bandana'){crown();b.px(5,2,L2);if(dir==='down'){b.px(12,3,D);b.px(12,4,D)}else if(dir==='up'){b.px(7,4,D);b.px(8,4,D);b.px(7,5,H);b.px(8,6,H)}else{b.px(12,3,D);b.px(13,4,D)}}
+  else if(hd==='wizard'){b.px(8,-1,H);b.rect(7,0,2,1,H);b.rect(6,1,4,1,H);b.rect(5,2,6,1,H);b.rect(3,3,10,1,D);b.px(7,1,'#f1c66b')}
+  else if(hd==='flowers'){const Y='#fff3a0';if(side){b.px(5,1,H);b.px(7,0,Y);b.px(9,1,H);b.px(11,2,Y)}else{b.px(4,2,H);b.px(5,1,Y);b.px(7,1,H);b.px(8,0,Y);b.px(10,1,H);b.px(11,2,Y)}}
+  else if(hd==='crown'){b.rect(4,2,8,2,H);b.px(4,1,H);b.px(7,0,H);b.px(8,0,H);b.px(11,1,H);b.px(7,1,H);b.px(8,1,H);b.px(8,2,'#e04a4a');b.px(5,2,L2)}}
+/* glasses, a scarf and so on */
+function extraPix(b,dir,ex,H){const side=dir==='left';if(ex==='none')return;
+  if(ex==='glasses'){if(dir==='down'){for(const x of[5,7,8,10])b.px(x,5,GEAR)}else if(side){b.px(4,5,GEAR);b.px(6,5,GEAR)}else{b.px(4,5,GEAR);b.px(11,5,GEAR)}}
+  else if(ex==='sunglasses'){if(dir==='down'){b.rect(5,5,6,1,'#1b1430');b.px(6,5,'#5a6a8a');b.px(9,5,'#5a6a8a')}else if(side){b.rect(3,5,3,1,'#1b1430')}else{b.px(4,5,'#1b1430');b.px(11,5,'#1b1430')}}
+  else if(ex==='scarf'){if(side){b.rect(5,8,6,1,H);b.px(10,9,H);b.px(11,10,dk(H))}else{b.rect(4,8,8,1,H);if(dir==='down'){b.px(9,9,H);b.px(9,10,dk(H))}else{b.px(6,9,H);b.px(6,10,dk(H))}}}
+  else if(ex==='goggles'){if(side){b.rect(4,3,8,1,GEAR);b.px(4,3,'#8fe0ff');b.px(5,3,'#8fe0ff')}else if(dir==='down'){b.rect(4,3,8,1,GEAR);for(const x of[5,6,9,10])b.px(x,3,'#8fe0ff')}else b.rect(4,4,8,1,GEAR)}
+  else if(ex==='headphones'){b.rect(5,0,6,1,GEAR);if(side){b.rect(8,4,2,2,GEAR);b.px(8,4,'#6a6f88')}else{b.rect(3,3,1,3,GEAR);b.rect(12,3,1,3,GEAR)}}
+  else if(ex==='earrings'){if(side)b.px(8,7,'#f1c66b');else if(dir==='down'){b.px(4,7,'#f1c66b');b.px(11,7,'#f1c66b')}}}
+/* your trainer in battle: a bigger, side-on sprite that faces the other side. f: idle (arm down), reach (arm held
+   out), wind and toss (throwing a charm) */
+function trainerBuf(p,f){const b=new Buf(32,44),w=wear(p),hd=w.hairdo,hr=w.hair,H=w.hat,B2=w.boots,SK=w.skin,C=w.coat,P=w.pants,tp=w.top,pk=w.pack,BG=w.bag,cov=HAT_COVERS.has(w.head);
+  const T=tp==='labcoat'||tp==='vest'?WHITE:C,A=tp==='vest'||tp==='labcoat'?WHITE:C;
   /* legs in a lunge: the back one straight, the front one bent forward */
-  b.line(12,30,8,40,p.pants,3);b.line(17,30,21,35,p.pants,3);b.line(21,35,22,40,p.pants,3);b.rect(5,40,6,2,B2);b.rect(20,40,7,2,B2);
-  if(st==='long')b.rect(9,11,4,11,hr);
+  if(w.legs==='pants'){b.line(12,30,8,40,P,3);b.line(17,30,21,35,P,3);b.line(21,35,22,40,P,3)}
+  else{b.line(12,30,8,40,SK,3);b.line(17,30,21,35,SK,3);b.line(21,35,22,40,SK,3);
+    if(w.legs==='shorts'){b.line(12,30,10.5,34,P,3);b.line(17,30,19.5,33,P,3)}}
+  b.rect(5,40,6,2,B2);b.rect(20,40,7,2,B2);
+  if(w.legs==='skirt'){b.poly([[11,28],[21,28],[24,35],[8,35]],P);b.line(9,35,23,35,dk(P))}
+  /* behind you: long hair, a cape, a big pack */
+  if(w.head!=='hood'||hd==='long'){if(hd==='long')b.rect(9,11,4,11,hr);if(hd==='twintails'){b.line(11,12,8,22,hr,3);b.px(11,12,lt(hr))}
+    if(hd==='braid')for(let y=12;y<=26;y+=2)b.ell(10,y,1.9,1.2,(y/2)%2?hr:dk(hr),0)}
+  if(tp==='cape'){b.poly([[11,18],[17,18],[12,37],[3,35]],C);b.line(11,18,4,35,dk(C),2)}
+  if(pk==='bigpack'){b.rect(4,17,8,13,BG);b.rect(4,17,8,2,lt(BG));b.rect(5,22,6,1,dk(BG));b.ell(8,15.5,4.6,2.1,'#c4554a')}
+  if(pk==='sling'){b.rect(8,19,5,6,BG);b.rect(8,19,5,1,lt(BG))}
   /* the back arm, then the body */
-  b.line(13,21,10,25,dk(p.coat),3);b.line(10,25,9,28,dk(p.coat),3);b.rect(8,27,3,3,dk(SK));
-  b.poly([[11,31],[20,31],[21,19],[12,19]],p.coat);b.rect(11,19,2,12,dk(p.coat));b.rect(11,29,10,2,dk(p.coat));
-  if(p.bag){b.line(20,19,12,28,dk(p.bag),1);b.rect(7,25,5,5,p.bag);b.rect(7,25,5,1,lt(p.bag))}
+  const limb=(pts,col,sk,short)=>{for(let i=0;i<pts.length-1;i++){const[x0,y0]=pts[i],[x1,y1]=pts[i+1];if(short&&i===0){const mx=x0+(x1-x0)*.4,my=y0+(y1-y0)*.4;b.line(x0,y0,mx,my,col,3);b.line(mx,my,x1,y1,sk,3)}else b.line(x0,y0,x1,y1,short?sk:col,3)}};
+  limb([[13,21],[10,25],[9,28]],dk(A),dk(SK),tp==='tshirt');b.rect(8,27,3,3,dk(SK));
+  if(tp==='puffer')b.poly([[10,31],[21,31],[22,19],[11,19]],T);else b.poly([[11,31],[20,31],[21,19],[12,19]],T);
+  b.rect(11,19,2,12,dk(T));b.rect(11,29,10,2,dk(T));
+  if(tp==='longcoat'||tp==='labcoat'||tp==='raincoat'){const bot=tp==='raincoat'?35:38;b.poly([[11,30],[20,30],[23,bot],[9,bot]],T);b.line(16,31,17,bot,dk(T));if(tp!=='raincoat'){b.px(20,22,lt(T));b.px(20,25,lt(T))}}
+  if(tp==='hoodie'){b.ell(12.6,18.6,3.2,2.3,dk(C),0);b.rect(15,25,5,2,dk(C));for(let y=20;y<23;y++)b.px(19,y,WHITE)}
+  if(tp==='raincoat'){b.ell(12.6,18.6,3,2.2,dk(C),0);b.line(13,21,12,29,lt(C))}
+  if(tp==='puffer'){b.line(11,23,21,23,lt(C));b.line(11,27,21,27,lt(C))}
+  if(tp==='tshirt')b.px(19,19,SK);
+  if(tp==='sweater'){b.rect(11,24,10,2,lt(C));b.ell(16.5,19.2,3,1.2,dk(C),0)}
+  if(tp==='vest'){b.poly([[12,19],[18,19],[18,31],[11,31]],C);b.rect(19,19,2,1,dk(WHITE))}
+  if(tp==='labcoat'){b.rect(19,19,2,6,C);b.rect(14,26,4,1,dk(WHITE))}
+  if(tp==='tracksuit'){b.line(12,19,11,30,WHITE);b.line(20,20,20,30,lt(C))}
+  if(tp==='cape')b.px(17,18,'#f1c66b');
+  if(tp==='overalls'){b.rect(14,22,7,9,P);b.line(15,19,15,22,P,2);b.px(16,23,lt(P));b.rect(15,26,4,2,dk(P))}
+  if(w.legs==='pants'&&tp==='overalls')b.rect(11,29,10,2,P);
+  /* bags worn in front of the body */
+  const BD=BG?dk(BG):null;
+  if(pk==='backpack'){b.line(20,19,12,28,BD,1);b.rect(7,25,5,5,BG);b.rect(7,25,5,1,lt(BG))}
+  if(pk==='bigpack')b.line(20,19,13,27,BD,1);
+  if(pk==='satchel'){b.line(20,19,12,28,BD,1);b.rect(8,26,6,6,BG);b.rect(8,26,6,2,lt(BG));b.px(10,28,'#f1c66b')}
+  if(pk==='shoulder'){b.line(16,19,19,27,BD,1);b.rect(17,27,6,6,BG);b.rect(17,27,6,1,lt(BG))}
+  if(pk==='waist'){b.rect(11,28,10,1,BD);b.rect(18,26,5,4,BG);b.line(18,27,22,27,lt(BG))}
+  if(pk==='sling')b.line(13,20,20,28,BD,1);
   b.rect(15,15,3,3,SK);
+  if(w.extra==='scarf'){b.rect(13,16,8,3,H);b.line(13,18,10,24,H,2);b.px(10,24,lt(H))}
   /* the head */
   b.ell(16.5,10.5,5.6,5.6,SK,0);
-  if(st==='hood'){b.ell(15.2,9.5,6.6,6.6,p.hood);b.ell(18.6,11,3.9,4.3,SK,0);b.rect(10,14,6,2,p.hood);b.line(14.5,5,14.5,15,dk(p.hood),1)}
-  else if(st==='cap'){b.ell(13.5,11,3.6,4.6,hr,0);b.ell(16,6.6,6,3.6,p.hood);b.rect(10,7,12,2,p.hood);b.rect(19,8,6,1,dk(p.hood));b.px(13,9,dk(hr))}
-  else{b.ell(15.4,7.6,6.2,4.2,hr);b.ell(12.8,11,3.4,4.6,hr,0);b.rect(19,6,3,3,hr);b.px(21,9,hr);if(st==='long')b.rect(9,10,4,8,hr)}
+  if(w.head==='hood'){b.ell(15.2,9.5,6.6,6.6,H);b.ell(18.6,11,3.9,4.3,SK,0);b.rect(10,14,6,2,H);b.line(14.5,5,14.5,15,dk(H),1)}
+  else battleHair(b,w,hd,hr,SK,cov);
+  battleHat(b,w.head,H,hr);if(w.head==='cap')b.px(13,9,dk(hr));
   b.rect(19,10,1,2,INK);b.px(20,9,dk(SK));b.px(21,13,dk(SK));
+  battleExtra(b,w.extra,H);
   /* the front arm: down by the side, or reaching out at the other side */
-  if(f==='reach'){b.line(18,21,25,20,p.coat,3);b.rect(25,18,3,4,SK);b.px(28,18,SK);b.px(28,19,SK);b.px(28,20,SK);b.px(26,17,SK);b.px(25,22,dk(SK))}
-  else if(f==='wind'){b.line(18,20,15,13,p.coat,3);b.rect(12,9,4,4,SK)}
-  else if(f==='toss'){b.line(18,21,26,15,p.coat,3);b.rect(25,12,4,4,SK);b.px(29,13,SK)}
-  else{b.line(18,21,20,27,p.coat,3);b.rect(19,27,3,3,SK)}
+  const sh=tp==='tshirt';
+  if(f==='reach'){limb([[18,21],[25,20]],A,SK,sh);b.rect(25,18,3,4,SK);b.px(28,18,SK);b.px(28,19,SK);b.px(28,20,SK);b.px(26,17,SK);b.px(25,22,dk(SK))}
+  else if(f==='wind'){limb([[18,20],[15,13]],A,SK,sh);b.rect(12,9,4,4,SK)}
+  else if(f==='toss'){limb([[18,21],[26,15]],A,SK,sh);b.rect(25,12,4,4,SK);b.px(29,13,SK)}
+  else{limb([[18,21],[20,27]],A,SK,sh);b.rect(19,27,3,3,SK)}
+  if(tp==='tracksuit'&&f!=='wind')b.line(18,22,f==='reach'?24:f==='toss'?24:19,f==='reach'?21:f==='toss'?17:25,WHITE);
   return b.outline()}
+function battleHair(b,w,hd,hr,SK,cov){const L2=lt(hr);
+  const back=()=>{b.ell(13.5,11,3.6,4.6,hr,0);b.px(13,9,dk(hr))};
+  const full=()=>{b.ell(15.4,7.6,6.2,4.2,hr);b.ell(12.8,11,3.4,4.6,hr,0);b.rect(19,6,3,3,hr);b.px(21,9,hr)};
+  if(hd==='buzz'){const c=mix(hr,SK,.4);b.ell(15.4,7.8,6,3.6,c,0);b.ell(12.8,11,3.2,4.2,c,0);return}
+  if(hd==='mohawk'){if(!cov){b.line(11,8,13,3,hr,3);b.line(13,3,18,2,hr,3);b.line(18,2,21,4,hr,2);b.px(14,2,L2)}else b.ell(13,11,2.6,3.6,mix(hr,SK,.5),0);return}
+  if(hd==='curly'){if(!cov){b.ell(15,7.4,7.4,5.4,hr);b.ell(12,11.6,4.4,5.4,hr,0);b.rect(19,6,3,3,hr)}else b.ell(12.2,11.6,4.4,5.2,hr,0);for(const[x,y]of[[10,6],[13,4],[17,4],[10,11],[12,14],[20,6]])if(!cov||x<14&&y>8)b.px(x,y,L2);return}
+  if(cov)back();else full();
+  if(hd==='long')b.rect(9,10,4,8,hr);
+  if(hd==='spiky'&&!cov){b.poly([[11,5],[12,-1],[15,4]],hr);b.poly([[14,4],[18,-1],[19,4]],hr);b.poly([[9,9],[5,4],[11,6]],hr);b.poly([[18,4],[23,1],[21,7]],hr)}
+  if(hd==='ponytail'){b.px(10,9,dk(hr));b.line(10,9,6,13,hr,3);b.line(6,13,6,19,hr,2)}
+  if(hd==='buns'){if(cov)b.ell(9.5,7,2.4,2.4,hr);else b.ell(11.5,3.6,2.9,2.7,hr)}
+  if(hd==='bob'){b.ell(13,12,4.2,5,hr,0);if(!cov)b.rect(19,6,4,4,hr)}
+  if(hd==='swept'&&!cov)b.poly([[16,4],[24,6],[22,10],[19,8]],hr)}
+function battleHat(b,hd,H,hr){if(hd==='none'||hd==='hood')return;const D=dk(H),L2=lt(H);
+  if(hd==='cap'||hd==='backcap'){b.ell(16,6.6,6,3.6,H);b.rect(10,7,12,2,H);if(hd==='cap')b.rect(19,8,6,1,D);else{b.rect(5,8,6,1,D);b.px(20,8,D)}}
+  else if(hd==='beanie'||hd==='bobble'){b.ell(15.6,6.4,6.6,4.4,H);b.rect(9,8,14,2,D);for(const x of[11,14,17,20])b.px(x,5,L2);if(hd==='bobble')b.ell(15,1.8,2.3,2,WHITE)}
+  else if(hd==='bucket'){b.ell(15.8,6.4,5.6,3.4,H);b.rect(10,6,12,3,H);b.poly([[7,9],[25,9],[24,11],[8,11]],D)}
+  else if(hd==='beret'){b.ell(14.4,6,7,3,H);b.px(15,2,D);b.px(15,3,D);b.px(10,5,L2)}
+  else if(hd==='sunhat'){b.ell(16,6,5,3.2,H);b.rect(11,6,10,3,H);b.rect(11,8,10,1,D);b.ell(16,9.6,11,1.6,L2,0)}
+  else if(hd==='cowboy'){b.poly([[11,9],[11,4],[14,2],[16,4],[18,2],[21,4],[21,9]],H);b.rect(11,8,10,1,D);b.rect(5,9,22,1,H);b.px(4,8,H);b.px(27,8,H);b.px(3,7,H);b.px(28,7,H)}
+  else if(hd==='tophat'){b.rect(11,0,10,8,H);b.rect(11,6,10,1,'#c4554a');b.rect(8,8,16,1,D);b.px(12,1,L2)}
+  else if(hd==='headband'){b.rect(10,6,12,2,H);b.px(10,8,D);b.line(10,8,8,11,H)}
+  else if(hd==='bandana'){b.ell(15.5,7,6.4,4,H);b.rect(9,7,13,2,H);b.px(9,9,D);b.line(9,9,6,12,H,2);b.px(12,5,L2)}
+  else if(hd==='wizard'){b.poly([[9,9],[23,9],[14,-2]],H);b.rect(6,9,20,2,D);b.px(15,4,'#f1c66b');b.px(14,5,'#f1c66b');b.px(16,5,'#f1c66b');b.px(15,6,'#f1c66b')}
+  else if(hd==='flowers'){for(const[x,y]of[[12,4],[16,3],[20,5]]){b.plus(x,y,H);b.px(x,y,'#fff3a0')}}
+  else if(hd==='crown'){b.rect(11,3,10,3,H);for(const x of[11,15,20]){b.px(x,2,H);b.px(x,1,H)}b.px(16,4,'#e04a4a');b.px(12,4,L2)}}
+function battleExtra(b,ex,H){
+  if(ex==='glasses'){b.rect(18,9,5,4,GEAR);b.rect(19,10,3,2,'#d4ecff');b.rect(19,10,1,2,INK);b.line(18,10,14,10,GEAR)}
+  else if(ex==='sunglasses'){b.rect(18,9,5,3,'#1b1430');b.px(21,10,'#6a7a9a');b.line(18,10,14,10,'#1b1430')}
+  else if(ex==='goggles'){b.line(10,9,17,7,GEAR,2);b.ell(19,6.6,2.6,1.9,'#5a5f73',0);b.ell(19,6.6,1.6,1.1,'#8fe0ff',0)}
+  else if(ex==='headphones'){b.line(14,9,13,3,GEAR,2);b.line(13,3,16,1,GEAR,2);b.ell(14.5,11,2.4,3,GEAR,0);b.px(14,10,'#6a6f88')}
+  else if(ex==='earrings'){b.px(15,14,'#f1c66b');b.px(15,15,'#ffe9a0')}}
 let _tp={};
 function trainerCanvas(f){return _tp[f]||(_tp[f]=trainerBuf(PAL.player,f).canvas(1))}
 /* ================= your trainer's look ================= */
+/* one colour list for clothes, hats and bags */
+const CLOTH=[['#e8734f','Orange'],['#e04a4a','Red'],['#a83a3a','Brick'],['#7a2a3a','Maroon'],['#f07ab0','Pink'],['#f4b8d0','Rose'],['#8a5ad8','Purple'],['#c0a0f0','Lilac'],
+  ['#3b6fd8','Blue'],['#3b4a78','Navy'],['#6ac0f0','Sky'],['#2fb7b0','Teal'],['#3fc1c9','Aqua'],['#8ee0b8','Mint'],['#4fb36a','Green'],['#4a7a4a','Forest'],['#8a9a3a','Olive'],
+  ['#f1c040','Yellow'],['#f1c66b','Gold'],['#c99360','Tan'],['#9a6a3a','Leather'],['#6b4a2a','Brown'],['#8a8a9a','Grey'],['#f4f1ea','White'],['#2f2a44','Black']];
 const LOOKS={
-  style:[['hood','Hood'],['cap','Cap'],['short','Short hair'],['long','Long hair']],
-  hair:[['#6b4a2a','Brown'],['#2a2340','Black'],['#a8543a','Auburn'],['#f1c66b','Blonde'],['#ece6f4','White'],['#f28ab8','Pink'],['#4a7fe0','Blue'],['#4fb36a','Green']],
-  hat:[['#2fb7b0','Teal'],['#e04a4a','Red'],['#3b6fd8','Blue'],['#8a5ad8','Purple'],['#f1c040','Gold'],['#4fb36a','Green'],['#f07ab0','Pink'],['#2f2a44','Black']],
-  skin:[['#f2c9a0','Light'],['#f8dcc0','Fair'],['#e0a87a','Tan'],['#c98f63','Olive'],['#8a5a3c','Brown'],['#5e3a26','Deep']],
-  coat:[['#e8734f','Orange'],['#e04a4a','Red'],['#3b6fd8','Blue'],['#4fb36a','Green'],['#8a5ad8','Purple'],['#f1c040','Yellow'],['#f4f1ea','White'],['#2f2a44','Black']],
-  pants:[['#3b4a78','Navy'],['#2f2a44','Black'],['#6b4a2a','Brown'],['#4a7a4a','Green'],['#8a8a9a','Grey'],['#a83a3a','Red']],
-  bag:[['#f1c66b','Gold'],['#9a6a3a','Leather'],['#3fc1c9','Teal'],['','None']],
+  style:[['short','Short'],['long','Long'],['spiky','Spiky'],['ponytail','Ponytail'],['buns','Space buns'],['bob','Bob'],['curly','Curly'],['mohawk','Mohawk'],['buzz','Buzz cut'],['twintails','Twin tails'],['braid','Braid'],['swept','Swept fringe']],
+  hair:[['#6b4a2a','Brown'],['#4a3020','Dark brown'],['#2a2340','Black'],['#a8543a','Auburn'],['#d84a3a','Red'],['#f08a3a','Ginger'],['#f1c66b','Blonde'],['#f4ecd0','Platinum'],['#b8bcc8','Silver'],
+    ['#ece6f4','White'],['#f28ab8','Pink'],['#9a6ad8','Purple'],['#4a7fe0','Blue'],['#3fb8b0','Teal'],['#4fb36a','Green']],
+  head:[['none','Nothing'],['hood','Hood up'],['cap','Cap'],['backcap','Backwards cap'],['beanie','Beanie'],['bobble','Bobble hat'],['bucket','Bucket hat'],['beret','Beret'],['sunhat','Sun hat'],
+    ['cowboy','Cowboy hat'],['tophat','Top hat'],['headband','Headband'],['bandana','Bandana'],['wizard','Wizard hat'],['flowers','Flower crown'],['crown','Crown']],
+  hat:CLOTH,
+  skin:[['#fbe6d4','Pale'],['#f8dcc0','Fair'],['#f2c9a0','Light'],['#e0a87a','Tan'],['#c98f63','Olive'],['#a8704a','Bronze'],['#8a5a3c','Brown'],['#5e3a26','Deep'],['#4a2a1a','Dark']],
+  top:[['jacket','Jacket'],['hoodie','Hoodie'],['longcoat','Long coat'],['puffer','Puffer jacket'],['raincoat','Raincoat'],['tshirt','T-shirt'],['sweater','Sweater'],['vest','Vest and shirt'],
+    ['tracksuit','Tracksuit'],['labcoat','Lab coat'],['overalls','Overalls'],['cape','Cape']],
+  coat:CLOTH,
+  legs:[['pants','Trousers'],['shorts','Shorts'],['skirt','Skirt']],
+  pants:CLOTH,
+  boots:[['#2a2340','Dark'],['#6b4a2a','Brown'],['#f4f1ea','White'],['#e04a4a','Red'],['#3b6fd8','Blue'],['#4fb36a','Green'],['#f1c040','Yellow'],['#f07ab0','Pink'],['#8a8a9a','Grey']],
+  pack:[['backpack','Backpack'],['bigpack','Hiking pack'],['satchel','Satchel'],['shoulder','Shoulder bag'],['waist','Waist bag'],['sling','Sling bag'],['none','No bag']],
+  bag:CLOTH,
+  extra:[['none','Nothing'],['glasses','Glasses'],['sunglasses','Sunglasses'],['scarf','Scarf'],['goggles','Goggles'],['headphones','Headphones'],['earrings','Earrings']],
 };
-const LOOK_KEY='lynties-look',LOOK0={style:'hood',hair:'#6b4a2a',hat:'#2fb7b0',skin:'#f2c9a0',coat:'#e8734f',pants:'#3b4a78',bag:'#f1c66b'};
+const LOOK_KEY='lynties-look',LOOK0={style:'short',hair:'#6b4a2a',head:'hood',hat:'#2fb7b0',skin:'#f2c9a0',top:'jacket',coat:'#e8734f',legs:'pants',pants:'#3b4a78',boots:'#2a2340',pack:'backpack',bag:'#f1c66b',extra:'none'};
 let LOOK=Object.assign({},LOOK0);
-const lookValid=l=>!!l&&typeof l==='object'&&Object.keys(LOOKS).every(k=>LOOKS[k].some(([v])=>v===l[k]));
-function readLook(){try{const l=JSON.parse(localStorage.getItem(LOOK_KEY)||'null');return lookValid(l)?l:null}catch(e){return null}}
+/* a look saved before the wardrobe grew: style was hood/cap/short/long, and an empty bag meant no bag */
+function fixLook(l){if(!l||typeof l!=='object')return null;const o=Object.assign({},l);
+  if(o.head===undefined){o.head=o.style==='hood'||o.style==='cap'?o.style:'none';if(o.style==='hood'||o.style==='cap')o.style='short'}
+  if(o.bag===''){o.pack='none';o.bag='#9a6a3a'}
+  for(const k of Object.keys(LOOK0))if(o[k]===undefined)o[k]=LOOK0[k];
+  for(const k of Object.keys(LOOK0))if(!LOOKS[k].some(([v])=>v===o[k]))o[k]=LOOK0[k];
+  return o}
+const lookValid=l=>!!fixLook(l);
+function readLook(){try{return fixLook(JSON.parse(localStorage.getItem(LOOK_KEY)||'null'))}catch(e){return null}}
 /* keep: remember it on this device. A save also carries the look, so it travels with save codes and cloud saves */
-function setLook(l,keep){LOOK=Object.assign({},LOOK0,l);
-  PAL.player={hood:LOOK.hat,hair:LOOK.hair,style:LOOK.style,skin:LOOK.skin,coat:LOOK.coat,pants:LOOK.pants,boots:'#2a2340',bag:LOOK.bag||null};
+function setLook(l,keep){LOOK=fixLook(l)||Object.assign({},LOOK0);
+  PAL.player={hood:LOOK.hat,hair:LOOK.hair,style:LOOK.style,head:LOOK.head,skin:LOOK.skin,top:LOOK.top,coat:LOOK.coat,legs:LOOK.legs,pants:LOOK.pants,boots:LOOK.boots,
+    pack:LOOK.pack,bag:LOOK.pack==='none'?null:LOOK.bag,extra:LOOK.extra};
   for(const k of Object.keys(_pc))if(k.startsWith('player'))delete _pc[k];_tp={};
   if(keep)try{localStorage.setItem(LOOK_KEY,JSON.stringify(LOOK))}catch(e){}
   if(S)S.look=Object.assign({},LOOK);
@@ -4829,25 +5027,61 @@ const W3STYLE={prof:'short',healer:'long',clerk:'cap',guard:'cap',pia:'long',mos
 function w3style(key,p){if(p.style)return p.style;if(W3STYLE[key])return W3STYLE[key];return['short','long','cap','hood','short'][hashStr(key)%5]}
 const W3HR=.235;
 function w3kidProto(key,p){
-  const st=w3style(key,p),hair=p.hair||p.hood,skin=p.skin||'#f2c9a0',coat=p.coat,pants=p.pants||'#3b4a78',boots=p.boots||'#2a2340',OL=.013;
+  /* the same wardrobe as the pixel sprites (wear()); townsfolk keep the hairstyle the 3D world always gave them */
+  const w=p.head!==undefined?wear(p):wear(Object.assign({},p,{style:w3style(key,p)}));
+  const hair=w.hair,skin=w.skin||'#f2c9a0',coat=w.coat,pants=w.pants||'#3b4a78',boots=w.boots||'#2a2340',OL=.013,tp=w.top,pk=w.pack,BG=w.bag;
+  const T=tp==='labcoat'||tp==='vest'?WHITE:coat,A=tp==='labcoat'||tp==='vest'?WHITE:coat;
   const G=role=>{const g=new THREE.Group();if(role)g.userData.role=role;return g};
   const root=G('root'),hip=G('hip'),body=G('body'),head=G('head'),legs=[G('legL'),G('legR')],arms=[G('armL'),G('armR')];
   root.add(hip);hip.position.y=.25;
-  /* legs and boots */
+  /* legs and boots: trousers, shorts, or bare legs under a skirt */
   legs.forEach((l,i)=>{const s=i?1:-1;l.position.set(s*.068,0,0);hip.add(l);
-    l.add(w3at(w3part(new THREE.CapsuleGeometry(.054,.1,4,10),pants,{ol:OL}),0,-.1,0));
+    if(w.legs==='pants')l.add(w3at(w3part(new THREE.CapsuleGeometry(.054,.1,4,10),pants,{ol:OL}),0,-.1,0));
+    else{l.add(w3at(w3part(new THREE.CapsuleGeometry(.044,.12,4,10),skin,{ol:OL}),0,-.11,0));
+      if(w.legs==='shorts')l.add(w3at(w3part(new THREE.CapsuleGeometry(.057,.03,4,10),pants,{ol:OL}),0,-.04,0))}
     l.add(w3at(w3part(W3G.ball(),boots,{ol:OL}),0,-.215,.02,0,0,0,[.068,.052,.094]))});
-  /* the jacket, a little flared at the hem */
   hip.add(body);
-  body.add(w3part(new THREE.LatheGeometry([[0,-.03],[.132,-.03],[.142,.03],[.13,.16],[.1,.23],[.05,.265],[0,.27]].map(([a,b])=>new THREE.Vector2(a,b)),22),coat,{ol:OL}));
-  body.add(w3at(w3part(new THREE.CylinderGeometry(.128,.13,.05,20),pants,{ol:0}),0,-.035,0));
-  body.add(w3at(new THREE.Mesh(W3G.box(),w3toon(dk(coat))),0,.12,.136,0,0,0,[.02,.2,.01]));
-  body.add(w3at(w3part(new THREE.TorusGeometry(.085,.022,8,18),dk(coat),{ol:0}),0,.245,0,Math.PI/2,0,0));
-  if(p.bag){const bg=w3at(w3part(new THREE.BoxGeometry(.2,.22,.1),p.bag,{ol:OL}),0,.13,-.16);body.add(bg);bg.add(w3at(w3part(new THREE.BoxGeometry(.205,.07,.11),lt(p.bag),{ol:0}),0,.09,0));
-    for(const s of[-1,1])body.add(w3at(new THREE.Mesh(W3G.box(),w3toon(dk(p.bag))),s*.075,.16,.09,-.25,0,0,[.03,.2,.012]))}
-  /* arms hang from the shoulders, hands at the ends */
+  const lathe=(pts,col,o={})=>w3part(new THREE.LatheGeometry(pts.map(([a,b])=>new THREE.Vector2(a,b)),22),col,Object.assign({ol:OL},o));
+  const box=(col,x,y,z,sx,sy,sz,rx=0,ry=0,rz=0)=>body.add(w3at(new THREE.Mesh(W3G.box(),w3toon(col)),x,y,z,rx,ry,rz,[sx,sy,sz]));
+  const DS={mat:null};
+  /* the top: the jacket's shape, a little flared at the hem (puffier for a puffer) */
+  const sc=tp==='puffer'?1.1:1;
+  body.add(lathe([[0,-.03],[.132*sc,-.03],[.142*sc,.03],[.13*sc,.16],[.1*sc,.23],[.05,.265],[0,.27]],T));
+  if(w.legs==='skirt')body.add(w3at(w3part(new THREE.CylinderGeometry(.13,.19,.1,22,1,true),pants,{ol:OL,mat:w3toon(pants,{side:THREE.DoubleSide})}),0,-.065,0));
+  else body.add(w3at(w3part(new THREE.CylinderGeometry(.128,.13,.05,20),pants,{ol:0}),0,-.035,0));
+  /* long coats hang down over the legs */
+  if(tp==='longcoat'||tp==='labcoat'||tp==='raincoat'){const bot=tp==='raincoat'?-.15:-.2;
+    body.add(w3part(new THREE.LatheGeometry([[.142,.03],[.15,-.03],[.175,bot]].map(([a,b])=>new THREE.Vector2(a,b)),22),T,{ol:OL,mat:w3toon(T,{side:THREE.DoubleSide})}))}
+  if(tp==='jacket'||tp==='raincoat'||tp==='tracksuit'||tp==='longcoat')box(dk(T),0,.12,.136,.02,.2,.01);
+  body.add(w3at(w3part(new THREE.TorusGeometry(.085,.022,8,18),tp==='tshirt'?skin:dk(T),{ol:0}),0,.245,0,Math.PI/2,0,0));
+  if(tp==='hoodie'||tp==='raincoat'){body.add(w3at(w3part(W3G.ball(),dk(coat),{ol:OL}),0,.255,-.085,0,0,0,[.12,.07,.075]))}
+  if(tp==='hoodie'){box(dk(coat),0,.07,.133,.13,.06,.01);for(const s of[-1,1])body.add(w3at(w3part(new THREE.CapsuleGeometry(.006,.06,3,6),WHITE,{ol:0}),s*.03,.19,.128))}
+  if(tp==='longcoat'){for(const y of[.05,.11,.17])body.add(w3at(w3part(W3G.ball(),lt(coat),{ol:0}),.028,y,.138,0,0,0,.012))}
+  if(tp==='puffer'){for(const y of[.03,.1,.17])body.add(w3at(w3part(new THREE.TorusGeometry(.145-y*.12,.012,6,22),lt(coat),{ol:0}),0,y,0,Math.PI/2,0,0))}
+  if(tp==='sweater')body.add(w3at(w3part(new THREE.TorusGeometry(.142,.016,6,22),lt(coat),{ol:0}),0,.09,0,Math.PI/2,0,0));
+  if(tp==='vest')body.add(w3at(lathe([[.0,-.02],[.137,-.02],[.146,.03],[.135,.16],[.106,.225],[.07,.245]],coat,{ol:OL*.8}),0,0,0,0,0,0,1));
+  if(tp==='vest')box(WHITE,0,.13,.14,.05,.2,.01);
+  if(tp==='labcoat')box(coat,0,.17,.134,.05,.12,.01);
+  if(tp==='tracksuit')for(const s of[-1,1])box(WHITE,s*.13,.1,0,.012,.2,.06);
+  if(tp==='overalls'){box(pants,0,.09,.12,.17,.16,.04);for(const s of[-1,1])box(pants,s*.06,.2,.04,.025,.14,.2,-.3,0,0);box(lt(pants),0,.12,.142,.05,.03,.005)}
+  if(tp==='cape'){const cp=w3part(new THREE.CylinderGeometry(.15,.26,.44,18,1,true,Math.PI/2-.3,Math.PI+.6),coat,{ol:OL,mat:w3toon(dk(coat),{side:THREE.DoubleSide})});
+    body.add(w3at(cp,0,.04,-.01,.12,0,0));if(pk==='backpack'||pk==='bigpack'||pk==='sling')cp.scale.set(1.45,1,1.75);body.add(w3at(w3part(W3G.ball(),'#f1c66b',{ol:0}),0,.235,.1,0,0,0,.022))}
+  /* the bag */
+  if(pk==='backpack'&&BG){const bg=w3at(w3part(new THREE.BoxGeometry(.2,.22,.1),BG,{ol:OL}),0,.13,-.16);body.add(bg);bg.add(w3at(w3part(new THREE.BoxGeometry(.205,.07,.11),lt(BG),{ol:0}),0,.09,0));
+    for(const s of[-1,1])box(dk(BG),s*.075,.16,.09,.03,.2,.012,-.25,0,0)}
+  if(pk==='bigpack'){body.add(w3at(w3part(new THREE.BoxGeometry(.25,.33,.14),BG,{ol:OL}),0,.15,-.18));body.add(w3at(w3part(new THREE.BoxGeometry(.255,.08,.15),lt(BG),{ol:0}),0,.27,-.18));
+    body.add(w3at(w3part(new THREE.CylinderGeometry(.05,.05,.32,12),'#c4554a',{ol:OL}),0,.36,-.17,0,0,Math.PI/2));for(const s of[-1,1])box(dk(BG),s*.075,.16,.09,.03,.2,.012,-.25,0,0)}
+  if(pk==='satchel'){box(dk(BG),0,.13,.13,.025,.34,.01,0,0,.75);box(dk(BG),0,.13,-.13,.025,.34,.01,0,0,-.75);
+    body.add(w3at(w3part(new THREE.BoxGeometry(.15,.13,.06),BG,{ol:OL}),.16,0,.04,0,.5,0));body.add(w3at(w3part(new THREE.BoxGeometry(.155,.06,.065),lt(BG),{ol:0}),.16,.04,.042,0,.5,0))}
+  if(pk==='shoulder'){box(dk(BG),.1,.17,0,.02,.2,.02,0,0,.35);body.add(w3at(w3part(new THREE.BoxGeometry(.08,.15,.13),BG,{ol:OL}),.19,.02,0));body.add(w3at(w3part(new THREE.BoxGeometry(.085,.03,.135),lt(BG),{ol:0}),.19,.09,0))}
+  if(pk==='waist'){body.add(w3at(w3part(new THREE.TorusGeometry(.142,.014,6,22),dk(BG),{ol:0}),0,.02,0,Math.PI/2,0,0));body.add(w3at(w3part(new THREE.BoxGeometry(.13,.07,.05),BG,{ol:OL}),0,.03,.15))}
+  if(pk==='sling'){box(dk(BG),0,.13,.13,.022,.34,.01,0,0,-.75);box(dk(BG),0,.13,-.13,.022,.34,.01,0,0,.75);body.add(w3at(w3part(new THREE.BoxGeometry(.15,.12,.06),BG,{ol:OL}),-.03,.18,-.15));body.add(w3at(w3part(new THREE.BoxGeometry(.155,.03,.065),lt(BG),{ol:0}),-.03,.225,-.15))}
+  if(w.extra==='scarf'){body.add(w3at(w3part(new THREE.TorusGeometry(.09,.038,8,18),w.hat,{ol:OL}),0,.255,0,Math.PI/2,0,0));box(w.hat,.06,.17,.12,.05,.13,.025,.1,0,.1);box(dk(w.hat),.06,.105,.122,.05,.015,.026,.1,0,.1)}
+  /* arms hang from the shoulders, hands at the ends; a T-shirt has short sleeves */
   arms.forEach((a,i)=>{const s=i?1:-1;a.position.set(s*.155,.21,0);body.add(a);a.rotation.z=s*.1;
-    a.add(w3at(w3part(new THREE.CapsuleGeometry(.045,.1,4,10),coat,{ol:OL}),0,-.08,0));
+    if(tp==='tshirt'){a.add(w3at(w3part(new THREE.CapsuleGeometry(.05,.02,4,10),coat,{ol:OL}),0,-.03,0));a.add(w3at(w3part(new THREE.CapsuleGeometry(.04,.09,4,10),skin,{ol:OL}),0,-.09,0))}
+    else a.add(w3at(w3part(new THREE.CapsuleGeometry(tp==='puffer'?.054:.045,.1,4,10),A,{ol:OL}),0,-.08,0));
+    if(tp==='tracksuit')a.add(w3at(new THREE.Mesh(W3G.box(),w3toon(WHITE)),s*.044,-.08,0,0,0,0,[.008,.15,.03]));
     a.add(w3at(w3part(W3G.ball(),skin,{ol:OL*.8}),0,-.175,.005,0,0,0,.048))});
   /* the head: big and round, with the face painted on */
   head.position.y=.49;body.add(head);
@@ -4855,7 +5089,7 @@ function w3kidProto(key,p){
   for(const s of[-1,1])head.add(w3at(w3part(W3G.ball(),skin,{ol:OL*.7}),s*W3HR*.97,-.02,0,0,0,0,[.04,.055,.045]));
   const face=new THREE.Mesh(new THREE.SphereGeometry(W3HR*1.006,24,12,Math.PI/2-.95,1.9,Math.PI*.34,Math.PI*.36),new THREE.MeshToonMaterial({map:w3faceTex(),gradientMap:w3grad(),alphaTest:.5,polygonOffset:true,polygonOffsetFactor:-2}));
   face.userData.noBake=1;face.scale.set(1,.95,.97);head.add(face);
-  w3hair(head,st,hair,p.hood,OL);
+  w3hair(head,w,OL);w3hat(head,w,OL);w3extra(head,w,OL);
   w3bake(root,new Set([root,hip,body,head,...legs,...arms]));
   root.traverse(o=>{if(o.isMesh&&!o.userData.outline)o.castShadow=true});
   return root}
@@ -4873,49 +5107,118 @@ function w3hairline({front=.37,bang=.09,side=.5,burn=.08,back=.72,bangW=1.05,lob
   return d=>{const a=d/PI;let t=front+(back-front)*w3ss(.18,.92,a)+(side-front-(back-front)*w3ss(.18,.92,.5))*Math.exp(-(((a-.5)/.16)**2));
     if(d<bangW){const k=1-d/bangW;t+=bang*Math.pow(Math.abs(Math.cos(d/bangW*PI*lobes/2)),1.4)*(.45+.55*k)}
     t+=burn*Math.exp(-(((a-.4)/.045)**2));return t*PI}}
-function w3hair(head,st,hair,hood,OL){const R=W3HR,PI=Math.PI;
-  const shell=(edge,col,r=R*1.075,o={})=>head.add(w3part(w3shell(r,edge,o),col,{ol:OL}));
-  if(st==='hood'){
-    /* the hood: a big soft shell with an oval face opening, a rim around it, and a little fringe peeking out */
+/* the hair. Under a hat only a snug shell shows, plus whatever hangs below the hat (long hair, tails, a braid) */
+function w3hair(head,w,OL){const R=W3HR,PI=Math.PI,hd=w.hairdo,hair=w.hair,hat=w.head,cov=HAT_COVERS.has(hat);
+  const add=(o)=>head.add(o),part=(g,col,ol=OL)=>w3part(g,col,{ol});
+  const shell=(edge,col,r=R*1.075,o={})=>add(part(w3shell(r,edge,o),col));
+  const ball=(col,x,y,z,s,ol=OL)=>add(w3at(part(W3G.ball(),col,ol),x,y,z,0,0,0,s));
+  /* what hangs below: shown under hats and hoods too */
+  const hang=()=>{
+    if(hd==='long'){add(w3at(part(W3G.ball(),hair),0,-R*.62,-R*.5,.25,0,0,[R*1.02,R*1.22,R*.62]));for(const sx of[-1,1])add(w3at(part(new THREE.CapsuleGeometry(.052,.2,4,10),hair,OL*.8),sx*R*.9,-R*.72,R*.18,.1,0,sx*.12))}
+    if(hd==='twintails')for(const sx of[-1,1]){ball(lt(hair),sx*R*.92,R*.12,-R*.32,.04,0);add(w3at(part(new THREE.CapsuleGeometry(.055,.2,4,10),hair,OL*.8),sx*R*1.08,-R*.42,-R*.36,.15,0,sx*.32))}
+    if(hd==='braid'){for(let i=0;i<6;i++)ball(i%2?dk(hair):hair,0,-R*.5-i*.052,-R*.92-i*.012,[.05-i*.003,.034,.044],OL*.7);ball(lt(hair),0,-R*.5-6*.052,-R*1,.026,0)}
+    if(hd==='ponytail'){ball(dk(hair),0,R*.15,-R*1.02,.035,0);add(w3at(part(new THREE.CapsuleGeometry(.055,.22,4,10),hair,OL*.8),0,-R*.4,-R*1.18,-.3,0,0))}
+    if(hd==='bob'&&hat!=='hood')add(w3at(part(W3G.ball(),hair),0,-R*.3,-R*.32,0,0,0,[R*1.12,R*.78,R*.8]))};
+  if(hat==='hood'){shell(w3hairline({front:.34,bang:.08,side:.46,burn:0,back:.5,bangW:.8,lobes:4}),hair,R*1.06);hang();return}
+  if(hd==='buzz'||hd==='mohawk'){shell(w3hairline({front:.3,bang:0,side:.5,burn:.05,back:.72,lobes:1}),hd==='buzz'?mix(hair,w.skin,.35):mix(hair,w.skin,.65),R*1.012,{puff:0});
+    if(hd==='mohawk'&&!cov)for(let i=0;i<7;i++){const a=-.55+i*.32;add(w3at(part(W3G.cone(5),hair,OL*.7),0,Math.cos(a)*R*1.05,Math.sin(-a)*R*1.05,-a,0,0,[.03,.12+.02*Math.sin(i),.06]))}
+    return}
+  if(cov){shell(w3hairline({front:.42,bang:.06,side:.53,burn:.06,back:.72,lobes:4}),hair,R*1.05,{puff:0});
+    if(hd==='curly')for(const sx of[-1,1])ball(hair,sx*R*.95,-R*.1,-R*.2,[.07,.09,.09]);
+    hang();return}
+  if(hd==='long'){shell(w3hairline({front:.36,bang:.1,side:.58,burn:.1,back:.8,lobes:5}),hair,R*1.08);hang();return}
+  if(hd==='curly'){shell(w3hairline({front:.38,bang:.05,side:.55,burn:.05,back:.75,lobes:6}),hair,R*1.06);
+    const N=22;for(let i=0;i<N;i++){const t=Math.acos(1-1.1*(i+.5)/N),f=i*2.4,x=Math.sin(t)*Math.sin(f),y=Math.cos(t),z=Math.sin(t)*Math.cos(f);if(z>.55&&y<.75)continue;
+      ball(i%3?hair:lt(hair),x*R*1.1,y*R*1.1+.01,z*R*1.08-.01,.075,OL*.6)}return}
+  if(hd==='bob'){shell(w3hairline({front:.36,bang:.13,side:.62,burn:0,back:.78,lobes:7}),hair,R*1.08);hang();return}
+  /* short, spiky, swept, buns, ponytail, twin tails and the braid start from a full head of hair */
+  shell(w3hairline({front:.37,bang:.1,side:.5,burn:.09,back:.7,lobes:5}),hair);
+  if(hd==='short'||hd==='swept'){for(const[a,y,z,rx,rz,s]of[[.05,1.02,-.25,-1.1,-.3,1],[-.07,.94,-.45,-1.5,.35,.9],[.1,.82,-.62,-1.9,-.2,.8]])
+      add(w3at(part(W3G.cone(7),hair,OL*.7),a*R,y*R,z*R,rx,0,rz,[.05*s,.15*s,.05*s]));
+    add(w3at(part(W3G.cone(6),hair,OL*.6),.02,R*1.07,R*.12,.35,0,-.25,[.022,.09,.022]))}
+  if(hd==='swept')add(w3at(part(W3G.ball(),hair,OL*.8),R*.28,R*.6,R*.78,-.5,0,-.6,[.13,.05,.08]));
+  if(hd==='spiky')for(let i=0;i<9;i++){const f=i*2.4,t=.25+.5*(i%3)/2,x=Math.sin(t)*Math.sin(f),y=Math.cos(t),z=Math.sin(t)*Math.cos(f);if(z>.6)continue;
+    const o=w3at(part(W3G.cone(5),hair,OL*.7),x*R*1.02,y*R*1.02,z*R*1.02);o.lookAt(new THREE.Vector3(x*3,y*3+.4,z*3));o.rotateX(PI/2);o.scale.set(.06,.21,.06);add(o)}
+  if(hd==='buns')for(const sx of[-1,1]){ball(hair,sx*R*.62,R*.86,-R*.12,.085);ball(dk(hair),sx*R*.5,R*.74,-R*.08,.03,0)}
+  hang()}
+/* hats and hoods */
+function w3hat(head,w,OL){const R=W3HR,PI=Math.PI,H=w.hat,hd=w.head;if(hd==='none')return;
+  const part=(g,col,o={})=>w3part(g,col,Object.assign({ol:OL},o)),two=c=>({mat:w3toon(c,{side:THREE.DoubleSide})});
+  if(hd==='hood'){
+    /* the hood: a big soft shell with an oval face opening, a rim around it, and drawstrings */
     const RH=R*1.2,nt=18,nf=40,top=.3*PI,bot=.88*PI,P2=[],idx=[],rimL=[],rimR=[];
-    for(let i=0;i<=nt;i++){const th=top+(bot-top)*i/nt,u=(th-top)/(bot-top),w=1.02*Math.pow(Math.sin(Math.min(1,u*1.25)*PI/2),.6)*(u>.82?1-(u-.82)*1.6:1);
-      for(let j=0;j<=nf;j++){const ph=PI/2+w+(PI*2-2*w)*j/nf,r=RH*(1-.06*u*u);P2.push(-r*Math.cos(ph)*Math.sin(th),r*Math.cos(th)-u*.03,r*Math.sin(ph)*Math.sin(th))}
+    for(let i=0;i<=nt;i++){const th=top+(bot-top)*i/nt,u=(th-top)/(bot-top),ww=1.02*Math.pow(Math.sin(Math.min(1,u*1.25)*PI/2),.6)*(u>.82?1-(u-.82)*1.6:1);
+      for(let j=0;j<=nf;j++){const ph=PI/2+ww+(PI*2-2*ww)*j/nf,r=RH*(1-.06*u*u);P2.push(-r*Math.cos(ph)*Math.sin(th),r*Math.cos(th)-u*.03,r*Math.sin(ph)*Math.sin(th))}
       const pl=P2.slice((i*(nf+1))*3,(i*(nf+1))*3+3),pr=P2.slice((i*(nf+1)+nf)*3,(i*(nf+1)+nf)*3+3);rimL.push(new THREE.Vector3(...pl));rimR.push(new THREE.Vector3(...pr))}
     for(let i=0;i<nt;i++)for(let j=0;j<nf;j++){const a=i*(nf+1)+j,b=a+nf+1;idx.push(a,b,a+1,b,b+1,a+1)}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P2,3));g.setIndex(idx);g.computeVertexNormals();
-    head.add(w3part(g,hood,{ol:OL}));
-    head.add(w3part(new THREE.SphereGeometry(RH,40,10,0,PI*2,0,top),hood,{ol:OL}));
-    const rim=new THREE.CatmullRomCurve3([...rimL.slice().reverse(),...rimR]);head.add(w3part(new THREE.TubeGeometry(rim,40,.026,8,false),dk(hood),{ol:0}));
-    shell(w3hairline({front:.34,bang:.08,side:.46,burn:0,back:.5,bangW:.8,lobes:4}),hair,R*1.06);
+    head.add(part(g,H));head.add(part(new THREE.SphereGeometry(RH,40,10,0,PI*2,0,top),H));
+    const rim=new THREE.CatmullRomCurve3([...rimL.slice().reverse(),...rimR]);head.add(w3part(new THREE.TubeGeometry(rim,40,.026,8,false),dk(H),{ol:0}));
     for(const sx of[-1,1])head.add(w3at(w3part(new THREE.CapsuleGeometry(.012,.08,3,6),'#f4f1ea',{ol:0}),sx*.07,-R*1.02,R*.7,.25,0,0));
     return}
-  if(st==='cap'){
-    shell(w3hairline({front:.42,bang:.06,side:.53,burn:.06,back:.72,lobes:4}),hair,R*1.05,{puff:0});
-    /* the cap: a crown tilted back a little, a band, a curved brim out front and a button on top */
-    const cap=new THREE.Group();cap.rotation.x=-.12;head.add(cap);
-    cap.add(w3part(new THREE.SphereGeometry(R*1.14,36,14,0,PI*2,0,PI*.5),hood,{ol:OL}));
+  const hat=new THREE.Group();head.add(hat);
+  if(hd==='cap'||hd==='backcap'){
+    /* the cap: a crown tilted back a little, a band, a curved brim (out front, or behind for a backwards cap) and a button on top */
+    hat.rotation.x=-.12;if(hd==='backcap')hat.rotation.set(-.05,PI,0);
+    hat.add(part(new THREE.SphereGeometry(R*1.14,36,14,0,PI*2,0,PI*.5),H));
     const sh=new THREE.Shape(),N=24,Rb=R*1.1;for(let k=0;k<=N;k++){const u=PI*k/N,x=-Math.cos(u)*Rb,y=Math.sin(u)*(Rb*.62+.17);k?sh.lineTo(x,y):sh.moveTo(x,y)}
     for(let k=N;k>=0;k--){const u=PI*k/N;sh.lineTo(-Math.cos(u)*Rb*.98,Math.sin(u)*Rb*.6)}
     const bg=new THREE.ExtrudeGeometry(sh,{depth:.026,bevelEnabled:true,bevelThickness:.006,bevelSize:.006,bevelSegments:1,curveSegments:2});bg.rotateX(PI/2);
-    cap.add(w3at(w3part(bg,dk(hood),{ol:OL*.8}),0,R*.38,0,.18,0,0));
-    cap.add(w3at(w3part(W3G.ball(),dk(hood),{ol:0}),0,R*1.14,0,0,0,0,.03));
+    hat.add(w3at(part(bg,dk(H),{ol:OL*.8}),0,R*.38,0,.18,0,0));
+    hat.add(w3at(w3part(W3G.ball(),dk(H),{ol:0}),0,R*1.14,0,0,0,0,.03));
+    if(hd==='backcap')hat.add(w3at(new THREE.Mesh(W3G.box(),w3toon(dk(H))),0,R*.18,-R*1.12,0,0,0,[.08,.03,.01]));
     return}
-  if(st==='long'){
-    shell(w3hairline({front:.36,bang:.1,side:.58,burn:.1,back:.8,lobes:5}),hair,R*1.08);
-    /* soft hair falling down the back and two locks framing the face */
-    head.add(w3at(w3part(W3G.ball(),hair,{ol:OL}),0,-R*.62,-R*.5,.25,0,0,[R*1.02,R*1.22,R*.62]));
-    for(const sx of[-1,1])head.add(w3at(w3part(new THREE.CapsuleGeometry(.052,.2,4,10),hair,{ol:OL*.8}),sx*R*.9,-R*.72,R*.18,.1,0,sx*.12));
-    return}
-  /* short: a full head of hair with bangs, sideburns and a few tufts sweeping back */
-  shell(w3hairline({front:.37,bang:.1,side:.5,burn:.09,back:.7,lobes:5}),hair);
-  for(const[a,y,z,rx,rz,s]of[[.05,1.02,-.25,-1.1,-.3,1],[-.07,.94,-.45,-1.5,.35,.9],[.1,.82,-.62,-1.9,-.2,.8]])
-    head.add(w3at(w3part(W3G.cone(7),hair,{ol:OL*.7}),a*R,y*R,z*R,rx,0,rz,[.05*s,.15*s,.05*s]));
-  head.add(w3at(w3part(W3G.cone(6),hair,{ol:OL*.6}),.02,R*1.07,R*.12,.35,0,-.25,[.022,.09,.022]))}
+  if(hd==='beanie'||hd==='bobble'){hat.rotation.x=-.18;const e=PI*.47;
+    hat.add(part(new THREE.SphereGeometry(R*1.13,32,14,0,PI*2,0,e),H));
+    hat.add(w3at(part(new THREE.TorusGeometry(R*1.13*Math.sin(e),.035,8,30),dk(H),{ol:OL*.8}),0,R*1.13*Math.cos(e),0,PI/2,0,0));
+    if(hd==='bobble')hat.add(w3at(part(W3G.sph(1),WHITE),0,R*1.18,-R*.05,0,0,0,.07));return}
+  if(hd==='bucket'){hat.rotation.x=-.08;hat.add(w3at(part(new THREE.CylinderGeometry(R*.92,R*1.1,R*.6,26),H),0,R*.62,0));hat.add(w3at(part(W3G.ball(),H),0,R*.9,0,0,0,0,[R*.92,R*.22,R*.92]));
+    hat.add(w3at(part(new THREE.CylinderGeometry(R*1.12,R*1.62,R*.24,30,1,true),dk(H),two(dk(H))),0,R*.27,0));return}
+  if(hd==='beret'){hat.rotation.set(-.1,0,.28);hat.add(w3at(part(W3G.ball(),H),R*.08,R*.72,0,0,0,0,[R*1.22,R*.38,R*1.15]));hat.add(w3at(part(W3G.cone(6),dk(H),{ol:0}),R*.08,R*1.1,0,0,0,0,[.014,.05,.014]));return}
+  if(hd==='sunhat'){hat.rotation.x=-.1;hat.add(part(new THREE.SphereGeometry(R*1.1,30,12,0,PI*2,0,PI*.48),H));hat.add(w3at(part(new THREE.TorusGeometry(R*1.1,.02,6,30),dk(H),{ol:0}),0,R*.12,0,PI/2,0,0));
+    hat.add(w3at(part(new THREE.CylinderGeometry(R*2.05,R*2.05,.016,36),lt(H)),0,R*.06,0));return}
+  if(hd==='cowboy'){hat.rotation.x=-.12;
+    hat.add(w3at(part(new THREE.LatheGeometry([[R*1.05,R*.3],[R*1.02,R*.5],[R*.92,R*1.2],[R*.76,R*1.36],[R*.5,R*1.25],[0,R*1.32]].map(([a,b])=>new THREE.Vector2(a,b)),26),H),0,0,0,0,0,0,[1,1,.88]));
+    hat.add(w3at(part(new THREE.TorusGeometry(R*1.03,.018,6,28),dk(H),{ol:0}),0,R*.42,0,PI/2,0,0));
+    hat.add(w3at(part(new THREE.LatheGeometry([[R*1.0,R*.3],[R*1.45,R*.28],[R*1.72,R*.36],[R*1.86,R*.5]].map(([a,b])=>new THREE.Vector2(a,b)),32),H,two(H)),0,0,0,0,0,0,[1,1,.85]));return}
+  if(hd==='tophat'){hat.rotation.x=-.08;hat.add(w3at(part(new THREE.CylinderGeometry(R*.78,R*.74,R*1.0,26),H),0,R*1.08,0));
+    hat.add(w3at(part(new THREE.CylinderGeometry(R*.79,R*.79,R*.2,26),'#c4554a',{ol:0}),0,R*.7,0));hat.add(w3at(part(new THREE.CylinderGeometry(R*1.3,R*1.3,.02,30),dk(H)),0,R*.58,0));return}
+  if(hd==='headband'){hat.rotation.x=-.32;hat.add(w3at(part(new THREE.TorusGeometry(R*1.07,.032,8,32),H,{ol:OL*.8}),0,R*.42,0,PI/2,0,0));return}
+  if(hd==='bandana'){hat.rotation.x=-.16;hat.add(part(new THREE.SphereGeometry(R*1.11,32,14,0,PI*2,0,PI*.5),H));
+    hat.add(w3at(part(W3G.sph(1),dk(H)),0,R*.05,-R*1.1,0,0,0,.045));for(const s of[-1,1])hat.add(w3at(part(new THREE.BoxGeometry(.04,.12,.012),H,{ol:OL*.6}),s*.03,-R*.25,-R*1.1,0,0,s*.3));
+    for(const[x,y,z]of[[.4,.75,.6],[-.5,.6,.65],[.1,.9,-.3]])hat.add(w3at(w3part(W3G.ball(),WHITE,{ol:0}),x*R*1.1,y*R*1.1,z*R*1.1,0,0,0,.012));return}
+  if(hd==='wizard'){hat.rotation.x=-.22;hat.add(w3at(part(new THREE.CylinderGeometry(R*1.65,R*1.65,.018,36),dk(H)),0,R*.38,0));
+    const cone=new THREE.Group();cone.position.y=R*.4;hat.add(cone);cone.add(w3at(part(new THREE.ConeGeometry(R*1.02,R*1.5,26,1,true),H,two(H)),0,R*.75,0));
+    cone.add(w3at(part(new THREE.ConeGeometry(R*.42,R*.9,16),H),0,R*1.85,-R*.18,-.45,0,0));
+    cone.add(w3at(w3part(new THREE.OctahedronGeometry(1,0),'#f1c66b',{ol:0}),0,R*.65,R*.82,0,0,0,.04));return}
+  if(hd==='flowers'){for(let i=0;i<8;i++){const f=-PI*.75+i/7*PI*1.5,x=Math.sin(f)*R*1.02,z=Math.cos(f)*R*1.02,y=R*.5,fl=new THREE.Group();fl.position.set(x,y,z);hat.add(fl);
+      for(let k=0;k<5;k++){const a=k/5*PI*2;fl.add(w3at(w3part(W3G.ball(),i%2?H:lt(H),{ol:0}),Math.cos(a)*.022,Math.sin(a)*.022,0,0,0,0,.018))}
+      fl.add(w3at(w3part(W3G.ball(),'#fff3a0',{ol:0}),0,0,.006,0,0,0,.014));fl.lookAt(x*3,y,z*3)}
+    hat.add(w3at(w3part(new THREE.TorusGeometry(R*1.03,.008,5,30),'#4fb36a',{ol:0}),0,R*.5,0,PI/2,0,0));return}
+  if(hd==='crown'){hat.rotation.x=-.1;hat.add(w3at(part(new THREE.CylinderGeometry(R*.72,R*.8,R*.36,24,1,true),H,two(H)),0,R*.98,0));
+    for(let i=0;i<6;i++){const f=i/6*PI*2;hat.add(w3at(part(W3G.cone(4),H,{ol:OL*.6}),Math.sin(f)*R*.74,R*1.26,Math.cos(f)*R*.74,0,0,0,[.03,.08,.03]))}
+    hat.add(w3at(w3part(W3G.ball(),'#e04a4a',{ol:0}),0,R*.98,R*.79,0,0,0,.03))}}
+/* glasses, goggles, headphones and earrings (the scarf is on the body) */
+function w3extra(head,w,OL){const R=W3HR,PI=Math.PI,ex=w.extra;if(ex==='none'||ex==='scarf')return;
+  const ey=-.018,ez=R*.99,ex2=.0755;
+  if(ex==='glasses'){for(const s of[-1,1])head.add(w3at(w3part(new THREE.TorusGeometry(.042,.008,6,18),GEAR,{ol:0}),s*ex2,ey,ez,0,s*.32,0));
+    head.add(w3at(new THREE.Mesh(W3G.box(),w3toon(GEAR)),0,ey+.01,ez+.008,0,0,0,[.04,.008,.008]));
+    for(const s of[-1,1])head.add(w3at(new THREE.Mesh(W3G.box(),w3toon(GEAR)),s*.17,ey+.012,.12,0,Math.atan2(s*.11,-.2),0,[.008,.008,.22]))}
+  if(ex==='sunglasses'){for(const s of[-1,1]){const gl=w3at(new THREE.Group(),s*ex2,ey,ez+.004,0,s*.32,0);head.add(gl);gl.add(w3at(w3part(new THREE.CylinderGeometry(.046,.046,.012,18),'#1b1430',{ol:0}),0,0,0,PI/2,0,0))}
+    head.add(w3at(new THREE.Mesh(W3G.box(),w3toon('#1b1430')),0,ey+.01,ez+.01,0,0,0,[.04,.01,.01]));
+    for(const s of[-1,1])head.add(w3at(new THREE.Mesh(W3G.box(),w3toon('#1b1430')),s*.17,ey+.012,.12,0,Math.atan2(s*.11,-.2),0,[.008,.01,.22]))}
+  if(ex==='goggles'){const g=new THREE.Group();g.rotation.x=-.3;head.add(g);g.add(w3at(w3part(new THREE.TorusGeometry(R*1.07,.022,6,32),GEAR,{ol:0}),0,R*.4,0,PI/2,0,0));
+    for(const s of[-1,1]){const lens=w3at(new THREE.Group(),s*.075,R*.4,R*1.06,0,s*.3,0);g.add(lens);lens.add(w3at(w3part(new THREE.CylinderGeometry(.05,.05,.04,18),'#5a5f73',{ol:OL*.6}),0,0,0,PI/2,0,0));
+      lens.add(w3at(new THREE.Mesh(new THREE.CylinderGeometry(.038,.038,.01,18),w3toon('#8fe0ff',{emissive:new THREE.Color('#2a6a80')})),0,0,.018,PI/2,0,0))}}
+  if(ex==='headphones'){head.add(w3at(w3part(new THREE.TorusGeometry(R*1.12,.02,8,26,PI),GEAR,{ol:OL*.6}),0,0,0,0,0,0));
+    for(const s of[-1,1])head.add(w3at(w3part(new THREE.CylinderGeometry(.06,.06,.05,18),GEAR,{ol:OL*.7}),s*R*1.1,-.01,0,0,0,PI/2));
+    for(const s of[-1,1])head.add(w3at(w3part(new THREE.CylinderGeometry(.04,.04,.01,14),'#6a6f88',{ol:0}),s*R*1.21,-.01,0,0,0,PI/2))}
+  if(ex==='earrings')for(const s of[-1,1])head.add(w3at(w3part(W3G.ball(),'#f1c66b',{ol:0}),s*R*.98,-.075,.005,0,0,0,.016))}
 /* merge each moving part's static pieces into one mesh (and one outline), so a crowd stays cheap to draw */
 function w3bake(root,moving){root.updateMatrixWorld(true);
   for(const node of moving){const pieces=[],kill=[];const inv=new THREE.Matrix4().copy(node.matrixWorld).invert();
     const walk=o=>{for(const c of o.children){if(moving.has(c))continue;
-      if(c.isMesh&&!c.userData.outline&&!c.userData.noBake&&c.material&&c.material.isMeshToonMaterial&&!c.material.map&&!c.material.transparent){pieces.push([c.geometry,new THREE.Matrix4().multiplyMatrices(inv,c.matrixWorld),'#'+c.material.color.getHexString()]);kill.push(c)}
+      if(c.isMesh&&!c.userData.outline&&!c.userData.noBake&&c.material&&c.material.isMeshToonMaterial&&!c.material.map&&!c.material.transparent&&c.material.side!==THREE.DoubleSide){pieces.push([c.geometry,new THREE.Matrix4().multiplyMatrices(inv,c.matrixWorld),'#'+c.material.color.getHexString()]);kill.push(c)}
       if(c.children.length)walk(c)}};
     walk(node);if(pieces.length<2)continue;
     const mm=w3mergedMesh(pieces,{ol:.009,fade:false,toon:true});for(const c of kill)c.removeFromParent();node.add(mm)}}
@@ -6017,15 +6320,19 @@ $('#tNew').onclick=()=>newGame(newSlotId());
 $('#tLookBtn').onclick=()=>lookPanel(null);$('#tLookImg').src=personCanvas('player','down',0).toDataURL();
 /* the look editor: each row is one choice. Left and right (or tapping the row's left or right half) step through it */
 let lookAfter=null,lookRaf=0;
-const LOOK_ROWS=[['style','Style'],['hair','Hair'],['hat','Hood / cap'],['skin','Skin'],['coat','Coat'],['pants','Trousers'],['bag','Bag']];
-const lookRowOn=k=>k==='hat'?LOOK.style==='hood'||LOOK.style==='cap':k==='hair'?LOOK.style!=='hood':true;
+const LOOK_ROWS=[['style','Hair'],['hair','Hair colour'],['head','Hat'],['hat','Hat colour'],['skin','Skin'],['top','Top'],['coat','Top colour'],['legs','Bottoms'],['pants','Bottoms colour'],['boots','Shoes'],['pack','Bag'],['bag','Bag colour'],['extra','Extra']];
+const lookRowOn=k=>k==='hat'?LOOK.head!=='none'||LOOK.extra==='scarf':k==='bag'?LOOK.pack!=='none':true;
+const lookLabel=(k,l)=>k!=='hat'?l:LOOK.head==='none'?'Scarf colour':LOOK.extra==='scarf'?'Hat & scarf':LOOK.head==='hood'?'Hood colour':'Hat colour';
+/* a whole new outfit at random (your skin stays as it is) */
+function lookRandom(){const l=Object.assign({},LOOK);for(const k of Object.keys(LOOKS))if(k!=='skin'){const o=LOOKS[k];l[k]=o[Math.floor(rnd()*o.length)][0]}setLook(l,true);MUS.sfx('chime');renderLook()}
 function lookPanel(after,kind){lookAfter=after;$('#tMain').hidden=true;$('#tLook').hidden=false;$('#tLookBack').hidden=kind==='intro';
   $('#tLookTitle').textContent=kind==='intro'?'What do you look like?':after?'Make your trainer':'Your trainer';$('#tLookDone').textContent=kind==='intro'?"That's me!":after?'Start your journey':'Done';
   renderLook();requestAnimationFrame(()=>{const b=$('#lookRows button');if(b)b.focus()});cancelAnimationFrame(lookRaf);lookRaf=requestAnimationFrame(lookTick)}
 function closeLook(){$('#tLook').hidden=true;cancelAnimationFrame(lookRaf);setLook(LOOK,true)}
 function renderLook(){const rows=$('#lookRows'),fk=document.activeElement&&rows.contains(document.activeElement)?document.activeElement.dataset.k:null;rows.innerHTML='';
-  for(const[k,label]of LOOK_ROWS){if(!lookRowOn(k))continue;const opts=LOOKS[k],i=Math.max(0,opts.findIndex(([v])=>v===LOOK[k])),[v,name]=opts[i];
-    const sw=k==='style'?'':`<i class="lk-sw${v?'':' none'}" style="background:${v||'transparent'}"></i>`;
+  const rb=el('button','btn sm look-rand','Random look');rb.dataset.k='rand';rb.onclick=lookRandom;rows.append(rb);
+  for(const[k,label0]of LOOK_ROWS){if(!lookRowOn(k))continue;const opts=LOOKS[k],i=Math.max(0,opts.findIndex(([v])=>v===LOOK[k])),[v,name]=opts[i],label=lookLabel(k,label0);
+    const sw=v[0]==='#'?`<i class="lk-sw" style="background:${v}"></i>`:'';
     const b=el('button','look-row',`<span class="lk-l">${label}</span><span class="lk-v"><i class="lk-a">◀</i>${sw}<b>${name}</b><i class="lk-a">▶</i></span>`);b.dataset.k=k;
     b.onclick=e=>{const r=b.getBoundingClientRect(),tap=e.clientX>0&&e.detail>0;lookCycle(k,tap&&e.clientX-r.left<r.width*.5?-1:1)};rows.append(b)}
   if(fk){const nb=rows.querySelector(`[data-k="${fk}"]`);(nb||rows.querySelector('button')).focus()}}
@@ -6054,7 +6361,7 @@ buildTiles();load3D();buildWorld();buildMini();setMap('world');layout();sndLabel
 $('#tTag').textContent=`${ORDER.length} Lynties · 8 legends · 4 caves`;
 $('#parade').innerHTML=['thalassor','ignaroth','aethyra','fulgurion','nihilux'].map(id=>`<img class="px" src="${sprURL(id)}" alt="${SP[id].name}">`).join('');
 requestAnimationFrame(loop);
-window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt,get LAB(){return LAB},labFaced};
+window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt,get LAB(){return LAB},labFaced,person,trainerBuf,wear,LOOKS,LOOK0,setLook,fixLook,get LOOK(){return LOOK},PAL,get w3(){return typeof w3kidProto==='function'?{w3kidProto,W3,w3animKid,THREE}:null}};
 const snap=()=>S&&S.flags.starter&&!B&&CM?{S:JSON.parse(JSON.stringify(Object.assign(S,{pos:{map:CM.id,x:P.x,y:P.y,dir:P.dir}}))),slot:SLOT,dirty}:null;
 const hot=!ZP&&window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(snap);

@@ -392,25 +392,61 @@ const W3STYLE={prof:'short',healer:'long',clerk:'cap',guard:'cap',pia:'long',mos
 function w3style(key,p){if(p.style)return p.style;if(W3STYLE[key])return W3STYLE[key];return['short','long','cap','hood','short'][hashStr(key)%5]}
 const W3HR=.235;
 function w3kidProto(key,p){
-  const st=w3style(key,p),hair=p.hair||p.hood,skin=p.skin||'#f2c9a0',coat=p.coat,pants=p.pants||'#3b4a78',boots=p.boots||'#2a2340',OL=.013;
+  /* the same wardrobe as the pixel sprites (wear()); townsfolk keep the hairstyle the 3D world always gave them */
+  const w=p.head!==undefined?wear(p):wear(Object.assign({},p,{style:w3style(key,p)}));
+  const hair=w.hair,skin=w.skin||'#f2c9a0',coat=w.coat,pants=w.pants||'#3b4a78',boots=w.boots||'#2a2340',OL=.013,tp=w.top,pk=w.pack,BG=w.bag;
+  const T=tp==='labcoat'||tp==='vest'?WHITE:coat,A=tp==='labcoat'||tp==='vest'?WHITE:coat;
   const G=role=>{const g=new THREE.Group();if(role)g.userData.role=role;return g};
   const root=G('root'),hip=G('hip'),body=G('body'),head=G('head'),legs=[G('legL'),G('legR')],arms=[G('armL'),G('armR')];
   root.add(hip);hip.position.y=.25;
-  /* legs and boots */
+  /* legs and boots: trousers, shorts, or bare legs under a skirt */
   legs.forEach((l,i)=>{const s=i?1:-1;l.position.set(s*.068,0,0);hip.add(l);
-    l.add(w3at(w3part(new THREE.CapsuleGeometry(.054,.1,4,10),pants,{ol:OL}),0,-.1,0));
+    if(w.legs==='pants')l.add(w3at(w3part(new THREE.CapsuleGeometry(.054,.1,4,10),pants,{ol:OL}),0,-.1,0));
+    else{l.add(w3at(w3part(new THREE.CapsuleGeometry(.044,.12,4,10),skin,{ol:OL}),0,-.11,0));
+      if(w.legs==='shorts')l.add(w3at(w3part(new THREE.CapsuleGeometry(.057,.03,4,10),pants,{ol:OL}),0,-.04,0))}
     l.add(w3at(w3part(W3G.ball(),boots,{ol:OL}),0,-.215,.02,0,0,0,[.068,.052,.094]))});
-  /* the jacket, a little flared at the hem */
   hip.add(body);
-  body.add(w3part(new THREE.LatheGeometry([[0,-.03],[.132,-.03],[.142,.03],[.13,.16],[.1,.23],[.05,.265],[0,.27]].map(([a,b])=>new THREE.Vector2(a,b)),22),coat,{ol:OL}));
-  body.add(w3at(w3part(new THREE.CylinderGeometry(.128,.13,.05,20),pants,{ol:0}),0,-.035,0));
-  body.add(w3at(new THREE.Mesh(W3G.box(),w3toon(dk(coat))),0,.12,.136,0,0,0,[.02,.2,.01]));
-  body.add(w3at(w3part(new THREE.TorusGeometry(.085,.022,8,18),dk(coat),{ol:0}),0,.245,0,Math.PI/2,0,0));
-  if(p.bag){const bg=w3at(w3part(new THREE.BoxGeometry(.2,.22,.1),p.bag,{ol:OL}),0,.13,-.16);body.add(bg);bg.add(w3at(w3part(new THREE.BoxGeometry(.205,.07,.11),lt(p.bag),{ol:0}),0,.09,0));
-    for(const s of[-1,1])body.add(w3at(new THREE.Mesh(W3G.box(),w3toon(dk(p.bag))),s*.075,.16,.09,-.25,0,0,[.03,.2,.012]))}
-  /* arms hang from the shoulders, hands at the ends */
+  const lathe=(pts,col,o={})=>w3part(new THREE.LatheGeometry(pts.map(([a,b])=>new THREE.Vector2(a,b)),22),col,Object.assign({ol:OL},o));
+  const box=(col,x,y,z,sx,sy,sz,rx=0,ry=0,rz=0)=>body.add(w3at(new THREE.Mesh(W3G.box(),w3toon(col)),x,y,z,rx,ry,rz,[sx,sy,sz]));
+  const DS={mat:null};
+  /* the top: the jacket's shape, a little flared at the hem (puffier for a puffer) */
+  const sc=tp==='puffer'?1.1:1;
+  body.add(lathe([[0,-.03],[.132*sc,-.03],[.142*sc,.03],[.13*sc,.16],[.1*sc,.23],[.05,.265],[0,.27]],T));
+  if(w.legs==='skirt')body.add(w3at(w3part(new THREE.CylinderGeometry(.13,.19,.1,22,1,true),pants,{ol:OL,mat:w3toon(pants,{side:THREE.DoubleSide})}),0,-.065,0));
+  else body.add(w3at(w3part(new THREE.CylinderGeometry(.128,.13,.05,20),pants,{ol:0}),0,-.035,0));
+  /* long coats hang down over the legs */
+  if(tp==='longcoat'||tp==='labcoat'||tp==='raincoat'){const bot=tp==='raincoat'?-.15:-.2;
+    body.add(w3part(new THREE.LatheGeometry([[.142,.03],[.15,-.03],[.175,bot]].map(([a,b])=>new THREE.Vector2(a,b)),22),T,{ol:OL,mat:w3toon(T,{side:THREE.DoubleSide})}))}
+  if(tp==='jacket'||tp==='raincoat'||tp==='tracksuit'||tp==='longcoat')box(dk(T),0,.12,.136,.02,.2,.01);
+  body.add(w3at(w3part(new THREE.TorusGeometry(.085,.022,8,18),tp==='tshirt'?skin:dk(T),{ol:0}),0,.245,0,Math.PI/2,0,0));
+  if(tp==='hoodie'||tp==='raincoat'){body.add(w3at(w3part(W3G.ball(),dk(coat),{ol:OL}),0,.255,-.085,0,0,0,[.12,.07,.075]))}
+  if(tp==='hoodie'){box(dk(coat),0,.07,.133,.13,.06,.01);for(const s of[-1,1])body.add(w3at(w3part(new THREE.CapsuleGeometry(.006,.06,3,6),WHITE,{ol:0}),s*.03,.19,.128))}
+  if(tp==='longcoat'){for(const y of[.05,.11,.17])body.add(w3at(w3part(W3G.ball(),lt(coat),{ol:0}),.028,y,.138,0,0,0,.012))}
+  if(tp==='puffer'){for(const y of[.03,.1,.17])body.add(w3at(w3part(new THREE.TorusGeometry(.145-y*.12,.012,6,22),lt(coat),{ol:0}),0,y,0,Math.PI/2,0,0))}
+  if(tp==='sweater')body.add(w3at(w3part(new THREE.TorusGeometry(.142,.016,6,22),lt(coat),{ol:0}),0,.09,0,Math.PI/2,0,0));
+  if(tp==='vest')body.add(w3at(lathe([[.0,-.02],[.137,-.02],[.146,.03],[.135,.16],[.106,.225],[.07,.245]],coat,{ol:OL*.8}),0,0,0,0,0,0,1));
+  if(tp==='vest')box(WHITE,0,.13,.14,.05,.2,.01);
+  if(tp==='labcoat')box(coat,0,.17,.134,.05,.12,.01);
+  if(tp==='tracksuit')for(const s of[-1,1])box(WHITE,s*.13,.1,0,.012,.2,.06);
+  if(tp==='overalls'){box(pants,0,.09,.12,.17,.16,.04);for(const s of[-1,1])box(pants,s*.06,.2,.04,.025,.14,.2,-.3,0,0);box(lt(pants),0,.12,.142,.05,.03,.005)}
+  if(tp==='cape'){const cp=w3part(new THREE.CylinderGeometry(.15,.26,.44,18,1,true,Math.PI/2-.3,Math.PI+.6),coat,{ol:OL,mat:w3toon(dk(coat),{side:THREE.DoubleSide})});
+    body.add(w3at(cp,0,.04,-.01,.12,0,0));if(pk==='backpack'||pk==='bigpack'||pk==='sling')cp.scale.set(1.45,1,1.75);body.add(w3at(w3part(W3G.ball(),'#f1c66b',{ol:0}),0,.235,.1,0,0,0,.022))}
+  /* the bag */
+  if(pk==='backpack'&&BG){const bg=w3at(w3part(new THREE.BoxGeometry(.2,.22,.1),BG,{ol:OL}),0,.13,-.16);body.add(bg);bg.add(w3at(w3part(new THREE.BoxGeometry(.205,.07,.11),lt(BG),{ol:0}),0,.09,0));
+    for(const s of[-1,1])box(dk(BG),s*.075,.16,.09,.03,.2,.012,-.25,0,0)}
+  if(pk==='bigpack'){body.add(w3at(w3part(new THREE.BoxGeometry(.25,.33,.14),BG,{ol:OL}),0,.15,-.18));body.add(w3at(w3part(new THREE.BoxGeometry(.255,.08,.15),lt(BG),{ol:0}),0,.27,-.18));
+    body.add(w3at(w3part(new THREE.CylinderGeometry(.05,.05,.32,12),'#c4554a',{ol:OL}),0,.36,-.17,0,0,Math.PI/2));for(const s of[-1,1])box(dk(BG),s*.075,.16,.09,.03,.2,.012,-.25,0,0)}
+  if(pk==='satchel'){box(dk(BG),0,.13,.13,.025,.34,.01,0,0,.75);box(dk(BG),0,.13,-.13,.025,.34,.01,0,0,-.75);
+    body.add(w3at(w3part(new THREE.BoxGeometry(.15,.13,.06),BG,{ol:OL}),.16,0,.04,0,.5,0));body.add(w3at(w3part(new THREE.BoxGeometry(.155,.06,.065),lt(BG),{ol:0}),.16,.04,.042,0,.5,0))}
+  if(pk==='shoulder'){box(dk(BG),.1,.17,0,.02,.2,.02,0,0,.35);body.add(w3at(w3part(new THREE.BoxGeometry(.08,.15,.13),BG,{ol:OL}),.19,.02,0));body.add(w3at(w3part(new THREE.BoxGeometry(.085,.03,.135),lt(BG),{ol:0}),.19,.09,0))}
+  if(pk==='waist'){body.add(w3at(w3part(new THREE.TorusGeometry(.142,.014,6,22),dk(BG),{ol:0}),0,.02,0,Math.PI/2,0,0));body.add(w3at(w3part(new THREE.BoxGeometry(.13,.07,.05),BG,{ol:OL}),0,.03,.15))}
+  if(pk==='sling'){box(dk(BG),0,.13,.13,.022,.34,.01,0,0,-.75);box(dk(BG),0,.13,-.13,.022,.34,.01,0,0,.75);body.add(w3at(w3part(new THREE.BoxGeometry(.15,.12,.06),BG,{ol:OL}),-.03,.18,-.15));body.add(w3at(w3part(new THREE.BoxGeometry(.155,.03,.065),lt(BG),{ol:0}),-.03,.225,-.15))}
+  if(w.extra==='scarf'){body.add(w3at(w3part(new THREE.TorusGeometry(.09,.038,8,18),w.hat,{ol:OL}),0,.255,0,Math.PI/2,0,0));box(w.hat,.06,.17,.12,.05,.13,.025,.1,0,.1);box(dk(w.hat),.06,.105,.122,.05,.015,.026,.1,0,.1)}
+  /* arms hang from the shoulders, hands at the ends; a T-shirt has short sleeves */
   arms.forEach((a,i)=>{const s=i?1:-1;a.position.set(s*.155,.21,0);body.add(a);a.rotation.z=s*.1;
-    a.add(w3at(w3part(new THREE.CapsuleGeometry(.045,.1,4,10),coat,{ol:OL}),0,-.08,0));
+    if(tp==='tshirt'){a.add(w3at(w3part(new THREE.CapsuleGeometry(.05,.02,4,10),coat,{ol:OL}),0,-.03,0));a.add(w3at(w3part(new THREE.CapsuleGeometry(.04,.09,4,10),skin,{ol:OL}),0,-.09,0))}
+    else a.add(w3at(w3part(new THREE.CapsuleGeometry(tp==='puffer'?.054:.045,.1,4,10),A,{ol:OL}),0,-.08,0));
+    if(tp==='tracksuit')a.add(w3at(new THREE.Mesh(W3G.box(),w3toon(WHITE)),s*.044,-.08,0,0,0,0,[.008,.15,.03]));
     a.add(w3at(w3part(W3G.ball(),skin,{ol:OL*.8}),0,-.175,.005,0,0,0,.048))});
   /* the head: big and round, with the face painted on */
   head.position.y=.49;body.add(head);
@@ -418,7 +454,7 @@ function w3kidProto(key,p){
   for(const s of[-1,1])head.add(w3at(w3part(W3G.ball(),skin,{ol:OL*.7}),s*W3HR*.97,-.02,0,0,0,0,[.04,.055,.045]));
   const face=new THREE.Mesh(new THREE.SphereGeometry(W3HR*1.006,24,12,Math.PI/2-.95,1.9,Math.PI*.34,Math.PI*.36),new THREE.MeshToonMaterial({map:w3faceTex(),gradientMap:w3grad(),alphaTest:.5,polygonOffset:true,polygonOffsetFactor:-2}));
   face.userData.noBake=1;face.scale.set(1,.95,.97);head.add(face);
-  w3hair(head,st,hair,p.hood,OL);
+  w3hair(head,w,OL);w3hat(head,w,OL);w3extra(head,w,OL);
   w3bake(root,new Set([root,hip,body,head,...legs,...arms]));
   root.traverse(o=>{if(o.isMesh&&!o.userData.outline)o.castShadow=true});
   return root}
@@ -436,49 +472,118 @@ function w3hairline({front=.37,bang=.09,side=.5,burn=.08,back=.72,bangW=1.05,lob
   return d=>{const a=d/PI;let t=front+(back-front)*w3ss(.18,.92,a)+(side-front-(back-front)*w3ss(.18,.92,.5))*Math.exp(-(((a-.5)/.16)**2));
     if(d<bangW){const k=1-d/bangW;t+=bang*Math.pow(Math.abs(Math.cos(d/bangW*PI*lobes/2)),1.4)*(.45+.55*k)}
     t+=burn*Math.exp(-(((a-.4)/.045)**2));return t*PI}}
-function w3hair(head,st,hair,hood,OL){const R=W3HR,PI=Math.PI;
-  const shell=(edge,col,r=R*1.075,o={})=>head.add(w3part(w3shell(r,edge,o),col,{ol:OL}));
-  if(st==='hood'){
-    /* the hood: a big soft shell with an oval face opening, a rim around it, and a little fringe peeking out */
+/* the hair. Under a hat only a snug shell shows, plus whatever hangs below the hat (long hair, tails, a braid) */
+function w3hair(head,w,OL){const R=W3HR,PI=Math.PI,hd=w.hairdo,hair=w.hair,hat=w.head,cov=HAT_COVERS.has(hat);
+  const add=(o)=>head.add(o),part=(g,col,ol=OL)=>w3part(g,col,{ol});
+  const shell=(edge,col,r=R*1.075,o={})=>add(part(w3shell(r,edge,o),col));
+  const ball=(col,x,y,z,s,ol=OL)=>add(w3at(part(W3G.ball(),col,ol),x,y,z,0,0,0,s));
+  /* what hangs below: shown under hats and hoods too */
+  const hang=()=>{
+    if(hd==='long'){add(w3at(part(W3G.ball(),hair),0,-R*.62,-R*.5,.25,0,0,[R*1.02,R*1.22,R*.62]));for(const sx of[-1,1])add(w3at(part(new THREE.CapsuleGeometry(.052,.2,4,10),hair,OL*.8),sx*R*.9,-R*.72,R*.18,.1,0,sx*.12))}
+    if(hd==='twintails')for(const sx of[-1,1]){ball(lt(hair),sx*R*.92,R*.12,-R*.32,.04,0);add(w3at(part(new THREE.CapsuleGeometry(.055,.2,4,10),hair,OL*.8),sx*R*1.08,-R*.42,-R*.36,.15,0,sx*.32))}
+    if(hd==='braid'){for(let i=0;i<6;i++)ball(i%2?dk(hair):hair,0,-R*.5-i*.052,-R*.92-i*.012,[.05-i*.003,.034,.044],OL*.7);ball(lt(hair),0,-R*.5-6*.052,-R*1,.026,0)}
+    if(hd==='ponytail'){ball(dk(hair),0,R*.15,-R*1.02,.035,0);add(w3at(part(new THREE.CapsuleGeometry(.055,.22,4,10),hair,OL*.8),0,-R*.4,-R*1.18,-.3,0,0))}
+    if(hd==='bob'&&hat!=='hood')add(w3at(part(W3G.ball(),hair),0,-R*.3,-R*.32,0,0,0,[R*1.12,R*.78,R*.8]))};
+  if(hat==='hood'){shell(w3hairline({front:.34,bang:.08,side:.46,burn:0,back:.5,bangW:.8,lobes:4}),hair,R*1.06);hang();return}
+  if(hd==='buzz'||hd==='mohawk'){shell(w3hairline({front:.3,bang:0,side:.5,burn:.05,back:.72,lobes:1}),hd==='buzz'?mix(hair,w.skin,.35):mix(hair,w.skin,.65),R*1.012,{puff:0});
+    if(hd==='mohawk'&&!cov)for(let i=0;i<7;i++){const a=-.55+i*.32;add(w3at(part(W3G.cone(5),hair,OL*.7),0,Math.cos(a)*R*1.05,Math.sin(-a)*R*1.05,-a,0,0,[.03,.12+.02*Math.sin(i),.06]))}
+    return}
+  if(cov){shell(w3hairline({front:.42,bang:.06,side:.53,burn:.06,back:.72,lobes:4}),hair,R*1.05,{puff:0});
+    if(hd==='curly')for(const sx of[-1,1])ball(hair,sx*R*.95,-R*.1,-R*.2,[.07,.09,.09]);
+    hang();return}
+  if(hd==='long'){shell(w3hairline({front:.36,bang:.1,side:.58,burn:.1,back:.8,lobes:5}),hair,R*1.08);hang();return}
+  if(hd==='curly'){shell(w3hairline({front:.38,bang:.05,side:.55,burn:.05,back:.75,lobes:6}),hair,R*1.06);
+    const N=22;for(let i=0;i<N;i++){const t=Math.acos(1-1.1*(i+.5)/N),f=i*2.4,x=Math.sin(t)*Math.sin(f),y=Math.cos(t),z=Math.sin(t)*Math.cos(f);if(z>.55&&y<.75)continue;
+      ball(i%3?hair:lt(hair),x*R*1.1,y*R*1.1+.01,z*R*1.08-.01,.075,OL*.6)}return}
+  if(hd==='bob'){shell(w3hairline({front:.36,bang:.13,side:.62,burn:0,back:.78,lobes:7}),hair,R*1.08);hang();return}
+  /* short, spiky, swept, buns, ponytail, twin tails and the braid start from a full head of hair */
+  shell(w3hairline({front:.37,bang:.1,side:.5,burn:.09,back:.7,lobes:5}),hair);
+  if(hd==='short'||hd==='swept'){for(const[a,y,z,rx,rz,s]of[[.05,1.02,-.25,-1.1,-.3,1],[-.07,.94,-.45,-1.5,.35,.9],[.1,.82,-.62,-1.9,-.2,.8]])
+      add(w3at(part(W3G.cone(7),hair,OL*.7),a*R,y*R,z*R,rx,0,rz,[.05*s,.15*s,.05*s]));
+    add(w3at(part(W3G.cone(6),hair,OL*.6),.02,R*1.07,R*.12,.35,0,-.25,[.022,.09,.022]))}
+  if(hd==='swept')add(w3at(part(W3G.ball(),hair,OL*.8),R*.28,R*.6,R*.78,-.5,0,-.6,[.13,.05,.08]));
+  if(hd==='spiky')for(let i=0;i<9;i++){const f=i*2.4,t=.25+.5*(i%3)/2,x=Math.sin(t)*Math.sin(f),y=Math.cos(t),z=Math.sin(t)*Math.cos(f);if(z>.6)continue;
+    const o=w3at(part(W3G.cone(5),hair,OL*.7),x*R*1.02,y*R*1.02,z*R*1.02);o.lookAt(new THREE.Vector3(x*3,y*3+.4,z*3));o.rotateX(PI/2);o.scale.set(.06,.21,.06);add(o)}
+  if(hd==='buns')for(const sx of[-1,1]){ball(hair,sx*R*.62,R*.86,-R*.12,.085);ball(dk(hair),sx*R*.5,R*.74,-R*.08,.03,0)}
+  hang()}
+/* hats and hoods */
+function w3hat(head,w,OL){const R=W3HR,PI=Math.PI,H=w.hat,hd=w.head;if(hd==='none')return;
+  const part=(g,col,o={})=>w3part(g,col,Object.assign({ol:OL},o)),two=c=>({mat:w3toon(c,{side:THREE.DoubleSide})});
+  if(hd==='hood'){
+    /* the hood: a big soft shell with an oval face opening, a rim around it, and drawstrings */
     const RH=R*1.2,nt=18,nf=40,top=.3*PI,bot=.88*PI,P2=[],idx=[],rimL=[],rimR=[];
-    for(let i=0;i<=nt;i++){const th=top+(bot-top)*i/nt,u=(th-top)/(bot-top),w=1.02*Math.pow(Math.sin(Math.min(1,u*1.25)*PI/2),.6)*(u>.82?1-(u-.82)*1.6:1);
-      for(let j=0;j<=nf;j++){const ph=PI/2+w+(PI*2-2*w)*j/nf,r=RH*(1-.06*u*u);P2.push(-r*Math.cos(ph)*Math.sin(th),r*Math.cos(th)-u*.03,r*Math.sin(ph)*Math.sin(th))}
+    for(let i=0;i<=nt;i++){const th=top+(bot-top)*i/nt,u=(th-top)/(bot-top),ww=1.02*Math.pow(Math.sin(Math.min(1,u*1.25)*PI/2),.6)*(u>.82?1-(u-.82)*1.6:1);
+      for(let j=0;j<=nf;j++){const ph=PI/2+ww+(PI*2-2*ww)*j/nf,r=RH*(1-.06*u*u);P2.push(-r*Math.cos(ph)*Math.sin(th),r*Math.cos(th)-u*.03,r*Math.sin(ph)*Math.sin(th))}
       const pl=P2.slice((i*(nf+1))*3,(i*(nf+1))*3+3),pr=P2.slice((i*(nf+1)+nf)*3,(i*(nf+1)+nf)*3+3);rimL.push(new THREE.Vector3(...pl));rimR.push(new THREE.Vector3(...pr))}
     for(let i=0;i<nt;i++)for(let j=0;j<nf;j++){const a=i*(nf+1)+j,b=a+nf+1;idx.push(a,b,a+1,b,b+1,a+1)}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P2,3));g.setIndex(idx);g.computeVertexNormals();
-    head.add(w3part(g,hood,{ol:OL}));
-    head.add(w3part(new THREE.SphereGeometry(RH,40,10,0,PI*2,0,top),hood,{ol:OL}));
-    const rim=new THREE.CatmullRomCurve3([...rimL.slice().reverse(),...rimR]);head.add(w3part(new THREE.TubeGeometry(rim,40,.026,8,false),dk(hood),{ol:0}));
-    shell(w3hairline({front:.34,bang:.08,side:.46,burn:0,back:.5,bangW:.8,lobes:4}),hair,R*1.06);
+    head.add(part(g,H));head.add(part(new THREE.SphereGeometry(RH,40,10,0,PI*2,0,top),H));
+    const rim=new THREE.CatmullRomCurve3([...rimL.slice().reverse(),...rimR]);head.add(w3part(new THREE.TubeGeometry(rim,40,.026,8,false),dk(H),{ol:0}));
     for(const sx of[-1,1])head.add(w3at(w3part(new THREE.CapsuleGeometry(.012,.08,3,6),'#f4f1ea',{ol:0}),sx*.07,-R*1.02,R*.7,.25,0,0));
     return}
-  if(st==='cap'){
-    shell(w3hairline({front:.42,bang:.06,side:.53,burn:.06,back:.72,lobes:4}),hair,R*1.05,{puff:0});
-    /* the cap: a crown tilted back a little, a band, a curved brim out front and a button on top */
-    const cap=new THREE.Group();cap.rotation.x=-.12;head.add(cap);
-    cap.add(w3part(new THREE.SphereGeometry(R*1.14,36,14,0,PI*2,0,PI*.5),hood,{ol:OL}));
+  const hat=new THREE.Group();head.add(hat);
+  if(hd==='cap'||hd==='backcap'){
+    /* the cap: a crown tilted back a little, a band, a curved brim (out front, or behind for a backwards cap) and a button on top */
+    hat.rotation.x=-.12;if(hd==='backcap')hat.rotation.set(-.05,PI,0);
+    hat.add(part(new THREE.SphereGeometry(R*1.14,36,14,0,PI*2,0,PI*.5),H));
     const sh=new THREE.Shape(),N=24,Rb=R*1.1;for(let k=0;k<=N;k++){const u=PI*k/N,x=-Math.cos(u)*Rb,y=Math.sin(u)*(Rb*.62+.17);k?sh.lineTo(x,y):sh.moveTo(x,y)}
     for(let k=N;k>=0;k--){const u=PI*k/N;sh.lineTo(-Math.cos(u)*Rb*.98,Math.sin(u)*Rb*.6)}
     const bg=new THREE.ExtrudeGeometry(sh,{depth:.026,bevelEnabled:true,bevelThickness:.006,bevelSize:.006,bevelSegments:1,curveSegments:2});bg.rotateX(PI/2);
-    cap.add(w3at(w3part(bg,dk(hood),{ol:OL*.8}),0,R*.38,0,.18,0,0));
-    cap.add(w3at(w3part(W3G.ball(),dk(hood),{ol:0}),0,R*1.14,0,0,0,0,.03));
+    hat.add(w3at(part(bg,dk(H),{ol:OL*.8}),0,R*.38,0,.18,0,0));
+    hat.add(w3at(w3part(W3G.ball(),dk(H),{ol:0}),0,R*1.14,0,0,0,0,.03));
+    if(hd==='backcap')hat.add(w3at(new THREE.Mesh(W3G.box(),w3toon(dk(H))),0,R*.18,-R*1.12,0,0,0,[.08,.03,.01]));
     return}
-  if(st==='long'){
-    shell(w3hairline({front:.36,bang:.1,side:.58,burn:.1,back:.8,lobes:5}),hair,R*1.08);
-    /* soft hair falling down the back and two locks framing the face */
-    head.add(w3at(w3part(W3G.ball(),hair,{ol:OL}),0,-R*.62,-R*.5,.25,0,0,[R*1.02,R*1.22,R*.62]));
-    for(const sx of[-1,1])head.add(w3at(w3part(new THREE.CapsuleGeometry(.052,.2,4,10),hair,{ol:OL*.8}),sx*R*.9,-R*.72,R*.18,.1,0,sx*.12));
-    return}
-  /* short: a full head of hair with bangs, sideburns and a few tufts sweeping back */
-  shell(w3hairline({front:.37,bang:.1,side:.5,burn:.09,back:.7,lobes:5}),hair);
-  for(const[a,y,z,rx,rz,s]of[[.05,1.02,-.25,-1.1,-.3,1],[-.07,.94,-.45,-1.5,.35,.9],[.1,.82,-.62,-1.9,-.2,.8]])
-    head.add(w3at(w3part(W3G.cone(7),hair,{ol:OL*.7}),a*R,y*R,z*R,rx,0,rz,[.05*s,.15*s,.05*s]));
-  head.add(w3at(w3part(W3G.cone(6),hair,{ol:OL*.6}),.02,R*1.07,R*.12,.35,0,-.25,[.022,.09,.022]))}
+  if(hd==='beanie'||hd==='bobble'){hat.rotation.x=-.18;const e=PI*.47;
+    hat.add(part(new THREE.SphereGeometry(R*1.13,32,14,0,PI*2,0,e),H));
+    hat.add(w3at(part(new THREE.TorusGeometry(R*1.13*Math.sin(e),.035,8,30),dk(H),{ol:OL*.8}),0,R*1.13*Math.cos(e),0,PI/2,0,0));
+    if(hd==='bobble')hat.add(w3at(part(W3G.sph(1),WHITE),0,R*1.18,-R*.05,0,0,0,.07));return}
+  if(hd==='bucket'){hat.rotation.x=-.08;hat.add(w3at(part(new THREE.CylinderGeometry(R*.92,R*1.1,R*.6,26),H),0,R*.62,0));hat.add(w3at(part(W3G.ball(),H),0,R*.9,0,0,0,0,[R*.92,R*.22,R*.92]));
+    hat.add(w3at(part(new THREE.CylinderGeometry(R*1.12,R*1.62,R*.24,30,1,true),dk(H),two(dk(H))),0,R*.27,0));return}
+  if(hd==='beret'){hat.rotation.set(-.1,0,.28);hat.add(w3at(part(W3G.ball(),H),R*.08,R*.72,0,0,0,0,[R*1.22,R*.38,R*1.15]));hat.add(w3at(part(W3G.cone(6),dk(H),{ol:0}),R*.08,R*1.1,0,0,0,0,[.014,.05,.014]));return}
+  if(hd==='sunhat'){hat.rotation.x=-.1;hat.add(part(new THREE.SphereGeometry(R*1.1,30,12,0,PI*2,0,PI*.48),H));hat.add(w3at(part(new THREE.TorusGeometry(R*1.1,.02,6,30),dk(H),{ol:0}),0,R*.12,0,PI/2,0,0));
+    hat.add(w3at(part(new THREE.CylinderGeometry(R*2.05,R*2.05,.016,36),lt(H)),0,R*.06,0));return}
+  if(hd==='cowboy'){hat.rotation.x=-.12;
+    hat.add(w3at(part(new THREE.LatheGeometry([[R*1.05,R*.3],[R*1.02,R*.5],[R*.92,R*1.2],[R*.76,R*1.36],[R*.5,R*1.25],[0,R*1.32]].map(([a,b])=>new THREE.Vector2(a,b)),26),H),0,0,0,0,0,0,[1,1,.88]));
+    hat.add(w3at(part(new THREE.TorusGeometry(R*1.03,.018,6,28),dk(H),{ol:0}),0,R*.42,0,PI/2,0,0));
+    hat.add(w3at(part(new THREE.LatheGeometry([[R*1.0,R*.3],[R*1.45,R*.28],[R*1.72,R*.36],[R*1.86,R*.5]].map(([a,b])=>new THREE.Vector2(a,b)),32),H,two(H)),0,0,0,0,0,0,[1,1,.85]));return}
+  if(hd==='tophat'){hat.rotation.x=-.08;hat.add(w3at(part(new THREE.CylinderGeometry(R*.78,R*.74,R*1.0,26),H),0,R*1.08,0));
+    hat.add(w3at(part(new THREE.CylinderGeometry(R*.79,R*.79,R*.2,26),'#c4554a',{ol:0}),0,R*.7,0));hat.add(w3at(part(new THREE.CylinderGeometry(R*1.3,R*1.3,.02,30),dk(H)),0,R*.58,0));return}
+  if(hd==='headband'){hat.rotation.x=-.32;hat.add(w3at(part(new THREE.TorusGeometry(R*1.07,.032,8,32),H,{ol:OL*.8}),0,R*.42,0,PI/2,0,0));return}
+  if(hd==='bandana'){hat.rotation.x=-.16;hat.add(part(new THREE.SphereGeometry(R*1.11,32,14,0,PI*2,0,PI*.5),H));
+    hat.add(w3at(part(W3G.sph(1),dk(H)),0,R*.05,-R*1.1,0,0,0,.045));for(const s of[-1,1])hat.add(w3at(part(new THREE.BoxGeometry(.04,.12,.012),H,{ol:OL*.6}),s*.03,-R*.25,-R*1.1,0,0,s*.3));
+    for(const[x,y,z]of[[.4,.75,.6],[-.5,.6,.65],[.1,.9,-.3]])hat.add(w3at(w3part(W3G.ball(),WHITE,{ol:0}),x*R*1.1,y*R*1.1,z*R*1.1,0,0,0,.012));return}
+  if(hd==='wizard'){hat.rotation.x=-.22;hat.add(w3at(part(new THREE.CylinderGeometry(R*1.65,R*1.65,.018,36),dk(H)),0,R*.38,0));
+    const cone=new THREE.Group();cone.position.y=R*.4;hat.add(cone);cone.add(w3at(part(new THREE.ConeGeometry(R*1.02,R*1.5,26,1,true),H,two(H)),0,R*.75,0));
+    cone.add(w3at(part(new THREE.ConeGeometry(R*.42,R*.9,16),H),0,R*1.85,-R*.18,-.45,0,0));
+    cone.add(w3at(w3part(new THREE.OctahedronGeometry(1,0),'#f1c66b',{ol:0}),0,R*.65,R*.82,0,0,0,.04));return}
+  if(hd==='flowers'){for(let i=0;i<8;i++){const f=-PI*.75+i/7*PI*1.5,x=Math.sin(f)*R*1.02,z=Math.cos(f)*R*1.02,y=R*.5,fl=new THREE.Group();fl.position.set(x,y,z);hat.add(fl);
+      for(let k=0;k<5;k++){const a=k/5*PI*2;fl.add(w3at(w3part(W3G.ball(),i%2?H:lt(H),{ol:0}),Math.cos(a)*.022,Math.sin(a)*.022,0,0,0,0,.018))}
+      fl.add(w3at(w3part(W3G.ball(),'#fff3a0',{ol:0}),0,0,.006,0,0,0,.014));fl.lookAt(x*3,y,z*3)}
+    hat.add(w3at(w3part(new THREE.TorusGeometry(R*1.03,.008,5,30),'#4fb36a',{ol:0}),0,R*.5,0,PI/2,0,0));return}
+  if(hd==='crown'){hat.rotation.x=-.1;hat.add(w3at(part(new THREE.CylinderGeometry(R*.72,R*.8,R*.36,24,1,true),H,two(H)),0,R*.98,0));
+    for(let i=0;i<6;i++){const f=i/6*PI*2;hat.add(w3at(part(W3G.cone(4),H,{ol:OL*.6}),Math.sin(f)*R*.74,R*1.26,Math.cos(f)*R*.74,0,0,0,[.03,.08,.03]))}
+    hat.add(w3at(w3part(W3G.ball(),'#e04a4a',{ol:0}),0,R*.98,R*.79,0,0,0,.03))}}
+/* glasses, goggles, headphones and earrings (the scarf is on the body) */
+function w3extra(head,w,OL){const R=W3HR,PI=Math.PI,ex=w.extra;if(ex==='none'||ex==='scarf')return;
+  const ey=-.018,ez=R*.99,ex2=.0755;
+  if(ex==='glasses'){for(const s of[-1,1])head.add(w3at(w3part(new THREE.TorusGeometry(.042,.008,6,18),GEAR,{ol:0}),s*ex2,ey,ez,0,s*.32,0));
+    head.add(w3at(new THREE.Mesh(W3G.box(),w3toon(GEAR)),0,ey+.01,ez+.008,0,0,0,[.04,.008,.008]));
+    for(const s of[-1,1])head.add(w3at(new THREE.Mesh(W3G.box(),w3toon(GEAR)),s*.17,ey+.012,.12,0,Math.atan2(s*.11,-.2),0,[.008,.008,.22]))}
+  if(ex==='sunglasses'){for(const s of[-1,1]){const gl=w3at(new THREE.Group(),s*ex2,ey,ez+.004,0,s*.32,0);head.add(gl);gl.add(w3at(w3part(new THREE.CylinderGeometry(.046,.046,.012,18),'#1b1430',{ol:0}),0,0,0,PI/2,0,0))}
+    head.add(w3at(new THREE.Mesh(W3G.box(),w3toon('#1b1430')),0,ey+.01,ez+.01,0,0,0,[.04,.01,.01]));
+    for(const s of[-1,1])head.add(w3at(new THREE.Mesh(W3G.box(),w3toon('#1b1430')),s*.17,ey+.012,.12,0,Math.atan2(s*.11,-.2),0,[.008,.01,.22]))}
+  if(ex==='goggles'){const g=new THREE.Group();g.rotation.x=-.3;head.add(g);g.add(w3at(w3part(new THREE.TorusGeometry(R*1.07,.022,6,32),GEAR,{ol:0}),0,R*.4,0,PI/2,0,0));
+    for(const s of[-1,1]){const lens=w3at(new THREE.Group(),s*.075,R*.4,R*1.06,0,s*.3,0);g.add(lens);lens.add(w3at(w3part(new THREE.CylinderGeometry(.05,.05,.04,18),'#5a5f73',{ol:OL*.6}),0,0,0,PI/2,0,0));
+      lens.add(w3at(new THREE.Mesh(new THREE.CylinderGeometry(.038,.038,.01,18),w3toon('#8fe0ff',{emissive:new THREE.Color('#2a6a80')})),0,0,.018,PI/2,0,0))}}
+  if(ex==='headphones'){head.add(w3at(w3part(new THREE.TorusGeometry(R*1.12,.02,8,26,PI),GEAR,{ol:OL*.6}),0,0,0,0,0,0));
+    for(const s of[-1,1])head.add(w3at(w3part(new THREE.CylinderGeometry(.06,.06,.05,18),GEAR,{ol:OL*.7}),s*R*1.1,-.01,0,0,0,PI/2));
+    for(const s of[-1,1])head.add(w3at(w3part(new THREE.CylinderGeometry(.04,.04,.01,14),'#6a6f88',{ol:0}),s*R*1.21,-.01,0,0,0,PI/2))}
+  if(ex==='earrings')for(const s of[-1,1])head.add(w3at(w3part(W3G.ball(),'#f1c66b',{ol:0}),s*R*.98,-.075,.005,0,0,0,.016))}
 /* merge each moving part's static pieces into one mesh (and one outline), so a crowd stays cheap to draw */
 function w3bake(root,moving){root.updateMatrixWorld(true);
   for(const node of moving){const pieces=[],kill=[];const inv=new THREE.Matrix4().copy(node.matrixWorld).invert();
     const walk=o=>{for(const c of o.children){if(moving.has(c))continue;
-      if(c.isMesh&&!c.userData.outline&&!c.userData.noBake&&c.material&&c.material.isMeshToonMaterial&&!c.material.map&&!c.material.transparent){pieces.push([c.geometry,new THREE.Matrix4().multiplyMatrices(inv,c.matrixWorld),'#'+c.material.color.getHexString()]);kill.push(c)}
+      if(c.isMesh&&!c.userData.outline&&!c.userData.noBake&&c.material&&c.material.isMeshToonMaterial&&!c.material.map&&!c.material.transparent&&c.material.side!==THREE.DoubleSide){pieces.push([c.geometry,new THREE.Matrix4().multiplyMatrices(inv,c.matrixWorld),'#'+c.material.color.getHexString()]);kill.push(c)}
       if(c.children.length)walk(c)}};
     walk(node);if(pieces.length<2)continue;
     const mm=w3mergedMesh(pieces,{ol:.009,fade:false,toon:true});for(const c of kill)c.removeFromParent();node.add(mm)}}
