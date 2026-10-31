@@ -10,6 +10,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Strike at Night** | A 16-bit style RPG. Lift was a tech worker in 2026 until a car hit him; he wakes up as a farm boy in Larkfield, is framed for his new parents' murder, and lives as a bandit with a price on his head. Beat strong foes to take their power as new forms. Prologue and two chapters. | D-pad move · A talk/confirm · B back · START menu · SELECT change form |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
+| **Spellsteel** | A 32-bit style RPG with active-time battles in the old Final Fantasy way. The Grey is draining the world's colour; win back five Embers with Mira, Bram, Kit and the friends you wish for. Your hero wears any of 200+ pieces in 52 dyes and carries one of 10 weapon kinds shaped part by part. Played sideways. | D-pad move · A talk/confirm · B back (hold to run) · START menu · SELECT pose |
 
 ## Lynties in 3D
 
@@ -58,6 +59,17 @@ A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. 
 - **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
 - Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
 
+## Spellsteel
+
+The Grey is draining the colour out of the world, Ember by Ember. You are an apprentice smith from Emberwick with a first weapon of spellsteel, the metal that takes whatever shape its bearer wills. Five bosses hold the five Embers; each one you win back brings a region's colour back.
+
+- **Your hero:** 38 hairstyles, 48 hats, 36 tops, 20 bottoms, 16 shoes, 19 things for the back and 25 face extras, plus skin, eyes, brows, mouth, ears and gloves, each in 52 dyes. Their weapon is any of sword, greatsword, katana, dual katana, great axe, warhammer, bow, fists, staff or grimoire, with every part, colour and engraving chosen by you (a staff's gem, a grimoire's cover symbol, words along a blade). The Style menu restyles your own character; everyone else keeps their look.
+- **Battle:** each fighter's gauge fills with speed and time waits while you choose. The team shares CP (up to 6): a plain Attack earns 1, a Special costs 2. Each fighter's Ult charges as they fight and take hits. Commands open beside whoever's turn it is, fighters dash across the field to strike, the camera leans in for Specials and Ults, and each foe shows its health underneath.
+- **Elements and reactions:** every character fights as Pyro, Cryo, Electro, Dendro or Geo. A hit leaves its element on a foe, and a different element landing next sets off a reaction (Melt, Overload, Burning, Superconduct, Shatter, Quicken, Crystallize, Petrify and more).
+- **Party and wishes:** three fight at a time (front, middle, back; the front draws the most attacks). A Tank, a Healer and a DPS together get a bonus, and named pairs share bonds. Defeating foes and finishing quests earns gems; every 100 gems is a wish for one of 19 heroes (★5 6% of the time, certain within 30 wishes; a repeat gives 50 gems back). Wish → Best heroes ranks every Tank, Healer and DPS from S to B.
+- **Quests** (in the START menu): the story's five Embers, finding your companions, bounties on each kind of foe, and deeds like reactions, wishes, battles won, chests and reforging, each paying gems.
+- Built from `tools/spellsteel/src/` with `python3 tools/spellsteel/build.py`, which writes `games/spellsteel/index.html`.
+
 ## Playing it
 
 There are two ways to play from this repo:
@@ -83,6 +95,7 @@ tools/lynties-3d/           the Lynties game, its 3D world and the script that b
 tools/drownedmoon/          Strike at Night's source (src/*.js), its build script and label maker
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
+tools/spellsteel/           Spellsteel's source (src/*.js and the page shell), its build script, and sprite-sheet helpers
 ```
 
 ## How the console works
