@@ -6112,7 +6112,7 @@ async function newGame(slot){
   await talk(["Welcome to my lab! Come in, come in.","On the table are three Bond Charms, and each one holds a Lynty.","I never know which Lynties will turn up. Every new trainer finds a different three!","Stand in front of a charm to see who's inside. Once you open one, that Lynty is yours for good. No changing your mind!"],W2);
   LAB.phase='pick';mode='world';held.clear()}
 /* ---------- choosing your partner in Wren's lab: three charms on the table, a different three every game ----------
-   Any Lynty line can turn up (legends only rarely). Opening a charm is final. Then Remy bursts in and takes the
+   Any Lynty line can turn up, except the eight legends. Opening a charm is final. Then Remy bursts in and takes the
    charm that's strongest against yours, and Wren keeps the last one. LAB is null except during this scene. */
 let LAB=null;const NICKQ=[];
 const labMap=()=>MAPS.home_lynhaven_lab;
@@ -6120,9 +6120,9 @@ const NICKS={any:['Mochi','Biscuit','Pip','Nugget','Comet','Ziggy','Pixel','Taff
  water:['Bubbles','Splash','Misty','Ripple','Tide'],fire:['Ember','Blaze','Sparky','Cinder','Toast'],earth:['Pebble','Rocky','Boulder','Dusty','Clay'],air:['Breezy','Gust','Feather','Zephyr','Puff'],
  leaf:['Sprout','Clover','Fern','Basil','Twig'],spark:['Zap','Volt','Buzz','Flash','Static'],frost:['Frosty','Snowball','Flurry','Icicle','Chill'],shadow:['Shade','Midnight','Inky','Gloom','Ghost']};
 const nickIdeas=id=>NICKS.any.concat(NICKS[SP[id].el]||[]);
-/* three different Lynties (first forms), of three different elements when possible */
-function rollStarters(){const base=ORDER.filter(id=>SP[id].line&&SP[id].line[0]===id),legs=base.filter(id=>SP[id].leg),rest=base.filter(id=>!SP[id].leg);let first=null;
-  for(let t=0;t<60;t++){const out=[];while(out.length<3){const id=legs.length&&rnd()<1/30?pick(legs):pick(rest);if(!out.includes(id))out.push(id)}
+/* three different Lynties (first forms, never a legend), of three different elements when possible */
+function rollStarters(){const rest=ORDER.filter(id=>SP[id].line&&SP[id].line[0]===id&&!SP[id].leg);let first=null;
+  for(let t=0;t<60;t++){const out=[];while(out.length<3){const id=pick(rest);if(!out.includes(id))out.push(id)}
     if(new Set(out.map(id=>SP[id].el)).size===3)return out;first=first||out}return first}
 function labSetup(){const m=labMap();m.ents=m.ents.filter(e=>e.kind!=='charm');
   const charms=rollStarters().map((id,i)=>{const e={kind:'charm',x:3+i,y:3,sp:id};e.show=()=>!!LAB&&!e.gone;e.talk=()=>pickCharm(e);return e});
@@ -6361,7 +6361,7 @@ buildTiles();load3D();buildWorld();buildMini();setMap('world');layout();sndLabel
 $('#tTag').textContent=`${ORDER.length} Lynties · 8 legends · 4 caves`;
 $('#parade').innerHTML=['thalassor','ignaroth','aethyra','fulgurion','nihilux'].map(id=>`<img class="px" src="${sprURL(id)}" alt="${SP[id].name}">`).join('');
 requestAnimationFrame(loop);
-window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt,get LAB(){return LAB},labFaced,person,trainerBuf,wear,LOOKS,LOOK0,setLook,fixLook,get LOOK(){return LOOK},PAL,get w3(){return typeof w3kidProto==='function'?{w3kidProto,W3,w3animKid,THREE}:null}};
+window.__lyn={CAVES,LEGS,CAVE_PAL,TR,ITEMS,writeSave,ensureAltar,rollAltar,altarTalk,sprURL,champTalk,wardenTalk,toTitle,openMenu,dexView,dexEntry,get dirty(){return dirty},get SLOT(){return SLOT},continueGame,vis:e=>!e.show||e.show(),TIMG,walkOK:t=>walkT(t),isEnc:t=>!!(t&&TL[t].enc),CLOUD,readSlot,mk:mkMon,MUS,get EVO(){return EVO},syncMap,pzSolved,solvePz,stepPuzzle,SIDES,RTD,HPZ,checkSpot,sees,fighterTalk,trackFor,tryMove,interact,sprCanvas,ORDER,evolve,get S(){return S},P,throwCharm,teamView,get B(){return B},get mode(){return mode},startWild,runBattle,WARD,SP,TOWNS,ROUTES,MAPS,get CM(){return CM},setMap,doWarp,zoneAt,tAt,entAt,get LAB(){return LAB},labFaced,rollStarters,person,trainerBuf,wear,LOOKS,LOOK0,setLook,fixLook,get LOOK(){return LOOK},PAL,get w3(){return typeof w3kidProto==='function'?{w3kidProto,W3,w3animKid,THREE}:null}};
 const snap=()=>S&&S.flags.starter&&!B&&CM?{S:JSON.parse(JSON.stringify(Object.assign(S,{pos:{map:CM.id,x:P.x,y:P.y,dir:P.dir}}))),slot:SLOT,dirty}:null;
 const hot=!ZP&&window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(snap);
