@@ -10,6 +10,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Strike at Night** | A top-down RPG with active-time battles. Lift dies in 2026 and wakes as a farm boy in Larkfield, framed for his new parents' murder. Explore the classic Strike at Night maps tile by tile in any of 200+ outfits; the hooded man's knife is spellsteel, reshaped at any anvil; beating Garrick and Sir Kell gives Lift their powers. Shared-CP battles, wishes for 19 more heroes, quests. Chapters 1 and 2. | D-pad move · A talk/look · B back (hold to run) · START menu |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
+| **Party Rex** | A dinosaur's birthday party gone wild: hop between the party tables and dive on the goblin kids rushing in from both doors. Levels never end, and new kinds of kids join as you go. Played sideways. | A jump (only from a table) · B dive · ▲ ▶ right · ▼ ◀ left · START pause |
 
 ## Lynties in 3D
 
@@ -49,6 +50,17 @@ A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. 
 - **Battle:** you play Wat on the field. A strikes, B rolls, SELECT shouts HOLD / CHARGE / FOLLOW ME to every squad. Folk hidden in wheat or brush strike for double damage; folk near Wat hit harder and never run; fire spreads through wheat; pikes break cavalry charges; nobles only really fear Wat's own blade.
 - **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
 - Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
+
+## Party Rex
+
+Rex is the birthday dinosaur, and the guests are little goblin kids in party hats who rush in from the doors on both sides to tag him.
+
+- **Moving:** ▲ or ▶ walks right, ▼ or ◀ walks left. Rex can walk along a table and drop off its end.
+- **Jumping:** A jumps, but only while Rex is standing on a table. On the floor next to a table, A climbs up onto it.
+- **Diving:** B dives straight down, through the table if Rex is on one. Landing a dive on a kid bonks them and bounces Rex back up into the air, so a good run chains bonk after bonk without touching the floor; each bonk in a chain is worth more.
+- **Losing:** if a kid reaches Rex and tags him, the party is over. Landing on a kid's head without diving only gives a little bounce.
+- **Endless:** a level ends when every kid in it has been bonked. Each level sends more kids, faster, and new kinds join along the way: sprinters, hoppers that jump onto tables, and big kids who need two bonks. The best score is kept in the browser (`partyrex-best`).
+- SELECT turns the sound on or off. The game is the single file `games/partyrex/index.html`; it draws its own sprites and plays its own music in code.
 
 ## Strike at Night
 
