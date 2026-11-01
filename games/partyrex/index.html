@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Party Rex</title>
 <style>
-/* Party Rex: one canvas, 320x180 pixels, scaled up with crisp edges. Outside the ZigaPlay, a DASH button sits under it on touch screens. */
+/* Party Rex: one tall canvas, 180 pixels wide and 220 to 340 tall, scaled up with crisp edges. Outside the ZigaPlay, a DASH button sits under it on touch screens. */
 :root{color-scheme:dark;--bg:#2a1838;--pad:#3a2450;--edge:#140a1e}
 html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 #stage{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
@@ -14,19 +14,17 @@ html.touch:not(.zp) #pad{display:flex}
 .pb small{display:block;font-size:11px;opacity:.8;margin-top:2px}
 .grp{display:flex;gap:12px;align-items:center}
 #bD{width:140px;border-radius:37px;background:#ffd84a;color:#2a1838}
-#bP{width:44px;height:44px;font-size:14px;position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:12px;display:none}
-html.touch:not(.zp) #bP{display:grid}
+#bP{width:54px;height:54px;font-size:16px}
 </style>
-<div id="stage"><canvas id="cv" width="320" height="180" aria-label="Party Rex"></canvas></div>
-<div id="pad"><span></span><button class="pb" id="bD" aria-label="Dash down">DASH</button></div>
-<button class="pb" id="bP" aria-label="Pause">II</button>
+<div id="stage"><canvas id="cv" width="180" height="300" aria-label="Party Rex"></canvas></div>
+<div id="pad"><button class="pb" id="bP" aria-label="Pause">II</button><button class="pb" id="bD" aria-label="Dash down">DASH</button></div>
 <script>
 (()=>{'use strict';
 /* ================= setup ================= */
 const ZP=(()=>{try{return window.parent!==window&&window.parent.ZIGAPLAY||null}catch(e){return null}})();
 const RT=document.documentElement;if(ZP)RT.classList.add('zp');
 if(!ZP&&(matchMedia('(pointer:coarse)').matches||'ontouchstart'in window))RT.classList.add('touch');
-const W=320,H=180,FLOOR=160,GRAV=.32,K='#1b1430',WH='#ffffff';
+const W=180,K='#1b1430',WH='#ffffff';let H=300,FLOOR=278,VS=1.9,GRAV=.32*VS;
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
 const rnd=Math.random,clamp=(v,a,b)=>v<a?a:v>b?b:v,pick=a=>a[Math.floor(rnd()*a.length)],lerp=(a,b,t)=>a+(b-a)*t;
 const store={get(k,d){try{const v=localStorage.getItem('partyrex-'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('partyrex-'+k,JSON.stringify(v))}catch(e){}}};
@@ -36,7 +34,7 @@ const dk=c=>mix(c,'#1b1430',.3),lt=c=>mix(c,'#ffffff',.35);
 function fit(){const pad=RT.classList.contains('touch')&&!ZP?Math.min(140,innerHeight*.34):0,aw=innerWidth-(ZP?0:16),ah=innerHeight-pad-(ZP?0:16);
   let s=Math.min(aw/W,ah/H);if(s>=2)s=Math.floor(s*2)/2;cv.style.width=Math.round(W*s)+'px';cv.style.height=Math.round(H*s)+'px';
   document.getElementById('stage').style.bottom=pad+'px'}
-addEventListener('resize',fit);fit();
+addEventListener('resize',()=>{onResize();fit()});fit();
 
 /* ================= a pixel font (5x7), so the words stay crisp everywhere ================= */
 const FD={A:'01110 10001 10001 11111 10001 10001 10001',B:'11110 10001 10001 11110 10001 10001 11110',C:'01110 10001 10000 10000 10000 10001 01110',D:'11110 10001 10001 10001 10001 10001 11110',
@@ -154,116 +152,105 @@ function musicTick(){const a=AC;if(!a||!mus.on)return;const spb=mus.spb||.19;whi
 function music(on){mus.on=on;const a=AC;if(on&&a){mus.next=Math.max(mus.next,a.currentTime+.05);if(!mus.timer)mus.timer=setInterval(musicTick,50)}}
 function setMute(m){muted=m;store.set('mute',m);if(master)master.gain.value=m?0:.55}
 
-/* ================= the party house: one room per level, scrolling past Rex ================= */
-const REXX=72;              /* where Rex stays on the screen; the house scrolls by him */
-const RL=2200;              /* each room (one level) is this many pixels long */
-const TY=[130,120,112];     /* tabletop heights */
-const CLOTHS=['#ff8ac0','#ffd84a','#7ad0ff','#9af0b8','#c8a8ff','#ffa86a'];
+/* ================= the party house: one room per level, scrolling past Rex =================
+   The screen is tall: 180 pixels wide, and as tall as the phone's screen allows (220 to 340). Rex's bounces are
+   scaled to that height (VS), so the timing of the game is the same on every screen; only the arcs get taller. */
+const REXX=36;              /* where Rex stays on the screen; the house scrolls by him */
+const RL=1600;              /* each room (one level) is this many pixels long */
+const HS=.72;               /* horizontal speeds, scaled for the narrow screen */
+const TWID=240;             /* each room's wall and floor repeat every 240 pixels */
 const BUNT=['#ff5fa8','#ffd84a','#6ad0ff','#a8ff6a','#ff8a3a','#c8a8ff'];
+const TOPY=50;              /* below the bunting and banners: where wall pictures may start */
 let cam=0;
 function mk(w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;fn(g);return c}
 const seeded=s=>()=>(s=(s*9301+49297)%233280)/233280;
+const fy=f=>Math.round(TOPY+f*(FLOOR-TOPY));
 function disc(g,x,y,r,c){g.fillStyle=c;for(let dy=-r;dy<=r;dy++){const w=Math.round(Math.sqrt(r*r-dy*dy));g.fillRect(x-w,y+dy,w*2,1)}}
-function windowAt(g,wx,wy,cur,cur2){g.fillStyle='#ffffff';g.fillRect(wx-1,wy-1,34,30);const sk=g.createLinearGradient(0,wy,0,wy+28);sk.addColorStop(0,'#7ac8ff');sk.addColorStop(1,'#c8ecff');g.fillStyle=sk;g.fillRect(wx+1,wy+1,30,26);
-  g.fillStyle='#ffffff';g.fillRect(wx+15,wy+1,2,26);g.fillRect(wx+1,wy+13,30,2);g.fillRect(wx+4,wy+6,8,3);g.fillRect(wx+20,wy+19,9,3);
-  g.fillStyle=cur;g.fillRect(wx-4,wy-3,6,34);g.fillRect(wx+30,wy-3,6,34);g.fillStyle=cur2;g.fillRect(wx-4,wy-3,40,3)}
+function windowAt(g,wx,wy,h,cur,cur2){g.fillStyle='#ffffff';g.fillRect(wx-1,wy-1,34,h+2);const sk=g.createLinearGradient(0,wy,0,wy+h);sk.addColorStop(0,'#7ac8ff');sk.addColorStop(1,'#c8ecff');g.fillStyle=sk;g.fillRect(wx+1,wy+1,30,h-2);
+  g.fillStyle='#ffffff';g.fillRect(wx+15,wy+1,2,h-2);g.fillRect(wx+1,wy+Math.round(h/2)-1,30,2);g.fillRect(wx+4,wy+6,8,3);g.fillRect(wx+20,wy+h-9,9,3);
+  g.fillStyle=cur;g.fillRect(wx-4,wy-3,6,h+6);g.fillRect(wx+30,wy-3,6,h+6);g.fillStyle=cur2;g.fillRect(wx-4,wy-3,40,3)}
 function frame2(g,x,y,w,h,bg){g.fillStyle=K;g.fillRect(x-2,y-2,w+4,h+4);g.fillStyle='#ffffff';g.fillRect(x-1,y-1,w+2,h+2);g.fillStyle=bg;g.fillRect(x,y,w,h)}
-/* four rooms that take turns: each draws one 320-pixel stretch of wall and floor that repeats */
+const winH=()=>clamp(Math.round((FLOOR-TOPY)*.26),28,52);
+/* four rooms that take turns: each draws one 240-pixel stretch of wall and floor that repeats */
 const THEMES=[
  {name:'THE PARTY ROOM',banner:'HAPPY ROARTHDAY!',peek:'#ffeaf3',
-  wall(g){const gr=g.createLinearGradient(0,0,0,FLOOR);gr.addColorStop(0,'#ffd6e8');gr.addColorStop(1,'#ffeaf3');g.fillStyle=gr;g.fillRect(0,0,W,FLOOR);
-   g.fillStyle='rgba(255,255,255,.35)';for(let x=0;x<W;x+=16)g.fillRect(x,0,7,FLOOR);
-   g.fillStyle='#f6bcd4';const r=seeded(7);for(let i=0;i<24;i++){const x=Math.floor(r()*(W-10))+4,y=46+Math.floor(r()*96);g.fillRect(x,y,3,3);g.fillRect(x-2,y-3,1,2);g.fillRect(x+1,y-4,1,2);g.fillRect(x+4,y-3,1,2)}
-   windowAt(g,64,48,'#ff5fa8','#ff8ac0');windowAt(g,224,48,'#ff5fa8','#ff8ac0')},
-  floor(g){for(let y=0;y<20;y+=10)for(let x=0;x<W;x+=10){g.fillStyle=((x+y)/10)%2?'#e8dcff':'#d2c2f4';g.fillRect(x,y+2,10,10)}g.fillStyle='#b48aff';g.fillRect(0,0,W,2);g.fillStyle='#8a64d8';g.fillRect(0,2,W,1)}},
+  wall(g){const gr=g.createLinearGradient(0,0,0,FLOOR);gr.addColorStop(0,'#ffd6e8');gr.addColorStop(1,'#ffeaf3');g.fillStyle=gr;g.fillRect(0,0,TWID,FLOOR);
+   g.fillStyle='rgba(255,255,255,.35)';for(let x=0;x<TWID;x+=16)g.fillRect(x,0,7,FLOOR);
+   g.fillStyle='#f6bcd4';const r=seeded(7);for(let i=0;i<30;i++){const x=Math.floor(r()*(TWID-10))+4,y=TOPY+8+Math.floor(r()*(FLOOR-TOPY-16));g.fillRect(x,y,3,3);g.fillRect(x-2,y-3,1,2);g.fillRect(x+1,y-4,1,2);g.fillRect(x+4,y-3,1,2)}
+   windowAt(g,44,fy(.14),winH(),'#ff5fa8','#ff8ac0');windowAt(g,164,fy(.14),winH(),'#ff5fa8','#ff8ac0')},
+  floor(g){for(let y=0;y<20;y+=10)for(let x=0;x<TWID;x+=10){g.fillStyle=((x+y)/10)%2?'#e8dcff':'#d2c2f4';g.fillRect(x,y+2,10,10)}g.fillStyle='#b48aff';g.fillRect(0,0,TWID,2);g.fillStyle='#8a64d8';g.fillRect(0,2,TWID,1)}},
  {name:'THE KITCHEN',banner:'CAKE TIME!',peek:'#fff1c2',
-  wall(g){g.fillStyle='#fff1c2';g.fillRect(0,0,W,FLOOR);g.fillStyle='#fffaf0';g.fillRect(0,72,W,FLOOR-72);
-   g.fillStyle='#f0dca0';for(let y=72,row=0;y<FLOOR;y+=10,row++){g.fillRect(0,y,W,1);for(let x=(row%2)*5;x<W;x+=10)g.fillRect(x,y,1,10)}
-   g.fillStyle='#ff8ac0';g.fillRect(0,70,W,2);
-   for(const[x0,x1]of[[6,118],[202,314]]){g.fillStyle='#8a5a34';g.fillRect(x0-1,39,x1-x0+2,28);g.fillStyle='#e8a868';g.fillRect(x0,40,x1-x0,26);
-     for(let x=x0,i=0;x+26<=x1;x+=28,i++){g.fillStyle='#c98a50';g.fillRect(x+2,42,24,22);g.fillStyle='#f2bd84';g.fillRect(x+3,43,22,1);g.fillStyle='#ffd84a';g.fillRect(x+(i%2?4:22),51,2,4)}}
-   windowAt(g,144,40,'#ff8a3a','#ffb36a');},
-  floor(g){for(let y=0;y<20;y+=10)for(let x=0;x<W;x+=10){g.fillStyle=((x+y)/10)%2?'#fdfbff':'#9a8ac0';g.fillRect(x,y+2,10,10)}g.fillStyle='#c08040';g.fillRect(0,0,W,2);g.fillStyle='#8a5a34';g.fillRect(0,2,W,1)}},
+  wall(g){const bs=fy(.42);g.fillStyle='#fff1c2';g.fillRect(0,0,TWID,FLOOR);g.fillStyle='#fffaf0';g.fillRect(0,bs,TWID,FLOOR-bs);
+   g.fillStyle='#f0dca0';for(let y=bs,row=0;y<FLOOR;y+=10,row++){g.fillRect(0,y,TWID,1);for(let x=(row%2)*5;x<TWID;x+=10)g.fillRect(x,y,1,10)}
+   g.fillStyle='#ff8ac0';g.fillRect(0,bs-2,TWID,2);
+   const cy=fy(.08);for(const[x0,x1]of[[6,90],[150,234]]){g.fillStyle='#8a5a34';g.fillRect(x0-1,cy-1,x1-x0+2,30);g.fillStyle='#e8a868';g.fillRect(x0,cy,x1-x0,28);
+     for(let x=x0,i=0;x+26<=x1;x+=28,i++){g.fillStyle='#c98a50';g.fillRect(x+2,cy+2,24,24);g.fillStyle='#f2bd84';g.fillRect(x+3,cy+3,22,1);g.fillStyle='#ffd84a';g.fillRect(x+(i%2?4:22),cy+11,2,4)}}
+   windowAt(g,103,cy,winH(),'#ff8a3a','#ffb36a')},
+  floor(g){for(let y=0;y<20;y+=10)for(let x=0;x<TWID;x+=10){g.fillStyle=((x+y)/10)%2?'#fdfbff':'#9a8ac0';g.fillRect(x,y+2,10,10)}g.fillStyle='#c08040';g.fillRect(0,0,TWID,2);g.fillStyle='#8a5a34';g.fillRect(0,2,TWID,1)}},
  {name:'THE GAME ROOM',banner:'GAME ON!',peek:'#d4ecff',
-  wall(g){const gr=g.createLinearGradient(0,0,0,FLOOR);gr.addColorStop(0,'#b8dcff');gr.addColorStop(1,'#e2f2ff');g.fillStyle=gr;g.fillRect(0,0,W,FLOOR);
-   const r=seeded(11);g.fillStyle='#ffffff';for(let i=0;i<30;i++){const x=Math.floor(r()*(W-8))+4,y=46+Math.floor(r()*96);g.fillRect(x,y,1,3);g.fillRect(x-1,y+1,3,1)}
-   disc(g,40,62,9,'#ffb36a');g.fillStyle='#ff8a3a';g.fillRect(33,60,14,2);g.fillStyle='#c8a8ff';g.fillRect(26,64,28,2);
-   frame2(g,92,48,30,38,'#2a1838');g.drawImage(dinoBuf('bounce',0).canvas(),94,56);g.fillStyle='#ffd84a';for(let i=0;i<5;i++)g.fillRect(95+i*6,51,2,2);
-   frame2(g,190,52,36,26,'#ffffff');['#ff5f5f','#ff8a3a','#ffd84a','#7ad86a','#6ad0ff','#b48aff'].forEach((c,i)=>{g.fillStyle=c;g.fillRect(192,55+i*3,32,3)});
-   disc(g,272,70,11,K);disc(g,272,70,10,'#ff5f5f');disc(g,272,70,7,'#ffffff');disc(g,272,70,4,'#ff5f5f');disc(g,272,70,1,'#ffd84a')},
-  floor(g){g.fillStyle='#5a68c8';g.fillRect(0,2,W,20);g.fillStyle='#7a88e8';for(let y=5,row=0;y<22;y+=6,row++)for(let x=(row%2)*5;x<W;x+=10)g.fillRect(x,y,2,2);g.fillStyle='#3a4aa8';g.fillRect(0,0,W,3)}},
+  wall(g){const gr=g.createLinearGradient(0,0,0,FLOOR);gr.addColorStop(0,'#b8dcff');gr.addColorStop(1,'#e2f2ff');g.fillStyle=gr;g.fillRect(0,0,TWID,FLOOR);
+   const r=seeded(11);g.fillStyle='#ffffff';for(let i=0;i<34;i++){const x=Math.floor(r()*(TWID-8))+4,y=TOPY+4+Math.floor(r()*(FLOOR-TOPY-12));g.fillRect(x,y,1,3);g.fillRect(x-1,y+1,3,1)}
+   const py=fy(.12);disc(g,40,py+10,9,'#ffb36a');g.fillStyle='#ff8a3a';g.fillRect(33,py+8,14,2);g.fillStyle='#c8a8ff';g.fillRect(26,py+12,28,2);
+   frame2(g,150,py,30,38,'#2a1838');g.drawImage(dinoBuf('bounce',0).canvas(),152,py+8);g.fillStyle='#ffd84a';for(let i=0;i<5;i++)g.fillRect(153+i*6,py+3,2,2);
+   const ly=fy(.5);frame2(g,22,ly,36,26,'#ffffff');['#ff5f5f','#ff8a3a','#ffd84a','#7ad86a','#6ad0ff','#b48aff'].forEach((c,i)=>{g.fillStyle=c;g.fillRect(24,ly+3+i*3,32,3)});
+   disc(g,194,ly+16,11,K);disc(g,194,ly+16,10,'#ff5f5f');disc(g,194,ly+16,7,'#ffffff');disc(g,194,ly+16,4,'#ff5f5f');disc(g,194,ly+16,1,'#ffd84a')},
+  floor(g){g.fillStyle='#5a68c8';g.fillRect(0,2,TWID,20);g.fillStyle='#7a88e8';for(let y=5,row=0;y<22;y+=6,row++)for(let x=(row%2)*5;x<TWID;x+=10)g.fillRect(x,y,2,2);g.fillStyle='#3a4aa8';g.fillRect(0,0,TWID,3)}},
  {name:'THE BACKYARD',banner:'PARTY OUTSIDE!',peek:'#8ad0ff',out:1,
-  wall(g){const gr=g.createLinearGradient(0,0,0,FLOOR);gr.addColorStop(0,'#6cc0ff');gr.addColorStop(1,'#d6f1ff');g.fillStyle=gr;g.fillRect(0,0,W,FLOOR);
-   for(let x=0;x<W;x++){const h=Math.round(Math.sin(x/160*Math.PI)*7+Math.sin(x/40*Math.PI)*2);g.fillStyle='#a6dc94';g.fillRect(x,104-h,1,FLOOR);g.fillStyle='#5cb85a';g.fillRect(x,118-Math.round(Math.abs(Math.sin(x/12*Math.PI))*4),1,FLOOR)}
-   for(let x=0;x<W;x+=8){g.fillStyle='#ffffff';g.fillRect(x+1,128,6,FLOOR-128);g.fillRect(x+2,126,4,2);g.fillRect(x+3,125,2,1);g.fillStyle='#d8d0e8';g.fillRect(x+6,128,1,FLOOR-128)}
-   g.fillStyle='#ffffff';g.fillRect(0,134,W,3);g.fillRect(0,148,W,3);g.fillStyle='#d8d0e8';g.fillRect(0,137,W,1);g.fillRect(0,151,W,1)},
-  floor(g){for(let x=0;x<W;x+=10){g.fillStyle=(x/10)%2?'#6cc65a':'#5cb64a';g.fillRect(x,2,10,20)}g.fillStyle='#4a9a3a';g.fillRect(0,0,W,3);g.fillStyle='#8ad870';for(let x=3;x<W;x+=7)g.fillRect(x,1,1,2)}}];
+  wall(g){const gr=g.createLinearGradient(0,0,0,FLOOR);gr.addColorStop(0,'#6cc0ff');gr.addColorStop(1,'#d6f1ff');g.fillStyle=gr;g.fillRect(0,0,TWID,FLOOR);
+   const fb=FLOOR-32;for(let x=0;x<TWID;x++){const h=Math.round(Math.sin(x/120*Math.PI)*7+Math.sin(x/40*Math.PI)*2);g.fillStyle='#a6dc94';g.fillRect(x,fb-24-h,1,FLOOR);g.fillStyle='#5cb85a';g.fillRect(x,fb-10-Math.round(Math.abs(Math.sin(x/12*Math.PI))*4),1,FLOOR)}
+   for(let x=0;x<TWID;x+=8){g.fillStyle='#ffffff';g.fillRect(x+1,fb,6,FLOOR-fb);g.fillRect(x+2,fb-2,4,2);g.fillRect(x+3,fb-3,2,1);g.fillStyle='#d8d0e8';g.fillRect(x+6,fb,1,FLOOR-fb)}
+   g.fillStyle='#ffffff';g.fillRect(0,fb+6,TWID,3);g.fillRect(0,fb+20,TWID,3);g.fillStyle='#d8d0e8';g.fillRect(0,fb+9,TWID,1);g.fillRect(0,fb+23,TWID,1)},
+  floor(g){for(let x=0;x<TWID;x+=10){g.fillStyle=(x/10)%2?'#6cc65a':'#5cb64a';g.fillRect(x,2,10,20)}g.fillStyle='#4a9a3a';g.fillRect(0,0,TWID,3);g.fillStyle='#8ad870';for(let x=3;x<TWID;x+=7)g.fillRect(x,1,1,2)}}];
 const themeOf=r=>THEMES[((r%4)+4)%4];
-/* the bunting swoops along the whole house */
-const bY=x=>10+Math.round(Math.sin((((x%240)+240)%240)/240*Math.PI)*8);
+/* the bunting swoops along the whole house, just under the score */
+const bY=x=>24+Math.round(Math.sin((((x%200)+200)%200)/200*Math.PI)*7);
 function drawBunting(cx){for(let x=Math.floor(cx/12)*12;x<cx+W+12;x+=12){const y=bY(x);ctx.fillStyle=BUNT[((x/12)%6+6)%6];ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+10,bY(x+10)+1);ctx.lineTo(x+5,y+9);ctx.closePath();ctx.fill()}
   ctx.fillStyle='#8a5a34';for(let x=Math.floor(cx/2)*2;x<cx+W;x+=2)ctx.fillRect(x,bY(x),2,1)}
-function drawRoomBanner(cx,text){const bw=tw(text)+16,bx=Math.round(cx-bw/2);ctx.fillStyle='#b8306e';ctx.fillRect(bx-4,31,6,12);ctx.fillRect(bx+bw-2,31,6,12);ctx.fillStyle='#ff5fa8';ctx.fillRect(bx,28,bw,13);ctx.fillStyle='#ff8ac0';ctx.fillRect(bx,28,bw,2);txt(text,cx,31,'#ffffff',1,'c','#b8306e')}
+function drawRoomBanner(cx,text){const bw=tw(text)+16,bx=Math.round(cx-bw/2);ctx.fillStyle='#b8306e';ctx.fillRect(bx-4,47,6,12);ctx.fillRect(bx+bw-2,47,6,12);ctx.fillStyle='#ff5fa8';ctx.fillRect(bx,44,bw,13);ctx.fillStyle='#ff8ac0';ctx.fillRect(bx,44,bw,2);txt(text,cx,47,'#ffffff',1,'c','#b8306e')}
 /* the doorway into the next room, with the level number over it */
-function drawDoor(b,r){const nx=themeOf(r);ctx.fillStyle=K;ctx.fillRect(b-17,95,34,FLOOR-95);ctx.fillStyle='#8a5a34';ctx.fillRect(b-16,96,32,FLOOR-96);ctx.fillStyle='#6e4428';ctx.fillRect(b+13,96,3,FLOOR-96);
-  ctx.fillStyle=nx.peek;ctx.fillRect(b-12,100,24,FLOOR-100);ctx.fillStyle='rgba(42,24,56,.35)';ctx.fillRect(b-12,100,24,FLOOR-100);
-  const s=`LEVEL ${r+1}`,w=tw(s)+8;ctx.fillStyle=K;ctx.fillRect(b-w/2-1,81,w+2,12);ctx.fillStyle='#ffd84a';ctx.fillRect(b-w/2,82,w,10);txt(s,b,84,'#2a1838',1,'c')}
+function drawDoor(b,r){const nx=themeOf(r),top=FLOOR-66;ctx.fillStyle=K;ctx.fillRect(b-17,top-1,34,FLOOR-top+1);ctx.fillStyle='#8a5a34';ctx.fillRect(b-16,top,32,FLOOR-top);ctx.fillStyle='#6e4428';ctx.fillRect(b+13,top,3,FLOOR-top);
+  ctx.fillStyle=nx.peek;ctx.fillRect(b-12,top+4,24,FLOOR-top-4);ctx.fillStyle='rgba(42,24,56,.35)';ctx.fillRect(b-12,top+4,24,FLOOR-top-4);
+  const s=`LEVEL ${r+1}`,w=tw(s)+8;ctx.fillStyle=K;ctx.fillRect(b-w/2-1,top-16,w+2,12);ctx.fillStyle='#ffd84a';ctx.fillRect(b-w/2,top-15,w,10);txt(s,b,top-13,'#2a1838',1,'c')}
 function cloud(x,y){ctx.fillStyle='#ffffff';ctx.fillRect(x,y,30,8);ctx.fillRect(x+6,y-5,14,6);ctx.fillRect(x+17,y-3,9,4);ctx.fillStyle='#e4f2ff';ctx.fillRect(x,y+6,30,2)}
-/* everything behind the tables: the rooms on screen, the bunting, the doorways */
+/* everything behind the kids: the rooms on screen, the bunting, the doorways */
 function drawHouse(cx){const r0=Math.floor(cx/RL),r1=Math.floor((cx+W)/RL);
   for(let r=r0;r<=r1;r++){const th=themeOf(r),a=Math.max(cx,r*RL),b=Math.min(cx+W,(r+1)*RL);if(b<=a)continue;
     ctx.save();ctx.beginPath();ctx.rect(a,0,b-a,H);ctx.clip();
-    for(let x=Math.floor(a/W)*W;x<b;x+=W){ctx.drawImage(th.wc,x,0);ctx.drawImage(th.fc,x,FLOOR-2)}
-    if(th.out){/* the sun and the clouds are far away, so they drift by slowly */const sx=cx+268;disc(ctx,sx,40,11,'#fff3a0');disc(ctx,sx,40,8,'#ffd84a');
-      for(let i=0;i<5;i++){const px=((i*137+40-cx*.3)%640+640)%640-80;cloud(Math.round(cx+px),50+(i*29)%36)}}
-    for(const off of[320,1460]){const bx=r*RL+off;if(bx>a-90&&bx<b+90)drawRoomBanner(bx,th.banner)}
+    for(let x=Math.floor(a/TWID)*TWID;x<b;x+=TWID){ctx.drawImage(th.wc,x,0);ctx.drawImage(th.fc,x,FLOOR-2)}
+    if(th.out){/* the sun and the clouds are far away, so they drift by slowly */const sx=cx+W-34;disc(ctx,sx,80,11,'#fff3a0');disc(ctx,sx,80,8,'#ffd84a');
+      const band=Math.max(20,FLOOR-180);for(let i=0;i<5;i++){const px=((i*97+30-cx*.3)%420+420)%420-60;cloud(Math.round(cx+px),70+(i*37)%band)}}
+    if(G.state!=='title')for(const off of[180,860]){const bx=r*RL+off;if(bx>a-80&&bx<b+80)drawRoomBanner(bx,th.banner)}
     ctx.restore()}
   drawBunting(cx);
   for(let r=Math.max(1,r0);r<=r1+1;r++){const b=r*RL;if(b>cx-30&&b<cx+W+30)drawDoor(b,r)}}
-/* one table: a cloth with a scalloped hem, polka dots, wooden legs, and party things on top */
-function drawTable(g,t){const{x,w,y}=t,c=t.cloth;
-  g.fillStyle='#8a5a34';g.fillRect(x+4,y+6,3,FLOOR-y-6);g.fillRect(x+w-7,y+6,3,FLOOR-y-6);g.fillStyle='#6e4428';g.fillRect(x+6,y+6,1,FLOOR-y-6);g.fillRect(x+w-5,y+6,1,FLOOR-y-6);
-  g.fillStyle=dk(c);g.fillRect(x,y,w,8);g.fillStyle=c;g.fillRect(x,y,w,6);
-  for(let i=0;i<w;i+=6){g.fillStyle=c;g.fillRect(x+i,y+6,5,2);g.fillRect(x+i+1,y+8,3,1)}
-  g.fillStyle=lt(c);g.fillRect(x,y,w,1);for(let i=3;i<w-2;i+=7)g.fillRect(x+i,y+3+((i/7)%2?1:0),2,1);
-  g.fillStyle=K;g.fillRect(x,y-1,w,1);g.fillRect(x-1,y,1,8);g.fillRect(x+w,y,1,8)}
-function drawDecor(g,t,now,level){const{x,w,y}=t,cx=Math.round(x+w/2);
-  if(t.decor==='cake'){const bx=cx-10;g.fillStyle=K;g.fillRect(bx-1,y-15,22,15);g.fillStyle='#fff3e0';g.fillRect(bx,y-14,20,14);g.fillStyle='#ff8ac0';g.fillRect(bx,y-8,20,3);g.fillRect(bx,y-14,20,2);
-    for(let i=0;i<20;i+=4)g.fillRect(bx+i+1,y-12,2,1+((i/4)%2));g.fillStyle='#6ad0ff';g.fillRect(bx+2,y-4,2,2);g.fillRect(bx+9,y-3,2,2);g.fillRect(bx+15,y-4,2,2);
-    const n=clamp(level,1,6);for(let i=0;i<n;i++){const kx=bx+2+Math.round(i*(16/(Math.max(1,n-1)||1)));g.fillStyle=['#ffd84a','#6ad0ff','#a8ff6a'][i%3];g.fillRect(kx,y-19,2,5);
-      const fl=Math.floor(now/120+i)%2;g.fillStyle='#ff8a3a';g.fillRect(kx,y-22+fl,2,2);g.fillStyle='#fff3a0';g.fillRect(kx+(fl?1:0),y-21,1,1)}}
-  else if(t.decor==='cupcakes'){for(const dx of[-12,0,12]){const bx=cx+dx-3;g.fillStyle=K;g.fillRect(bx-1,y-8,8,8);g.fillStyle='#c99360';g.fillRect(bx,y-4,6,4);g.fillStyle=pick2(['#ff8ac0','#ffffff','#a8ff6a'],dx);g.fillRect(bx,y-7,6,3);g.fillStyle='#e04a4a';g.fillRect(bx+2,y-8,2,1)}}
-  else if(t.decor==='cups'){for(const dx of[-14,-5,4,13]){const bx=cx+dx;g.fillStyle=K;g.fillRect(bx-1,y-7,6,7);g.fillStyle=pick2(['#6ad0ff','#ffd84a','#ff5fa8','#a8ff6a'],dx);g.fillRect(bx,y-6,4,6);g.fillStyle='#ffffff';g.fillRect(bx,y-6,4,1)}}
-  else if(t.decor==='present'){const bx=cx-6;g.fillStyle=K;g.fillRect(bx-1,y-11,14,11);g.fillStyle='#6ad0ff';g.fillRect(bx,y-10,12,10);g.fillStyle='#ff5fa8';g.fillRect(bx+5,y-10,2,10);g.fillRect(bx,y-6,12,2);
-    g.fillRect(bx+2,y-13,3,3);g.fillRect(bx+7,y-13,3,3)}
-  else if(t.decor==='punch'){const bx=cx-8;g.fillStyle=K;g.fillRect(bx-1,y-8,18,8);g.fillStyle='#d8f0ff';g.fillRect(bx,y-7,16,7);g.fillStyle='#ff5f7a';g.fillRect(bx+1,y-5,14,4);g.fillStyle='#ffffff';g.fillRect(bx+2,y-7,3,1)}
-  else if(t.decor==='plates'){for(const dx of[-10,6]){const bx=cx+dx-5;g.fillStyle=K;g.fillRect(bx-1,y-3,12,3);g.fillStyle='#ffffff';g.fillRect(bx,y-3,10,2);g.fillStyle='#ffd84a';g.fillRect(bx+3,y-5,4,2)}}}
-const pick2=(a,i)=>a[Math.abs(Math.round(i))%a.length];
-/* tables are laid out just ahead of the screen as Rex goes, and cleared away behind him */
-function genTables(upto){while(G.tabX<upto){const w=44+Math.floor(rnd()*36);let x=G.tabX;const b=Math.round((x+w/2)/RL)*RL;if(b>0&&x<b+28&&x+w>b-28)x=b+28;
-    G.tables.push({x,w,y:pick(TY),cloth:pick(CLOTHS),decor:rnd()<.2?'cake':pick(['cupcakes','cups','present','punch','plates'])});G.tabX=x+w+40+Math.floor(rnd()*120)}
-  G.tables=G.tables.filter(t=>t.x+t.w>cam-40)}
-/* the highest tabletop (or the floor) at or below a point */
-function surfaceUnder(x,y){let s=FLOOR;for(const t of G.tables)if(x>=t.x-2&&x<=t.x+t.w+2&&t.y>=y-1&&t.y<s)s=t.y;return s}
 
 /* ================= the game ================= */
-const G={state:'title',t:0,level:1,score:0,pts:0,best:store.get('runbest',0),tables:[],tabX:0,kids:[],parts:[],pops:[],balloons:[],shake:0,banner:null,newBest:false,overT:0,titleT:0,
+const G={state:'title',t:0,level:1,score:0,pts:0,best:store.get('runbest',0),kids:[],parts:[],pops:[],balloons:[],shake:0,banner:null,newBest:false,overT:0,titleT:0,
   clock:0,nextArr:0,plan:null,balT:0,grace:0,x0:0,bonks:0,thuds:0,bumps:0,boings:0,dashes:0,bestCombo:0,D:null};
-const P={x:0,y:FLOOR,vx:0,vy:0,st:'air',spd:60,combo:0,anim:0,safe:0,hurt:false,squash:0};
+const P={x:0,y:0,vx:0,vy:0,st:'air',spd:60,combo:0,anim:0,safe:0,hurt:false,squash:0};
 /* how fast Rex runs: his speed meter (0 to 100) turned into pixels a frame */
-const rexVx=(s=P.spd)=>.8+s*.028;
-const START_SPD=60,LOSS={floor:18,table:8,bump:14},MAXSPD=100;
+const rexVx=(s=P.spd)=>(.8+s*.028)*HS;
+const START_SPD=60,LOSS={floor:18,bump:14},MAXSPD=100;
 /* each level: how far apart the kids arrive (in frames), how often two come close together, how fast they run, and who comes */
-function diff(L){return{lo:Math.max(10,22-2*L),hi:Math.min(38,32+L),pair:clamp(.07*(L-3),0,.25),sp:Math.min(1.3,.62+.06*L),table:Math.min(.55,.25+.06*L),
+function diff(L){return{lo:Math.max(10,22-2*L),hi:Math.min(38,32+L),pair:clamp(.07*(L-3),0,.25),sp:Math.min(1.3,.62+.06*L),
   types:L>=4?['kid','kid','sprint','hop','big']:L>=3?['kid','kid','sprint','hop']:L>=2?['kid','kid','sprint']:['kid']}}
-function newGame(){Object.assign(G,{state:'play',pts:0,score:0,newBest:false,level:1,D:diff(1),kids:[],parts:[],pops:[],balloons:[],tables:[],clock:0,nextArr:110,plan:null,balT:5,grace:105,
+/* the screen's height: picked from the space the game has, between 220 and 340 pixels */
+function targetH(){const pad=RT.classList.contains('touch')&&!ZP?Math.min(140,innerHeight*.34):0,aw=Math.max(1,innerWidth-(ZP?0:16)),ah=Math.max(1,innerHeight-pad-(ZP?0:16));
+  return clamp(Math.round(W*ah/aw/2)*2,220,340)}
+function applySize(h){H=h||targetH();FLOOR=H-22;VS=clamp((H-100)/105,1,2);GRAV=.32*VS;cv.width=W;cv.height=H;ctx.imageSmoothingEnabled=false;
+  for(const th of THEMES){th.wc=mk(TWID,FLOOR,g=>th.wall(g));th.fc=mk(TWID,22,g=>th.floor(g))}}
+/* the window changed size: a new height takes effect on the title screen (a run in progress keeps its shape) */
+function onResize(){if(G.state==='title'&&targetH()!==H){applySize();toTitle()}}
+function newGame(){if(targetH()!==H)applySize();
+  Object.assign(G,{state:'play',pts:0,score:0,newBest:false,level:1,D:diff(1),kids:[],parts:[],pops:[],balloons:[],clock:0,nextArr:110,plan:null,balT:5,grace:105,
     bonks:0,thuds:0,bumps:0,boings:0,dashes:0,bestCombo:0,banner:{a:'LEVEL 1 · '+THEMES[0].name,b:'DASH ONTO THE GOBLIN KIDS!',t:3}});
-  Object.assign(P,{x:140,y:96,vy:-2,st:'air',spd:START_SPD,combo:0,safe:0,hurt:false,squash:0});P.vx=rexVx();G.x0=P.x;cam=P.x-REXX;G.tabX=cam+170;genTables(cam+W+320);
+  Object.assign(P,{x:100,y:FLOOR-64*VS,vy:-2*VS,st:'air',spd:START_SPD,combo:0,safe:0,hurt:false,squash:0});P.vx=rexVx();G.x0=P.x;cam=P.x-REXX;
   SFX.start();music(true)}
-function toTitle(){Object.assign(G,{state:'title',kids:[],parts:[],pops:[],balloons:[],tables:[],level:1,titleT:0,banner:null});cam=0;G.tabX=40;genTables(W+320);
-  Object.assign(P,{x:250,y:FLOOR,vy:-4,st:'air',spd:START_SPD,combo:0,safe:0,hurt:false,squash:0});music(true)}
+const titleBounce=()=>{const room=FLOOR-27-titleLayout().boxB-6;return clamp(room,6,40)};
+function toTitle(){Object.assign(G,{state:'title',kids:[],parts:[],pops:[],balloons:[],level:1,titleT:0,banner:null});cam=0;
+  Object.assign(P,{x:120,y:FLOOR,vy:-Math.sqrt(2*GRAV*.7*titleBounce()),st:'air',spd:START_SPD,combo:0,safe:0,hurt:false,squash:0});music(true)}
 /* ---------- Rex: he runs by himself; the only thing to do is dash ---------- */
-function dash(){if(G.state!=='play'||P.st!=='air')return;P.st='dive';P.vy=7.6;G.dashes++;SFX.dive()}
+function dash(){if(G.state!=='play'||P.st!=='air')return;P.st='dive';P.vy=7.6*VS;G.dashes++;SFX.dive()}
 function press(btn){if(G.state==='title'){if(btn!=='down')newGame();return}
   if(G.state==='over'){if(G.overT<=0){if(btn==='b')toTitle();else newGame()}return}
   if(G.state==='pause'){if(btn==='b')toTitle();else resume();return}
@@ -274,162 +261,160 @@ function resume(){G.state='play';music(true)}
 /* deeper into the house a miss costs more, and a bonk gives a little less */
 const lossMul=()=>Math.min(1.7,1+.04*(G.level-1)),gainMul=()=>Math.max(.45,1-.03*(G.level-1));
 function loseSpeed(n){if(G.grace>0)return;P.spd=Math.max(0,P.spd-n*lossMul())}
-/* Rex touches down anywhere but on a goblin kid: bump, bounce back up, and lose speed */
-function thud(t){const was=P.st;P.y=t?t.y:FLOOR;P.st='air';P.combo=0;P.squash=.14;P.vy=t?-5.8:-6.6;
-  const before=P.spd;loseSpeed(t?LOSS.table:LOSS.floor);G.thuds++;SFX.land();dust(P.x,P.y,was==='dive'?10:6);G.shake=was==='dive'?4:2;
-  if(P.spd<before)popup(REXX,P.y-34,t?'OOF!':'SLOWER!','#ff9a9a',1);
+/* Rex hits the floor: bump, bounce back up, and lose speed */
+function thud(){const was=P.st;P.y=FLOOR;P.st='air';P.combo=0;P.squash=.14;P.vy=-6.6*VS;
+  const before=P.spd;loseSpeed(LOSS.floor);G.thuds++;SFX.land();dust(P.x,P.y,was==='dive'?10:6);G.shake=was==='dive'?4:2;
+  if(P.spd<before)popup(REXX,P.y-34,'SLOWER!','#ff9a9a',1);
   if(P.spd<=0)outOfSpeed()}
 function updRex(){P.anim+=1/60;if(P.safe>0){P.safe-=1/60;if(P.safe<=0)P.hurt=false}if(P.squash>0)P.squash-=1/60;
-  if(P.st==='tired'){/* out of speed: skid to a stop */P.vx*=.95;P.x+=P.vx;const s=surfaceUnder(P.x,P.y);
-    if(P.y<s){P.vy=Math.min(P.vy+GRAV,6.4);P.y=Math.min(s,P.y+P.vy);if(P.y>=s){P.vy=0;SFX.land();dust(P.x,s,8)}}else if(P.vx>.3&&rnd()<.5)dust(P.x-6,P.y,1);return}
+  if(P.st==='tired'){/* out of speed: skid to a stop */P.vx*=.95;P.x+=P.vx;
+    if(P.y<FLOOR){P.vy=Math.min(P.vy+GRAV,6.4*VS);P.y=Math.min(FLOOR,P.y+P.vy);if(P.y>=FLOOR){P.vy=0;SFX.land();dust(P.x,FLOOR,8)}}else if(P.vx>.2&&rnd()<.5)dust(P.x-6,P.y,1);return}
   P.vx+=(rexVx()-P.vx)*.06;P.x+=P.vx;
-  if(P.st==='dive')P.vy=7.6;else P.vy=Math.min(P.vy+GRAV,6.4);
-  const old=P.y;P.y+=P.vy;
+  if(P.st==='dive')P.vy=7.6*VS;else P.vy=Math.min(P.vy+GRAV,6.4*VS);
+  P.y+=P.vy;
   if(hitKids())return;
-  if(P.vy>0){/* a dash goes straight through the tables to the floor; a plain fall lands on them */
-    let hit=null;if(P.st!=='dive')for(const t of G.tables)if(old<=t.y&&P.y>=t.y&&P.x>=t.x-2&&P.x<=t.x+t.w+2&&(!hit||t.y<hit.y))hit=t;
-    if(hit)thud(hit);else if(P.y>=FLOOR)thud(null)}}
+  if(P.vy>0&&P.y>=FLOOR)thud()}
 /* hit boxes: a dash reaches a little wider than Rex, so a close call counts */
-const rexBox=()=>P.st==='dive'?{l:P.x-9,r:P.x+9,t:P.y-18,b:P.y+2}:{l:P.x-6,r:P.x+6,t:P.y-16,b:P.y-2};
+const rexBox=()=>P.st==='dive'?{l:P.x-8,r:P.x+8,t:P.y-18,b:P.y+2}:{l:P.x-6,r:P.x+6,t:P.y-16,b:P.y-2};
 function kidBox(k){const w=k.big?7:5,h=k.big?19:13;return{l:k.x-w,r:k.x+w,t:k.y-h,b:k.y}}
-const kidLive=k=>k.st==='run'||k.st==='hop'||k.st==='fall';
+const kidLive=k=>k.st==='run'||k.st==='hop';
 function hitKids(){const pb=rexBox();
   for(const k of G.kids){if(!kidLive(k))continue;const kb=kidBox(k);if(pb.r<kb.l||pb.l>kb.r||pb.b<kb.t||pb.t>kb.b)continue;
     if(P.st==='dive'){bonk(k);return true}
     if(P.safe>0)continue;
-    if(P.vy>.5&&P.y-kb.t<8){/* landed on a head without dashing: a little boing, but no speed */
-      P.y=kb.t;P.vy=-4.6;P.safe=.15;k.squish=.2;G.boings++;SFX.boing();if(G.boings<=3||G.boings%6===0)popup(REXX,P.y-36,'DASH TO BONK!','#ffd84a',1);return true}
+    if(P.vy>.5&&P.y-kb.t<8*VS){/* landed on a head without dashing: a little boing, but no speed */
+      P.y=kb.t;P.vy=-4.6*VS;P.safe=.15;k.squish=.2;G.boings++;SFX.boing();if(G.boings<=3||G.boings%6===0)popup(REXX,P.y-36,'DASH TO BONK!','#ffd84a',1);return true}
     bump(k);return true}
   return false}
 function bonk(k){P.combo++;const gain=(k.big?14:Math.min(12,6+P.combo))*gainMul();P.spd=Math.min(MAXSPD,P.spd+gain);
   const pts=100*Math.min(P.combo,10)*(k.big?2:1);G.pts+=pts;G.bonks++;G.bestCombo=Math.max(G.bestCombo,P.combo);
   SFX.bonk(P.combo);popup(k.x,k.y-(k.big?36:28),P.combo>1?`+${pts} *${P.combo}`:`+${pts}`,P.combo>1?'#ffd84a':'#ffffff');confetti(k.x,k.y-10,k.big?26:16);
-  k.st='bonked';k.vx=-.6-rnd()*1.4;k.vy=-3.2;k.table=null;
-  P.st='air';P.y=Math.min(P.y,kidBox(k).t);P.vy=k.big?-8.2:-7.2;P.safe=.3;P.hurt=false;G.shake=3}
+  k.st='bonked';k.vx=(-.6-rnd()*1.4)*HS;k.vy=-3.2*VS;
+  P.st='air';P.y=Math.min(P.y,kidBox(k).t);P.vy=(k.big?-8.2:-7.2)*VS;P.safe=.3;P.hurt=false;G.shake=3}
 /* running into a kid any other way: ouch */
-function bump(k){P.combo=0;const before=P.spd;loseSpeed(LOSS.bump);P.vy=Math.min(P.vy,-4.2);P.st='air';P.safe=.7;P.hurt=true;G.shake=4;G.bumps++;SFX.hit();k.flash=.4;
+function bump(k){P.combo=0;const before=P.spd;loseSpeed(LOSS.bump);P.vy=Math.min(P.vy,-4.2*VS);P.st='air';P.safe=.7;P.hurt=true;G.shake=4;G.bumps++;SFX.hit();k.flash=.4;
   if(P.spd<before)popup(REXX,P.y-34,'OUCH!','#ff9a9a',1);if(P.spd<=0)outOfSpeed()}
 function outOfSpeed(){P.st='tired';P.spd=0;G.state='caught';G.t=2.4;G.banner=null;SFX.over();music(false);G.shake=6;
   let i=0;const slot=()=>(i%2?1:-1)*(16+10*(i>>1));
   for(const k of G.kids)if(kidLive(k)&&k.x>cam-10&&k.x<cam+W+10){k.st='cheer';k.off=slot();i++}
   for(;i<3;i++){/* a few more kids run in to celebrate */const k=spawnKid(planKid());k.st='cheer';k.off=slot();if(k.off<0)k.x=cam-14}}
 /* ---------- the goblin kids: they run at Rex from the right ---------- */
-function planKid(){const type=pick(G.D.types),T=KTYPES[type];return{type,sp:G.D.sp*T.sp*(.9+rnd()*.2)}}
-function spawnKid(pl){const x=cam+W+14;let tab=null;if(rnd()<G.D.table)for(const t of G.tables)if(x>=t.x+6&&x<=t.x+t.w-4){tab=t;break}
-  const T=KTYPES[pl.type],k={type:pl.type,shirt:pick(SHIRTS),hat:pick(HATS),x,y:tab?tab.y:FLOOR,vx:0,vy:0,face:-1,st:'run',table:tab,sp:pl.sp,
-    big:!!T.big,hopper:!!T.hop,hopAt:36+rnd()*44,hopped:false,anim:rnd()*9,flash:0,squish:0,spin:0};
+function planKid(){const type=pick(G.D.types),T=KTYPES[type];return{type,sp:G.D.sp*T.sp*(.9+rnd()*.2)*HS}}
+function spawnKid(pl){const T=KTYPES[pl.type],k={type:pl.type,shirt:pick(SHIRTS),hat:pick(HATS),x:cam+W+14,y:FLOOR,vx:0,vy:0,face:-1,st:'run',sp:pl.sp,
+    big:!!T.big,hopper:!!T.hop,hopAt:(28+rnd()*30),hopped:false,anim:rnd()*9,flash:0,squish:0,spin:0};
   G.kids.push(k);if(rnd()<.3)SFX.giggle();return k}
 /* kids are sent so they reach Rex a fair beat apart: never further apart than one good bounce can carry him */
 function schedule(){if(!G.plan)G.plan=planKid();const T=(W+14-REXX)/(rexVx()+G.plan.sp);
   if(G.clock>=G.nextArr-T){const arrive=Math.max(G.nextArr,G.clock+T),D=G.D;spawnKid(G.plan);G.plan=null;G.nextArr=arrive+(rnd()<D.pair?8+rnd()*4:D.lo+rnd()*(D.hi-D.lo))}}
-function kidFall(k){k.vy=Math.min(k.vy+GRAV,6);const old=k.y;k.y+=k.vy;
-  if(k.vy>0){let hit=null;for(const t of G.tables)if(old<=t.y&&k.y>=t.y&&k.x>=t.x&&k.x<=t.x+t.w&&(!hit||t.y<hit.y))hit=t;
-    if(hit){k.y=hit.y;k.vy=0;k.table=hit;return true}if(k.y>=FLOOR){k.y=FLOOR;k.vy=0;k.table=null;return true}}return false}
+function kidFall(k){k.vy=Math.min(k.vy+GRAV,6*VS);k.y+=k.vy;if(k.vy>0&&k.y>=FLOOR){k.y=FLOOR;k.vy=0;return true}return false}
 function updKid(k){k.anim+=1/60;if(k.flash>0)k.flash-=1/60;if(k.squish>0)k.squish-=1/60;
   switch(k.st){
-  case'run':k.x-=k.sp;k.anim+=k.sp/14;
-    if(k.table&&k.x<k.table.x+1){k.table=null;k.st='fall';k.vy=0}
-    else if(k.hopper&&!k.hopped&&k.x-P.x<k.hopAt&&k.x>P.x+8){k.hopped=true;k.st='hop';k.vy=-4.4;k.table=null}
+  case'run':k.x-=k.sp;k.anim+=k.sp/(14*HS);
+    if(k.hopper&&!k.hopped&&k.x-P.x<k.hopAt&&k.x>P.x+6){k.hopped=true;k.st='hop';k.vy=-4.4*VS}
     break;
-  case'fall':case'hop':k.x-=k.sp;if(kidFall(k))k.st='run';break;
-  case'bonked':k.x+=k.vx;k.y+=k.vy;k.vy+=.28;k.spin+=.35;if(k.y>H+40)k.gone=1;break;
-  case'cheer':{const tx=P.x+k.off;if(Math.abs(tx-k.x)>1.2){k.face=Math.sign(tx-k.x);k.x+=k.face*1.4}else k.face=P.x>k.x?1:-1;if(k.y<FLOOR){k.vy=Math.min(k.vy+GRAV,6);k.y=Math.min(FLOOR,k.y+k.vy)}k.table=null;break}}
+  case'hop':k.x-=k.sp;if(kidFall(k))k.st='run';break;
+  case'bonked':k.x+=k.vx;k.y+=k.vy;k.vy+=.28*VS;k.spin+=.35;if(k.y>H+40)k.gone=1;break;
+  case'cheer':{const tx=P.x+k.off;if(Math.abs(tx-k.x)>1.2){k.face=Math.sign(tx-k.x);k.x+=k.face*1.1}else k.face=P.x>k.x?1:-1;if(k.y<FLOOR)kidFall(k);break}}
   if(k.x<cam-40)k.gone=1}
 /* ---------- bonus balloons, particles and pop-ups ---------- */
 function dust(x,y,n){for(let i=0;i<n;i++)G.parts.push({x:x+(rnd()-.5)*10,y:y-1,vx:(rnd()-.5)*1.4,vy:-rnd()*.8,life:.35+rnd()*.2,c:'#ffffff',s:2,g:.02})}
 function confetti(x,y,n){for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,v=1+rnd()*2.2;G.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,life:.8+rnd()*.6,c:pick(BUNT),s:rnd()<.3?2:1,g:.06,spin:1})}}
 /* a pop-up stays where it happened, or (scr) stays on the screen next to Rex */
-function popup(x,y,s,c,scr=0){G.pops.push({x,y,s,c,life:1,scr})}
+function popup(x,y,s,c,scr=0){if(scr)G.pops=G.pops.filter(p=>!p.scr);G.pops.push({x,y,s,c,life:1,scr})}
 function updFx(){for(const p of G.parts){p.x+=p.vx;p.y+=p.vy;p.vy+=p.g||0;if(p.spin)p.vx*=.98;p.life-=1/60}G.parts=G.parts.filter(p=>p.life>0&&p.x>cam-40);
   for(const p of G.pops){p.y-=.4;p.life-=1/60}G.pops=G.pops.filter(p=>p.life>0);
-  if(G.state==='play'){G.balT-=1/60;if(G.balT<=0){G.balT=5+rnd()*5;const n=1+Math.floor(rnd()*3),x=cam+W+12,y=40+rnd()*40;for(let i=0;i<n;i++)G.balloons.push({x:x+i*14,y:y+(i%2)*9,c:pick(BUNT),ph:rnd()*6})}}
+  if(G.state==='play'){G.balT-=1/60;if(G.balT<=0){G.balT=5+rnd()*5;const n=1+Math.floor(rnd()*3),x=cam+W+12,y=clamp(FLOOR-(50+rnd()*60)*VS,64,FLOOR-50);
+    for(let i=0;i<n;i++)G.balloons.push({x:x+i*14,y:y+(i%2)*9,c:pick(BUNT),ph:rnd()*6})}}
   const pb=rexBox();for(const b of G.balloons){b.ph+=.04;b.y+=Math.sin(b.ph)*.15;
     if(!b.pop&&G.state==='play'&&b.x+5>pb.l&&b.x-5<pb.r&&b.y+6>pb.t&&b.y-7<pb.b){b.pop=1;G.pts+=50;SFX.pop();confetti(b.x,b.y,12);popup(b.x,b.y-14,'+50','#ffffff')}}
   G.balloons=G.balloons.filter(b=>!b.pop&&b.x>cam-20);if(G.shake>0)G.shake-=.4}
 /* ---------- the flow of a run ---------- */
 function checkLevel(){const L=Math.floor(P.x/RL)+1;if(L<=G.level)return;G.level=L;G.D=diff(L);const bonus=250*(L-1);G.pts+=bonus;
-  G.banner={a:`LEVEL ${L} · ${themeOf(L-1).name}`,b:`BONUS +${bonus}`,t:2.6};SFX.clear();confetti(P.x+60,46,26)}
+  G.banner={a:`LEVEL ${L} · ${themeOf(L-1).name}`,b:`BONUS +${bonus}`,t:2.6};SFX.clear();confetti(P.x+50,70,26)}
 function update(){G.titleT+=1/60;mus.spb=.23-P.spd*.0007;
   if(G.state==='title'){updTitle();updFx();return}
   if(G.state==='pause')return;
   if(G.state==='play'){G.clock++;if(G.grace>0)G.grace--;
     for(const k of G.kids)updKid(k);
-    updRex();cam=P.x-REXX;genTables(cam+W+320);
+    updRex();cam=P.x-REXX;
     if(G.state==='play'){schedule();checkLevel();if(G.banner&&(G.banner.t-=1/60)<=0)G.banner=null}
     G.kids=G.kids.filter(k=>!k.gone);updFx();G.score=G.pts+Math.max(0,Math.floor((P.x-G.x0)/16));return}
   if(G.state==='caught'){G.t-=1/60;for(const k of G.kids)updKid(k);updRex();cam=P.x-REXX;G.kids=G.kids.filter(k=>!k.gone);updFx();
     if(G.t<=0){G.state='over';G.overT=.6;if(G.score>G.best){G.best=G.score;G.newBest=true;store.set('runbest',G.best)}}return}
   if(G.state==='over'){if(G.overT>0)G.overT-=1/60;for(const k of G.kids)if(k.st==='cheer')k.anim+=1/60;updFx()}}
 /* ---------- the title screen: the house drifts by while Rex bounces ---------- */
-const TITLEKIDS=[{type:'kid',shirt:'#ff6b6b',hat:'#ffd84a',x:14,face:1,anim:0},{type:'sprint',shirt:'#4aa6e4',hat:'#a8ff6a',x:52,face:1,anim:.2},{type:'hop',shirt:'#66c659',hat:'#ff5fa8',x:298,face:-1,anim:.5}];
-function updTitle(){cam+=.6;genTables(cam+W+320);P.x=cam+250;P.anim+=1/60;P.vy+=GRAV*.7;P.y+=P.vy;if(P.y>=FLOOR){P.y=FLOOR;P.vy=-4;P.squash=.1}if(P.squash>0)P.squash-=1/60;
-  if(rnd()<.03)confetti(cam+20+rnd()*280,16+rnd()*30,5)}
+const TITLEKIDS=[{type:'kid',shirt:'#ff6b6b',hat:'#ffd84a',x:14,face:1,anim:0},{type:'sprint',shirt:'#4aa6e4',hat:'#a8ff6a',x:40,face:1,anim:.2},{type:'hop',shirt:'#66c659',hat:'#ff5fa8',x:164,face:-1,anim:.5}];
+function titleLayout(){const ly=Math.round(clamp(H*.07,14,30)),py=ly+70,by=py+16;return{ly,py,by,boxB:by+66}}
+function updTitle(){cam+=.6*HS;P.x=cam+120;P.anim+=1/60;P.vy+=GRAV*.7;P.y+=P.vy;if(P.y>=FLOOR){P.y=FLOOR;P.vy=-Math.sqrt(2*GRAV*.7*titleBounce());P.squash=.1}if(P.squash>0)P.squash-=1/60;
+  if(rnd()<.03)confetti(cam+10+rnd()*160,30+rnd()*30,5)}
 
 /* ================= drawing ================= */
 function drawKid(k,now){if(k.flash>0&&Math.floor(k.flash*20)%2)return;
-  const f=Math.floor(k.anim*7)%2,pose=k.st==='bonked'?'dizzy':k.st==='cheer'?'cheer':(k.st==='hop'||k.st==='fall')?'hop':'run';
+  const f=Math.floor(k.anim*7)%2,pose=k.st==='bonked'?'dizzy':k.st==='cheer'?'cheer':k.st==='hop'?'hop':'run';
   const im=kidSpr(k,pose,f),sc=k.big?1.5:1,w=18*sc,h=20*sc;
   if(k.st==='bonked'){ctx.save();ctx.translate(Math.round(k.x),Math.round(k.y-h/2));ctx.rotate(k.spin);ctx.drawImage(im,-w/2,-h/2,w,h);ctx.restore();return}
-  const s=surfaceUnder(k.x,k.y);ctx.fillStyle='rgba(40,20,60,.22)';ctx.fillRect(Math.round(k.x-5*sc),s-1,Math.round(10*sc),2);
+  ctx.fillStyle='rgba(40,20,60,.22)';ctx.fillRect(Math.round(k.x-5*sc),FLOOR-1,Math.round(10*sc),2);
   const sq=k.squish>0?.75:1,hh=Math.round(h*sq);ctx.drawImage(im,Math.round(k.x-w/2),Math.round(k.y-hh+1+(pose==='run'&&f?-1:0)),w,hh)}
 function drawRex(now){const ph=Math.floor(P.anim*8)%2;let pose;
-  if(P.st==='tired')pose=P.vx>.4?'run':'sad';else if(P.st==='dive')pose='dive';else pose=P.vy<-2?'bounce':'jump';
+  if(P.st==='tired')pose=P.vx>.3?'run':'sad';else if(P.st==='dive')pose='dive';else pose=P.vy<-2*VS?'bounce':'jump';
   if(P.hurt&&P.safe>0&&Math.floor(P.safe*30)%2)return;
   const im=dinoSpr(pose,ph,1),x=Math.round(P.x),y=Math.round(P.y);
-  const s=surfaceUnder(P.x,P.y),d=clamp((s-P.y)/120,0,1),sw=Math.round(14-8*d);ctx.fillStyle='rgba(40,20,60,.22)';ctx.fillRect(x-(sw>>1),s-1,sw,2);
+  const d=clamp((FLOOR-P.y)/(120*VS),0,1),sw=Math.round(14-8*d);ctx.fillStyle='rgba(40,20,60,.22)';ctx.fillRect(x-(sw>>1),FLOOR-1,sw,2);
   if(pose==='dive'){/* nose-down, with speed lines */ctx.save();ctx.translate(x,y-13);ctx.rotate(Math.PI/2);ctx.drawImage(im,-13,-14);ctx.restore();
-    ctx.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<3;i++)ctx.fillRect(x-14+i*6,y-36+i*3-Math.floor((now/30+i*5)%8),1,7);return}
-  if(P.spd>75&&G.state==='play'){/* going really fast: a trail of Rexes */ctx.globalAlpha=.22;ctx.drawImage(im,x-13-9,y-27+2);ctx.globalAlpha=.12;ctx.drawImage(im,x-13-18,y-27+4);ctx.globalAlpha=1}
+    ctx.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<3;i++)ctx.fillRect(x-14+i*6,y-38+i*3-Math.floor((now/30+i*5)%10),1,9);return}
+  if(P.spd>75&&G.state==='play'){/* going really fast: a trail of Rexes */ctx.globalAlpha=.22;ctx.drawImage(im,x-13-8,y-27+2*VS);ctx.globalAlpha=.12;ctx.drawImage(im,x-13-16,y-27+4*VS);ctx.globalAlpha=1}
   if(P.squash>0)ctx.drawImage(im,x-15,y-22,30,22);else ctx.drawImage(im,x-13,y-27)}
 function drawBalloon(b){const x=Math.round(b.x),y=Math.round(b.y);ctx.fillStyle=K;ctx.fillRect(x-5,y-7,11,13);ctx.fillRect(x-4,y-8,9,15);ctx.fillStyle=b.c;ctx.fillRect(x-4,y-7,9,13);ctx.fillRect(x-3,y-8,7,15);
   ctx.fillStyle=lt(b.c);ctx.fillRect(x-2,y-5,2,3);ctx.fillStyle=b.c;ctx.fillRect(x,y+7,1,1);ctx.fillStyle='#8a5a34';for(let i=0;i<10;i++)ctx.fillRect(x+Math.round(Math.sin(b.ph+i*.6)),y+8+i,1,1)}
 function drawParts(){for(const p of G.parts){ctx.globalAlpha=clamp(p.life*2.5,0,1);ctx.fillStyle=p.c;ctx.fillRect(Math.round(p.x),Math.round(p.y),p.s,p.s)}ctx.globalAlpha=1}
-function drawPops(scr){for(const p of G.pops){if(!!p.scr!==scr)continue;ctx.globalAlpha=clamp(p.life*2,0,1);txt(p.s,Math.round(p.x),Math.round(p.y),p.c,1,'c',K)}ctx.globalAlpha=1}
+function drawPops(scr){for(const p of G.pops){if(!!p.scr!==scr)continue;ctx.globalAlpha=clamp(p.life*2,0,1);const half=tw(p.s)/2;
+    txt(p.s,Math.round(scr?clamp(p.x,half+2,W-half-2):p.x),Math.round(p.y),p.c,1,'c',K)}ctx.globalAlpha=1}
 /* streaks rushing past when Rex is quick */
-function drawSpeedLines(now){const v=P.vx;if(v<2.7||G.state!=='play')return;const n=Math.min(12,Math.floor((v-2.7)*10)+2);ctx.fillStyle='rgba(255,255,255,.5)';
-  for(let i=0;i<n;i++){const y=24+((i*53)%118),len=10+((i*7)%14),x=W-((now*.12*v+i*131)%(W+60));ctx.fillRect(Math.round(x),y,len,1)}}
-function drawHud(now){ctx.fillStyle='rgba(27,20,48,.6)';ctx.fillRect(0,0,W,11);
-  txt(`SCORE ${String(G.score).padStart(6,'0')}`,4,2,'#ffffff');txt(`LEVEL ${G.level}`,150,2,'#ffd84a',1,'c');
-  const bx=W-64,bw=60,v=P.spd/MAXSPD;txt('SPEED',bx-4,2,'#c8a8ff',1,'r');ctx.fillStyle=K;ctx.fillRect(bx-1,1,bw+2,9);ctx.fillStyle='#3a2a50';ctx.fillRect(bx,2,bw,7);
+function drawSpeedLines(now){const v=P.vx/HS;if(v<2.7||G.state!=='play')return;const n=Math.min(12,Math.floor((v-2.7)*10)+2);ctx.fillStyle='rgba(255,255,255,.5)';
+  for(let i=0;i<n;i++){const y=40+((i*53)%Math.max(40,FLOOR-60)),len=8+((i*7)%12),x=W-((now*.12*v*HS+i*131)%(W+50));ctx.fillRect(Math.round(x),y,len,1)}}
+function drawHud(now){ctx.fillStyle='rgba(27,20,48,.62)';ctx.fillRect(0,0,W,22);
+  txt(`SCORE ${String(G.score).padStart(6,'0')}`,3,2,'#ffffff');txt(`LEVEL ${G.level}`,W-3,2,'#ffd84a',1,'r');
+  const bx=36,bw=W-39,v=P.spd/MAXSPD;txt('SPEED',3,12,'#c8a8ff');ctx.fillStyle=K;ctx.fillRect(bx-1,11,bw+2,9);ctx.fillStyle='#3a2a50';ctx.fillRect(bx,12,bw,7);
   const col=P.spd>50?'#7ad86a':P.spd>25?'#ffd84a':'#ff5f5f',blink=P.spd<=25&&G.state==='play'&&Math.floor(now/150)%2;
-  if(!blink&&v>0){const fw=Math.max(1,Math.round(bw*v));ctx.fillStyle=col;ctx.fillRect(bx,2,fw,7);ctx.fillStyle=lt(col);ctx.fillRect(bx,2,fw,1)}
-  ctx.fillStyle='rgba(27,20,48,.7)';for(let i=1;i<4;i++)ctx.fillRect(bx+Math.round(bw*i/4),2,1,7);
-  if(P.combo>1&&G.state==='play')txt(`COMBO *${P.combo}`,W-4,14,'#ffd84a',1,'r',K);
-  if(G.banner&&G.state==='play'){const B=G.banner,w=Math.max(tw(B.a),tw(B.b))+16,x=Math.round(W/2-w/2);panel(x,16,w,22);txt(B.a,W/2,19,'#b8306e',1,'c');txt(B.b,W/2,29,'#2a1838',1,'c')}}
+  if(!blink&&v>0){const fw=Math.max(1,Math.round(bw*v));ctx.fillStyle=col;ctx.fillRect(bx,12,fw,7);ctx.fillStyle=lt(col);ctx.fillRect(bx,12,fw,1)}
+  ctx.fillStyle='rgba(27,20,48,.7)';for(let i=1;i<4;i++)ctx.fillRect(bx+Math.round(bw*i/4),12,1,7);
+  if(P.combo>1&&G.state==='play')txt(`COMBO *${P.combo}`,W-3,25,'#ffd84a',1,'r',K);
+  if(G.banner&&G.state==='play'){const B=G.banner,w=Math.max(tw(B.a),tw(B.b))+10,x=Math.round(W/2-w/2);panel(x,38,w,22);txt(B.a,W/2,41,'#b8306e',1,'c');txt(B.b,W/2,51,'#2a1838',1,'c')}}
 function panel(x,y,w,h){ctx.fillStyle=K;ctx.fillRect(x-2,y-2,w+4,h+4);ctx.fillStyle='#ff5fa8';ctx.fillRect(x,y,w,h);ctx.fillStyle='#ffe0ef';ctx.fillRect(x+2,y+2,w-4,h-4)}
 const KB=()=>!ZP&&!RT.classList.contains('touch');
 function render(now){ctx.save();ctx.setTransform(1,0,0,1,0,0);
   let sx=0,sy=0;if(G.shake>0){sx=Math.round((rnd()-.5)*G.shake);sy=Math.round((rnd()-.5)*G.shake)}
   const cx=Math.round(cam);ctx.translate(sx-cx,sy);
   drawHouse(cx);
-  for(const t of G.tables)if(t.x<cx+W+10&&t.x+t.w>cx-10){drawTable(ctx,t);drawDecor(ctx,t,now,G.state==='title'?3:G.level)}
   for(const b of G.balloons)drawBalloon(b);
   for(const k of G.kids)drawKid(k,now);
   drawRex(now);drawParts();drawPops(false);
   ctx.setTransform(1,0,0,1,0,0);
   if(G.state==='title'){for(const k of TITLEKIDS)ctx.drawImage(kidSpr(k,'cheer',Math.floor(now/180+k.anim*3)%2),k.x-9,FLOOR-19);drawTitle(now);ctx.restore();return}
   drawSpeedLines(now);drawPops(true);drawHud(now);
-  if(G.state==='caught'&&Math.floor(now/200)%2)txt('OUT OF STEAM!',W/2,56,'#ffffff',2,'c',K);
-  if(G.state==='pause'){ctx.fillStyle='rgba(27,20,48,.6)';ctx.fillRect(0,0,W,H);panel(90,58,140,56);txt('PAUSED',W/2,66,'#b8306e',2,'c');txt(KB()?'ENTER OR Z: KEEP PARTYING':'START OR A: KEEP PARTYING',W/2,88,'#2a1838',1,'c');txt(KB()?'X: QUIT TO TITLE':'B: QUIT TO TITLE',W/2,100,'#2a1838',1,'c')}
+  if(G.state==='caught'&&Math.floor(now/200)%2)txt('OUT OF STEAM!',W/2,Math.round(H*.3),'#ffffff',2,'c',K);
+  if(G.state==='pause'){ctx.fillStyle='rgba(27,20,48,.6)';ctx.fillRect(0,0,W,H);const y=Math.round(H/2-30);panel(8,y,164,58);txt('PAUSED',W/2,y+8,'#b8306e',2,'c');
+    txt(KB()?'ENTER OR Z: KEEP PARTYING':'START OR A: KEEP PARTYING',W/2,y+30,'#2a1838',1,'c');txt(KB()?'X: QUIT TO TITLE':'B: QUIT TO TITLE',W/2,y+42,'#2a1838',1,'c')}
   if(G.state==='over')drawOver(now);
   ctx.restore()}
-function drawTitle(now){const t='PARTY REX',cs=['#ff5fa8','#ffd84a','#6ad0ff','#a8ff6a','#ff8a3a'];
-  ctx.fillStyle='rgba(27,20,48,.45)';ctx.fillRect(0,48,W,40);
-  let x=Math.round(W/2-tw(t,4)/2);for(const[i,ch]of[...t].entries()){const y=52+Math.round(Math.sin(now/220+i*.7)*2);txt(ch,x+4,y+4,K,4);txt(ch,x,y,cs[i%cs.length],4);x+=24}
+function drawTitle(now){const L=titleLayout(),cs=['#ff5fa8','#ffd84a','#6ad0ff','#a8ff6a','#ff8a3a'];
+  ctx.fillStyle='rgba(27,20,48,.45)';ctx.fillRect(0,L.ly-6,W,70);
+  let i=0;for(const[word,y0]of[['PARTY',L.ly],['REX',L.ly+34]]){let x=Math.round(W/2-tw(word,4)/2);for(const ch of word){const y=y0+Math.round(Math.sin(now/220+i*.7)*2);txt(ch,x+3,y+3,K,4);txt(ch,x,y,cs[i%cs.length],4);x+=24;i++}}
   const kb=KB(),A=kb?'Z':'A',B=kb?'X':'B';
-  if(Math.floor(now/450)%2)txt(`PRESS ${A} TO PARTY`,W/2,96,'#ffffff',1,'c',K);
-  ctx.fillStyle='rgba(27,20,48,.6)';ctx.fillRect(0,136,W,44);
-  txt(`${B} OR ${A}: DASH DOWN ONTO THE GOBLIN KIDS`,W/2,140,'#ffe0ef',1,'c');
-  txt('EACH BONK SPEEDS REX UP. THE FLOOR SLOWS HIM.',W/2,150,'#ffe0ef',1,'c');
-  txt("RUN OUT OF SPEED AND THE PARTY'S OVER!",W/2,160,'#ffd84a',1,'c');
-  txt(`BEST ${G.best}`,4,171,'#ffffff');txt(`${kb?'M':'SELECT'}: SOUND ${muted?'OFF':'ON'}`,W-4,171,'#c8a8ff',1,'r');if(kb)txt('ENTER PAUSE',W/2,171,'#9a88c0',1,'c')}
-function drawOver(now){ctx.fillStyle='rgba(27,20,48,.62)';ctx.fillRect(0,0,W,H);panel(66,28,188,122);txt("PARTY'S OVER!",W/2,36,'#b8306e',2,'c');
-  txt('REX RAN OUT OF SPEED',W/2,54,'#2a1838',1,'c');
-  txt(`SCORE ${G.score}`,W/2,68,'#b8306e',1,'c');
-  txt(`${Math.max(0,Math.floor((P.x-G.x0)/16))} M   LEVEL ${G.level}`,W/2,80,'#2a1838',1,'c');
-  txt(`${G.bonks} BONKS   BEST COMBO *${G.bestCombo}`,W/2,91,'#2a1838',1,'c');
-  txt(G.newBest?'NEW BEST!':`BEST ${G.best}`,W/2,105,G.newBest&&Math.floor(now/250)%2?'#ff5fa8':'#2a1838',1,'c');
-  if(G.overT<=0){txt(KB()?'Z: PARTY AGAIN':'A: PARTY AGAIN',W/2,122,'#2a1838',1,'c');txt(KB()?'X: TITLE':'B: TITLE',W/2,133,'#2a1838',1,'c')}}
+  if(Math.floor(now/450)%2)txt(`PRESS ${A} TO PARTY`,W/2,L.py,'#ffffff',1,'c',K);
+  ctx.fillStyle='rgba(27,20,48,.62)';ctx.fillRect(0,L.by-4,W,L.boxB-L.by+4);
+  txt(`${B} OR ${A}: DASH DOWN ON KIDS`,W/2,L.by,'#ffe0ef',1,'c');
+  txt('BONKS SPEED REX UP,',W/2,L.by+11,'#ffe0ef',1,'c');
+  txt('THE FLOOR SLOWS HIM DOWN.',W/2,L.by+22,'#ffe0ef',1,'c');
+  txt("NO SPEED LEFT? PARTY'S OVER!",W/2,L.by+33,'#ffd84a',1,'c');
+  txt(`BEST ${G.best}`,4,L.by+48,'#ffffff');txt(`${kb?'M':'SELECT'}: SOUND ${muted?'OFF':'ON'}`,W-4,L.by+48,'#c8a8ff',1,'r')}
+function drawOver(now){ctx.fillStyle='rgba(27,20,48,.62)';ctx.fillRect(0,0,W,H);const y=Math.round(H/2-78);panel(8,y,164,156);txt('PARTY OVER!',W/2,y+8,'#b8306e',2,'c');
+  txt('REX RAN OUT OF SPEED',W/2,y+28,'#2a1838',1,'c');
+  txt(`SCORE ${G.score}`,W/2,y+44,'#b8306e',1,'c');
+  txt(`${Math.max(0,Math.floor((P.x-G.x0)/16))} M · LEVEL ${G.level}`,W/2,y+56,'#2a1838',1,'c');
+  txt(`${G.bonks} BONKS`,W/2,y+68,'#2a1838',1,'c');txt(`BEST COMBO *${G.bestCombo}`,W/2,y+80,'#2a1838',1,'c');
+  txt(G.newBest?'NEW BEST!':`BEST ${G.best}`,W/2,y+96,G.newBest&&Math.floor(now/250)%2?'#ff5fa8':'#2a1838',1,'c');
+  if(G.overT<=0){txt(KB()?'Z: PARTY AGAIN':'A: PARTY AGAIN',W/2,y+118,'#2a1838',1,'c');txt(KB()?'X: TITLE':'B: TITLE',W/2,y+132,'#2a1838',1,'c')}}
 
 /* ================= input ================= */
 function input(btn,down){if(!down)return;
@@ -452,14 +437,24 @@ window.ZPCart={title:'Party Rex',
 if(ZP&&ZP.cartReady)try{ZP.cartReady(window.ZPCart)}catch(e){}
 
 /* ================= go ================= */
-for(const th of THEMES){th.wc=mk(W,FLOOR,g=>th.wall(g));th.fc=mk(W,22,g=>th.floor(g))}
-toTitle();
+applySize();fit();toTitle();
 let last=performance.now(),acc=0;const STEP=1000/60;
 function frame(now){acc+=Math.min(250,now-last);last=now;let n=0;if(window.__PR&&window.__PR.freeze)acc=0;while(acc>=STEP&&n<8){update();acc-=STEP;n++}if(n>=8)acc=0;render(now);requestAnimationFrame(frame)}
 requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame)});
 /* hooks for automated tests only (the address must end in #prtest) */
-if(/prtest/.test(location.hash))window.__PR={G,P,input,update,render:()=>render(performance.now()),newGame,toTitle,spawnKid,planKid,schedule,diff,KTYPES,THEMES,rexVx,kidBox,rexBox,LOSS,RL,REXX,
-  get cam(){return cam},set cam(v){cam=v}};
+if(/prtest/.test(location.hash))window.__PR={G,P,input,update,render:()=>render(performance.now()),newGame,toTitle,spawnKid,planKid,schedule,diff,KTYPES,THEMES,rexVx,kidBox,rexBox,LOSS,RL,REXX,applySize,
+  get cam(){return cam},set cam(v){cam=v},get H(){return H},get FLOOR(){return FLOOR},get VS(){return VS},
+  cartArt(){/* the label (96x64, scaled up 3x): Rex diving onto a goblin kid at the party, drawn on the screen's corner and copied off */
+    const LW=96,LH=64,fl=56;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.save();ctx.beginPath();ctx.rect(0,0,LW,LH);ctx.clip();
+    const th=THEMES[0];ctx.drawImage(th.wc,30,FLOOR-fl-0,LW,fl,0,0,LW,fl);ctx.drawImage(th.fc,0,0,LW,22,0,fl-2,LW,22);
+    for(let x=-2,i=0;x<LW;x+=10,i++){const y=1+Math.round(Math.sin(x/LW*Math.PI)*3);ctx.fillStyle=BUNT[i%6];ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+8,y);ctx.lineTo(x+4,y+7);ctx.closePath();ctx.fill()}
+    const k1={type:'kid',shirt:'#ff6b6b',hat:'#ffd84a',face:-1},k2={type:'hop',shirt:'#66c659',hat:'#ff5fa8',face:-1},k3={type:'sprint',shirt:'#4aa6e4',hat:'#a8ff6a',face:-1};
+    ctx.drawImage(kidSpr(k1,'run',0),40,fl-19);ctx.drawImage(kidSpr(k3,'run',1),74,fl-19);ctx.drawImage(kidSpr(k2,'hop',0),60,fl-30);
+    const im=dinoSpr('dive',0,1);ctx.save();ctx.translate(49,20);ctx.rotate(Math.PI/2);ctx.drawImage(im,-13,-14);ctx.restore();
+    ctx.fillStyle='#ffffff';for(let i=0;i<3;i++)ctx.fillRect(41+i*6,0+i*2,1,7);
+    let sd=5;const r2=()=>(sd=(sd*9301+49297)%233280)/233280;for(let i=0;i<34;i++){ctx.fillStyle=BUNT[i%6];ctx.fillRect(Math.floor(r2()*LW),Math.floor(8+r2()*36),1+(i%3===0),1)}
+    drawBalloon({x:12,y:22,c:'#ff5fa8',ph:1});drawBalloon({x:24,y:16,c:'#6ad0ff',ph:2});drawBalloon({x:86,y:20,c:'#ffd84a',ph:3});ctx.restore();
+    const c=document.createElement('canvas');c.width=LW;c.height=LH;c.getContext('2d').drawImage(cv,0,0,LW,LH,0,0,LW,LH);ctx.restore();return c.toDataURL()}};
 })();
 </script>
 </body></html>
