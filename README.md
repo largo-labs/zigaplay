@@ -6,12 +6,10 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 |---|---|---|
 | **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 166 Lynties, starting with a partner from one of three random charms in Prof. Wren's lab. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker, hi-lo, Rocket (cash out before it blows up) and The Track (horse racing), plus Downtown: buildings to buy that earn chips while you're away. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
-| **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. Every blow slides you in to meet the robot in front, and a launch can be chased into the air. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Strike at Night** | A top-down RPG with active-time battles. Lift dies in 2026 and wakes as a farm boy in Larkfield, framed for his new parents' murder. Explore the classic Strike at Night maps tile by tile in any of 200+ outfits; the hooded man's knife is spellsteel, reshaped at any anvil; beating Garrick and Sir Kell gives Lift their powers. Shared-CP battles, wishes for 19 more heroes, quests. Chapters 1 and 2. | D-pad move · A talk/look · B back (hold to run) · START menu |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 | **Party Rex** | A dinosaur's birthday party gone wild: Rex runs right through the house on his own, room after room, and keeps his speed up by dashing down onto the goblin kids rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
-| **Ring Out** | A platform fighter with 20 fighters, Smash-style: hits raise the damage percent, and the higher it gets the farther a hit launches you, until someone flies off the screen. Played upright, against the CPU. | ◀◀ ▶▶ run · ▲ jump · ▼ dodge · A attack · B special (with ◀▶ ▲ ▼ for the others) · START pause |
 
 ## Lynties in 3D
 
@@ -65,20 +63,6 @@ The console stays upright for Party Rex. The picture is 180 pixels wide and as t
 - **Endless:** the first seconds are free, then each level brings faster kids and new kinds (sprinters, kids who jump, big kids, kids arriving in pairs), misses cost a little more and bonks give a little less. The best score is kept in the browser (`partyrex-runbest`).
 - SELECT turns the sound on or off. The game is the single file `games/partyrex/index.html`; it draws its own sprites and plays its own music in code.
 
-## Ring Out
-
-A one-on-one platform fighter against the CPU (level 1 to 9), with 1 to 5 stocks, on four stages: Sky Temple, Old Bridge, Lava Peak and Neon Roof.
-
-- **The 20 fighters:** Blaze, Nimbus, Tanko, Volt, Rosa, Grizz, Pip, Coral, Kai, Moss, Fang, Duke, Luma, Rivet, Zip, Onyx, Sage, Holly, Drako and Jinx. Each has its own weight, speed, jumps and fighting style, and four specials. The select screen and the pause screen list them.
-- **Moving:** ◀ ▶ walk; tap a direction twice (or keep tapping it) to run. ▲ jumps (a quick tap is a short hop) and jumps again in the air; Nimbus, Pip and Drako get a third jump.
-- **Dodging:** ▼ dodges, invincible for a moment; with ◀ or ▶ held it becomes a roll. In the air it is an air dodge, once per jump. If an attack would have hit you during the dodge, that's a **perfect dodge**: time slows, and the attacker is stunned long enough for you to punish. On a thin platform, tap ▼ twice to drop through.
-- **A attacks:** A A A is a three-hit jab; A with ◀ ▶ a side attack; ▲ then A quickly an up attack; ▼ then A quickly a low sweep; A while running a dash attack. In the air: neutral, forward, back, up and down (a spike) aerials.
-- **B specials:** B alone, B with ◀ ▶, B with ▲ (the recovery that gets you back to the stage) and B with ▼. Specials include fireballs, a charge shot (hold B), boomerangs, bombs, a laser, shockwaves, dashes, a flying flip kick, a command grab, a whip, a teleport strike, counters, reflectors and traps.
-- **Combos:** when an A attack hits, B cancels it straight into any special, and up attacks and aerials can jump-cancel. A short input buffer keeps presses made during the freeze of a hit.
-- **Damage and knockouts:** the percent at the bottom rises with every hit; knockback grows with it and with the hit's damage, and heavier fighters fly less. Fly past the edge of the screen and you lose a stock. The main stage is solid; reach its edge from below and the ledge assist pulls you up.
-- Settings and each fighter's wins are kept in the browser (`ringout-` keys). SELECT turns the sound on or off.
-- Built from `tools/ringout/src/` with `python3 tools/ringout/build.py`, which writes `games/ringout/index.html`.
-
 ## Strike at Night
 
 Strike at Night's story and its top-down world, with Spellsteel's battles, wardrobe and forge. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.
@@ -118,7 +102,6 @@ tools/lynties-3d/           the Lynties game, its 3D world and the script that b
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell), build script and label maker
-tools/ringout/              Ring Out's source (src/*.js and the page shell) and its build script
 ```
 
 ## How the console works
@@ -157,5 +140,5 @@ Lynties' 3D world uses [three.js](https://threejs.org/) (MIT, see `games/lynties
 
 ## Keyboard controls
 
-On the ZigaPlay home screen, the **KEYS** button (or the K key) opens a list of every console button with two keys each. Pick a row, press A or Enter, then press the key you want. A key already in use moves over to the new button, Backspace clears a slot, and "Reset to defaults" brings the originals back. The choices are saved in the browser (`zigaplay-keys`) and apply to every game on the console. Games can read the current keys from `ZIGAPLAY.keys`; Gearfist's PC controls screen does.
+On the ZigaPlay home screen, the **KEYS** button (or the K key) opens a list of every console button with two keys each. Pick a row, press A or Enter, then press the key you want. A key already in use moves over to the new button, Backspace clears a slot, and "Reset to defaults" brings the originals back. The choices are saved in the browser (`zigaplay-keys`) and apply to every game on the console. Games can read the current keys from `ZIGAPLAY.keys`.
 
