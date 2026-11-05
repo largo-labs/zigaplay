@@ -89,7 +89,7 @@ These save every second, both on the device (localStorage, prefixed with the gam
 
 ## Strike at Night
 
-A super simple Smash-style fighter, played sideways. You against the CPU on a night stage; the last one with stocks left wins.
+A super simple Smash-style fighter, played upright (the console stays vertical). You against the CPU on a narrow, tall night stage with platforms stacked above it; the last one with stocks left wins.
 
 - **Controls (changeable on the title screen, CONTROLS):** ◀ ▶ run (fast), ▲ jump and ▲ again in the air to double jump, A attack, B block, ▼ block. B with a direction is a special: B + ▲ up special (the recovery), B + ◀ ▶ side special, B + ▼ down special. In the air B alone dodges. Block + A grabs and throws (hold ◀ ▶ or ▲ for the direction), block + ◀ ▶ rolls, blocking just before a hit parries. ▼ in the air falls fast; ▼ twice drops through a platform. The four actions (attack, special/block, jump, block) can be moved to any of A, B, UP, DOWN or SELECT.
 - **Attacks:** A, A, A is a jab combo; ◀ ▶ + A a strong hit (a dash attack while running); ▲ + A up attack; ▼ + A a low sweep; in the air a spin kick, front, back, up and a spiking down attack. A hit that lands can be cancelled into any attack, special or jump, so combos flow.

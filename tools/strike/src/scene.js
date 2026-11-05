@@ -2,8 +2,8 @@
 const CAM={x:0,y:-60,w:420};
 function camTarget(){const A=FT.filter(f=>f.st!=='ko');let x1=-100,x2=100,y1=-90,y2=0;
   if(A.length){x1=Math.min(...A.map(f=>f.x));x2=Math.max(...A.map(f=>f.x));y1=Math.min(...A.map(f=>f.y-34));y2=Math.max(...A.map(f=>f.y))}
-  const asp=SW/SH;let w=Math.max(x2-x1+160,270),h=Math.max(y2-y1+110,160);w=Math.max(w,h*asp);w=Math.min(w,BLAST.r-BLAST.l-30);const hh=w/asp;
-  let cx=(x1+x2)/2,cy=(y1+y2)/2-12;cx=clamp(cx,BLAST.l+w/2,BLAST.r-w/2);cy=clamp(cy,BLAST.t+hh/2,Math.max(BLAST.t+hh/2,BLAST.b-hh/2+10));return{cx,cy,w}}
+  const asp=SW/SH;let w=PORT?Math.max(x2-x1+110,200):Math.max(x2-x1+160,270),h=Math.max(y2-y1+110,160);w=Math.max(w,h*asp);w=Math.min(w,BLAST.r-BLAST.l-30);const hh=w/asp;
+  let cx=(x1+x2)/2,cy=(y1+y2)/2-12-(PORT?hh*.07:0);cx=clamp(cx,BLAST.l+w/2,BLAST.r-w/2);cy=clamp(cy,BLAST.t+hh/2,Math.max(BLAST.t+hh/2,BLAST.b-hh/2+10));return{cx,cy,w}}
 function camTick(snap){const T=camTarget(),k=snap?1:.1;CAM.x+=(T.cx-CAM.x)*k;CAM.y+=(T.cy-CAM.y)*k;CAM.w+=(T.w-CAM.w)*(snap?1:.07)}
 const camS=()=>SW/CAM.w;
 function worldXf(){const S=camS();let sx=0,sy=0;if(SHAKE>0){sx=(rnd()-.5)*SHAKE;sy=(rnd()-.5)*SHAKE}ctx.setTransform(DPR*S,0,0,DPR*S,DPR*(SW/2-CAM.x*S+sx),DPR*(SH/2-CAM.y*S+sy))}
@@ -23,7 +23,7 @@ function drawSky(id){ctx.setTransform(DPR,0,0,DPR,0,0);const W=SW,Hh=SH,B=bgFor(
   const mx=W*(id==='bridge'?.5:.78)+px*30*U,my=Hh*(id==='bridge'?.5:.22)+py*40,mr=Hh*(id==='bridge'?.2:.085);
   const mg=ctx.createRadialGradient(mx,my,mr*.6,mx,my,mr*3);mg.addColorStop(0,'rgba(255,240,220,.35)');mg.addColorStop(1,'rgba(255,240,220,0)');ctx.fillStyle=mg;ctx.fillRect(mx-mr*3,my-mr*3,mr*6,mr*6);
   ctx.fillStyle='#f4ecd8';ctx.beginPath();ctx.arc(mx,my,mr,0,TAU);ctx.fill();ctx.fillStyle='rgba(180,170,150,.35)';for(const[a,b,c]of[[-.3,-.2,.22],[.25,.15,.16],[-.05,.35,.12]]){ctx.beginPath();ctx.arc(mx+a*mr,my+b*mr,c*mr,0,TAU);ctx.fill()}
-  if(id==='clock'){const cx=W*.32+px*60*U,cy=Hh*.42+py*60,cr=Hh*.3;ctx.fillStyle='#1c1228';ctx.beginPath();ctx.arc(cx,cy,cr*1.12,0,TAU);ctx.fill();ctx.fillStyle='#e8dcb8';ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(cx,cy,cr,0,TAU);ctx.fill();ctx.globalAlpha=1;
+  if(id==='clock'){const cx=W*.32+px*60*U,cy=Hh*.42+py*60,cr=Math.min(Hh,W)*.3;ctx.fillStyle='#1c1228';ctx.beginPath();ctx.arc(cx,cy,cr*1.12,0,TAU);ctx.fill();ctx.fillStyle='#e8dcb8';ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(cx,cy,cr,0,TAU);ctx.fill();ctx.globalAlpha=1;
     ctx.strokeStyle='#2a1a2a';for(let i=0;i<12;i++){const a=i/12*TAU;ctx.lineWidth=i%3?2:4;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*cr*.82,cy+Math.sin(a)*cr*.82);ctx.lineTo(cx+Math.cos(a)*cr*.94,cy+Math.sin(a)*cr*.94);ctx.stroke()}
     const d=new Date(),hA=((d.getHours()%12)+d.getMinutes()/60)/12*TAU-Math.PI/2,mA=(d.getMinutes()+d.getSeconds()/60)/60*TAU-Math.PI/2;ctx.lineCap='round';
     ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(hA)*cr*.5,cy+Math.sin(hA)*cr*.5);ctx.stroke();ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(mA)*cr*.78,cy+Math.sin(mA)*cr*.78);ctx.stroke()}

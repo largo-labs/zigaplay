@@ -1,7 +1,7 @@
 /* ================= the match, the loop, saving ================= */
 let MATCH={train:false,flash:0,count:0,tleft:0,ending:0,endT:0,res:null};
 function startMatch(o){const S=SAVE.set;setStage(o.stage);PROJ=[];FX=[];SHAKE=0;const lvl=o.train?0:(o.lvl||S.level);
-  FT=[newFighter(o.chars[0],0,false,0),newFighter(o.chars[1],1,true,lvl)];placeFighter(FT[0],-70);placeFighter(FT[1],70);
+  FT=[newFighter(o.chars[0],0,false,0),newFighter(o.chars[1],1,true,lvl)];placeFighter(FT[0],-55);placeFighter(FT[1],55);
   FT.forEach((f,i)=>{f.stocks=o.stocks?o.stocks[i]:S.stocks;f.pct=o.pct?o.pct[i]:0});
   MATCH={train:!!o.train,chars:o.chars.slice(),stage:o.stage,lvl,flash:0,count:o.resume?70:100,tleft:o.tleft!=null?o.tleft:(S.time&&!o.train?S.time*3600:0),ending:0,endT:0,res:null};
   SAVE.picks=[o.chars[0],o.chars[1],o.stage];for(const k in RAW.held)RAW.held[k]=false;camTick(true);go('fight');music(true);saveNow()}
@@ -24,7 +24,7 @@ function fightStep(){if(TAP('start')&&!MATCH.ending){SFX.back();go('pause');retu
   if(MATCH.tleft>0&&!MATCH.ending){MATCH.tleft--;if(MATCH.tleft===0)MATCH.ending=1}}
 const pctCol=p=>{const t=Math.min(1,p/160);return t<.5?`rgb(255,255,${Math.round(255-t*2*200)})`:`rgb(255,${Math.round(255-(t-.5)*2*200)},${Math.round(55-(t-.5)*2*40)})`};
 function hud(){ctx.setTransform(DPR,0,0,DPR,0,0);
-  FT.forEach((f,i)=>{const w=Math.min(118*U,SW*.4),cx=SW*(i?.7:.3),x=cx-w/2,y=SH-38*U;panel(x,y,w,33*U,'rgba(8,8,22,.72)',i?'#7aa0ff':'#ff4a5a');
+  FT.forEach((f,i)=>{const w=Math.min(118*U,SW*(PORT?.47:.4)),cx=SW*(i?(PORT?.75:.7):(PORT?.25:.3)),x=cx-w/2,y=SH-38*U;panel(x,y,w,33*U,'rgba(8,8,22,.72)',i?'#7aa0ff':'#ff4a5a');
     ctx.save();ctx.beginPath();ctx.arc(x+16*U,y+16.5*U,12*U,0,TAU);ctx.fillStyle=shade(f.c.body,-.5);ctx.fill();ctx.clip();drawHead(f.c,x+16*U,y+19*U,1.05*U);ctx.restore();
     text(f.c.name,x+32*U,y+4*U,8,i?'#7aa0ff':'#ff4a5a','left',900);
     if(MATCH.train&&i===1)text('DUMMY',x+32*U,y+19*U,7,'#a8a8c8','left',800);

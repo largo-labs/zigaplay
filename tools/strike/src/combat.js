@@ -26,7 +26,7 @@ function applyHit(a,v,b,dir){
   if(v.held){const h=v.held;h.st='air';h.holder=null;v.held=null}
   const kb=calcKB(v,b,d);let ang=b.ang;
   if(b.radial){const cx=b.cx!=null?b.cx:b.x,cy=b.cy!=null?b.cy:b.y;dir=sgn(v.x-cx)||dir;ang=Math.atan2(-((v.y-16)-cy),Math.abs(v.x-cx))*180/Math.PI;ang=clamp(ang,25,85)}
-  const r=ang*Math.PI/180,L=kb*.11;v.vx=v.vy=0;v.mv=null;v.hide=0;v.ff=0;v.counter=v.reflect=false;
+  const r=ang*Math.PI/180,L=kb*.1;v.vx=v.vy=0;v.mv=null;v.hide=0;v.ff=0;v.counter=v.reflect=false;
   if(!b.kg){/* linking hits carry the target along */v.lvx=0;v.lvy=0;v.vx=a.vx*.9;v.vy=Math.min(0,a.vy*.9);if(b.x!=null){v.x+=(b.x-v.x)*.2;v.y+=((b.y+12)-v.y)*.15}v.hs=10;v.st='hit';v.t=0;if(!v.gr)v.vy=a.vy*.9}
   else{v.lvx=Math.cos(r)*L*dir;v.lvy=-Math.sin(r)*L;
     if(v.gr&&v.lvy>0)v.lvy=-v.lvy*.6;

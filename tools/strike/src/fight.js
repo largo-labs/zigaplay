@@ -1,10 +1,11 @@
 /* ================= stages, fighters and their state machine ================= */
 const STAGES=[
-  {id:'roof',name:'ROOFTOP',main:{x1:-150,x2:150,y:0},plats:[{x1:-112,x2:-42,y:-62},{x1:42,x2:112,y:-62},{x1:-35,x2:35,y:-120}]},
-  {id:'bridge',name:'MOON BRIDGE',main:{x1:-185,x2:185,y:0},plats:[]},
-  {id:'clock',name:'CLOCK TOWER',main:{x1:-132,x2:132,y:0},plats:[{x1:-104,x2:-34,y:-56},{x1:34,x2:104,y:-56},{x1:-30,x2:30,y:-112}]},
-  {id:'docks',name:'NEON DOCKS',main:{x1:-148,x2:148,y:0},plats:[{x1:-122,x2:-52,y:-52},{x1:12,x2:92,y:-92}]}];
-const BLAST={l:-345,r:345,t:-265,b:195};
+  {id:'roof',name:'ROOFTOP',main:{x1:-120,x2:120,y:0},plats:[{x1:-96,x2:-36,y:-56},{x1:36,x2:96,y:-56},{x1:-30,x2:30,y:-110},{x1:-88,x2:-40,y:-164},{x1:40,x2:88,y:-164}]},
+  {id:'bridge',name:'MOON BRIDGE',main:{x1:-140,x2:140,y:0},plats:[]},
+  {id:'clock',name:'CLOCK TOWER',main:{x1:-110,x2:110,y:0},plats:[{x1:-88,x2:-32,y:-52},{x1:32,x2:88,y:-52},{x1:-28,x2:28,y:-104},{x1:-28,x2:28,y:-158}]},
+  {id:'docks',name:'NEON DOCKS',main:{x1:-118,x2:118,y:0},plats:[{x1:-100,x2:-44,y:-50},{x1:10,x2:80,y:-90},{x1:-62,x2:-4,y:-142}]}];
+/* the blast lines: past these you are out. The stages are narrow and tall, made for an upright screen */
+const BLAST={l:-280,r:280,t:-275,b:200};
 let STAGE=STAGES[0],PLATS=[],FT=[],PROJ=[],FX=[],SHAKE=0,UID=0,FRAME=0;
 function setStage(i){STAGE=STAGES[i];const M=STAGE.main;PLATS=[{x1:M.x1,x2:M.x2,y:M.y,solid:1},...STAGE.plats.map(p=>Object.assign({soft:1},p))]}
 function newFighter(ci,id,cpu,lvl){const c=ROSTER[ci];return{c,id,cpu,lvl,x:0,y:0,vx:0,vy:0,lvx:0,lvy:0,face:1,gr:null,jumps:1,st:'air',t:0,mv:null,pct:0,stocks:3,
@@ -92,7 +93,7 @@ function climb(f,L){f.x=L.x-L.side*10;f.y=L.y;f.gr=PLATS[0];f.vx=0;f.vy=0}
 function grabLedge(f,L){f.st='ledge';f.t=0;f.lx=L;f.mv=null;f.hide=0;f.x=L.x+L.side*7;f.y=L.y+24;f.vx=f.vy=f.lvx=f.lvy=0;f.face=-L.side;f.jumps=1;f.upUsed=f.sideUsed=f.dodged=0;f.ff=0;f.inv=Math.max(f.inv,30);f.airT=0}
 function ledgeNear(x,y,r){const M=STAGE.main;for(const s of[-1,1]){const ex=s<0?M.x1:M.x2;if(Math.hypot(x-ex,y-M.y)<r)return{x:ex,y:M.y,side:s}}return null}
 function breakShield(f){setSt(f,'dizzy');f.sh=0;f.vy=-7;f.gr=null;f.mv=null;SFX.brk();shake(6);burst(f.x,f.y-16,'#9ad8ff',14,4)}
-function respawn(f){f.x=0;f.y=-150;f.vx=f.vy=f.lvx=f.lvy=0;f.pct=0;f.gr=null;f.st='spawn';f.t=0;f.inv=150;f.jumps=1;f.upUsed=f.sideUsed=f.dodged=0;f.mv=null;f.sh=50;f.hide=0;f.face=1}
+function respawn(f){f.x=0;f.y=-205;f.vx=f.vy=f.lvx=f.lvy=0;f.pct=0;f.gr=null;f.st='spawn';f.t=0;f.inv=150;f.jumps=1;f.upUsed=f.sideUsed=f.dodged=0;f.mv=null;f.sh=50;f.hide=0;f.face=1}
 function land(f,p){f.gr=p;f.y=p.y;f.vy=0;f.lvy=0;f.jumps=1;f.ff=0;f.upUsed=f.sideUsed=f.dodged=0;const air=f.airT;f.airT=0;
   switch(f.st){case'air':setSt(f,'land');f.landN=2;if(air>8){SFX.land();dust(f.x,f.y)}break;
     case'atk':if(f.mv.d.air){const n=f.mv.d.land;setSt(f,'land');f.landN=f.mv.hitAny?Math.ceil(n/2):n;SFX.land()}break;

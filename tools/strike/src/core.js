@@ -6,8 +6,8 @@ const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const rnd=Math.random,clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sgn=v=>v<0?-1:v>0?1:0,pick=a=>a[Math.floor(rnd()*a.length)],TAU=Math.PI*2;
 const store={get(k,d){try{const v=localStorage.getItem('strike-'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('strike-'+k,JSON.stringify(v))}catch(e){}}};
 /* the view: the screen in CSS pixels, drawn at up to 2x; UI sizes follow U = height / 270 */
-let SW=480,SH=270,DPR=1,U=1;
-function resize(){DPR=Math.min(2,devicePixelRatio||1);SW=innerWidth;SH=innerHeight;cv.width=Math.round(SW*DPR);cv.height=Math.round(SH*DPR);U=Math.min(SH/270,SW/420)}
+let SW=480,SH=270,DPR=1,U=1,PORT=false;
+function resize(){DPR=Math.min(2,devicePixelRatio||1);SW=innerWidth;SH=innerHeight;cv.width=Math.round(SW*DPR);cv.height=Math.round(SH*DPR);PORT=SH>SW*1.1;U=PORT?Math.min(SW/300,SH/400):Math.min(SH/270,SW/420)}
 addEventListener('resize',resize);resize();
 const font=(px,w=800)=>`${w} ${Math.round(px*U)}px system-ui,-apple-system,"Segoe UI",sans-serif`;
 function text(s,x,y,px,col,al='left',w=800,out=null){ctx.font=font(px,w);ctx.textAlign=al;ctx.textBaseline='top';if(out){ctx.lineWidth=Math.max(2,px*U*.22);ctx.strokeStyle=out;ctx.lineJoin='round';ctx.strokeText(s,x,y)}ctx.fillStyle=col;ctx.fillText(s,x,y)}
