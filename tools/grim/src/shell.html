@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Grim Ascent</title>
+<style>
+/* Grim Ascent: one tall canvas, 180 pixels wide and 220 to 340 tall, scaled up with crisp edges.
+   Outside the ZigaPlay, touch screens get SLAM and ATTACK buttons under it (and arrows when the phone can't tilt). */
+:root{color-scheme:dark;--bg:#0c0a14;--pad:#241c34;--edge:#05040a}
+html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
+#cv{display:block;image-rendering:pixelated;image-rendering:crisp-edges;box-shadow:0 0 0 3px var(--edge),0 10px 30px rgba(0,0,0,.6);border-radius:4px}
+html.zp #cv{box-shadow:none;border-radius:0}
+#pad{position:fixed;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:space-between;padding:12px max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-bottom,0px));gap:12px;touch-action:none}
+html.touch:not(.zp) #pad{display:flex}
+.pb{width:70px;height:70px;border-radius:50%;border:3px solid var(--edge);background:var(--pad);color:#e8e4ff;font:800 15px/1 system-ui,sans-serif;box-shadow:0 4px 0 var(--edge);touch-action:none;display:grid;place-items:center;padding:0}
+.pb.on{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+.grp{display:flex;gap:12px;align-items:center}
+#bA{background:#c8303a;color:#fff}#bB{background:#5a3aa8;color:#fff}
+#bP{width:50px;height:50px;font-size:14px}
+.arr{display:none}html.notilt .arr{display:grid}
+</style>
+<div id="stage"><canvas id="cv" width="180" height="300" aria-label="Grim Ascent"></canvas></div>
+<div id="pad"><div class="grp"><button class="pb arr" id="bL" aria-label="Left">&#9664;</button><button class="pb arr" id="bR" aria-label="Right">&#9654;</button><button class="pb" id="bP" aria-label="Pause">II</button></div>
+<div class="grp"><button class="pb" id="bB" aria-label="Slam">SLAM</button><button class="pb" id="bA" aria-label="Attack">ATTACK</button></div></div>
+<script>
+(()=>{'use strict';
+/*@@SCRIPTS@@*/
+})();
+</script>
+</body></html>

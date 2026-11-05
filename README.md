@@ -10,6 +10,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 | **Party Rex** | A dinosaur's birthday party gone wild: Rex runs right through the house on his own, room after room, and keeps his speed up by dashing down onto the goblin kids rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
+| **Grim Ascent** | A Doodle Jump-style climb up a haunted tower as a little reaper in a black cloak and skull mask. Tilt the phone to steer; you bounce on the platforms by yourself. Slam into monsters with B and finish them with A combos; tougher monsters take two, three or four combos. Played upright. | Tilt steer · B slam · A attack · START pause |
 
 ## Lynties in 3D
 
@@ -63,6 +64,16 @@ The console stays upright for Party Rex. The picture is 180 pixels wide and as t
 - **Endless:** the first seconds are free, then each level brings faster kids and new kinds (sprinters, kids who jump, big kids, kids arriving in pairs), misses cost a little more and bonks give a little less. The best score is kept in the browser (`partyrex-runbest`).
 - SELECT turns the sound on or off. The game is the single file `games/partyrex/index.html`; it draws its own sprites and plays its own music in code.
 
+## Grim Ascent
+
+A little reaper (black cloak over everything, a skull mask with glowing eyes, a small sword) climbs a haunted tower that never ends. He bounces on every platform by himself, like Doodle Jump; the player steers by tilting the phone. The run ends when he falls off the bottom of the screen or loses his last heart.
+
+- **Tilt:** the game reads the phone's orientation sensor (on the ZigaPlay, from the console page, where the touches are). iPhone asks permission the first time a button is pressed. Options set the steering (auto, tilt, D-pad), tilt sensitivity, and the centre (also SELECT during a climb). Where there is no tilt (a desktop browser, or a page that is not allowed to read the sensor), the D-pad steers instead; otherwise the D-pad is for the menus.
+- **Combat:** B slams straight down (it homes in a little on a monster below). Slamming into a monster stuns it and starts a combo: press A up to four times (the fourth is a finisher), then you spring upward. A full combo (slam + four slashes) is one red pip of a monster's health: wisps and bone bats take one, ghouls and wraiths two, gargoyles three, bone golems four. A on its own is a quick slash; landing on a monster's head without slamming just bounces you off. Touching a monster from the side, or a gargoyle's fireball, costs a heart.
+- **The climb:** stone platforms, moving rune platforms, crumbling ones that break after one bounce, and springs. Slamming onto a platform bounces you higher. Platforms get further apart and monsters come more often as you go up, through four stretches: Graveyard, Cathedral, Storm and Blood Moon.
+- **Hearts and souls:** you start with three hearts (up to five). Monsters burst into souls; every 40 souls gives back a heart, and a heart floats in now and then. The best height is saved and drawn as a dashed line on the tower.
+- Built from `tools/grim/src/` with `python3 tools/grim/build.py`, which writes `games/grim/index.html`. The sprites are drawn in code; the pixel font and sprite helpers are Party Rex's.
+
 ## Strike at Night
 
 Strike at Night's story and its top-down world, with Spellsteel's battles, wardrobe and forge. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.
@@ -102,6 +113,7 @@ tools/lynties-3d/           the Lynties game, its 3D world and the script that b
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell), build script and label maker
+tools/grim/                 Grim Ascent: its source (src/*.js and the page shell) and build script
 ```
 
 ## How the console works

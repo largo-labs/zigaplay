@@ -390,6 +390,17 @@ html.wide .console.widegame .grille{display:none}
 .fx-partyrex i.bl{width:22px;height:27px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.65) 0 18%,rgba(255,255,255,0) 30%),var(--c);opacity:.75;animation:zbob 5s ease-in-out infinite}
 .fx-partyrex i.bl::after{content:"";position:absolute;left:10px;top:27px;width:1px;height:26px;background:rgba(60,15,42,.45)}
 
+/* Grim Ascent: a reaper's cloak, deep violet-black with bone-white buttons, ghost-teal eyes, and soul wisps drifting up */
+.console[data-shell=grim]{--b1:#2a2038;--b2:#1c1428;--b3:#110c1a;--edge:#05030a;--print:#eee8d4;--print2:#7af0ff;
+  --ab1:#ffffff;--ab2:#e2dcc6;--ab3:#9e967e;--abedge:#2a2418;--abshadow:#16120a;--groove1:#0e0a16;--groove2:#181222;
+  --pill1:#4a3c66;--pill2:#2e2444;--pilledge:#0a0612;--grille:#0e0a16;--bez1:#0e0a16;--bez2:#07050c;--bezink:#7af0ff;--st1:#c88aff;--st2:#7af0ff;
+  --dp1:#2e2444;--dp2:#1c1428;--dpa:#8a7ab0;--dpa2:#7af0ff;--dpsh:#05030a;--kn1:#5a4a7a;--kn2:#3a2e54;--kn3:#241c38;
+  --lcd0:#120c24;--lcd1:#4a3a8a;--lcd2:#9a8ad8;--lcd3:#d6ccf4}
+.console[data-shell=grim] .btn-ab span{color:var(--print)}
+.fx-grim .glow{left:-20%;right:-20%;bottom:-70px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(122,240,255,.18),rgba(122,240,255,0));animation:zpulse 4s ease-in-out infinite}
+.fx-grim b{bottom:-10px;width:5px;height:7px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 50% 60%,#e8fcff 0 30%,#5ab8ff 60%,rgba(90,184,255,0) 75%);opacity:0;animation:zsoul linear infinite}
+@keyframes zsoul{0%{transform:translate(0,0);opacity:0}10%{opacity:.85}80%{opacity:.6}100%{transform:translate(var(--dx),-420px);opacity:0}}
+
 /* Spellsteel: cool steel-blue with gold trim and violet spell buttons, five Embers aglow and a glint of steel */
 .console[data-shell=spellsteel]{--b1:#6482b4;--b2:#46649a;--b3:#2e4572;--edge:#0c1a34;--print:#fff0c0;--print2:#ffd86a;
   --ab1:#f0c4ff;--ab2:#a850e4;--ab3:#5e1c98;--abedge:#2a0a4a;--abshadow:#1c0630;--groove1:#2a4070;--groove2:#385688;
@@ -593,6 +604,9 @@ const CARTS=[
   {id:'partyrex',title:'Party Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#b8306e',ink:'#fff3c4',skin:'partyrex',
    blurb:'Rex runs on his own. Dash down onto the goblin kids to keep up his speed, and try not to hit the floor.',
    note:'B or A dash down · START pause'},
+  {id:'grim',title:'Grim Ascent',file:'games/grim/index.html',art:'games/grim/cart.png',label:'#140c24',ink:'#eee8d4',skin:'grim',
+   blurb:'Climb a haunted tower as a little reaper. Tilt to steer, slam monsters with B and finish them with A combos.',
+   note:'Tilt steer · B slam · A attack · START pause'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -604,6 +618,7 @@ const SKINS=[
   {id:'dronestrike',name:'Drone Strike',tag:'GAME',ed:'DRONE STRIKE EDITION',sw:['#4d5e36','#ffb627']},
   {id:'pitchfork',name:'Pitchfork Rising',tag:'GAME',ed:'PITCHFORK RISING EDITION',sw:['#933a22','#f0b830']},
   {id:'partyrex',name:'Party Rex',tag:'GAME',ed:'PARTY REX EDITION',sw:['#ff82bb','#56c25e']},
+  {id:'grim',name:'Grim Ascent',tag:'GAME',ed:'GRIM ASCENT EDITION',sw:['#1c1428','#eee8d4']},
   {id:'spellsteel',name:'Spellsteel',tag:'GAME',ed:'SPELLSTEEL EDITION',sw:['#46649a','#a850e4']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
@@ -644,6 +659,8 @@ const SKINFX={
     for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
   partyrex:()=>{const r=prng(71),C=['#ffd84a','#6ad0ff','#a8ff6a','#ffffff','#c8a8ff','#ff8a3a'];let h=`<i class="bl" style="left:3%;top:72%;--c:#6ad0ff;animation-delay:-1s"></i><i class="bl" style="left:89%;top:83%;--c:#ffd84a;animation-delay:-3s"></i>`;
     for(let i=0;i<22;i++)h+=`<b style="left:${pct(r()*100)};--c:${C[i%C.length]};--dx:${Math.round((r()-.5)*60)}px;--rot:${Math.round(360+r()*540)}deg;animation-duration:${sec(6+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
+  grim:()=>{const r=prng(97);let h='<i class="glow"></i>';
+    for(let i=0;i<12;i++)h+=`<b style="left:${pct(4+r()*90)};--dx:${Math.round((r()-.5)*40)}px;animation-duration:${sec(7+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
   spellsteel:()=>{const r=prng(67),C=['#ff5a3a','#ffb030','#6ae0ff','#9aff7a','#c88aff'];let h='<i class="gloss"></i>';
     C.forEach((c,i)=>h+=`<i class="em" style="left:${10+i*20}%;--c:${c};animation-delay:${sec(-i*.8)}"></i>`);
     for(let i=0;i<10;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(6+r()*8).toFixed(0)}px;animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
