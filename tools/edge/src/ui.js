@@ -71,6 +71,7 @@ function goSettings(){const el=scr('settings');el.innerHTML=`<div class="top"><d
   buildMenu('settings',[{label:'STOCKS',val:()=>SET.stocks,left:()=>{SET.stocks=Math.max(1,SET.stocks-1)},right:()=>{SET.stocks=Math.min(5,SET.stocks+1)}},
     {label:'CPU LEVEL',val:()=>SET.level,left:()=>{SET.level=Math.max(1,SET.level-1)},right:()=>{SET.level=Math.min(9,SET.level+1)}},
     {label:'SOUND',val:()=>muted?'OFF':'ON',left:()=>setMute(!muted),right:()=>setMute(!muted)},
+    {label:'VIBRATION',val:()=>HAPTIC.on?'ON':'OFF',left:()=>setVib(!HAPTIC.on),right:()=>setVib(!HAPTIC.on)},
     {label:'MUSIC',val:()=>SET.music?'ON':'OFF',left:()=>{SET.music=!SET.music;music(SET.music,'menu')},right:()=>{SET.music=!SET.music;music(SET.music,'menu')}},
     {label:'BACK',act:()=>{saveSet();goMain()}}],{x:24,y:80,w:280,back:()=>{saveSet();goMain()}});show('settings')}
 /* ---------- controls: change which button does what ---------- */
@@ -103,7 +104,7 @@ function controlsTick(){if(REMAP){const w=$('#ctlWait');w.classList.add('on');w.
 function goPause(){G.state='pause';showSet([]);const el=scr('pause');const tr=G.mode==='training';
   el.innerHTML=`<div class="dim"></div><div class="top"><div class="hdr">PAUSED</div><div class="sub">${tr?'TRAINING':'STOCK MATCH'} · ${G.stage.name}</div></div><div class="hint">START RESUME</div>`;
   const items=[{label:'RESUME',act:resume}];
-  if(tr)items.push({label:'DUMMY',val:()=>TRAIN.names[TRAIN.dummy],left:()=>dummyCyc(-1),right:()=>dummyCyc(1)},{label:'RESET POSITIONS',act:()=>{resetTraining();resume()}});
+  if(tr)items.push({label:'DUMMY',val:()=>TRAIN.names[TRAIN.dummy],left:()=>dummyCyc(-1),right:()=>dummyCyc(1)},{label:'RESET POSITIONS',act:()=>{resetTraining();resume()}},{label:'SHOW HITBOXES',val:()=>G.showHB?'ON':'OFF',left:()=>{G.showHB=!G.showHB},right:()=>{G.showHB=!G.showHB}});
   items.push({label:'MOVES LIST',act:()=>goMoves(G.fighters[0].ch.idx,'pause')},{label:'CONTROLS',act:()=>goControls('pause')},{label:'QUIT MATCH',act:()=>{music(SET.music,'menu');goMain()}});
   buildMenu('pause',items,{x:24,y:84,w:270,back:resume});show('pause');music(false)}
 function resume(){G.state='fight';show('hud');music(SET.music,G.stage.def.song)}

@@ -58,10 +58,10 @@ function recover(f,o,P,A,L){const S=G.stage.main,side=f.x<(S.l+S.r)/2?-1:1,Lx=si
     press(P,'special');return true}
   return true}
 /* ---------- will this attack reach them, if they keep moving as they are? ---------- */
-function willHit(f,def,o,face,lead=0){if(!def.hb||!def.hb.length)return false;const s=(def.s??6)+lead,ox=o.x+(o.vx+o.kx)*s*.8,oy=o.ground?o.y:o.y+(o.vy+o.ky)*s*.6;
+function willHit(f,def,o,face,lead=0){const HBs=f.HB&&f.HB[def.id]||def.hb;if(!HBs||!HBs.length)return false;const s=(def.s??6)+lead,ox=o.x+(o.vx+o.kx)*s*.8,oy=o.ground?o.y:o.y+(o.vy+o.ky)*s*.6;
   const low=o.st==='crouch'||o.st==='lie'?.62:1,c={x:ox,y0:oy+.25,y1:Math.max(oy+.3,oy+o.h*low-.25),r:.34};
   const mx=f.x+(f.ground?f.vx*s*.3:f.vx*s*.8),my=f.ground?f.y:f.y+f.vy*s*.5;
-  for(const b of def.hb)if(circCap(mx+face*b.x,my+b.y,b.r+.04,c))return true;return false}
+  for(const b of HBs)if(circCap(mx+face*b.x,my+b.y,b.r+.04,c))return true;return false}
 function threat(f,o){if(o.dead)return null;const m=o.mv;
   if(m&&(o.st==='attack'||o.st==='special')){const d=m.def,s=d.s??8,left=s-m.f;if(left<-1)return null;
     if(d.hb&&d.hb.length){const fake={...d,s:Math.max(0,left)};if(willHit(o,fake,f,o.face))return{t:Math.max(0,left),grab:d.hb[0].grab}}

@@ -25,13 +25,20 @@ function hudTick(){if(!HUDC||SCREEN!=='hud'&&SCREEN!=='pause')return;
   const b=G.banner;if(b!==HUDC.lastBan){HUDC.lastBan=b;HUDC.ban.classList.remove('on');if(b){void HUDC.ban.offsetWidth;HUDC.ban.textContent=b.s;HUDC.ban.style.color=b.col||'#fff';HUDC.ban.classList.add('on')}}
   HUDC.ban.style.opacity=b?Math.min(1,b.t/12):'';
   /* combos */
-  const cs=G.comboShow;if(cs){HUDC.combo.classList.add('on');const i=G.fighters.indexOf(cs.f);HUDC.combo.textContent=`${cs.n} HIT COMBO!`;HUDC.combo.style.left=i?'':'18px';HUDC.combo.style.right=i?'18px':''}else HUDC.combo.classList.remove('on');
-  HUDC.flash.style.opacity=Math.max(0,G.flash||0);
+  const cs=G.comboShow;if(cs){HUDC.combo.classList.add('on');const i=G.fighters.indexOf(cs.f);HUDC.combo.innerHTML=`${cs.n} HIT COMBO! <span style="font-size:14px;color:#fff">${Math.round(cs.dmg||0)}%</span>`;HUDC.combo.style.left=i?'':'18px';HUDC.combo.style.right=i?'18px':''}else HUDC.combo.classList.remove('on');
+  HUDC.flash.style.opacity=Math.max(0,G.flash||0);drawHB();
   /* floating words: PARRY!, COUNTER!, TECH! */
   for(const t of G.texts||[]){if(!t.el){t.el=document.createElement('div');t.el.style.cssText=`position:absolute;transform:translate(-50%,-100%);font:900 italic 16px/1 var(--ui);color:${t.col};-webkit-text-stroke:2px #10142a;paint-order:stroke fill;white-space:nowrap`;t.el.textContent=t.s;$('#tags').appendChild(t.el)}
     const[x,y]=toUI(t.f.x,t.f.y+t.f.h+.7+(60-t.t)*.012);t.el.style.left=x+'px';t.el.style.top=y+'px';t.el.style.opacity=Math.min(1,t.t/15)}
   /* training: how much the last combo did */
   if(G.mode==='training'){const T=G.trn,v=G.fighters[1],a=G.fighters[0];const d=v.pct-T.prev;if(d>0){if(a.combo<=1||v.st!=='hurt'&&!T.inC)T.dmg=0;T.dmg+=d;T.n=Math.max(1,a.combo);T.inC=1}if(v.st!=='hurt'&&v.hitlag<=0)T.inC=0;T.prev=v.pct;
     const s=`DUMMY: ${TRAIN.names[TRAIN.dummy]} · COMBO ${T.n} · ${Math.round(T.dmg*10)/10}% · START for options`;if(s!==T.s){T.s=s;HUDC.trn.textContent=s}}else if(HUDC.trn.textContent)HUDC.trn.textContent=''}
+/* training: draw the hurtboxes (yellow) and the hitboxes that are out this frame (red) */
+function drawHB(){let cv=document.getElementById('hbx');if(!cv){cv=document.createElement('canvas');cv.id='hbx';cv.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none';$('#gl').after(cv)}const on=G.showHB&&G.mode==='training';if(!on){if(cv.width>1){cv.width=1;cv.height=1}return}
+  const W=innerWidth,H=innerHeight;if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}const g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const sp=(x,y)=>{_pv.set(x,y,0).project(CAM);return[(_pv.x+1)/2*W,(1-_pv.y)/2*H]},pr=(x,y,r)=>{const a=sp(x,y),b=sp(x+r,y);return[a[0],a[1],Math.abs(b[0]-a[0])]};
+  g.lineWidth=2;for(const f of G.fighters){if(f.dead)continue;g.strokeStyle='rgba(255,230,80,.9)';g.fillStyle='rgba(255,230,80,.18)';
+    for(const c of hurtCaps(f)){const[ax,ay,r]=pr(c.ax,c.ay,c.r),[bx,by]=sp(c.bx,c.by),ang=Math.atan2(by-ay,bx-ax);g.beginPath();g.arc(ax,ay,r,ang+Math.PI/2,ang+Math.PI*1.5);g.arc(bx,by,r,ang-Math.PI/2,ang+Math.PI/2);g.closePath();g.fill();g.stroke()}}
+  g.strokeStyle='rgba(255,60,60,1)';g.fillStyle='rgba(255,40,40,.35)';for(const b of G.dbgBoxes||[]){const[x,y,r]=pr(b.x,b.y,b.r);g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke()}}
 function hudStep(){if(G.banner&&--G.banner.t<=0)G.banner=null;if(G.comboShow&&--G.comboShow.t<=0)G.comboShow=null;if(G.flash>0)G.flash=Math.max(0,G.flash-.03);
   if(G.texts){for(const t of G.texts)t.t--;for(const t of G.texts)if(t.t<=0&&t.el)t.el.remove();G.texts=G.texts.filter(t=>t.t>0)}}

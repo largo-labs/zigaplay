@@ -1,85 +1,135 @@
 /* ================= the fighters' bodies =================
-   A fighter is a jointed skeleton (Object3D joints) dressed in smooth shapes: muscles, clothes, hair, face, gear.
-   The model faces +Z with +Y up, about 1.8 units (metres) tall, feet at y = 0. It is posed by joint angles. */
+   A fighter is a skeleton of bones wearing one smooth skinned body: the torso, arms and legs are single meshes that
+   bend at the joints with no seams. Clothes are made the same way, a little larger, over the body; the head, hands,
+   feet and gear are rigid pieces held by the bones. The model faces +Z with +Y up, about 1.8 units (metres) tall,
+   feet at y = 0. It is posed by joint angles. */
 const MATS=new Map();
 function mat(color,o={}){const key=color+JSON.stringify(o);let m=MATS.get(key);if(m)return m;
   m=new THREE.MeshStandardMaterial(Object.assign({color,roughness:.75,metalness:0},o));MATS.set(key,m);return m}
-const SKINM=c=>mat(c,{roughness:.55});
+const SKINM=c=>mat(c,{roughness:.5});
 const G_SPH=new THREE.SphereGeometry(1,28,20),G_SPH_LO=new THREE.SphereGeometry(1,14,10),G_CYL=new THREE.CylinderGeometry(1,1,1,18,1),G_BOX=new THREE.BoxGeometry(1,1,1),G_CONE=new THREE.ConeGeometry(1,1,14);
-const CAPS=new Map();function capG(r,len){const k=r.toFixed(3)+'/'+len.toFixed(3);let g=CAPS.get(k);if(!g){g=new THREE.CapsuleGeometry(r,Math.max(.001,len),6,16);CAPS.set(k,g)}return g}
+const CAPS=new Map();function capG(r,len){const k=r.toFixed(3)+'/'+len.toFixed(3);let g=CAPS.get(k);if(!g){g=new THREE.CapsuleGeometry(r,Math.max(.001,len),8,16);CAPS.set(k,g)}return g}
 function mesh(geo,m,parent,pos=[0,0,0],scale=[1,1,1],rot=[0,0,0]){const o=new THREE.Mesh(geo,m);o.position.set(...pos);o.scale.set(...scale);o.rotation.set(...rot);o.castShadow=true;o.receiveShadow=false;parent.add(o);return o}
-function joint(parent,name,pos,J){const j=new THREE.Object3D();j.name=name;j.position.set(...pos);parent.add(j);J[name]=j;return j}
-/* a limb segment hanging down from a joint: a capsule from the joint to len below it, tapering by scale */
-function limb(j,r,len,m,taper=1){const g=capG(r,len-r*2);const o=mesh(g,m,j,[0,-len/2,0],[1,1,1]);if(taper!==1){o.scale.set(taper,1,taper)}return o}
-/* smooth body parts: a profile of [radius, height] points turned round the y axis, then squashed front to back */
-const LATHES=new Map();function lathe(key,prof){let g=LATHES.get(key);if(!g){g=new THREE.LatheGeometry(prof.map(([r,y])=>new THREE.Vector2(r,y)),28);LATHES.set(key,g)}return g}
-const PROF={
-  pelvis:[[.001,-.13],[.09,-.12],[.145,-.06],[.16,0],[.15,.06],[.135,.1],[.001,.11]],
-  abdomen:[[.001,-.06],[.135,-.05],[.13,.04],[.135,.12],[.15,.2],[.001,.21]],
-  chest:[[.001,-.05],[.14,-.04],[.16,.04],[.18,.13],[.19,.2],[.18,.25],[.14,.29],[.08,.31],[.001,.315]],
-  shoulders:[[.001,.17],[.18,.18],[.19,.21],[.18,.25],[.14,.29],[.08,.31],[.001,.315]],
-  band:[[.001,.03],[.162,.04],[.18,.12],[.188,.19],[.001,.195]]};
+function joint(parent,name,pos,J){const j=new THREE.Bone();j.name=name;j.position.set(...pos);parent.add(j);J[name]=j;return j}
+function mixc(a,b,t){const A=new THREE.Color(a),B=new THREE.Color(b);return'#'+A.lerp(B,t).getHexString()}
+/* ---------- skinned tubes ----------
+   Every part hangs straight at rest, so it is a stack of rings round a vertical axis. Its shape is a list of keys
+   [u, radius across, radius front-to-back, forward offset], joined by a smooth curve; u runs along the part (for a
+   limb 0 = top joint, 1 = middle joint, 2 = end joint). Each ring is weighted between the bones either side of it. */
+const cr=(a,b,c,d,t)=>.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t);
+function profAt(K,u){const n=K.length;if(u<=K[0][0])return[K[0][1],K[0][2],K[0][3]||0];if(u>=K[n-1][0])return[K[n-1][1],K[n-1][2],K[n-1][3]||0];
+  let i=1;while(u>K[i][0])i++;const a=K[Math.max(0,i-2)],b=K[i-1],c=K[i],d=K[Math.min(n-1,i+1)],t=(u-b[0])/(c[0]-b[0]);
+  return[1,2,3].map(k=>Math.max(.004,cr(a[k]||0,b[k]||0,c[k]||0,d[k]||0,t)))}
+const sstep=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+function boneW(P,u){const B=P.bones,w=P.blend;let k=0;for(let i=0;i<B.length;i++)if(u>=B[i][0])k=i;
+  if(k+1<B.length&&u>B[k+1][0]-w){const t=sstep((u-B[k+1][0]+w)/(2*w));return[B[k][1],B[k+1][1],1-t,t]}
+  if(k>0&&u<B[k][0]+w){const t=sstep((u-B[k][0]+w)/(2*w));return[B[k-1][1],B[k][1],1-t,t]}
+  return[B[k][1],0,1,0]}
+/* o: from, to (u range), grow (extra radius), flare(u) (more radius), lip (close an open end back to the body) */
+function tubeGeo(P,o){const M=18,N=o.rings||26,pos=[],si=[],sw=[],idx=[],from=o.from,to=o.to,g=o.grow||0;
+  const ring=(u,extra,shrink)=>{const[rx,rz,cz]=profAt(P.keys,u),f=o.flare?o.flare(u):0,y=P.y(u),[b0,b1,w0,w1]=boneW(P,u),base=pos.length/3;
+    const ax=shrink?rx-.002:rx*P.sx+g+f,az=shrink?rz-.002:rz*P.sz+g+f;
+    for(let j=0;j<M;j++){const a=j/M*Math.PI*2;pos.push(P.x+Math.sin(a)*(shrink?rx*P.sx-.002:ax),y,P.z+cz+Math.cos(a)*(shrink?rz*P.sz-.002:az));si.push(b0,b1,0,0);sw.push(w0,w1,0,0)}return base};
+  const rings=[];if(o.lip0)rings.push(ring(from,0,1));
+  for(let i=0;i<=N;i++)rings.push(ring(from+(to-from)*i/N));
+  if(o.lip1)rings.push(ring(to,0,1));
+  for(let r=0;r<rings.length-1;r++){const a=rings[r],b=rings[r+1];for(let j=0;j<M;j++){const j2=(j+1)%M;idx.push(a+j,b+j,a+j2,a+j2,b+j,b+j2)}}
+  const cap=(u,first)=>{const[rx,rz,cz]=profAt(P.keys,u),y=P.y(u),dir=Math.sign(P.y(u)-P.y(u+(first?.01:-.01)))||1,[b0,b1,w0,w1]=boneW(P,u),c=pos.length/3;
+    pos.push(P.x,y+dir*Math.min(rx,rz)*.35,P.z+cz);si.push(b0,b1,0,0);sw.push(w0,w1,0,0);const rr=first?rings[0]:rings[rings.length-1];
+    for(let j=0;j<M;j++){const j2=(j+1)%M;if(first)idx.push(c,rr+j,rr+j2);else idx.push(c,rr+j2,rr+j)}};
+  if(o.cap0&&!o.lip0)cap(from,true);if(o.cap1&&!o.lip1)cap(to,false);
+  /* a part that runs upward (the torso) turns the other way round, so flip its triangles to face outward */
+  if(P.y(to)>P.y(from))for(let i=0;i<idx.length;i+=3){const t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t}
+  const G=new THREE.BufferGeometry();G.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));G.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));
+  G.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));G.setIndex(idx);G.computeVertexNormals();return G}
+/* the body's shapes (radii in metres before the build widens them) */
+const TORSO=[[-.178,.02,.02],[-.162,.075,.065],[-.12,.135,.1,-.005],[-.06,.158,.112,-.01],[0,.152,.106,-.006],[.08,.134,.095],[.16,.14,.098,.006],[.26,.158,.108,.012],
+  [.34,.177,.117,.014],[.42,.19,.112,.008],[.47,.186,.098],[.51,.135,.082,-.006],[.545,.068,.06],[.6,.057,.055,.006],[.66,.055,.054,.012],[.7,.03,.03,.012]];
+const LEG=[[-.17,.04,.04],[-.1,.084,.084],[0,.096,.092],[.3,.088,.086,.004],[.7,.07,.068,.006],[.95,.058,.058,.01],[1.05,.057,.056],[1.25,.064,.06,-.013],
+  [1.55,.052,.049,-.006],[1.85,.041,.039],[2,.039,.037],[2.07,.018,.018]];
+const ARM=[[-.24,.02,.02],[-.16,.054,.052],[-.05,.07,.066],[.15,.064,.06],[.5,.057,.055,.004],[.88,.046,.046],[1,.045,.045],[1.2,.052,.048],[1.6,.043,.038],[1.95,.034,.03],[2.06,.018,.018]];
 const BUILD={slim:{w:.92,arm:.9,leg:.94},normal:{w:1,arm:1,leg:1},athletic:{w:1.04,arm:1.08,leg:1.04},heavy:{w:1.22,arm:1.2,leg:1.15},huge:{w:1.32,arm:1.32,leg:1.22}};
+const BONES=['hips','thL','knL','ftL','thR','knR','ftR','spine','chest','neck','head','shL','elL','hdL','shR','elR','hdR'];const BI=Object.fromEntries(BONES.map((b,i)=>[b,i]));
+function makeSkeleton(body,J,b){const hips=joint(body,'hips',[0,.95,0],J);
+  for(const[s,x]of[['L',1],['R',-1]]){const th=joint(hips,'th'+s,[x*.095*b.w,-.06,0],J),kn=joint(th,'kn'+s,[0,-.42,0],J);joint(kn,'ft'+s,[0,-.4,0],J)}
+  const spine=joint(hips,'spine',[0,.08,0],J),chest=joint(spine,'chest',[0,.2,0],J),neck=joint(chest,'neck',[0,.27,0],J);joint(neck,'head',[0,.09,0],J);
+  for(const[s,x]of[['L',1],['R',-1]]){const sh=joint(chest,'sh'+s,[x*.2*b.w,.2,0],J),el=joint(sh,'el'+s,[0,-.3*b.arm**.3,0],J);joint(el,'hd'+s,[0,-.27,0],J)}}
+/* the same skeleton with no body: the game uses it to know where fists, feet and blades really are */
+function simRig(L){const J={},root=new THREE.Group(),b=BUILD[L.build||'normal'],S=L.h||1,body=new THREE.Group();body.scale.setScalar(S);root.add(body);makeSkeleton(body,J,b);
+  const pt=(parent,name,p)=>{const o=new THREE.Object3D();o.position.set(...p);parent.add(o);J[name]=o};
+  pt(J.head,'headC',[0,.11,0]);for(const s of['L','R']){pt(J['hd'+s],'fist'+s,[0,-.06,.012]);pt(J['ft'+s],'toe'+s,[0,-.045,.085])}
+  if(L.weapon){const w=new THREE.Object3D();w.position.set(0,-.07,.01);J.hdR.add(w);const tip={sword:.95,greatsword:1.35,staff:.97}[L.weapon]||.9;
+    pt(w,'tip',[0,0,tip]);pt(w,'blade',[0,0,tip*.62]);if(L.weapon==='staff')pt(w,'butt',[0,0,-.7])}
+  return{root,J,body,S,b}}
 function buildRig(L){const J={},root=new THREE.Group(),b=BUILD[L.build||'normal'],S=L.h||1;
-  const skin=SKINM(L.skin),top=mat(L.top,{roughness:L.topRough??.85}),top2=mat(L.top2||L.top,{roughness:.8}),pants=mat(L.pants,{roughness:.88}),shoes=mat(L.shoes||'#2a2a30',{roughness:.6}),
-    hair=mat(L.hair||'#1a1410',{roughness:.62}),glove=L.gloves?mat(L.gloves,{roughness:.55}):skin,belt=mat(L.belt||'#2a1a10',{roughness:.6}),
-    metal=mat('#c8ccd6',{roughness:.28,metalness:.85}),dark=mat('#16141c',{roughness:.5}),white=mat('#f4f2ec',{roughness:.4});
+  const skin=SKINM(L.skin),top=mat(L.top,{roughness:L.topRough??.85}),top2=mat(L.top2||L.top,{roughness:.8}),pants=mat(L.pants,{roughness:.88}),shoes=mat(L.shoes||'#2a2a30',{roughness:.55}),
+    hair=mat(L.hair||'#1a1410',{roughness:.6}),glove=L.gloves?mat(L.gloves,{roughness:.55}):skin,belt=mat(L.belt||'#2a1a10',{roughness:.6}),
+    metal=mat('#c8ccd6',{roughness:.28,metalness:.85}),dark=mat('#16141c',{roughness:.5}),white=mat('#f4f2ec',{roughness:.35});
   const body=new THREE.Group();body.scale.setScalar(S);root.add(body);
-  const hips=joint(body,'hips',[0,.95,0],J);
-  /* pelvis and legs */
-  mesh(lathe('pelvis',PROF.pelvis),pants,hips,[0,0,0],[1.08*b.w,1,.74*b.w]);
-  if(L.belt!==null)mesh(new THREE.TorusGeometry(.155*b.w,.022,8,24),belt,hips,[0,.05,0],[1,1,.74],[Math.PI/2,0,0]);
-  const legs=[['L',1],['R',-1]];
-  for(const[s,x]of legs){const th=joint(hips,'th'+s,[x*.095*b.w,-.06,0],J),kn=joint(th,'kn'+s,[0,-.42,0],J),ft=joint(kn,'ft'+s,[0,-.4,0],J);
-    const pm=L.shorts?skin:pants;
-    if(L.shorts){mesh(G_SPH,pants,th,[0,-.1,0],[.088*b.leg,.14,.088*b.leg]);limb(th,.072*b.leg,.42,skin,1)}else limb(th,.083*b.leg,.44,pants);
-    mesh(G_SPH,pm,kn,[0,0,0],[.066*b.leg,.068,.066*b.leg]);
-    const boot=L.boots;limb(kn,.06*b.leg,.41,boot?shoes:pm);if(boot)mesh(G_CYL,shoes,kn,[0,-.22,0],[.066*b.leg,.2,.068*b.leg]);
-    if(L.kneepads)mesh(G_SPH,mat(L.kneepads,{roughness:.5}),kn,[0,-.02,.06],[.06,.07,.035]);
-    if(L.barefoot){mesh(G_SPH,skin,ft,[0,-.035,.05],[.05,.04,.12])}else{mesh(G_SPH,shoes,ft,[0,-.04,.055],[.06,.05,.135]);mesh(G_SPH,dark,ft,[0,-.072,.052],[.058,.014,.13])}
-    if(L.legwraps)mesh(G_CYL,mat(L.legwraps,{roughness:.9}),kn,[0,-.33,0],[.058,.1,.058])}
-  /* torso */
-  const spine=joint(hips,'spine',[0,.08,0],J),chest=joint(spine,'chest',[0,.2,0],J);
-  const tw=[1.12*b.w,1,.72*b.w];
-  mesh(lathe('abdomen',PROF.abdomen),L.sports||L.bare?skin:top,spine,[0,0,0],tw);
-  if(L.sports){mesh(lathe('band',PROF.band),top,chest,[0,0,.003],[tw[0]*1.02,1,tw[2]*1.06]);mesh(lathe('chest',PROF.chest),skin,chest,[0,0,0],tw)}
-  else if(L.tank){mesh(lathe('chest',PROF.chest),skin,chest,[0,0,0],tw);mesh(lathe('band',PROF.band),top,chest,[0,-.045,.002],[tw[0]*1.025,1.08,tw[2]*1.07]);for(const x of[-1,1])mesh(G_BOX,top,chest,[x*.09*b.w,.24,0],[.035,.08,.2*b.w],[0,0,x*-.25])}
-  else mesh(lathe('chest',PROF.chest),L.bare?skin:top,chest,[0,0,0],tw);
-  if(L.pecs&&L.bare)for(const x of[-1,1])mesh(G_SPH,skin,chest,[x*.078*b.w,.15,.1*b.w],[.08*b.w,.055,.04]);
-  if(L.gi){/* a martial-arts jacket: lapels and a skirt of cloth over the hips */mesh(G_BOX,top2,chest,[.03,.08,.118*b.w],[.03,.26,.012],[0,0,-.35]);mesh(G_BOX,top2,chest,[-.03,.08,.118*b.w],[.03,.26,.012],[0,0,.35]);
-    mesh(G_CYL,top,hips,[0,-.03,0],[.18*b.w,.18,.13*b.w])}
-  if(L.coat)mesh(G_CYL,top,hips,[0,-.13,0],[.19*b.w,.32,.14*b.w]);
-  if(L.armor){const am=mat(L.armor,{roughness:.3,metalness:.8});mesh(G_SPH,am,chest,[0,.1,.02],[.2*b.w,.2,.135*b.w]);mesh(G_SPH,am,spine,[0,.06,.01],[.155*b.w,.13,.115*b.w]);
-    for(const x of[-1,1])mesh(G_SPH,am,chest,[x*.2*b.w,.21,0],[.1,.07,.1]);mesh(G_CYL,am,hips,[0,-.08,0],[.18*b.w,.16,.13*b.w])}
-  if(L.vest)mesh(G_SPH,mat(L.vest,{roughness:.7}),chest,[0,.08,.01],[.19*b.w,.19,.128*b.w]).scale.set(.19*b.w,.19,.128*b.w);
-  if(L.scarf){const sm=mat(L.scarf,{roughness:.9});mesh(new THREE.TorusGeometry(.09,.035,8,20),sm,chest,[0,.28,0],[1,1,1],[Math.PI/2,0,0]);mesh(G_BOX,sm,chest,[.05,.2,-.1],[.08,.22,.02],[.3,0,.2])}
-  /* neck and head */
-  const neck=joint(chest,'neck',[0,.27,0],J),head=joint(neck,'head',[0,.09,0],J);
-  mesh(G_CYL,skin,neck,[0,.02,0],[.058*Math.min(1.25,b.w),.12,.058*Math.min(1.25,b.w)]);
-  mesh(G_SPH,skin,head,[0,.11,0],[.1,.122,.112]);
-  mesh(G_SPH,skin,head,[0,.052,.018],[.076,.064,.08]);
-  mesh(G_SPH,skin,head,[0,.085,.112],[.016,.024,.02]);
-  for(const x of[-1,1]){mesh(G_SPH_LO,skin,head,[x*.1,.1,0],[.018,.03,.02]);
-    mesh(G_SPH_LO,white,head,[x*.038,.115,.093],[.019,.013,.01]);mesh(G_SPH_LO,mat(L.eyes||'#3a2618',{roughness:.2}),head,[x*.038,.115,.1],[.009,.009,.006]);
-    mesh(G_BOX,hair,head,[x*.04,.142,.1],[.04,.008,.012],[0,0,x*-.12])}
-  mesh(G_BOX,mat(mixc(L.skin,'#7a2a2a',.45),{roughness:.5}),head,[0,.05,.107],[.04,.008,.01]);
+  /* the skeleton */
+  makeSkeleton(body,J,b);const{hips,spine,chest,neck,head}=J;
+  root.updateMatrixWorld(true);const skel=new THREE.Skeleton(BONES.map(n=>J[n]));
+  const skinned=(geo,m)=>{const o=new THREE.SkinnedMesh(geo,m);body.add(o);o.bind(skel,o.matrixWorld);o.castShadow=true;o.frustumCulled=false;return o};
+  /* the parts, in body space at rest */
+  const parts={torso:{x:0,z:0,y:u=>.95+u,keys:TORSO,sx:b.w,sz:b.w**.8,bones:[[-9,BI.hips],[.08,BI.spine],[.28,BI.chest],[.55,BI.neck],[.64,BI.head]],blend:.05}};
+  for(const[s,x]of[['L',1],['R',-1]]){const hy=.89,kl=.42,sl=.4;
+    parts['leg'+s]={x:x*.095*b.w,z:0,y:u=>hy-(u<=1?u*kl:kl+(u-1)*sl),keys:LEG,sx:b.leg,sz:b.leg,bones:[[-9,BI.hips],[-.06,BI['th'+s]],[1,BI['kn'+s]],[2.03,BI['ft'+s]]],blend:.09};
+    const sy=.95+.08+.2+.2,ul=.3*b.arm**.3,fl=.27;
+    parts['arm'+s]={x:x*.2*b.w,z:0,y:u=>sy-(u<=1?u*ul:ul+(u-1)*fl),keys:ARM,sx:b.arm,sz:b.arm,bones:[[-9,BI.chest],[-.07,BI['sh'+s]],[1,BI['el'+s]],[2.02,BI['hd'+s]]],blend:.07}}
+  const T=parts.torso,rxAt=y=>profAt(TORSO,y)[0]*b.w,rzAt=y=>profAt(TORSO,y)[1]*b.w**.8;
+  /* the body itself */
+  skinned(tubeGeo(T,{from:-.178,to:.7,rings:40,cap0:1,cap1:1}),skin);
+  for(const s of['L','R']){skinned(tubeGeo(parts['leg'+s],{from:-.17,to:2.07,rings:34,cap0:1,cap1:1}),skin);skinned(tubeGeo(parts['arm'+s],{from:-.24,to:2.06,rings:32,cap0:1,cap1:1}),skin)}
+  /* clothes over it */
+  const bare=L.bare||L.sports||L.tank;
+  skinned(tubeGeo(T,{from:-.178,to:L.gi||L.coat?-.02:.035,grow:.009,cap0:1,lip1:1,rings:12}),pants);
+  if(L.sports)skinned(tubeGeo(T,{from:.2,to:.4,grow:.008,lip0:1,lip1:1,rings:8}),top);
+  else if(L.tank)skinned(tubeGeo(T,{from:-.02,to:.455,grow:.01,lip0:1,lip1:1,rings:18}),top);
+  else if(!L.bare)skinned(tubeGeo(T,{from:L.gi||L.coat?-.13:-.02,to:.53,grow:.012,flare:u=>u<0?-u*.18:0,lip0:1,lip1:1,rings:22}),top);
+  for(const s of['L','R']){const leg=parts['leg'+s],arm=parts['arm'+s];
+    if(L.shorts)skinned(tubeGeo(leg,{from:-.17,to:.42,grow:.011,flare:u=>Math.max(0,u)*.012,cap0:1,lip1:1,rings:10}),pants);
+    else skinned(tubeGeo(leg,{from:-.17,to:L.boots?1.5:1.96,grow:.01,flare:L.gi?u=>Math.max(0,u-.4)*.022:null,cap0:1,lip1:1,rings:28}),pants);
+    if(L.boots)skinned(tubeGeo(leg,{from:1.32,to:2.07,grow:.016,lip0:1,cap1:1,rings:12}),shoes);
+    if(L.legwraps)skinned(tubeGeo(leg,{from:1.62,to:1.98,grow:.007,lip0:1,lip1:1,rings:6}),mat(L.legwraps,{roughness:.9}));
+    if(!bare){const end=L.longSleeves?1.9:L.gi?1.42:.52;skinned(tubeGeo(arm,{from:-.19,to:end,grow:.011,flare:L.gi?u=>Math.max(0,u-.6)*.035:null,cap0:1,lip1:1,rings:Math.round(8+end*10)}),top)}
+    if(L.wraps)skinned(tubeGeo(arm,{from:1.68,to:2,grow:.006,lip0:1,lip1:1,rings:6}),mat(L.wraps,{roughness:.9}));
+    if(L.gauntlets)skinned(tubeGeo(arm,{from:1.25,to:2.03,grow:.014,flare:u=>Math.max(0,1.5-u)*.02,lip0:1,cap1:1,rings:10}),mat(L.gauntlets,{roughness:.3,metalness:.8}))}
+  /* belt, lapels, skirts and gear over the torso */
+  if(L.belt!==null){const r=rxAt(.03)+.012;mesh(new THREE.TorusGeometry(1,.016/r,8,32),belt,hips,[0,.03,-.003],[r,r,(rzAt(.03)+.012)],[Math.PI/2,0,0])}
+  if(L.coat)mesh(new THREE.CylinderGeometry(.17*b.w,.24*b.w,.42,24,1,true),mat(L.top,{roughness:.85,side:THREE.DoubleSide}),hips,[0,-.22,-.005],[1,1,.74]);
+  if(L.tank)for(const x of[-1,1])mesh(capG(.018,.2),top,chest,[x*.09*b.w,.2,0],[1,1,.45],[Math.PI/2,0,x*.18]);
+  if(L.pecs&&L.bare)for(const x of[-1,1])mesh(G_SPH,skin,chest,[x*.075*b.w,.13,.07*b.w],[.075*b.w,.05,.045]);
+  if(L.armor){const am=mat(L.armor,{roughness:.3,metalness:.8});mesh(G_SPH,am,chest,[0,.09,.015],[.2*b.w,.21,.135*b.w]);mesh(G_SPH,am,spine,[0,.05,.008],[.16*b.w,.13,.118*b.w]);
+    for(const x of[-1,1])mesh(G_SPH,am,J['sh'+(x>0?'L':'R')],[x*.012,.0,0],[.095*b.arm,.075*b.arm,.095*b.arm]);mesh(new THREE.CylinderGeometry(.17*b.w,.2*b.w,.16,24,1,true),mat(L.armor,{roughness:.3,metalness:.8,side:THREE.DoubleSide}),hips,[0,-.07,0],[1,1,.74])}
+  if(L.vest)mesh(G_SPH,mat(L.vest,{roughness:.7}),chest,[0,.08,.01],[.19*b.w,.19,.128*b.w]);
+  if(L.scarf){const sm=mat(L.scarf,{roughness:.9});mesh(new THREE.TorusGeometry(.075,.032,10,24),sm,neck,[0,0,.005],[1,1,.95],[Math.PI/2,0,0]);mesh(capG(.03,.16),sm,chest,[.05,.17,-.1],[1,1,.35],[.3,0,.2])}
+  /* the head */
+  const nw=Math.min(1.25,b.w);
+  mesh(G_SPH,skin,head,[0,.11,0],[.098,.12,.11]);
+  mesh(G_SPH,skin,head,[0,.058,.016],[.074,.066,.082]);
+  mesh(G_SPH,skin,head,[0,.025,.05],[.04,.03,.04]);
+  mesh(capG(.012,.03),skin,head,[0,.088,.108],[1,1,1.1],[.25,0,0]);mesh(G_SPH_LO,skin,head,[0,.075,.112],[.017,.012,.014]);
+  for(const x of[-1,1]){mesh(G_SPH_LO,skin,head,[x*.098,.1,-.004],[.016,.028,.02]);
+    mesh(G_SPH_LO,white,head,[x*.037,.114,.091],[.019,.012,.01]);mesh(G_SPH_LO,mat(L.eyes||'#3a2618',{roughness:.15}),head,[x*.037,.114,.098],[.0085,.0085,.005]);
+    mesh(capG(.006,.03),hair,head,[x*.039,.137,.1],[1,1,.8],[0,0,Math.PI/2+x*.12])}
+  mesh(capG(.006,.022),mat(mixc(L.skin,'#8a3a3a',.4),{roughness:.45}),head,[0,.048,.104],[1,1,.8],[0,0,Math.PI/2]);
   hairStyle(L,head,hair,mat,skin);
-  if(L.beard)mesh(G_SPH,hair,head,[0,.03,.05],[.088,.075,.08]);
-  if(L.mask)mesh(G_SPH,mat(L.mask,{roughness:.8}),head,[0,.06,.03],[.103,.06,.1]);
-  if(L.headband){const hb=mat(L.headband,{roughness:.85});mesh(new THREE.TorusGeometry(.108,.014,8,28),hb,head,[0,.15,0],[1,1.05,1],[Math.PI/2+.12,0,0]);mesh(G_BOX,hb,head,[.02,.12,-.12],[.03,.1,.008],[.5,0,.3]);mesh(G_BOX,hb,head,[-.02,.11,-.125],[.03,.12,.008],[.6,0,-.2])}
-  /* arms */
-  const arms=[['L',1],['R',-1]];J.handTip={};
-  for(const[s,x]of arms){const sh=joint(chest,'sh'+s,[x*.2*b.w,.2,0],J),el=joint(sh,'el'+s,[0,-.3*b.arm**.3,0],J),hd=joint(el,'hd'+s,[0,-.27,0],J);
-    const sleeve=L.tank||L.sports||L.bare?skin:top,fore=L.longSleeves?top:skin;
-    mesh(G_SPH,sleeve,sh,[x*.01,-.02,0],[.068*b.arm,.068*b.arm,.066*b.arm]);
-    limb(sh,.058*b.arm,.31,sleeve);mesh(G_SPH,L.longSleeves?top:sleeve,el,[0,0,0],[.05*b.arm,.05*b.arm,.05*b.arm]);limb(el,.047*b.arm,.27,fore);
-    if(L.wraps)mesh(G_CYL,mat(L.wraps,{roughness:.9}),el,[0,-.2,0],[.052,.1,.052]);
-    if(L.gloves==='boxing'||L.boxing){mesh(G_SPH,mat(L.boxing||'#c8202a',{roughness:.35}),hd,[0,-.06,.01],[.075,.085,.08]);mesh(G_CYL,white,hd,[0,.0,0],[.05,.05,.05])}
-    else{const gm=L.gloves?glove:skin;mesh(G_SPH,gm,hd,[0,-.05,.008],[.045,.06,.034]);mesh(G_SPH_LO,gm,hd,[x*-.03,-.03,.02],[.015,.03,.015],[0,0,x*.5])}
-    if(L.gauntlets)mesh(G_CYL,mat(L.gauntlets,{roughness:.3,metalness:.8}),el,[0,-.17,0],[.058,.17,.058])}
+  if(L.beard){mesh(G_SPH,hair,head,[0,.04,.045],[.086,.068,.08]);mesh(capG(.008,.04),hair,head,[0,.062,.108],[1,1,.8],[0,0,Math.PI/2])}
+  if(L.mask)mesh(G_SPH,mat(L.mask,{roughness:.8}),head,[0,.058,.028],[.102,.062,.1]);
+  if(L.headband){const hbm=mat(L.headband,{roughness:.85});mesh(new THREE.TorusGeometry(.106,.013,8,32),hbm,head,[0,.148,-.004],[1,1.06,1.04],[Math.PI/2+.12,0,0]);mesh(capG(.01,.1),hbm,head,[.02,.11,-.12],[1.4,1,.4],[.5,0,.3]);mesh(capG(.01,.12),hbm,head,[-.02,.1,-.125],[1.4,1,.4],[.6,0,-.2])}
+  /* hands: a closed fist with a thumb, or boxing gloves */
+  for(const[s,x]of[['L',1],['R',-1]]){const hd=J['hd'+s];
+    if(L.boxing){mesh(G_SPH,mat(L.boxing,{roughness:.32}),hd,[0,-.065,.012],[.072,.085,.078]);mesh(G_SPH,mat(L.boxing,{roughness:.32}),hd,[x*-.045,-.05,.04],[.03,.04,.03]);mesh(G_CYL,white,hd,[0,-.005,0],[.046,.05,.046])}
+    else{const gm=L.gloves?glove:skin;mesh(capG(.036,.02),gm,hd,[0,-.05,.006],[1.05,1,.85]);mesh(capG(.02,.05),gm,hd,[0,-.085,.022],[1,1,1],[0,0,Math.PI/2]);
+      mesh(capG(.013,.025),gm,hd,[x*-.034,-.045,.026],[1,1,1],[.4,0,x*.5])}}
+  /* feet: shoes with soles, or bare feet */
+  for(const s of['L','R']){const ft=J['ft'+s];
+    if(L.barefoot){mesh(capG(.036,.11),skin,ft,[0,-.04,.05],[1.05,.7,1],[Math.PI/2,0,0]);mesh(G_SPH_LO,skin,ft,[0,-.03,-.005],[.04,.045,.045])}
+    else{mesh(capG(.044,.12),shoes,ft,[0,-.04,.052],[1.08,.78,1],[Math.PI/2,0,0]);mesh(capG(.046,.13),dark,ft,[0,-.068,.05],[1.1,.28,1],[Math.PI/2,0,0])}}
+  if(L.kneepads)for(const s of['L','R'])mesh(G_SPH,mat(L.kneepads,{roughness:.5}),J['kn'+s],[0,-.02,.06],[.06,.07,.035]);
   /* weapons, held in the right hand */
   if(L.weapon)J.weapon=buildWeapon(L.weapon,J.hdR,metal,mat);
-  root.traverse(o=>{if(o.isMesh){o.castShadow=true}});
+  root.traverse(o=>{if(o.isMesh)o.castShadow=true});
   return{root,J,body,S}}
 function hairStyle(L,head,hair,mat,skin){const st=L.hairStyle||'short';
   if(st==='bald')return;
@@ -99,7 +149,6 @@ function buildWeapon(kind,hand,metal,mat){const w=new THREE.Group();hand.add(w);
   if(kind==='greatsword'){mesh(G_CYL,grip,w,[0,0,0],[.02,.26,.02],[Math.PI/2,0,0]);mesh(G_BOX,gold,w,[0,0,.13],[.24,.04,.04]);mesh(G_BOX,metal,w,[0,0,.72],[.11,.022,1.14]);mesh(G_CONE,metal,w,[0,0,1.33],[.055,.1,.011],[Math.PI/2,0,0]);tip=1.35}
   if(kind==='staff'){mesh(G_CYL,mat('#7a4a22',{roughness:.6}),w,[0,0,.12],[.022,1.7,.022],[Math.PI/2,0,0]);for(const z of[-.72,.96])mesh(G_CYL,gold,w,[0,0,z],[.026,.06,.026],[Math.PI/2,0,0]);tip=.97}
   w.userData.tip=tip;w.userData.kind=kind;return w}
-function mixc(a,b,t){const A=new THREE.Color(a),B=new THREE.Color(b);return'#'+A.lerp(B,t).getHexString()}
 /* ---------- posing ----------
    A pose names joint angles in degrees, in plain terms:
    arm{L,R}: [forward, out to the side, twist]   elbow{L,R}: bend   leg{L,R}: [forward, out]   knee{L,R}: bend

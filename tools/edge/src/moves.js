@@ -8,7 +8,7 @@ const N0={
   jab3:{nm:'JAB FINISH',s:5,a:3,r:20,anim:{wind:'jab3W',hit:'jab3'},hb:[{x:.78,y:1.02,r:.38,dmg:5,kb:48,kg:85,ang:40}],light:1},
   ftilt:{nm:'SIDE ATTACK',s:6,a:3,r:19,anim:{wind:'ftiltW',hit:'ftilt'},hb:[{x:.88,y:1.12,r:.4,dmg:9,kb:30,kg:95,ang:35}],light:1},
   utilt:{nm:'UP ATTACK',s:5,a:5,r:18,anim:{wind:'utiltW',hit:'utilt'},hb:[{x:.25,y:2.0,r:.48,dmg:7,kb:36,kg:112,ang:88}],light:1},
-  dtilt:{nm:'LOW SWEEP',s:5,a:3,r:15,anim:{wind:'dtiltW',hit:'dtilt'},hb:[{x:.85,y:.25,r:.38,dmg:6,kb:30,kg:72,ang:30}],light:1},
+  dtilt:{nm:'LOW SWEEP',s:5,a:3,r:15,anim:{wind:'dtiltW',hit:'dtilt'},hb:[{x:.85,y:.25,r:.38,dmg:6,kb:22,kg:62,ang:80}],light:1},
   dash:{nm:'DASH ATTACK',s:6,a:8,r:22,anim:{wind:'dashA',hit:'dashA'},hb:[{x:.65,y:.95,r:.48,dmg:9,kb:46,kg:80,ang:50}],dashy:1},
   fsmash:{nm:'SIDE SMASH',s:15,a:3,r:32,anim:{wind:'fsmashW',hit:'fsmash'},hb:[{x:1.0,y:1.12,r:.5,dmg:15,kb:36,kg:104,ang:38}],smash:1,chargeAt:9},
   usmash:{nm:'UP SMASH',s:11,a:5,r:32,anim:{wind:'usmashW',hit:'usmash'},hb:[{x:.15,y:2.25,r:.58,dmg:14,kb:38,kg:100,ang:88}],smash:1,chargeAt:6},
@@ -33,7 +33,7 @@ const WEAPON_ANIM={ftilt:{wind:'slashW',hit:'slash'},fsmash:{wind:'slashW',hit:'
 const STY={
   martial:{dmg:1,s:0,r:1,kb:1,kg:1,reach:0},
   quick:{dmg:.82,s:-1,r:.82,kb:.95,kg:.92,reach:-.02},
-  heavy:{dmg:1.28,s:2,r:1.2,kb:1.08,kg:1.08,reach:.08},
+  heavy:{dmg:1.24,s:2,r:1.2,kb:1.06,kg:1.0,reach:.08},
   sword:{dmg:1.08,s:1,r:1.05,kb:1,kg:1,reach:.5,weapon:1},
   staff:{dmg:1,s:1,r:1,kb:1,kg:1,reach:.55,weapon:1},
   boxer:{dmg:1.05,s:-1,r:.9,kb:1,kg:1,reach:.05}};

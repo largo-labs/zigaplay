@@ -99,6 +99,8 @@ const _tmp=new Float32Array(PK.length),_tmp2=new Float32Array(PK.length);
 function sampleMove(m,out){const d=m.def,a=d.anim||{},f=m.f,s=d.s??6,ac=d.a??3,len=m.len||d.len||(s+ac+(d.r??12));
   const W=POSE[a.wind]||POSE.stance,Hh=POSE[a.hit]||POSE.stance,E=POSE[a.end||a.hit]||Hh,B=POSE.stance;
   if(a.fn)return a.fn(m,out);
-  if(f<s){const t=f/Math.max(1,s);return t<.65?mixPose(B,W,ease(t/.65),out):mixPose(W,Hh,ease((t-.65)/.35),out)}
-  if(f<s+ac){return mixPose(Hh,E,(f-s)/Math.max(1,ac),out)}
-  const t=clamp((f-s-ac)/Math.max(1,len-s-ac),0,1);return mixPose(E,m.air?POSE.fall:B,ease(t),out)}
+  /* wind up, then swing so the strike travels through the hit frames (where its hitboxes ride on the limb), then recover */
+  const sw0=s*.78,sw1=Math.max(sw0+1,s+ac-1);
+  if(f<sw0)return mixPose(B,W,ease(f/Math.max(1,sw0)),out);
+  if(f<=sw1){const t=(f-sw0)/(sw1-sw0);return mixPose(W,Hh,1-(1-t)*(1-t),out)}
+  const t=clamp((f-sw1)/Math.max(1,len-sw1),0,1);return mixPose(E,m.air?POSE.fall:B,ease(t),out)}

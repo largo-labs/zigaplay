@@ -121,4 +121,19 @@ function musicTick(){const c=AC;if(!c||!mus.on)return;const S=SONGS[mus.song]||S
       const l=S.lead[s%S.lead.length];if(l&&mus.song!=='menu'||l&&s%2===0)tone({f:mf(l),d:spb*1.7,type:'square',v:.045,t0:t,dest:musicBus,a:.01})}
     mus.step++;mus.next+=spb}}
 function music(on,song){if(song&&song!==mus.song){mus.song=song;mus.step=0}mus.on=on;const c=AC;if(on&&c){mus.next=Math.max(mus.next,c.currentTime+.05);if(!mus.timer)mus.timer=setInterval(musicTick,60)}}
+/* ================= vibration on hits =================
+   Phones that have it (Android) get navigator.vibrate. iPhone Safari has no vibrate, but it gives a haptic tick when a
+   switch control is flipped, so a hidden one is flipped instead. It lives in the console page when on the ZigaPlay,
+   since that is where the player's touches are. */
+const HAPTIC={on:store.get('vib',true),lab:null,last:0};
+function hapticWin(){try{return ZP?window.parent:window}catch(e){return window}}
+function haptic(ms){if(!HAPTIC.on)return;const now=performance.now();if(now-HAPTIC.last<40)return;HAPTIC.last=now;const w=hapticWin();
+  try{const nv=w.navigator;if(typeof nv.vibrate==='function'){nv.vibrate(ms);return}}catch(e){}
+  try{if(!HAPTIC.lab||!HAPTIC.lab.isConnected){const d=w.document,id='zp-haptic';let lab=d.getElementById(id+'-l');
+      if(!lab){const inp=d.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id=id;inp.tabIndex=-1;inp.setAttribute('aria-hidden','true');
+        lab=d.createElement('label');lab.id=id+'-l';lab.htmlFor=id;lab.setAttribute('aria-hidden','true');
+        for(const e of[inp,lab])e.style.cssText='position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;pointer-events:none';d.body.append(inp,lab)}
+      HAPTIC.lab=lab}
+    HAPTIC.lab.click();if(ms>=40)setTimeout(()=>{try{HAPTIC.lab.click()}catch(e){}},70)}catch(e){}}
+function setVib(on){HAPTIC.on=on;store.set('vib',on);if(on)haptic(20)}
 function setMute(m){muted=m;store.set('mute',m);if(master)master.gain.value=m?0:.6}

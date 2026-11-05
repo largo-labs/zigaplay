@@ -4,13 +4,13 @@ const DEAD=.22,BUF=6;
 class Fighter{
   constructor(ch,slot,pad,cpu){this.ch=ch;this.slot=slot;this.pad=pad;this.cpu=cpu;this.b=ch.b;this.w=ch.b.w;this.N=buildNormals(ch);this.SPC=buildSpecials(ch);
     this.h=1.8*(ch.look.h||1);this.stocks=G.stocks;this.pct=0;this.kos=0;this.falls=0;this.dealt=0;this.taken=0;this.bestCombo=0;this.combo=0;this.comboT=0;this.parries=0;
-    this.buf={};this.clock=0;this.shieldHP=50;this.callout=null}
+    this.buf={};this.clock=0;this.shieldHP=50;this.callout=null;this.comboDmg=0;simInit(this)}
   spawnAt(x,y,face){Object.assign(this,{x,y,vx:0,vy:0,kx:0,ky:0,face,ground:null,st:'air',t:0,mv:null,hitlag:0,hitstun:0,inv:0,armor:0,flash:0,jumps:1,upUsed:false,sideUsed:false,
       adodged:false,ff:false,dropT:0,dead:false,deadT:0,halo:null,tumble:false,lastHit:null,ledge:null,regrab:0,shieldStun:0,shieldAt:-99,holder:null,holding:null,chargeF:0,lag:0,runDir:0,walkPh:0,tech:-99,dizzy:0});
     const p=platUnder(x,y+.1);if(p&&Math.abs(p.y-y)<.05)this.land(p,true)}
   /* the buffered press: a button pressed in the last few frames still counts (even during a hit's freeze) */
-  pr(a){if(this.clock-(this.buf[a]??-99)<=BUF){this.buf[a]=-99;return true}return false}
-  peek(a){return this.clock-(this.buf[a]??-99)<=BUF}
+  pr(a,win=BUF){if(this.clock-(this.buf[a]??-99)<=win){this.buf[a]=-99;return true}return false}
+  peek(a,win=BUF){return this.clock-(this.buf[a]??-99)<=win}
   get sx(){return Math.abs(this.pad.x)>DEAD?this.pad.x:0}
   get sy(){return Math.abs(this.pad.y)>DEAD?this.pad.y:0}
   sideOK(){if(this.ground)return true;if(this.sideUsed)return false;this.sideUsed=true;return true}
@@ -35,7 +35,7 @@ class Fighter{
   airJump(){this.jumps--;this.vy=this.b.dj;this.ky=Math.max(0,this.ky);this.kx*=.5;this.ff=false;this.st='air';this.t=0;this.flip=24;SFX.djump();fxRing(this);this.vx=this.sx*this.b.air}
   land(p,quiet){const was=this.st,mv=this.mv;this.ground=p;this.y=p.y;this.vy=0;this.jumps=1;this.upUsed=this.sideUsed=this.adodged=false;this.ff=false;this.flip=0;this.regrab=0;
     if(!quiet&&!this.dead){fxDust(this,3);SFX.land()}
-    if(was==='attack'&&mv.def.air){this.mv=null;this.st='land';this.t=0;this.lag=mv.def.land;return}
+    if(was==='attack'&&mv.def.air){this.mv=null;this.st='land';this.t=0;this.lag=mv.connected?Math.ceil(mv.def.land/2):mv.def.land;return}
     if(was==='special'){const d=mv.def;if(d.landEnds){if(d.onLand)d.onLand(this,mv);this.mv=null;this.st='land';this.t=0;this.lag=d.land||10;return}return}
     if(was==='helpless'){this.st='land';this.t=0;this.lag=18;return}
     if(was==='adodge'){this.st='land';this.t=0;this.lag=8;return}
@@ -123,10 +123,12 @@ class Fighter{
     if(this.ground){if(d.dashy&&m.f<d.s+d.a)this.vx*=.94;else this.vx*=.8}else{this.vx=lerp(this.vx,this.sx*this.b.air,.04);if(this.wantFF()){this.ff=true;this.vy=-this.b.ffall}}
     if(d.light&&!d.air&&this.ground&&m.f<=3&&!m.connected&&this.pr('special')){this.smashDir();return}
     if(d.next&&m.f>=d.s+d.a&&this.pr('attack')){this.startMove(this.N[d.next]);return}
-    if(m.connected&&m.f>=d.s){/* a landed A attack can be extended: B into any special, A into another attack, jump out of up attacks and aerials */
-      if(this.pr('special')){this.special();return}
-      if(!d.next&&!d.smash&&m.f>=d.s+d.a&&this.peek('attack')){this.pr('attack');if(this.ground)this.groundAttack();else this.aerial();return}
-      if((d.air||d.id==='utilt')&&this.peek('jump')&&(this.ground||this.jumps>0)){this.pr('jump');this.mv=null;if(this.ground)this.jump(true);else this.airJump();return}}
+    if(m.connected&&m.f>=d.s){/* a landed A attack can be extended: B into any special, A into another attack, jump out of tilts and aerials.
+        Presses count from a little earlier while chaining, and the end of a move that hit recovers faster. */
+      const W=12;if(m.f>=d.s+d.a)m.f+=.5;
+      if(this.pr('special',W)){this.special();return}
+      if(!d.next&&!d.smash&&m.f>=d.s+d.a&&this.peek('attack',W)){this.pr('attack',W);if(this.ground)this.groundAttack();else this.aerial();return}
+      if((d.air||d.light||d.id==='dash')&&m.f>=d.s+d.a-1&&this.peek('jump',W)&&(this.ground||this.jumps>0)){this.pr('jump',W);this.mv=null;if(this.ground){this.st='jsq';this.t=1}else this.airJump();return}}
     if(!d.air)this.tryLedge(1);
     if(m.f>=d.len)this.endMove()}
   s_special(P){const m=this.mv,d=m.def;m.f++;

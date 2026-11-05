@@ -22,7 +22,7 @@ function cloudTex(){return TEX.cloud||(TEX.cloud=canvasTex(128,64,(g,w,h)=>{for(
 function softPlat(group,p,mat,edge){box(group,mat,(p.l+p.r)/2,p.y-.15,0,p.r-p.l,.3,2.2);if(edge)box(group,edge,(p.l+p.r)/2,p.y-.02,1.12,p.r-p.l,.06,.04,false)}
 const STAGES=[
  {id:'sky',name:'SKY SANCTUARY',song:'sky',desc:'Floating ruins above the clouds at sunset. Three platforms.',
-  main:{l:-8,r:8,y:0,th:2.6},soft:[{l:-5.3,r:-1.9,y:3.1},{l:1.9,r:5.3,y:3.1},{l:-1.7,r:1.7,y:6.1}],blast:{l:-21,r:21,b:-11,t:19},spawn:{x:0,y:9},
+  main:{l:-8,r:8,y:0,th:2.6},soft:[{l:-5.3,r:-1.9,y:3.1},{l:1.9,r:5.3,y:3.1},{l:-1.7,r:1.7,y:6.1}],blast:{l:-21,r:21,b:-11,t:21},spawn:{x:0,y:9},
   light:{sun:'#ffd8a8',sunI:2.6,sunPos:[6,12,10],hemiSky:'#ffc8a0',hemiGround:'#5a4a6a',hemi:.85,rim:'#ff9ac8',fog:'#e8a8a0',fogN:40,fogF:140},
   build(g,st){sky(g,[[0,'#2a3a8a'],[.45,'#c87aa8'],[.62,'#ffb878'],[.7,'#ffe0b0'],[1,'#e8a8a0']]);
     sprite(g,glowTex('rgba(255,236,190,1)'),18,10,-80,40,1,true);
@@ -35,7 +35,7 @@ const STAGES=[
     for(let i=0;i<6;i++){const isl=new THREE.Mesh(new THREE.ConeGeometry(2+rnd()*3,4+rnd()*3,6),stone);isl.position.set((rnd()-.5)*90,-4+rnd()*20,-40-rnd()*40);isl.rotation.x=Math.PI;g.add(isl);box(g,grass,isl.position.x,isl.position.y+(isl.geometry.parameters.height/2),isl.position.z,isl.geometry.parameters.radius*1.6,.3,isl.geometry.parameters.radius*1.2,false)}},
   tick(g,t){for(const s of g.userData.clouds||[]){s.position.x+=s.userData.drift;if(s.position.x>90)s.position.x=-90}}},
  {id:'orbit',name:'FINAL HORIZON',song:'orbit',desc:'One long flat stage above a planet. Nowhere to hide.',
-  main:{l:-9,r:9,y:0,th:1.6},soft:[],blast:{l:-22,r:22,b:-11,t:19},spawn:{x:0,y:8},
+  main:{l:-9,r:9,y:0,th:1.6},soft:[],blast:{l:-22,r:22,b:-11,t:21},spawn:{x:0,y:8},
   light:{sun:'#cfe0ff',sunI:2.4,sunPos:[-6,10,10],hemiSky:'#7a8aff',hemiGround:'#1a1030',hemi:.7,rim:'#6af0ff',fog:'#06081a',fogN:60,fogF:200},
   build(g,st){sky(g,[[0,'#02030a'],[.5,'#0a0e2a'],[1,'#1a0a2a']]);
     const pts=new Float32Array(1800*3);for(let i=0;i<1800;i++){const a=rnd()*Math.PI*2,b=Math.acos(rnd()*2-1),r=150;pts[i*3]=r*Math.sin(b)*Math.cos(a);pts[i*3+1]=r*Math.cos(b);pts[i*3+2]=-Math.abs(r*Math.sin(b)*Math.sin(a))}
@@ -51,7 +51,7 @@ const STAGES=[
     for(const x of[-4,4]){const e=new THREE.Mesh(new THREE.SphereGeometry(.35,16,12),glow);e.position.set(x,-1.7,1.2);g.add(e)}},
   tick(g,t){if(g.userData.planet)g.userData.planet.rotation.y+=.0006}},
  {id:'dock',name:'HARBOR NIGHT',song:'dock',desc:'A moonlit pier with crates to stand on.',
-  main:{l:-9.5,r:9.5,y:0,th:1.2},soft:[{l:-6.4,r:-3.4,y:2.8},{l:3.4,r:6.4,y:2.8}],blast:{l:-22,r:22,b:-10,t:18},spawn:{x:0,y:8},
+  main:{l:-9.5,r:9.5,y:0,th:1.2},soft:[{l:-6.4,r:-3.4,y:2.8},{l:3.4,r:6.4,y:2.8}],blast:{l:-22,r:22,b:-10,t:20},spawn:{x:0,y:8},
   light:{sun:'#a8c0ff',sunI:1.8,sunPos:[-5,10,9],hemiSky:'#3a4a8a',hemiGround:'#0a0a14',hemi:.75,rim:'#ffb060',fog:'#0a1024',fogN:30,fogF:120},
   build(g,st){sky(g,[[0,'#04060f'],[.55,'#121a3a'],[.68,'#2a2a5a'],[1,'#0a1024']]);
     sprite(g,glowTex('rgba(240,240,255,1)'),-22,22,-90,22,1,true);
@@ -67,7 +67,7 @@ const STAGES=[
     for(const x of[-8.6,8.6]){box(g,dark,x,1.3,-1.3,.18,2.6,.18);const l=new THREE.PointLight('#ffb060',14,9,1.6);l.position.set(x,2.7,-1);g.add(l);sprite(g,glowTex('rgba(255,190,100,1)'),x,2.7,-1.2,2.2,1,true)}},
   tick(g,t){if(g.userData.water)g.userData.water.position.y=-6+Math.sin(t/60)*.06}},
  {id:'temple',name:'TEMPLE GARDEN',song:'temple',desc:'A mountain temple in spring, petals on the wind.',
-  main:{l:-8.5,r:8.5,y:0,th:2.2},soft:[{l:-6.2,r:-2.6,y:3.3},{l:2.6,r:6.2,y:3.3}],blast:{l:-21,r:21,b:-11,t:19},spawn:{x:0,y:8},
+  main:{l:-8.5,r:8.5,y:0,th:2.2},soft:[{l:-6.2,r:-2.6,y:3.3},{l:2.6,r:6.2,y:3.3}],blast:{l:-21,r:21,b:-11,t:21},spawn:{x:0,y:8},
   light:{sun:'#fff0d8',sunI:2.5,sunPos:[7,12,9],hemiSky:'#c8e0ff',hemiGround:'#6a5a4a',hemi:.9,rim:'#ffd0e0',fog:'#d8e0f0',fogN:35,fogF:130},
   build(g,st){sky(g,[[0,'#6aa0e8'],[.55,'#b8d8f8'],[.7,'#f0f0f4'],[1,'#d8e0f0']]);
     const stone=new THREE.MeshStandardMaterial({map:stoneTex(),roughness:.9,color:'#d8d0c0'}),red=new THREE.MeshStandardMaterial({color:'#b82a20',roughness:.6}),roof=new THREE.MeshStandardMaterial({color:'#2a3448',roughness:.5}),wood=new THREE.MeshStandardMaterial({map:woodTex(),roughness:.8});
