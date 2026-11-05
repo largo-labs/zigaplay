@@ -10,16 +10,25 @@ function orientAngle(){try{const o=TW.screen&&TW.screen.orientation;if(o&&typeof
 function onTilt(e){if(e.gamma==null&&e.beta==null)return;const a=((orientAngle()%360)+360)%360,g=e.gamma||0,b=e.beta||0;
   const lat=a===90?b:a===270?-b:a===180?-g:g;TILT.abs=lat;TILT.raw=lat-TILT.center;TILT.lastAt=performance.now();TILT.live=true}
 try{TW.addEventListener('deviceorientation',onTilt)}catch(e){addEventListener('deviceorientation',onTilt)}
-function requestTilt(){if(TILT.perm==='granted'||TILT.perm==='denied'||TILT.perm==='asking')return;let D=null;try{D=TW.DeviceOrientationEvent}catch(e){}
-  if(D&&typeof D.requestPermission==='function'){TILT.perm='asking';try{D.requestPermission().then(r=>{TILT.perm=r==='granted'?'granted':'denied'}).catch(()=>{TILT.perm='unknown'})}catch(e){TILT.perm='unknown'}}
+/* ask on every press and release until it is granted: iPhone only shows its question when asked inside a tap,
+   and a release counts as a tap where a press may not. A page shown inside another site's page (the Claude app) is
+   refused without a question, so then tilt can't work and the screen sides or the D-pad steer. */
+function requestTilt(){if(TILT.perm==='granted')return;let D=null;try{D=TW.DeviceOrientationEvent}catch(e){}
+  if(D&&typeof D.requestPermission==='function'){try{D.requestPermission().then(r=>{TILT.perm=r==='granted'?'granted':'denied'}).catch(()=>{})}catch(e){}}
   else TILT.perm='granted'}
 function tiltLive(){if(performance.now()-TILT.lastAt>1500)TILT.live=false;return TILT.live}
 const tiltOK=()=>tiltLive();
-function tiltLine(){if(tiltLive())return'TILT ON: TILT TO STEER';if(TILT.perm==='denied')return'TILT OFF: D-PAD STEERS';
-  let D=null;try{D=TW.DeviceOrientationEvent}catch(e){}if(D&&typeof D.requestPermission==='function'&&TILT.perm!=='granted')return'PRESS A TO ALLOW TILT';return'NO TILT HERE: D-PAD STEERS'}
-function steerMode(){if(OPT.steer==='pad')return'pad';if(OPT.steer==='tilt')return'tilt';return tiltLive()?'tilt':'pad'}
+function tiltLine(){if(tiltLive())return'TILT ON: TILT TO STEER';if(TILT.perm==='denied')return'TILT IS BLOCKED HERE\nHOLD A SIDE OF THE SCREEN';
+  let D=null;try{D=TW.DeviceOrientationEvent}catch(e){}if(D&&typeof D.requestPermission==='function'&&TILT.perm!=='granted')return'PRESS A TO ALLOW TILT';return'NO TILT SIGNAL HERE\nHOLD A SIDE OF THE SCREEN'}
+function steerMode(){if(TOUCH.side)return'pad';if(OPT.steer==='pad')return'pad';if(OPT.steer==='tilt')return'tilt';return tiltLive()?'tilt':'pad'}
 function steerX(){if(steerMode()==='tilt'){let v=TILT.raw/FULL[OPT.sens];if(Math.abs(v)<.08)v=0;return clamp(v*Math.abs(v)*.35+v*.65,-1,1)}
-  return(held.right?1:0)-(held.left?1:0)}
+  return(held.right?1:0)-(held.left?1:0)||TOUCH.side}
+/* holding the left or right half of the picture steers too (the screen itself takes touches, also on the ZigaPlay) */
+const TOUCH={id:null,side:0};
+function touchSide(e){const r=cv.getBoundingClientRect();TOUCH.side=e.clientX<r.left+r.width/2?-1:1}
+cv.addEventListener('pointerdown',e=>{unlock();requestTilt();if(G.state!=='play')return;e.preventDefault();TOUCH.id=e.pointerId;touchSide(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+cv.addEventListener('pointermove',e=>{if(e.pointerId===TOUCH.id)touchSide(e)});
+for(const t of['pointerup','pointercancel','lostpointercapture'])cv.addEventListener(t,e=>{if(e.pointerId===TOUCH.id){TOUCH.id=null;TOUCH.side=0}});
 function centerTilt(){TILT.center=TILT.abs;TILT.raw=0;store.set('tc',TILT.center);SFX.pick();if(G.state==='play'||G.state==='pause')G.pops.push({x:P.x,y:P.y-30,s:'TILT CENTERED',c:'#7af0ff',t:50})}
 document.documentElement.classList.toggle('notilt',true);setInterval(()=>RT.classList.toggle('notilt',steerMode()!=='tilt'),500);
 
@@ -48,7 +57,7 @@ for(const[id,btn]of[['bA','a'],['bB','b'],['bP','start'],['bL','left'],['bR','ri
   el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}el.classList.add('on');input(btn,true)});
   const up=()=>{if(!el.classList.contains('on'))return;el.classList.remove('on');input(btn,false)};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up)}
 /* tapping the picture: choose on the menus (and asks for tilt on iPhone) */
-cv.addEventListener('pointerup',()=>{if(G.state==='title'||G.state==='how'||(G.state==='over'&&G.overT<=0))input('a',true),input('a',false)});
+cv.addEventListener('pointerup',()=>{requestTilt();if(G.state==='title'||G.state==='how'||(G.state==='over'&&G.overT<=0))input('a',true),input('a',false)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();music(false)}});
 addEventListener('resize',()=>{if(G.state==='title'&&targetH()!==H)applySize();else fit()});
 

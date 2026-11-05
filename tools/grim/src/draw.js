@@ -55,7 +55,7 @@ function drawHUD(){ctx.fillStyle='rgba(7,5,12,.55)';ctx.fillRect(0,0,W,13);txt(m
   if(P.st==='combo'){const cx=W/2,y=H-22;ctx.fillStyle='rgba(7,5,12,.7)';ctx.fillRect(cx-34,y-2,68,16);
     for(let i=0;i<4;i++){ctx.fillStyle=i<P.comboN?'#ffd84a':'#3a2c52';ctx.fillRect(cx-28+i*14,y+1,10,6)}txt(P.comboN<4?'A':'',cx+30,y,'#ff6a7a',1,'c');
     ctx.fillStyle='#c88aff';ctx.fillRect(cx-32,y+10,Math.round(64*P.comboT/56),2)}
-  if(steerMode()==='pad'&&G.t<300&&G.state==='play'&&P.st!=='combo')txt('◀ ▶ STEER',W/2,H-12,'#c8b8ff',1,'c',K)}
+  if(steerMode()==='pad'&&!TOUCH.side&&G.t<300&&G.state==='play'&&P.st!=='combo')txt('HOLD A SIDE OR ◀ ▶',W/2,H-12,'#c8b8ff',1,'c',K)}
 /* ---------- the screens ---------- */
 function panel(x,y,w,h){ctx.fillStyle='rgba(7,5,12,.82)';ctx.fillRect(x,y,w,h);ctx.fillStyle='#463463';ctx.fillRect(x,y,w,1);ctx.fillRect(x,y+h-1,w,1);ctx.fillRect(x,y,1,h);ctx.fillRect(x+w-1,y,1,h)}
 function menuList(items,sel,y){items.forEach((s,i)=>{const on=i===sel;txt((on?'▶ ':'  ')+s,W/2-50,y+i*12,on?'#ffd84a':'#c8c0e0',1,'l',K)})}
@@ -64,13 +64,13 @@ function drawTitle(){const z=ZONES[0];ctx.drawImage(skyCanvas(z),0,0);ctx.drawIm
   txt('GRIM',W/2,22,'#eee8d4',3,'c','#463463');txt('ASCENT',W/2,46,'#c88aff',2,'c',K);
   menuList(['CLIMB','HOW TO PLAY','OPTIONS'],G.menu,76);
   if(G.best)txt('BEST '+G.best+'M',W/2,118,'#ffd84a',1,'c',K);
-  txt(tiltLine(),W/2,132,tiltOK()?'#7af0ff':'#ff9aaa',1,'c',K)}
-const HOWTO=['TILT YOUR PHONE','LEFT AND RIGHT TO STEER.','YOU BOUNCE ON PLATFORMS','BY YOURSELF. GO UP!','','B: SLAM DOWN. SLAM INTO','A MONSTER TO START A','COMBO, THEN PRESS A 4X.','RED PIPS = COMBOS TO KILL.','','A ALONE: A QUICK SLASH.','SLAM A PLATFORM TO','BOUNCE HIGHER.','FALL OFF OR LOSE YOUR','HEARTS AND YOU DIE.','SELECT: CENTER TILT.'];
-function drawHow(){drawTitleBack();panel(6,10,W-12,H-20);txt('HOW TO PLAY',W/2,16,'#c88aff',1,'c');HOWTO.forEach((s,i)=>txt(s,W/2,30+i*11,s.startsWith('B:')||s.startsWith('A ')?'#ffd84a':'#e8e4ff',1,'c'));txt('B BACK',W/2,H-18,'#8a80b0',1,'c')}
+  tiltLine().split('\n').forEach((l,i)=>txt(l,W/2,132+i*10,tiltOK()?'#7af0ff':'#ff9aaa',1,'c',K))}
+const HOWTO=['TILT YOUR PHONE LEFT AND','RIGHT TO STEER (OR HOLD A','SIDE OF THE SCREEN).','YOU BOUNCE ON PLATFORMS','BY YOURSELF. GO UP!','','B: SLAM DOWN. SLAM INTO','A MONSTER TO START A','COMBO, THEN PRESS A 4X.','RED PIPS = COMBOS TO KILL.','','A ALONE: A QUICK SLASH.','SLAM A PLATFORM TO','BOUNCE HIGHER.','FALL OFF OR LOSE YOUR','HEARTS AND YOU DIE.','SELECT: CENTER TILT.'];
+function drawHow(){drawTitleBack();panel(6,10,W-12,H-20);txt('HOW TO PLAY',W/2,16,'#c88aff',1,'c');HOWTO.forEach((s,i)=>txt(s,W/2,28+i*10,s.startsWith('B:')||s.startsWith('A ')?'#ffd84a':'#e8e4ff',1,'c'));txt('B BACK',W/2,H-18,'#8a80b0',1,'c')}
 function drawTitleBack(){ctx.drawImage(skyCanvas(ZONES[0]),0,0);ctx.drawImage(silCanvas(ZONES[0]),0,H-200)}
 function optItems(){return['STEER: '+{auto:'AUTO',tilt:'TILT',pad:'D-PAD'}[OPT.steer],'TILT: '+['LOW','MEDIUM','HIGH'][OPT.sens],'CENTER TILT','SOUND: '+(muted?'OFF':'ON'),'VIBRATION: '+(HAP.on?'ON':'OFF'),'BACK']}
 function drawOpts(){drawTitleBack();panel(6,20,W-12,150);txt('OPTIONS',W/2,26,'#c88aff',1,'c');menuList(optItems(),G.menu,44);
-  txt(tiltLine(),W/2,124,tiltOK()?'#7af0ff':'#ff9aaa',1,'c');const g=TILT.raw;if(TILT.live)txt('TILT '+(g>0?'+':'')+Math.round(g)+'°',W/2,138,'#8a80b0',1,'c');txt('◀ ▶ CHANGE · B BACK',W/2,152,'#8a80b0',1,'c')}
+  tiltLine().split('\n').forEach((l,i)=>txt(l,W/2,118+i*9,tiltOK()?'#7af0ff':'#ff9aaa',1,'c'));const g=TILT.raw;if(TILT.live)txt('TILT '+(g>0?'+':'')+Math.round(g)+'°',W/2,138,'#8a80b0',1,'c');txt('◀ ▶ CHANGE · B BACK',W/2,152,'#8a80b0',1,'c')}
 function drawPause(){panel(14,50,W-28,118);txt('PAUSED',W/2,58,'#c88aff',1,'c');menuList(['RESUME','CENTER TILT','OPTIONS','QUIT'],G.menu,78);txt(meters(P.y)+'M · '+G.kills+' KILLS',W/2,140,'#e8e4ff',1,'c')}
 function drawOver(){panel(10,40,W-20,150);txt('YOU DIED',W/2,50,'#ff3a4a',2,'c',K);
   const rows=[['HEIGHT',G.maxH+'M'],['BEST',G.best+'M'],['KILLS',G.kills],['SOULS',G.souls],['BEST COMBO',G.bestCombo+' HITS']];

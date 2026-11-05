@@ -401,6 +401,13 @@ html.wide .console.widegame .grille{display:none}
 .fx-grim b{bottom:-10px;width:5px;height:7px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 50% 60%,#e8fcff 0 30%,#5ab8ff 60%,rgba(90,184,255,0) 75%);opacity:0;animation:zsoul linear infinite}
 @keyframes zsoul{0%{transform:translate(0,0);opacity:0}10%{opacity:.85}80%{opacity:.6}100%{transform:translate(var(--dx),-420px);opacity:0}}
 
+/* Gray Squares: gray. The body, the buttons, the screen. Nothing moves. */
+.console[data-shell=grayskin]{--b1:#c4c4c4;--b2:#b8b8b8;--b3:#acacac;--edge:#3a3a3a;--print:#6a6a6a;--print2:#8a8a8a;
+  --ab1:#b0b0b0;--ab2:#909090;--ab3:#707070;--abedge:#3a3a3a;--abshadow:#5a5a5a;--groove1:#a4a4a4;--groove2:#b0b0b0;
+  --pill1:#a0a0a0;--pill2:#808080;--pilledge:#4a4a4a;--grille:#a0a0a0;--bez1:#6a6a6a;--bez2:#5a5a5a;--bezink:#c8c8c8;--st1:#8a8a8a;--st2:#9a9a9a;
+  --dp1:#7a7a7a;--dp2:#5e5e5e;--dpa:#9a9a9a;--dpa2:#d0d0d0;--dpsh:#3a3a3a;--kn1:#8a8a8a;--kn2:#6a6a6a;--kn3:#4a4a4a;
+  --lcd0:#3a3a3a;--lcd1:#6a6a6a;--lcd2:#a8a8a8;--lcd3:#cfcfcf}
+
 /* Spellsteel: cool steel-blue with gold trim and violet spell buttons, five Embers aglow and a glint of steel */
 .console[data-shell=spellsteel]{--b1:#6482b4;--b2:#46649a;--b3:#2e4572;--edge:#0c1a34;--print:#fff0c0;--print2:#ffd86a;
   --ab1:#f0c4ff;--ab2:#a850e4;--ab3:#5e1c98;--abedge:#2a0a4a;--abshadow:#1c0630;--groove1:#2a4070;--groove2:#385688;
@@ -557,6 +564,10 @@ html.wide .keylist .cap{line-height:15px;font-size:12px;min-width:22px}
    - A game can take the buttons directly by defining   window.ZPCart = { input(btn, isDown) {...} }
      where btn is 'up' 'down' 'left' 'right' 'a' 'b' 'start' 'select' (and 'c' 'd' for face4 carts). The call happens inside the player's
      own press, so a game may start sound from it.
+   - A game steered by tilting the phone sets `tilt:true`: the console then asks the phone for its motion sensor on
+     the player's own taps (iPhone only allows the question inside a tap), and the game reads 'deviceorientation'
+     on the console's window. Inside another site's page (the Claude app) the browser refuses it; the Home Screen
+     edition can read it.
    - A widescreen game sets `wide:true`: while it runs, the console takes its sideways shape (D-pad left,
      screen middle, buttons right), and with the phone upright it turns itself a quarter turn so the game
      gets the long side of the screen.
@@ -604,9 +615,12 @@ const CARTS=[
   {id:'partyrex',title:'Party Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#b8306e',ink:'#fff3c4',skin:'partyrex',
    blurb:'Rex runs on his own. Dash down onto the goblin kids to keep up his speed, and try not to hit the floor.',
    note:'B or A dash down · START pause'},
-  {id:'grim',title:'Grim Ascent',file:'games/grim/index.html',art:'games/grim/cart.png',label:'#140c24',ink:'#eee8d4',skin:'grim',
+  {id:'grim',title:'Grim Ascent',file:'games/grim/index.html',art:'games/grim/cart.png',label:'#140c24',ink:'#eee8d4',skin:'grim',tilt:true,
    blurb:'Climb a haunted tower as a little reaper. Tilt to steer, slam monsters with B and finish them with A combos.',
    note:'Tilt steer · B slam · A attack · START pause'},
+  {id:'squares',title:'Gray Squares',file:'games/squares/index.html',art:'games/squares/cart.png',label:'#bdbdbd',ink:'#5c5c5c',skin:'grayskin',
+   blurb:'Press the square. Get a square. Buy things that make squares. It is gray. You will not stop.',
+   note:'A press · ▲▼ choose · A buy · START menu'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -619,6 +633,7 @@ const SKINS=[
   {id:'pitchfork',name:'Pitchfork Rising',tag:'GAME',ed:'PITCHFORK RISING EDITION',sw:['#933a22','#f0b830']},
   {id:'partyrex',name:'Party Rex',tag:'GAME',ed:'PARTY REX EDITION',sw:['#ff82bb','#56c25e']},
   {id:'grim',name:'Grim Ascent',tag:'GAME',ed:'GRIM ASCENT EDITION',sw:['#1c1428','#eee8d4']},
+  {id:'grayskin',name:'Gray Squares',tag:'GAME',ed:'GRAY SQUARES EDITION',sw:['#b8b8b8','#909090']},
   {id:'spellsteel',name:'Spellsteel',tag:'GAME',ed:'SPELLSTEEL EDITION',sw:['#46649a','#a850e4']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
@@ -920,7 +935,7 @@ function askInput(b){const a=askState;if(!a)return;if(b==='up'||b==='left'){a.i=
 
 /* ---------- buttons ---------- */
 const held=new Set();let repT=0,comboT=0;
-function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
+function pressBtn(b){sfxUnlock();motionAsk();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
   if(held.has(b))return;held.add(b);
   if(held.has('start')&&held.has('select')&&state==='game'){clearTimeout(comboT);comboT=setTimeout(()=>{if(held.has('start')&&held.has('select'))powerSwitch()},800)}
   switch(state){
@@ -944,6 +959,10 @@ function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}cat
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='skins'){skinsInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'off':if(b==='start'||b==='a')powerSwitch();break}}
+/* tilt carts: ask for the motion sensor inside the player's taps until the phone says yes */
+let motionOK=false;function motionAsk(){if(motionOK||state!=='game'||!(cur&&cur.tilt))return;try{const D=window.DeviceOrientationEvent;
+  if(D&&typeof D.requestPermission==='function')D.requestPermission().then(r=>{if(r==='granted')motionOK=true}).catch(()=>{});else motionOK=true}catch(e){}}
+for(const ev of['touchend','pointerup','click'])addEventListener(ev,motionAsk,{capture:true,passive:true});
 function releaseBtn(b){if(!held.has(b))return;held.delete(b);if(state==='game')toCart(b,false)}
 function releaseAll(){for(const b of[...held])releaseBtn(b);setDpad(null);try{toCartStick(0,0)}catch(e){}stickDirs.clear();stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stick.querySelectorAll('.notch').forEach(n=>n.classList.remove('on'))}
 function toCart(b,down){const w=cartWin();if(!w)return;

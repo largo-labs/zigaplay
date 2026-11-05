@@ -11,6 +11,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 | **Party Rex** | A dinosaur's birthday party gone wild: Rex runs right through the house on his own, room after room, and keeps his speed up by dashing down onto the goblin kids rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
 | **Grim Ascent** | A Doodle Jump-style climb up a haunted tower as a little reaper in a black cloak and skull mask. Tilt the phone to steer; you bounce on the platforms by yourself. Slam into monsters with B and finish them with A combos; tougher monsters take two, three or four combos. Played upright. | Tilt steer · B slam · A attack · START pause |
+| **Gray Squares** | Press the square to make a square, then buy things that make squares for you: an extra square, a small pile, a gray shelf, all the way up to gray everything. Everything is gray. It keeps going while you are away. | A press · ▲▼ choose · A buy · SELECT ×1/×10/max · START menu |
 
 ## Lynties in 3D
 
@@ -68,11 +69,19 @@ The console stays upright for Party Rex. The picture is 180 pixels wide and as t
 
 A little reaper (black cloak over everything, a skull mask with glowing eyes, a small sword) climbs a haunted tower that never ends. He bounces on every platform by himself, like Doodle Jump; the player steers by tilting the phone. The run ends when he falls off the bottom of the screen or loses his last heart.
 
-- **Tilt:** the game reads the phone's orientation sensor (on the ZigaPlay, from the console page, where the touches are). iPhone asks permission the first time a button is pressed. Options set the steering (auto, tilt, D-pad), tilt sensitivity, and the centre (also SELECT during a climb). Where there is no tilt (a desktop browser, or a page that is not allowed to read the sensor), the D-pad steers instead; otherwise the D-pad is for the menus.
+- **Tilt:** the game reads the phone's orientation sensor (on the ZigaPlay, from the console page, where the touches are). Its cartridge sets `tilt:true`, so the console asks the phone for the sensor inside the player's taps (iPhone only asks inside a tap). A page shown inside another site's page, such as the published ZigaPlay inside the Claude app, is refused by the browser; the Home Screen (offline) edition can read it. Holding the left or right half of the screen also steers. Options set the steering (auto, tilt, D-pad), tilt sensitivity, and the centre (also SELECT during a climb). Where there is no tilt (a desktop browser, or a page that is not allowed to read the sensor), the D-pad steers instead; otherwise the D-pad is for the menus.
 - **Combat:** B slams straight down (it homes in a little on a monster below). Slamming into a monster stuns it and starts a combo: press A up to four times (the fourth is a finisher), then you spring upward. A full combo (slam + four slashes) is one red pip of a monster's health: wisps and bone bats take one, ghouls and wraiths two, gargoyles three, bone golems four. A on its own is a quick slash; landing on a monster's head without slamming just bounces you off. Touching a monster from the side, or a gargoyle's fireball, costs a heart.
 - **The climb:** stone platforms, moving rune platforms, crumbling ones that break after one bounce, and springs. Slamming onto a platform bounces you higher. Platforms get further apart and monsters come more often as you go up, through four stretches: Graveyard, Cathedral, Storm and Blood Moon.
 - **Hearts and souls:** you start with three hearts (up to five). Monsters burst into souls; every 40 souls gives back a heart, and a heart floats in now and then. The best height is saved and drawn as a dashed line on the tower.
 - Built from `tools/grim/src/` with `python3 tools/grim/build.py`, which writes `games/grim/index.html`. The sprites are drawn in code; the pixel font and sprite helpers are Party Rex's.
+
+## Gray Squares
+
+A deliberately bland idle game. The screen is a number, a gray square and a list. Pressing the square makes squares; the things you buy make squares every second, and every 25 of the same thing doubles what each of them makes. Deadpan lines appear at milestones. Now and then the square turns slightly darker for six seconds, and pressing it then is worth a minute of everything. After enough squares in one run, START offers to begin again, slightly warmer: everything restarts, but makes 10% more for each warmth, and the gray turns a little more beige each time.
+
+- Holding A keeps pressing (or buying), faster the longer you hold. B also presses the square, so two thumbs can take turns. SELECT switches buying between one, ten and as many as you can afford.
+- It saves every few seconds and when the console is turned off, and on return it adds what the squares made while you were away (up to a day).
+- Built from `tools/squares/src/` with `python3 tools/squares/build.py`, which writes `games/squares/index.html`.
 
 ## Strike at Night
 
@@ -114,6 +123,7 @@ tools/dronestrike/          Drone Strike's source (src/*.js), its build script a
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell), build script and label maker
 tools/grim/                 Grim Ascent: its source (src/*.js and the page shell) and build script
+tools/squares/              Gray Squares: its page shell, script and build script
 ```
 
 ## How the console works
