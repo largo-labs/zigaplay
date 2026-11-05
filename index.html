@@ -331,7 +331,7 @@ html.wide .console.widegame .grille{display:none}
 @keyframes zsuit{0%,100%{transform:translateY(0) rotate(var(--r))}50%{transform:translateY(-9px) rotate(calc(var(--r) + 9deg))}}
 .fx-chipcity .gloss{top:-30%;bottom:-30%;left:0;width:38%;will-change:transform;background:linear-gradient(100deg,rgba(255,240,190,0),rgba(255,240,190,.2) 50%,rgba(255,240,190,0));animation:zsweep 7s ease-in-out infinite 1s}
 
-/* Strike at Night: night-navy body, ember-red buttons, a crescent moon over Millbrook's rooftops, embers rising */
+/* Strike at Night: night-navy body, ember-red buttons, a crescent moon over the rooftops, embers rising */
 .console[data-shell=drownedmoon]{--b1:#1e2448;--b2:#141836;--b3:#0b0d22;--edge:#04050f;--print:#e8ecff;--print2:#ff9a66;
   --ab1:#ffa48a;--ab2:#d8342a;--ab3:#86140e;--abedge:#3a0806;--abshadow:#260604;--groove1:#0a0c20;--groove2:#121634;
   --pill1:#5a6078;--pill2:#3a4058;--pilledge:#0a0c1c;--grille:#0a0c20;--bez1:#0b0d1e;--bez2:#05060f;--bezink:#ff9a66;--st1:#ff6a3a;--st2:#ffd36a;
@@ -378,17 +378,19 @@ html.wide .console.widegame .grille{display:none}
 @keyframes zsway2{0%,100%{transform:rotate(17deg)}50%{transform:rotate(12deg)}}
 .fx-pitchfork b{bottom:18px;width:3px;height:3px;border-radius:50%;background:#ffd05a;box-shadow:0 0 6px 2px rgba(255,150,30,.8);opacity:0;animation:zember 6s linear infinite}
 
-/* Party Rex: bubblegum-pink body, dino-green buttons, confetti drifting down and a couple of balloons bobbing */
-.console[data-shell=partyrex]{--b1:#ffa6d0;--b2:#ff82bb;--b3:#f262a4;--edge:#3a0f2a;--print:#fff3fa;--print2:#ffe27a;
-  --ab1:#c8ff9a;--ab2:#56c25e;--ab3:#2a7a3a;--abedge:#123a1a;--abshadow:#1c4a24;--groove1:#d84a8a;--groove2:#ea64a0;
-  --pill1:#d6c2ff;--pill2:#9a7ae0;--pilledge:#3e2470;--grille:#d84a8a;--bez1:#3a1a4a;--bez2:#24102e;--bezink:#ffe27a;--st1:#ffd84a;--st2:#6ad0ff;
-  --dp1:#5a2a6a;--dp2:#3a1a4a;--dpa:#c8a8ff;--dpa2:#ffe27a;--dpsh:#2a0f2a;--kn1:#8a5aa8;--kn2:#5a3478;--kn3:#3a1e52;
-  --lcd0:#4a0f3a;--lcd1:#b8306e;--lcd2:#ff9ccb;--lcd3:#ffe0ef;
-  background:radial-gradient(rgba(255,255,255,.18) 1px,rgba(255,255,255,0) 1.8px) 0 0/9px 9px,linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
-.fx-partyrex b{top:-10px;width:5px;height:3px;background:var(--c);opacity:.9;animation:zconf linear infinite}
-@keyframes zconf{0%{transform:translate(0,0) rotate(0deg)}100%{transform:translate(var(--dx),640px) rotate(var(--rot))}}
-.fx-partyrex i.bl{width:22px;height:27px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.65) 0 18%,rgba(255,255,255,0) 30%),var(--c);opacity:.75;animation:zbob 5s ease-in-out infinite}
-.fx-partyrex i.bl::after{content:"";position:absolute;left:10px;top:27px;width:1px;height:26px;background:rgba(60,15,42,.45)}
+/* Neon Rex: a night-city body with a cyan edge, hot-pink and cyan buttons, rain falling past flickering neon */
+.console[data-shell=partyrex]{--b1:#1e2236;--b2:#151828;--b3:#0c0e1a;--edge:#3af0ff;--print:#e8f8ff;--print2:#ff2a8a;
+  --ab1:#ffa8d0;--ab2:#ff2a8a;--ab3:#a0105a;--abedge:#3a0420;--abshadow:#240214;--groove1:#0c0e1a;--groove2:#161a2a;
+  --pill1:#3a4260;--pill2:#262c44;--pilledge:#05060c;--grille:#0c0e1a;--bez1:#0a0c16;--bez2:#05060c;--bezink:#3af0ff;--st1:#ff2a8a;--st2:#3af0ff;
+  --dp1:#262c44;--dp2:#161a2a;--dpa:#6a78a8;--dpa2:#3af0ff;--dpsh:#05060c;--kn1:#4a5478;--kn2:#2e3654;--kn3:#1e2438;
+  --lcd0:#0c1430;--lcd1:#2a5aa0;--lcd2:#6ac8f0;--lcd3:#c8f4ff;
+  background:repeating-linear-gradient(90deg,rgba(58,240,255,.04) 0 1px,rgba(0,0,0,0) 1px 14px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);
+  box-shadow:inset 0 0 0 2px rgba(58,240,255,.55),inset 0 3px 0 3px rgba(255,255,255,.06),0 0 18px rgba(58,240,255,.25),0 16px 34px rgba(0,0,0,.6)}
+.console[data-shell=partyrex] .btn-ab.b{--ab1:#b0f8ff;--ab2:#3af0ff;--ab3:#0a7a8a;--abedge:#02303a;--abshadow:#012028}
+.fx-partyrex b{top:-20px;width:1px;height:14px;background:linear-gradient(180deg,rgba(150,230,255,0),rgba(150,230,255,.55));animation:zrain linear infinite}
+@keyframes zrain{to{transform:translate(-30px,700px)}}
+.fx-partyrex i.sg{width:46px;height:20px;border:2px solid var(--c);border-radius:4px;box-shadow:0 0 10px var(--c),inset 0 0 8px var(--c);opacity:.5;animation:zflick 5s steps(1) infinite}
+@keyframes zflick{0%,40%,44%,100%{opacity:.5}42%{opacity:.08}}
 
 /* Grim Ascent: a reaper's cloak, deep violet-black with bone-white buttons, ghost-teal eyes, and soul wisps drifting up */
 .console[data-shell=grim]{--b1:#2a2038;--b2:#1c1428;--b3:#110c1a;--edge:#05030a;--print:#eee8d4;--print2:#7af0ff;
@@ -609,11 +611,11 @@ const CARTS=[
   {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',skin:'pitchfork',stick:true,wide:true,lib:true,
    blurb:'Lead a peasant revolt from the village barn to the king\'s throne: arm your folk, set traps, and fight on the field yourself.',
    note:'A strike · B roll · SELECT orders · START pause'},
-  {id:'nightsteel',title:'Strike at Night',file:'games/nightsteel/index.html',art:'games/nightsteel/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',wide:true,
-   blurb:'Framed for murder, Lift runs with the bandit Crows, armed with a knife of spellsteel.',
-   note:'A talk · B back (hold to run) · START menu'},
-  {id:'partyrex',title:'Party Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#b8306e',ink:'#fff3c4',skin:'partyrex',
-   blurb:'Rex runs on his own. Dash down onto the goblin kids to keep up his speed, and try not to hit the floor.',
+  {id:'strike',title:'Strike at Night',file:'games/strike/index.html',art:'games/strike/cart.png',label:'#140c1c',ink:'#ff8ad0',skin:'drownedmoon',wide:true,
+   blurb:'Fast rooftop brawls at night: 50 fighters with their own specials. Knock your rival off the stage.',
+   note:'A attack · B block / +▲◀▶▼ special · ▲ jump · ▼ block · START pause'},
+  {id:'partyrex',title:'Neon Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#0c0e1a',ink:'#3af0ff',skin:'partyrex',
+   blurb:'A cyber-raptor races through a neon city at night. Dash down onto the glitch goblins to keep up speed.',
    note:'B or A dash down · START pause'},
   {id:'grim',title:'Grim Ascent',file:'games/grim/index.html',art:'games/grim/cart.png',label:'#140c24',ink:'#eee8d4',skin:'grim',tilt:true,
    blurb:'Climb a haunted tower as a little reaper. Tilt to steer, slam monsters with B and finish them with A combos.',
@@ -631,7 +633,7 @@ const SKINS=[
   {id:'drownedmoon',name:'Strike at Night',tag:'GAME',ed:'STRIKE AT NIGHT EDITION',sw:['#141a3a','#d8342a']},
   {id:'dronestrike',name:'Drone Strike',tag:'GAME',ed:'DRONE STRIKE EDITION',sw:['#4d5e36','#ffb627']},
   {id:'pitchfork',name:'Pitchfork Rising',tag:'GAME',ed:'PITCHFORK RISING EDITION',sw:['#933a22','#f0b830']},
-  {id:'partyrex',name:'Party Rex',tag:'GAME',ed:'PARTY REX EDITION',sw:['#ff82bb','#56c25e']},
+  {id:'partyrex',name:'Neon Rex',tag:'GAME',ed:'NEON REX EDITION',sw:['#151828','#ff2a8a']},
   {id:'grim',name:'Grim Ascent',tag:'GAME',ed:'GRIM ASCENT EDITION',sw:['#1c1428','#eee8d4']},
   {id:'grayskin',name:'Gray Squares',tag:'GAME',ed:'GRAY SQUARES EDITION',sw:['#b8b8b8','#909090']},
   {id:'spellsteel',name:'Spellsteel',tag:'GAME',ed:'SPELLSTEEL EDITION',sw:['#46649a','#a850e4']},
@@ -672,8 +674,8 @@ const SKINFX={
     for(let i=0;i<6;i++)h+=`<i class="blip" style="left:${pct(8+r()*84)};top:${pct(10+r()*70)};animation-delay:${sec(-r()*3)}"></i>`;return h},
   pitchfork:()=>{const r=prng(53),f=c=>`<svg class="pf PFC" viewBox="0 0 52 150"><path d="M26 148 V50 M8 8 V34 Q8 50 26 50 Q44 50 44 34 V8 M26 50 V6"/></svg>`.replace('PFC',c);let h='<i class="glow"></i>'+f('p1')+f('p2');
     for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
-  partyrex:()=>{const r=prng(71),C=['#ffd84a','#6ad0ff','#a8ff6a','#ffffff','#c8a8ff','#ff8a3a'];let h=`<i class="bl" style="left:3%;top:72%;--c:#6ad0ff;animation-delay:-1s"></i><i class="bl" style="left:89%;top:83%;--c:#ffd84a;animation-delay:-3s"></i>`;
-    for(let i=0;i<22;i++)h+=`<b style="left:${pct(r()*100)};--c:${C[i%C.length]};--dx:${Math.round((r()-.5)*60)}px;--rot:${Math.round(360+r()*540)}deg;animation-duration:${sec(6+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
+  partyrex:()=>{const r=prng(71);let h=`<i class="sg" style="left:6%;top:70%;--c:#ff2a8a;animation-delay:-1s"></i><i class="sg" style="left:78%;top:84%;--c:#3af0ff;animation-delay:-3.2s"></i>`;
+    for(let i=0;i<26;i++)h+=`<b style="left:${pct(r()*110)};animation-duration:${sec(.8+r()*.8)};animation-delay:${sec(-r()*2)}"></b>`;return h},
   grim:()=>{const r=prng(97);let h='<i class="glow"></i>';
     for(let i=0;i<12;i++)h+=`<b style="left:${pct(4+r()*90)};--dx:${Math.round((r()-.5)*40)}px;animation-duration:${sec(7+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
   spellsteel:()=>{const r=prng(67),C=['#ff5a3a','#ffb030','#6ae0ff','#9aff7a','#c88aff'];let h='<i class="gloss"></i>';

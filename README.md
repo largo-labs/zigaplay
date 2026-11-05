@@ -6,10 +6,10 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 |---|---|---|
 | **Lynties** | A creature RPG in 3D: explore the Long Road, beat eight Wardens, keep up with your rival Remy, and bond with 166 Lynties, starting with a partner from one of three random charms in Prof. Wren's lab. | D-pad move · A talk/confirm · B back · START menu · SELECT map |
 | **Chip City** | A casino with blackjack, roulette, slots, video poker, hi-lo, Rocket (cash out before it blows up) and The Track (horse racing), plus Downtown: buildings to buy that earn chips while you're away. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
-| **Strike at Night** | A top-down RPG with active-time battles. Lift dies in 2026 and wakes as a farm boy in Larkfield, framed for his new parents' murder. Explore the classic Strike at Night maps tile by tile in any of 200+ outfits; the hooded man's knife is spellsteel, reshaped at any anvil; beating Garrick and Sir Kell gives Lift their powers. Shared-CP battles, wishes for 19 more heroes, quests. Chapters 1 and 2. | D-pad move · A talk/look · B back (hold to run) · START menu |
+| **Strike at Night** | A fast 2D platform fighter at night, one on one against the CPU: knock your rival off the stage. 50 fighters, each with their own up, side and down specials; double jumps, blocking, parries, grabs and combos. A title screen to change the controls, plus training and records. | A attack · B block, B + ▲ ◀▶ ▼ specials · ▲ jump · ▼ block · START pause |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
-| **Party Rex** | A dinosaur's birthday party gone wild: Rex runs right through the house on his own, room after room, and keeps his speed up by dashing down onto the goblin kids rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
+| **Neon Rex** | A cyber-raptor races through a neon city at night: Rex runs right on his own, district after district, and keeps his speed up by dashing down onto the glitch goblins rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
 | **Grim Ascent** | A Doodle Jump-style climb up a haunted tower as a little reaper in a black cloak and skull mask. Tilt the phone to steer; you bounce on the platforms by yourself. Slam into monsters with B and finish them with A combos; tougher monsters take two, three or four combos. Played upright. | Tilt steer · B slam · A attack · START pause |
 | **Gray Squares** | Press the square to make a square, then buy things that make squares for you: an extra square, a small pile, a gray shelf, all the way up to gray everything. Everything is gray. It keeps going while you are away. | A press · ▲▼ choose · A buy · SELECT ×1/×10/max · START menu |
 
@@ -52,11 +52,11 @@ A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. 
 - **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
 - Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
 
-## Party Rex
+## Neon Rex
 
-Rex is the birthday dinosaur, and the guests are little goblin kids in party hats who run at him. Rex runs right by himself and the house scrolls past, one room per level: the party room, the kitchen, the game room and the backyard, then round again.
+(It was Party Rex; the game id and files are still `partyrex`.) Rex is a cyber-raptor and the goblins are glitch goblins with antennas who run at him. Rex runs right by himself and the city scrolls past, one district per level: Neon Alley, the Night Market, the Arcade and the Rooftops, then round again. Synthwave music, rain and flickering neon signs.
 
-The console stays upright for Party Rex. The picture is 180 pixels wide and as tall as the screen allows (220 to 340 pixels), and Rex's bounces are scaled to that height, so the timing plays the same on every phone.
+The console stays upright for Neon Rex. The picture is 180 pixels wide and as tall as the screen allows (220 to 340 pixels), and Rex's bounces are scaled to that height, so the timing plays the same on every phone.
 
 - **The one button:** B (or A, or ▼) dashes Rex straight down.
 - **Speed is everything:** the meter at the top right is Rex's speed. Dashing onto a goblin kid bonks it, bounces Rex back up and adds speed, and bonks in a row build a combo for more points and more speed. Big kids give a bigger bounce.
@@ -73,7 +73,7 @@ A little reaper (black cloak over everything, a skull mask with glowing eyes, a 
 - **Combat:** B slams straight down (it homes in a little on a monster below). Slamming into a monster stuns it and starts a combo: press A up to four times (the fourth is a finisher), then you spring upward. A full combo (slam + four slashes) is one red pip of a monster's health: wisps and bone bats take one, ghouls and wraiths two, gargoyles three, bone golems four. A on its own is a quick slash; landing on a monster's head without slamming just bounces you off. Touching a monster from the side, or a gargoyle's fireball, costs a heart.
 - **The climb:** stone platforms, moving rune platforms, crumbling ones that break after one bounce, and springs. Slamming onto a platform bounces you higher. Platforms get further apart and monsters come more often as you go up, through four stretches: Graveyard, Cathedral, Storm and Blood Moon.
 - **Hearts and souls:** you start with three hearts (up to five). Monsters burst into souls; every 40 souls gives back a heart, and a heart floats in now and then. The best height is saved and drawn as a dashed line on the tower.
-- Built from `tools/grim/src/` with `python3 tools/grim/build.py`, which writes `games/grim/index.html`. The sprites are drawn in code; the pixel font and sprite helpers are Party Rex's.
+- Built from `tools/grim/src/` with `python3 tools/grim/build.py`, which writes `games/grim/index.html`. The sprites are drawn in code; the pixel font and sprite helpers are Neon Rex's.
 
 ## Gray Squares
 
@@ -83,23 +83,20 @@ A deliberately bland idle game. The screen is a number, a gray square and a list
 - It saves every few seconds and when the console is turned off, and on return it adds what the squares made while you were away (up to a day).
 - Built from `tools/squares/src/` with `python3 tools/squares/build.py`, which writes `games/squares/index.html`.
 
-## Saving (Gray Squares, Grim Ascent, Party Rex)
+## Saving (Gray Squares, Grim Ascent, Neon Rex, Strike at Night)
 
 These save every second, both on the device (localStorage, prefixed with the game's id) and, on the published ZigaPlay, to the player's account through `ZIGAPLAY.cloud` (collection `data/users/<id>/<game>/saves`, document `progress`). The Claude app can clear a page's storage when it closes, so the account copy is what brings progress back; on start each game loads both and keeps the newer. They also save when the page is hidden or closed and when the console's power switch is used. Grim Ascent and Party Rex keep a run in progress (height, hearts, kills and souls; or level, score, speed and distance), and their title screens offer to carry on with it.
 
 ## Strike at Night
 
-Strike at Night's story and its top-down world, with Spellsteel's battles, wardrobe and forge. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.
+A super simple Smash-style fighter, played sideways. You against the CPU on a night stage; the last one with stocks left wins.
 
-- **Top-down, tile by tile:** the field is the classic game's: its maps, its 16-bit tiles and its little four-way characters, all drawn in code (`tiles.js` holds the classic art in its own scope; `maps.js` the eight maps; `world.js` walking, people, triggers and night light). Whatever you wear in the wardrobe shows on the top-down Lift, and on anyone in your party.
-- **One body, yours to dress:** the wash basin on the first morning opens the full Spellsteel wardrobe (the face in the water is whoever you make it). After that it is in the START menu under Style.
-- **The knife is spellsteel:** Wick, the Crows' fence, spots it at the camp anvil. From then on it reshapes into any of the ten weapon kinds, part by part, and anvils reforge it with ore and infuse it with the elements Lift has learned (Electro, Dendro, Pyro, Geo, Cryo, one per story beat).
-- **Taking powers:** beating Garrick the Hound gives Lift his speed and the Hunt special; beating Sir Kell gives him Kell's weight and Iron Wall. Garrick's nose also finds the hooded man's trail in Greyford.
-- **A different face:** Greyford's gate guard knows the face from the posters. Put on a hood, a helm or a mask and he waves you through.
-- **Spellsteel's systems:** shared CP, Ults, elements and reactions, a party of three, gems from foes and quests, wishes for 19 heroes, the best-heroes list, charms and the tailors.
-- **Night:** the city street, Larkfield at sundown and by night, the camp and Hangman's Bend are washed dark with light added back around fires, lit windows and lamps; fights at night happen under the same sky.
-- **Battles** keep Spellsteel's side-on, active-time look.
-- Built from `tools/nightsteel/src/` with `python3 tools/nightsteel/build.py`, which writes `games/nightsteel/index.html`.
+- **Controls (changeable on the title screen, CONTROLS):** ◀ ▶ run (fast), ▲ jump and ▲ again in the air to double jump, A attack, B block, ▼ block. B with a direction is a special: B + ▲ up special (the recovery), B + ◀ ▶ side special, B + ▼ down special. In the air B alone dodges. Block + A grabs and throws (hold ◀ ▶ or ▲ for the direction), block + ◀ ▶ rolls, blocking just before a hit parries. ▼ in the air falls fast; ▼ twice drops through a platform. The four actions (attack, special/block, jump, block) can be moved to any of A, B, UP, DOWN or SELECT.
+- **Attacks:** A, A, A is a jab combo; ◀ ▶ + A a strong hit (a dash attack while running); ▲ + A up attack; ▼ + A a low sweep; in the air a spin kick, front, back, up and a spiking down attack. A hit that lands can be cancelled into any attack, special or jump, so combos flow.
+- **50 fighters** in light, middle and heavy builds, with their own speed, power, weapon (swords, katanas, spears, staffs, hammers, axes, claws, fans, gloves) and three named specials built from 28 kinds: risers, rockets, warps, hooks and springs; dashes, fireballs, boomerangs, beams, whips, command grabs and lobbed bombs; counters, reflectors, mines, traps, quakes and more. No two fighters share the same set.
+- **Matches** are fast: damage builds up a percent, and the higher it is the farther hits send you. Settings: 1 to 5 stocks, CPU level 1 to 9, an optional 2, 3 or 5 minute timer, sound and vibration. Four stages: Rooftop, Moon Bridge, Clock Tower (its clock shows the real time) and Neon Docks. Training has a dummy and a combo counter. Records keep wins and losses for each fighter.
+- **Saving:** settings, controls, records and a match in progress save every second (see Saving below); RESUME MATCH on the title picks the match back up.
+- Built from `tools/strike/src/` with `python3 tools/strike/build.py`, which writes `games/strike/index.html` (opening it with `#sntest` adds a test hook, `window.SNT`). The fighters and stages are drawn in code.
 
 ## Playing it
 
@@ -125,7 +122,7 @@ tools/make-icons.py         redraws the Home Screen icons (needs Pillow)
 tools/lynties-3d/           the Lynties game, its 3D world and the script that builds the cartridge
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
-tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell), build script and label maker
+tools/strike/               Strike at Night: its source (src/*.js and the page shell) and build script
 tools/grim/                 Grim Ascent: its source (src/*.js and the page shell) and build script
 tools/squares/              Gray Squares: its page shell, script and build script
 ```
