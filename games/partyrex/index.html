@@ -274,12 +274,13 @@ function updRex(){P.anim+=1/60;if(P.safe>0){P.safe-=1/60;if(P.safe<=0)P.hurt=fal
   P.y+=P.vy;
   if(hitKids())return;
   if(P.vy>0&&P.y>=FLOOR)thud()}
-/* hit boxes: a dash reaches a little wider than Rex, so a close call counts */
+/* hit boxes: a dash reaches a little wider than Rex, and a goblin kid can be bonked anywhere on its whole picture
+   (hat included), so a close call counts. Running into one from the side only hurts on its smaller body box. */
 const rexBox=()=>P.st==='dive'?{l:P.x-8,r:P.x+8,t:P.y-18,b:P.y+2}:{l:P.x-6,r:P.x+6,t:P.y-16,b:P.y-2};
-function kidBox(k){const w=k.big?7:5,h=k.big?19:13;return{l:k.x-w,r:k.x+w,t:k.y-h,b:k.y}}
+function kidBox(k,dive){const w=dive?(k.big?13:9):(k.big?7:5),h=dive?(k.big?29:20):(k.big?19:13);return{l:k.x-w,r:k.x+w,t:k.y-h,b:k.y}}
 const kidLive=k=>k.st==='run'||k.st==='hop';
 function hitKids(){const pb=rexBox();
-  for(const k of G.kids){if(!kidLive(k))continue;const kb=kidBox(k);if(pb.r<kb.l||pb.l>kb.r||pb.b<kb.t||pb.t>kb.b)continue;
+  const dive=P.st==='dive';for(const k of G.kids){if(!kidLive(k))continue;const kb=kidBox(k,dive);if(pb.r<kb.l||pb.l>kb.r||pb.b<kb.t||pb.t>kb.b)continue;
     if(P.st==='dive'){bonk(k);return true}
     if(P.safe>0)continue;
     if(P.vy>.5&&P.y-kb.t<8*VS){/* landed on a head without dashing: a little boing, but no speed */
@@ -290,7 +291,7 @@ function bonk(k){P.combo++;const gain=(k.big?14:Math.min(12,6+P.combo))*gainMul(
   const pts=100*Math.min(P.combo,10)*(k.big?2:1);G.pts+=pts;G.bonks++;G.bestCombo=Math.max(G.bestCombo,P.combo);
   SFX.bonk(P.combo);popup(k.x,k.y-(k.big?36:28),P.combo>1?`+${pts} *${P.combo}`:`+${pts}`,P.combo>1?'#ffd84a':'#ffffff');confetti(k.x,k.y-10,k.big?26:16);
   k.st='bonked';k.vx=(-.6-rnd()*1.4)*HS;k.vy=-3.2*VS;
-  P.st='air';P.y=Math.min(P.y,kidBox(k).t);P.vy=(k.big?-8.2:-7.2)*VS;P.safe=.3;P.hurt=false;G.shake=3}
+  P.st='air';P.y=Math.min(P.y,kidBox(k,true).t);P.vy=(k.big?-8.2:-7.2)*VS;P.safe=.3;P.hurt=false;G.shake=3}
 /* running into a kid any other way: ouch */
 function bump(k){P.combo=0;const before=P.spd;loseSpeed(LOSS.bump);P.vy=Math.min(P.vy,-4.2*VS);P.st='air';P.safe=.7;P.hurt=true;G.shake=4;G.bumps++;SFX.hit();k.flash=.4;
   if(P.spd<before)popup(REXX,P.y-34,'OUCH!','#ff9a9a',1);if(P.spd<=0)outOfSpeed()}
