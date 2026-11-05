@@ -25,22 +25,23 @@ let NB=null;function noise({d=.1,v=.2,f=1200,q=1,t0=0}){const a=AC;if(!a||muted)
   const t=a.currentTime+t0,s=a.createBufferSource(),bp=a.createBiquadFilter(),g=a.createGain();s.buffer=NB;bp.type='bandpass';bp.frequency.value=f;bp.Q.value=q;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
   s.connect(bp);bp.connect(g);g.connect(master);s.start(t);s.stop(t+d+.02)}
 const SFX={
-  swing(){noise({d:.06,f:2600,q:1.4,v:.12})},jump(){tone({f:300,f2:520,d:.08,type:'triangle',v:.1})},djump(){tone({f:420,f2:760,d:.1,type:'triangle',v:.1})},land(){noise({d:.05,f:400,v:.1})},
-  hit(p=0){noise({d:.07+p*.04,f:900-p*200,q:.8,v:.25+p*.08});tone({f:200-p*40,f2:70,d:.09+p*.05,v:.22})},shield(){tone({f:900,f2:700,d:.06,type:'triangle',v:.12})},
-  parry(){tone({f:1200,f2:1800,d:.12,type:'triangle',v:.16});tone({f:1800,d:.1,type:'sine',v:.08,t0:.04})},brk(){noise({d:.4,f:600,v:.3});tone({f:500,f2:80,d:.4,type:'sawtooth',v:.15})},
-  special(){tone({f:500,f2:900,d:.12,type:'sawtooth',v:.08})},shot(){tone({f:900,f2:300,d:.12,type:'square',v:.08})},boom(){noise({d:.35,f:300,q:.6,v:.35});tone({f:120,f2:40,d:.3,v:.25})},
-  ko(){noise({d:.6,f:500,q:.5,v:.35});tone({f:900,f2:60,d:.6,type:'sawtooth',v:.15})},beep(){tone({f:660,d:.12,v:.12})},go(){tone({f:990,d:.25,v:.14});tone({f:1320,d:.25,type:'triangle',v:.1,t0:.05})},
+  swing(){noise({d:.07,f:2200,q:1.2,v:.1})},slash(){noise({d:.09,f:4200,q:2,v:.12});tone({f:2400,f2:1400,d:.06,type:'sine',v:.03})},
+  jump(){noise({d:.05,f:700,v:.06});tone({f:240,f2:420,d:.07,type:'triangle',v:.06})},djump(){noise({d:.08,f:1400,q:.8,v:.08});tone({f:380,f2:680,d:.09,type:'triangle',v:.06})},land(){noise({d:.06,f:300,v:.12})},
+  hit(p=0){noise({d:.06+p*.05,f:700-p*180,q:.7,v:.3+p*.08});tone({f:140-p*25,f2:50,d:.1+p*.06,type:'sine',v:.35});if(p>1)noise({d:.25,f:2400,q:.5,v:.08,t0:.02})},
+  clang(){tone({f:1900,f2:1700,d:.18,type:'triangle',v:.06});tone({f:2830,d:.14,type:'sine',v:.04})},
+  shield(){tone({f:900,f2:700,d:.06,type:'triangle',v:.1});noise({d:.05,f:3000,v:.05})},
+  parry(){tone({f:1200,f2:1800,d:.12,type:'triangle',v:.14});tone({f:1800,d:.1,type:'sine',v:.08,t0:.04})},brk(){noise({d:.4,f:600,v:.3});tone({f:500,f2:80,d:.4,type:'sawtooth',v:.12})},
+  special(){noise({d:.12,f:1800,q:1.5,v:.07});tone({f:400,f2:800,d:.12,type:'sawtooth',v:.04})},
+  shot(){noise({d:.05,f:2600,q:.6,v:.22});tone({f:180,f2:60,d:.07,v:.12})},shotgun(){noise({d:.14,f:1600,q:.5,v:.32});tone({f:120,f2:40,d:.14,v:.2})},
+  snipe(){noise({d:.08,f:3200,q:.5,v:.28});tone({f:220,f2:50,d:.2,v:.16});noise({d:.4,f:1200,q:.4,v:.05,t0:.05})},
+  zap(){tone({f:1400,f2:300,d:.1,type:'sawtooth',v:.07});tone({f:2100,f2:600,d:.08,type:'square',v:.03})},
+  orb(){tone({f:300,f2:600,d:.25,type:'sine',v:.1});tone({f:450,f2:900,d:.25,type:'triangle',v:.05})},beam(){tone({f:200,f2:900,d:.35,type:'sawtooth',v:.08});noise({d:.35,f:5000,q:.6,v:.06})},
+  rocket(){noise({d:.3,f:500,q:.4,v:.18});tone({f:90,f2:260,d:.25,type:'sawtooth',v:.06})},throw(){noise({d:.08,f:1200,q:1,v:.08})},jet(){noise({d:.2,f:900,q:.4,v:.12})},
+  boom(){noise({d:.5,f:240,q:.5,v:.4});tone({f:90,f2:30,d:.45,v:.32});noise({d:.25,f:2000,q:.5,v:.06})},
+  ko(){noise({d:.7,f:400,q:.4,v:.35});tone({f:600,f2:50,d:.7,type:'sawtooth',v:.1});tone({f:60,f2:30,d:.6,v:.3})},beep(){tone({f:660,d:.12,v:.12})},go(){tone({f:990,d:.25,v:.14});tone({f:1320,d:.25,type:'triangle',v:.1,t0:.05})},
   move(){tone({f:700,d:.03,v:.05})},pick(){tone({f:660,d:.05,v:.08});tone({f:990,d:.07,v:.08,t0:.05})},back(){tone({f:400,f2:300,d:.07,v:.07})},
   game(){[523,659,784,1047].forEach((f,i)=>tone({f,d:.2,type:'triangle',v:.12,t0:i*.09}))}};
-/* a driving night tune: a minor bass line, chords and a lead, with a beat */
-const MUS={on:false,step:0,next:0,timer:0};const mf=n=>440*Math.pow(2,(n-69)/12);
-const LEAD=[69,0,72,74,76,0,74,72,69,0,67,69,72,0,0,0,69,0,72,74,76,79,76,74,72,0,74,72,69,0,0,0],BASSL=[45,45,57,45,43,43,55,43,41,41,53,41,40,40,52,44];
-function musicTick(){const a=AC;if(!a||!MUS.on)return;const spb=.13;while(MUS.next<a.currentTime+.2){const s=MUS.step,t=MUS.next-a.currentTime;
-  if(!muted){const n=LEAD[s%32];if(n)tone({f:mf(n),d:.16,type:'square',v:.05,t0:t,dest:mbus});const b=BASSL[(s>>1)%16];if(s%2===0)tone({f:mf(b-12),d:.2,type:'triangle',v:.2,t0:t,dest:mbus});
-    if(s%4===0)tone({f:120,f2:45,d:.12,type:'sine',v:.3,t0:t,dest:mbus});if(s%4===2)noise({d:.05,f:5000,v:.04,t0:t});if(s%8===4)noise({d:.1,f:1800,q:.7,v:.08,t0:t})}
-  MUS.step++;MUS.next+=spb}}
-function music(on){MUS.on=on;if(on&&AC){MUS.next=Math.max(MUS.next,AC.currentTime+.05);if(!MUS.timer)MUS.timer=setInterval(musicTick,50)}}
-function setMute(m){muted=m;store.set('mute',m);if(master)master.gain.value=m?0:.5}
+function setMute(m){muted=m;store.set('mute',m);if(master)master.gain.value=m?0:.5;if(MUS.bus)MUS.bus.gain.value=m?0:MUS.vol}
 /* a buzz on big hits: vibrate where it exists; on iPhone a hidden switch gives a haptic tick */
 const HAP={on:store.get('vib',true),lab:null,last:0};
 function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.last<45)return;HAP.last=now;let w=window;try{if(ZP)w=window.parent}catch(e){}

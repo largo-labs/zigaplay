@@ -103,7 +103,7 @@ button:focus{outline:none}
 .sign h1 b{color:#fff6cf;text-shadow:0 0 .4rem #f4c74f,0 0 .9rem #f4a32f,0 .15rem 0 #6a4200}
 .sign p{margin:.15rem 0 .2rem;font-size:.7rem;letter-spacing:.2em;color:var(--cyan);text-shadow:0 0 .35rem rgba(94,230,255,.8)}
 @keyframes neon{0%,18%,22%,62%,64%,100%{opacity:1}20%,63%{opacity:.55}}
-.wallet{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.25rem .8rem .35rem;font-size:.78rem;color:#d9c2e6}
+.wallet .cb{color:#7dffa8;font-weight:800;white-space:nowrap}.wallet{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.25rem .8rem .35rem;font-size:.78rem;color:#d9c2e6}
 .wallet b{color:var(--gold);font-family:var(--num);font-size:1.25rem;font-weight:400}
 .tier{display:inline-block;padding:.05rem .4rem;border-radius:.3rem;border:2px solid #000;font-weight:700;font-size:.72rem;color:#1a1020;background:var(--tc,#9fb7a8)}
 .scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -332,7 +332,7 @@ const ri=n=>Math.floor(rnd()*n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=ri(i+1),t=a[i];a[i]=a[j];a[j]=t}return a};
 
 /* ---------- the player's wallet, kept in this browser and (inside the ZigaPlay) in the cloud ---------- */
-const KEY='chipcity-save',START=1000,MINBET=5,WORK_N=10,WORK_PAY=5,DEBT=100000;
+const KEY='chipcity-save',START=1000,MINBET=5,WORK_N=10,WORK_PAY=50,DEBT=100000;
 const GAMES={bj:'Blackjack',rl:'Roulette',sl:'Slots',vp:'Video Poker',hl:'Hi-Lo',rk:'Rocket',hr:'The Track'};
 /* each casino you start gets its own id, so a brand-new stack can never be mistaken for (and overwrite) your saved one */
 const newRun=()=>Date.now().toString(36)+'-'+Math.floor(rnd()*1e9).toString(36);
@@ -403,8 +403,13 @@ function pay(n){n=Math.floor(n);if(n<=0)return;ST.chips+=n;if(ST.chips>ST.peak)S
 /* one finished round: what was staked, what came back */
 function record(game,bet,ret){const g=gs(game);g.rounds++;g.bet+=bet;g.ret+=ret;ST.wagered+=bet;const net=ret-bet;
   if(net>0){g.wins++;if(net>g.best)g.best=net;if(net>(ST.biggest.amt||0))ST.biggest={amt:net,game}}
+  /* win bonus: a winning round pays its winnings again and more, the bigger the bet the bigger the multiplier (2x at the smallest bet) */
+  if(net>0){const m=winMult(bet),bn=Math.round(net*(m-1));if(bn>0){ST.chips+=bn;ST.winBonus=(ST.winBonus||0)+bn;if(net+bn>g.best)g.best=net+bn;if(net+bn>(ST.biggest.amt||0))ST.biggest={amt:net+bn,game};showChips();
+    setTimeout(()=>{const b=$('#bal');if(b)floatAt(b,'+'+fmt(bn)+' ×'+m.toFixed(1))},400)}}
   if(ST.chips>ST.peak)ST.peak=ST.chips;save();checkTier()}
 
+/* the win multiplier: 2x at the smallest bet, one more for every ten times the bet (50 pays 3x, 500 pays 4x, 5,000 pays 5x...) */
+const winMult=bet=>Math.round(Math.min(10,2+Math.log10(Math.max(1,bet/MINBET)))*10)/10;
 /* VIP levels, by the most chips you have ever held */
 const TIERS=[[0,'Newcomer','#a9c4b2'],[5000,'Bronze','#d9935a'],[25000,'Silver','#cfd8e3'],[100000,'Gold','#f4c74f'],[1000000,'Platinum','#9ef0ff'],[10000000,'Diamond','#ff9af2']];
 const tierIdx=()=>{let i=0;TIERS.forEach((t,k)=>{if(ST.peak>=t[0])i=k});return i};
@@ -679,7 +684,7 @@ const TABLES=[
 function lobby(){const root=el('div','screen lobby');
   const t=TIERS[tierIdx()],nx=TIERS[tierIdx()+1];
   root.innerHTML=`<div class="sign"><h1>CHIP<b>CITY</b></h1><p>${owned('casino')?'OWNED BY YOU':'POCKET CASINO'}</p></div>
-    <div class="wallet"><span>VIP <span class="tier" style="--tc:${t[2]}">${t[1]}</span></span><span>${nx?`${nx[1]} at <b>${big(nx[0])}</b>`:'Top of the house'}</span></div>`;
+    <div class="wallet"><span>VIP <span class="tier" style="--tc:${t[2]}">${t[1]}</span> <b class="cb">wins ×2+</b></span><span>${nx?`${nx[1]} at <b>${big(nx[0])}</b>`:'Top of the house'}</span></div>`;
   /* the reason you're here: what you still owe Big Sal */
   {const owe=ST.debt,b=el('button','btn debt'+(owe?'':' free'));b.append(iconEl('sal'));const s3=el('span');
     s3.innerHTML=owe?`<b>You owe Big Sal <em>${fmt(owe)}</em></b><i class="dbar"><i style="width:${(DEBT-owe)/DEBT*100}%"></i></i><small>${salNag()}</small>`:`<b>Debt-free!</b><small>You paid Big Sal every chip. Stop by and gloat.</small>`;
@@ -703,7 +708,7 @@ function lobby(){const root=el('div','screen lobby');
   const st=el('button','btn ghost','Stats');st.addEventListener('click',()=>go(stats));
   const hp=el('button','btn ghost','How to play');hp.addEventListener('click',()=>info(`<h3>Welcome to Chip City</h3><p>Every table here uses play chips. There is no real money anywhere in this game.</p>
     <ul><li><b>D-pad</b> moves the cursor, <b>A</b> presses.</li><li><b>START</b> deals, spins or draws at every table.</li><li><b>B</b> takes you back (and takes a chip back at roulette).</li><li>On a bet, left and right change the amount.</li></ul>
-    <p><b>The goal:</b> you owe Big Sal ${fmt(DEBT)} chips. Win them at the tables and pay him off at his booth, a bit at a time or all at once.</p><p>You start with ${fmt(START)} chips. Run out, and it's time to go to work: at the vault, every ${WORK_N} polishes earn ${WORK_PAY} chips. You can go to work any time.</p><p>The <b>Corner Store</b> sells beer, energy drinks and charms that give you a little luck for a few minutes: when a round is about to go against you, luck gives it a second chance.</p><p><b>Downtown</b> sells buildings, from a hot dog cart to the Chip City Casino itself. Each one earns chips by the hour, even while the game is closed: drop by to collect.</p><p>Chips save by themselves after every round.</p>`));
+    <p><b>The goal:</b> you owe Big Sal ${fmt(DEBT)} chips. Win them at the tables and pay him off at his booth, a bit at a time or all at once.</p><p>You start with ${fmt(START)} chips. Run out, and it's time to go to work: at the vault, every ${WORK_N} polishes earn ${WORK_PAY} chips. You can go to work any time.</p><p><b>Win bonus:</b> every win pays its winnings times a multiplier that grows with your bet: 2× at ${MINBET} chips, 3× at ${MINBET*10}, 4× at ${MINBET*100}, 5× at ${fmt(MINBET*1000)} and on up to 10×. Losing bets pay nothing back.</p><p>The <b>Corner Store</b> sells beer, energy drinks and charms that give you a little luck for a few minutes: when a round is about to go against you, luck gives it a second chance.</p><p><b>Downtown</b> sells buildings, from a hot dog cart to the Chip City Casino itself. Each one earns chips by the hour, even while the game is closed: drop by to collect.</p><p>Chips save by themselves after every round.</p>`));
   const sd=el('button','btn ghost sndbtn',sndLabel());sd.addEventListener('click',cycleSound);
   row.append(st,sd,hp);bar.append(row);root.append(bar,el('div','fine','PLAY CHIPS ONLY · NO REAL MONEY · '+saveWord()));
   if(!ST.intro)setTimeout(()=>{if(S&&S.id==='lobby'&&!ST.intro)introStory()},350);
@@ -1338,14 +1343,14 @@ function track(){if(!TR.race)TR.race=newRace();const root=el('div','screen hr');
    DOWNTOWN: buy the town one building at a time. Each one earns chips by the hour, even while the game is closed.
    ======================================================================================================== */
 const PROPS=[
-  ['cart','Hot Dog Cart',2000,60,'Mustard, onions and a line of hungry gamblers.'],
-  ['laundry','Laundromat',10000,250,'Clean clothes. Clean-ish money.'],
-  ['pawn','Pawn Shop',40000,900,'Everybody in Chip City pawns something sooner or later.'],
-  ['diner','The Diner',120000,2400,'Open all night. The pie is famous.'],
-  ['club','Nightclub',400000,7000,'Neon, bass and a velvet rope.'],
-  ['hotel','The Lucky Hotel',1500000,22000,'Four hundred rooms, every one of them booked.'],
-  ['casino','Chip City Casino',10000000,120000,'The house itself. Own it, and you own Chip City.']];
-const TILL_H=12;
+  ['cart','Hot Dog Cart',2000,180,'Mustard, onions and a line of hungry gamblers.'],
+  ['laundry','Laundromat',10000,750,'Clean clothes. Clean-ish money.'],
+  ['pawn','Pawn Shop',40000,2700,'Everybody in Chip City pawns something sooner or later.'],
+  ['diner','The Diner',120000,7200,'Open all night. The pie is famous.'],
+  ['club','Nightclub',400000,21000,'Neon, bass and a velvet rope.'],
+  ['hotel','The Lucky Hotel',1500000,66000,'Four hundred rooms, every one of them booked.'],
+  ['casino','Chip City Casino',10000000,360000,'The house itself. Own it, and you own Chip City.']];
+const TILL_H=24;
 const theName=p=>p[1].startsWith('The ')?p[1]:'the '+p[1],TheName=p=>{const t=theName(p);return t[0].toUpperCase()+t.slice(1)};
 const owned=id=>!!(ST.props||{})[id];
 const ownedN=()=>PROPS.filter(p=>owned(p[0])).length;
@@ -1415,7 +1420,7 @@ function stats(){const root=el('div','screen lobby');const sc=el('div','scroll')
   box.innerHTML=`<h2>Your casino card</h2><table>
     <tr><td>Owed to Big Sal</td><td>${ST.debt?fmt(ST.debt):'<span class="pos">Paid off!</span>'}</td></tr><tr><td>Paid to Big Sal</td><td>${fmt(ST.paid)}</td></tr>
     <tr><td>Chips now</td><td>${fmt(ST.chips)}</td></tr><tr><td>Most chips ever</td><td>${fmt(ST.peak)}</td></tr>
-    <tr><td>VIP</td><td><span class="tier" style="--tc:${t[2]}">${t[1]}</span></td></tr>
+    <tr><td>VIP</td><td><span class="tier" style="--tc:${t[2]}">${t[1]}</span></td></tr><tr><td>Win bonuses</td><td>${fmt(ST.winBonus||0)}</td></tr>
     <tr><td>Biggest win</td><td>${ST.biggest.amt?fmt(ST.biggest.amt)+' · '+GAMES[ST.biggest.game]:'—'}</td></tr>
     <tr><td>Total bet</td><td>${fmt(ST.wagered)}</td></tr><tr><td>Earned at work</td><td>${fmt(ST.work.earned)}</td></tr><tr><td>Chips polished</td><td>${fmt(ST.work.clicks)}</td></tr><tr><td>Store goods bought</td><td>${fmt(Object.values(ST.bought||{}).reduce((a,b)=>a+b,0))}</td></tr><tr><td>Buildings owned</td><td>${ownedN()} of ${PROPS.length}</td></tr><tr><td>Earned downtown</td><td>${fmt(ST.propEarned||0)}</td></tr></table>
     <h2>Saving</h2><p class="savewhere ${where}">${where==='fail'?'Your Claude account turned the last save down ('+(zcStatus()&&zcStatus().err)+'). Copy a save code to be safe; the game keeps trying.':where==='saving'||where==='connecting'?'Saving to your Claude account…':where==='cloud'?'Saved to your Claude account after every round, so your casino follows you to any device.':where==='device'?'Saved on this device after every round, in four separate places, so closing the app keeps your casino.':where==='maybe'?'Saved on this phone after every round, but an iPhone can throw away what a file opened from the Files app saves. Copy a save code to be safe, or play the ZigaPlay inside Claude, where saves go to your account.':'This browser can\'t keep saves. Copy a save code before you leave.'}</p>

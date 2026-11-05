@@ -4,12 +4,12 @@ function startMatch(o){const S=SAVE.set;setStage(o.stage);PROJ=[];FX=[];SHAKE=0;
   FT=[newFighter(o.chars[0],0,false,0),newFighter(o.chars[1],1,true,lvl)];placeFighter(FT[0],-55);placeFighter(FT[1],55);
   FT.forEach((f,i)=>{f.stocks=o.stocks?o.stocks[i]:S.stocks;f.pct=o.pct?o.pct[i]:0});
   MATCH={train:!!o.train,chars:o.chars.slice(),stage:o.stage,lvl,flash:0,count:o.resume?70:100,tleft:o.tleft!=null?o.tleft:(S.time&&!o.train?S.time*3600:0),ending:0,endT:0,res:null};
-  SAVE.picks=[o.chars[0],o.chars[1],o.stage];for(const k in RAW.held)RAW.held[k]=false;camTick(true);go('fight');music(true);saveNow()}
+  SAVE.picks=[o.chars[0],o.chars[1],o.stage];for(const k in RAW.held)RAW.held[k]=false;camTick(true);go('fight');saveNow()}
 function resumeMatch(){const m=SAVE.match;if(!m)return;SEL.cur=[m.chars[0],m.chars[1]];startMatch({chars:m.chars,stage:m.stage,train:m.train,lvl:m.lvl,stocks:m.stocks,pct:m.pct,tleft:m.tleft,resume:1})}
 function finishMatch(){const a=FT[0],b=FT[1];const win=a.stocks!==b.stocks?(a.stocks>b.stocks?0:1):(a.pct<=b.pct?0:1);
   const r=SAVE.rec[a.c.i]||(SAVE.rec[a.c.i]={w:0,l:0});if(win===0)r.w++;else r.l++;const T=SAVE.tot||(SAVE.tot={w:0,l:0,ko:0});if(win===0)T.w++;else T.l++;T.ko+=a.kos;
   MATCH.res={win,chars:MATCH.chars,stage:MATCH.stage,stats:[[a.kos,a.falls,Math.round(a.dmg)+'%'],[b.kos,b.falls,Math.round(b.dmg)+'%']]};
-  SAVE.match=null;music(false);SFX.game();saveNow(true);go('results')}
+  SAVE.match=null;SFX.game();saveNow(true);go('results')}
 function fightStep(){if(TAP('start')&&!MATCH.ending){SFX.back();go('pause');return}
   readPad(HUMAN);
   if(MATCH.count>0){MATCH.count--;if(MATCH.count===30)SFX.go();if(MATCH.count>30){fxTick();camTick();return}}
@@ -25,7 +25,7 @@ function fightStep(){if(TAP('start')&&!MATCH.ending){SFX.back();go('pause');retu
 const pctCol=p=>{const t=Math.min(1,p/160);return t<.5?`rgb(255,255,${Math.round(255-t*2*200)})`:`rgb(255,${Math.round(255-(t-.5)*2*200)},${Math.round(55-(t-.5)*2*40)})`};
 function hud(){ctx.setTransform(DPR,0,0,DPR,0,0);
   FT.forEach((f,i)=>{const w=Math.min(118*U,SW*(PORT?.47:.4)),cx=SW*(i?(PORT?.75:.7):(PORT?.25:.3)),x=cx-w/2,y=SH-38*U;panel(x,y,w,33*U,'rgba(8,8,22,.72)',i?'#7aa0ff':'#ff4a5a');
-    ctx.save();ctx.beginPath();ctx.arc(x+16*U,y+16.5*U,12*U,0,TAU);ctx.fillStyle=shade(f.c.body,-.5);ctx.fill();ctx.clip();drawHead(f.c,x+16*U,y+19*U,1.05*U);ctx.restore();
+    ctx.save();ctx.beginPath();ctx.arc(x+16*U,y+16.5*U,12*U,0,TAU);ctx.fillStyle=shade(f.c.body,-.5);ctx.fill();ctx.clip();drawBust(f.c,x+16*U,y+18*U,1.25*U);ctx.restore();
     text(f.c.name,x+32*U,y+4*U,8,i?'#7aa0ff':'#ff4a5a','left',900);
     if(MATCH.train&&i===1)text('DUMMY',x+32*U,y+19*U,7,'#a8a8c8','left',800);
     else if(f.stocks>5)text('● x'+f.stocks,x+32*U,y+19*U,8,f.c.acc,'left',900);else for(let k=0;k<f.stocks;k++){ctx.fillStyle=f.c.acc;ctx.beginPath();ctx.arc(x+36*U+k*8*U,y+24*U,2.8*U,0,TAU);ctx.fill()}
@@ -42,7 +42,9 @@ function fightDraw(){drawSky(STAGE.id);worldXf();drawStage();for(const p of PROJ
 /* ---------- the loop ---------- */
 const SCREENS={title:[titleTick,titleDraw],controls:[controlsTick,controlsDraw],settings:[settingsTick,settingsDraw],records:[recordsTick,recordsDraw],select:[selectTick,selectDraw],
   stage:[stageTick,stageDraw],fight:[fightStep,()=>fightDraw()],pause:[pauseTick,pauseDraw],moves:[movesTick,movesDraw],results:[resultsTick,resultsDraw]};
-function step(){FRAME++;SCREENS[SCR][0]();if(MSG&&--MSG.t<=0)MSG=null}
+function step(){FRAME++;SCREENS[SCR][0]();if(MSG&&--MSG.t<=0)MSG=null;
+  /* the right song for the screen: the stage's track in a match, the title theme everywhere else */
+  if(AC&&AC.state==='running'){const want=['fight','pause','moves'].includes(SCR)||(SCR==='controls'&&BACKTO)?STAGE.id:'title';if(!MUS.on||MUS.song!==want)music(true,want)}}
 function draw(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.lineCap='round';ctx.lineJoin='round';SCREENS[SCR][1]();ctx.setTransform(DPR,0,0,DPR,0,0);
   if(MSG)text(MSG.s,SW/2,SH-34*U,11,'#ffd84a','center',900,'#000')}
 let last=performance.now(),acc=0;const STEP=1000/60;
