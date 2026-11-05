@@ -62,9 +62,9 @@ function menuList(items,sel,y){items.forEach((s,i)=>{const on=i===sel;txt((on?'â
 function drawTitle(){const z=ZONES[0];ctx.drawImage(skyCanvas(z),0,0);ctx.drawImage(silCanvas(z),0,H-200);
   ctx.drawImage(platCanvas('stone',44),W/2-22,H-40);const by=H-40-Math.abs(Math.sin(G.t*.06))*36;const sv=P.y;P.x=W/2;P.y=by+G.camY;P.face=1;P.st='air';P.vy=Math.cos(G.t*.06)>0?-1:1;P.slashT=0;P.inv=0;drawReaper();P.y=sv;
   txt('GRIM',W/2,22,'#eee8d4',3,'c','#463463');txt('ASCENT',W/2,46,'#c88aff',2,'c',K);
-  menuList(['CLIMB','HOW TO PLAY','OPTIONS'],G.menu,76);
-  if(G.best)txt('BEST '+G.best+'M',W/2,118,'#ffd84a',1,'c',K);
-  tiltLine().split('\n').forEach((l,i)=>txt(l,W/2,132+i*10,tiltOK()?'#7af0ff':'#ff9aaa',1,'c',K))}
+  const it=titleItems(),dy=(it.length-3)*12;menuList(it.map(x=>x[1]),G.menu,76);
+  if(G.best)txt('BEST '+G.best+'M',W/2,118+dy,'#ffd84a',1,'c',K);
+  tiltLine().split('\n').forEach((l,i)=>txt(l,W/2,132+dy+i*10,tiltOK()?'#7af0ff':'#ff9aaa',1,'c',K))}
 const HOWTO=['TILT YOUR PHONE LEFT AND','RIGHT TO STEER (OR HOLD A','SIDE OF THE SCREEN).','YOU BOUNCE ON PLATFORMS','BY YOURSELF. GO UP!','','B: SLAM DOWN. SLAM INTO','A MONSTER TO START A','COMBO, THEN PRESS A 4X.','RED PIPS = COMBOS TO KILL.','','A ALONE: A QUICK SLASH.','SLAM A PLATFORM TO','BOUNCE HIGHER.','FALL OFF OR LOSE YOUR','HEARTS AND YOU DIE.','SELECT: CENTER TILT.'];
 function drawHow(){drawTitleBack();panel(6,10,W-12,H-20);txt('HOW TO PLAY',W/2,16,'#c88aff',1,'c');HOWTO.forEach((s,i)=>txt(s,W/2,28+i*10,s.startsWith('B:')||s.startsWith('A ')?'#ffd84a':'#e8e4ff',1,'c'));txt('B BACK',W/2,H-18,'#8a80b0',1,'c')}
 function drawTitleBack(){ctx.drawImage(skyCanvas(ZONES[0]),0,0);ctx.drawImage(silCanvas(ZONES[0]),0,H-200)}

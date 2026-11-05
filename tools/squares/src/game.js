@@ -84,7 +84,11 @@ function buy(i){const x=items()[i-1];if(!x||x.k==='unk'){SND.no();return}
   else{const g=x.g,k=howMany(g),c=costOf(g,k);if(S.n<c){SND.no();shake(row);return}S.n-=c;S.own[g.id]=owned(g)+k}
   SND.buy();drawList();const r2=rowsEl.children[i-1];if(r2){r2.classList.add('flash');setTimeout(()=>r2.classList.remove('flash'),120)}checkSay();save()}
 function shake(r){if(!r)return;r.classList.remove('shake');void r.offsetWidth;r.classList.add('shake')}
-function save(){S.t=Date.now();store.set('save',S)}
+/* saving: every second, on this device and (on the ZigaPlay) to your account, so closing the app loses nothing.
+   The Claude app can clear this device's storage when it closes; the account copy is what comes back then. */
+const cloud=()=>{try{return ZP&&ZP.cloud||null}catch(e){return null}};
+function save(){S.t=Date.now();store.set('save',S);const c=cloud();if(c)try{c.save('squares',JSON.stringify(S),{at:S.t},'progress')}catch(e){}}
+function flush(){save();const c=cloud();if(c)try{c.flush('squares')}catch(e){}}
 /* ---------- the menu (START) ---------- */
 let MENU=null;
 function menuItems(){const out=[{s:'back to the square',f:closeMenu}];
@@ -118,17 +122,21 @@ $('#sq').addEventListener('pointerdown',e=>{e.preventDefault();unlock();SEL=0;dr
 rowsEl.addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;unlock();const i=+r.dataset.i;if(SEL===i)buy(i);else{SEL=i;drawList()}});
 $('#menu').addEventListener('click',e=>{const r=e.target.closest('.it');if(!r)return;MENU.sel=+r.dataset.m;menuItems()[MENU.sel].f()});
 $('#ft').lastElementChild.addEventListener('click',()=>{if(MENU)closeMenu();else openMenu()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});addEventListener('pagehide',save);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});addEventListener('pagehide',flush);
 /* ---------- the console ---------- */
-window.ZPCart={title:'Gray Squares',input(btn,down){input(btn,down)},home(){save();return true},snapshot(){return null}};
+window.ZPCart={title:'Gray Squares',input(btn,down){input(btn,down)},home(){flush();return true},snapshot(){return null}};
 if(ZP&&ZP.cartReady)try{ZP.cartReady(window.ZPCart)}catch(e){}
 /* ---------- time passing (also while you were away, up to a day) ---------- */
-(()=>{const away=Math.min(86400,Math.max(0,(Date.now()-(S.t||Date.now()))/1000)),ps=perSec();if(away>30&&ps>0){const g=ps*away;S.n+=g;S.run+=g;S.all+=g;shown=S.n;
-  setTimeout(()=>say('While you were away, the squares kept going. +'+fmt(g)+'.'),400)}else if(!S.presses)setTimeout(()=>say('This is a square. Press A.'),300)})();
+function awayGain(quiet){const away=Math.min(86400,Math.max(0,(Date.now()-(S.t||Date.now()))/1000)),ps=perSec();S.t=Date.now();if(away>30&&ps>0){const g=ps*away;S.n+=g;S.run+=g;S.all+=g;shown=S.n;
+  setTimeout(()=>say('While you were away, the squares kept going. +'+fmt(g)+'.'),400);return}if(!quiet&&!S.presses)setTimeout(()=>say('This is a square. Press A.'),300)}
+const LOCAL_T=S.presses?(S.t||0):0;awayGain();
+/* the account copy wins when it is newer than this device's (or this device has none) */
+(async()=>{const c=cloud();if(!c)return;try{const r=await c.load('squares','progress');if(!r||!r.ok||!r.json)return;const d=JSON.parse(r.json);
+  if((d.t||0)>LOCAL_T){S=Object.assign(fresh(),d);S.own=S.own||{};S.seen=S.seen||{};shown=S.n;awayGain(true);tint();drawList();drawTop()}}catch(e){}})();
 tint();drawList();drawTop();
 let last=performance.now(),acc=0,idle=0,lastList=0;
 setInterval(()=>{const now=performance.now(),dt=Math.min(1,(now-last)/1000);last=now;const g=perSec()*dt;S.n+=g;S.run+=g;S.all+=g;
   drawTop();if(now-lastList>250){lastList=now;drawList();checkSay()}
   darkTick(dt);msgT+=dt;if(msgT>9)$('#msg').style.opacity=.45},50);
-setInterval(save,5000);
+setInterval(save,1000);
 if(/sqtest/.test(location.hash))window.__SQ={S:()=>S,input,act,press,buy,items,perSec,fmt,save,warmer};

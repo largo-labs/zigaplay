@@ -83,6 +83,10 @@ A deliberately bland idle game. The screen is a number, a gray square and a list
 - It saves every few seconds and when the console is turned off, and on return it adds what the squares made while you were away (up to a day).
 - Built from `tools/squares/src/` with `python3 tools/squares/build.py`, which writes `games/squares/index.html`.
 
+## Saving (Gray Squares, Grim Ascent, Party Rex)
+
+These save every second, both on the device (localStorage, prefixed with the game's id) and, on the published ZigaPlay, to the player's account through `ZIGAPLAY.cloud` (collection `data/users/<id>/<game>/saves`, document `progress`). The Claude app can clear a page's storage when it closes, so the account copy is what brings progress back; on start each game loads both and keeps the newer. They also save when the page is hidden or closed and when the console's power switch is used. Grim Ascent and Party Rex keep a run in progress (height, hearts, kills and souls; or level, score, speed and distance), and their title screens offer to carry on with it.
+
 ## Strike at Night
 
 Strike at Night's story and its top-down world, with Spellsteel's battles, wardrobe and forge. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.

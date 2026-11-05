@@ -241,21 +241,35 @@ function applySize(h){H=h||targetH();FLOOR=H-22;VS=clamp((H-100)/105,1,2);GRAV=.
   for(const th of THEMES){th.wc=mk(TWID,FLOOR,g=>th.wall(g));th.fc=mk(TWID,22,g=>th.floor(g))}}
 /* the window changed size: a new height takes effect on the title screen (a run in progress keeps its shape) */
 function onResize(){if(G.state==='title'&&targetH()!==H){applySize();toTitle()}}
-function newGame(){if(targetH()!==H)applySize();
+/* ---------- saving: every second, on this device and (on the ZigaPlay) to your account ----------
+   The Claude app can clear this device's storage when it closes; the account copy is what comes back then.
+   A run in progress is kept (level, score, speed, how far), and the title screen offers to carry on with it. */
+G.saved=store.get('run',null);G.savedAt=store.get('at',0);
+const acct=()=>{try{return ZP&&ZP.cloud||null}catch(e){return null}};
+function runNow(){return G.state==='play'||G.state==='pause'?{level:G.level,pts:G.pts,score:G.score,spd:P.spd,x:P.x,x0:G.x0,bestCombo:G.bestCombo,bonks:G.bonks,thuds:G.thuds,bumps:G.bumps,boings:G.boings,dashes:G.dashes}:G.saved}
+function saveProgress(now){if(G.state==='play'||G.state==='pause')G.saved=runNow();G.savedAt=Date.now();store.set('run',G.saved);store.set('runbest',G.best);store.set('at',G.savedAt);
+  const c=acct();if(c)try{c.save('partyrex',JSON.stringify({best:G.best,run:G.saved,at:G.savedAt}),{at:G.savedAt},'progress');if(now)c.flush('partyrex')}catch(e){}}
+(async()=>{const c=acct();if(!c)return;try{const r=await c.load('partyrex','progress');if(!r||!r.ok||!r.json)return;const d=JSON.parse(r.json);
+  G.best=Math.max(G.best,d.best||0);if((d.at||0)>G.savedAt&&G.state==='title'){G.saved=d.run||null;G.savedAt=d.at;store.set('run',G.saved);store.set('at',G.savedAt)}store.set('runbest',G.best)}catch(e){}})();
+setInterval(()=>{if(G.state==='play'||G.state==='pause')saveProgress()},1000);
+addEventListener('pagehide',()=>saveProgress(true));
+function newGame(cont){if(targetH()!==H)applySize();
   Object.assign(G,{state:'play',pts:0,score:0,newBest:false,level:1,D:diff(1),kids:[],parts:[],pops:[],balloons:[],clock:0,nextArr:110,plan:null,balT:5,grace:105,
     bonks:0,thuds:0,bumps:0,boings:0,dashes:0,bestCombo:0,banner:{a:'LEVEL 1 · '+THEMES[0].name,b:'DASH ONTO THE GOBLIN KIDS!',t:3}});
   Object.assign(P,{x:100,y:FLOOR-64*VS,vy:-2*VS,st:'air',spd:START_SPD,combo:0,safe:0,hurt:false,squash:0});P.vx=rexVx();G.x0=P.x;cam=P.x-REXX;
-  SFX.start();music(true)}
+  if(cont&&cont.x){for(const k of['pts','score','bestCombo','bonks','thuds','bumps','boings','dashes'])G[k]=cont[k]||0;G.level=cont.level||1;G.D=diff(G.level);
+    P.spd=clamp(cont.spd||START_SPD,20,MAXSPD);P.x=cont.x;G.x0=cont.x0||100;P.vx=rexVx();cam=P.x-REXX;G.banner={a:`LEVEL ${G.level} · ${themeOf(G.level-1).name}`,b:'CARRYING ON!',t:2.6}}
+  SFX.start();music(true);saveProgress()}
 const titleBounce=()=>{const room=FLOOR-27-titleLayout().boxB-6;return clamp(room,6,40)};
-function toTitle(){Object.assign(G,{state:'title',kids:[],parts:[],pops:[],balloons:[],level:1,titleT:0,banner:null});cam=0;
+function toTitle(){if(G.state==='play'||G.state==='pause')saveProgress(true);Object.assign(G,{state:'title',kids:[],parts:[],pops:[],balloons:[],level:1,titleT:0,banner:null});cam=0;
   Object.assign(P,{x:120,y:FLOOR,vy:-Math.sqrt(2*GRAV*.7*titleBounce()),st:'air',spd:START_SPD,combo:0,safe:0,hurt:false,squash:0});music(true)}
 /* ---------- Rex: he runs by himself; the only thing to do is dash ---------- */
 function dash(){if(G.state!=='play'||P.st!=='air')return;P.st='dive';P.vy=7.6*VS;G.dashes++;SFX.dive()}
-function press(btn){if(G.state==='title'){if(btn!=='down')newGame();return}
+function press(btn){if(G.state==='title'){if(btn==='down')return;if(btn==='b'&&G.saved){G.saved=null;newGame();return}newGame(G.saved);return}
   if(G.state==='over'){if(G.overT<=0){if(btn==='b')toTitle();else newGame()}return}
   if(G.state==='pause'){if(btn==='b')toTitle();else resume();return}
   dash()}
-function pressStart(){if(G.state==='play')pause();else if(G.state==='pause')resume();else if(G.state==='title')newGame();else if(G.state==='over'&&G.overT<=0)newGame()}
+function pressStart(){if(G.state==='play')pause();else if(G.state==='pause')resume();else if(G.state==='title')newGame(G.saved);else if(G.state==='over'&&G.overT<=0)newGame()}
 function pause(){G.state='pause';music(false)}
 function resume(){G.state='play';music(true)}
 /* deeper into the house a miss costs more, and a bonk gives a little less */
@@ -341,7 +355,7 @@ function update(){G.titleT+=1/60;mus.spb=.23-P.spd*.0007;
     if(G.state==='play'){schedule();checkLevel();if(G.banner&&(G.banner.t-=1/60)<=0)G.banner=null}
     G.kids=G.kids.filter(k=>!k.gone);updFx();G.score=G.pts+Math.max(0,Math.floor((P.x-G.x0)/16));return}
   if(G.state==='caught'){G.t-=1/60;for(const k of G.kids)updKid(k);updRex();cam=P.x-REXX;G.kids=G.kids.filter(k=>!k.gone);updFx();
-    if(G.t<=0){G.state='over';G.overT=.6;if(G.score>G.best){G.best=G.score;G.newBest=true;store.set('runbest',G.best)}}return}
+    if(G.t<=0){G.state='over';G.overT=.6;if(G.score>G.best){G.best=G.score;G.newBest=true;store.set('runbest',G.best)}G.saved=null;saveProgress(true)}return}
   if(G.state==='over'){if(G.overT>0)G.overT-=1/60;for(const k of G.kids)if(k.st==='cheer')k.anim+=1/60;updFx()}}
 /* ---------- the title screen: the house drifts by while Rex bounces ---------- */
 const TITLEKIDS=[{type:'kid',shirt:'#ff6b6b',hat:'#ffd84a',x:14,face:1,anim:0},{type:'sprint',shirt:'#4aa6e4',hat:'#a8ff6a',x:40,face:1,anim:.2},{type:'hop',shirt:'#66c659',hat:'#ff5fa8',x:164,face:-1,anim:.5}];
@@ -402,7 +416,8 @@ function drawTitle(now){const L=titleLayout(),cs=['#ff5fa8','#ffd84a','#6ad0ff',
   ctx.fillStyle='rgba(27,20,48,.45)';ctx.fillRect(0,L.ly-6,W,70);
   let i=0;for(const[word,y0]of[['PARTY',L.ly],['REX',L.ly+34]]){let x=Math.round(W/2-tw(word,4)/2);for(const ch of word){const y=y0+Math.round(Math.sin(now/220+i*.7)*2);txt(ch,x+3,y+3,K,4);txt(ch,x,y,cs[i%cs.length],4);x+=24;i++}}
   const kb=KB(),A=kb?'Z':'A',B=kb?'X':'B';
-  if(Math.floor(now/450)%2)txt(`PRESS ${A} TO PARTY`,W/2,L.py,'#ffffff',1,'c',K);
+  if(G.saved)txt(`${A}: LEVEL ${G.saved.level||1} · ${B}: NEW RUN`,W/2,L.py,Math.floor(now/450)%2?'#ffffff':'#ffd84a',1,'c',K);
+  else if(Math.floor(now/450)%2)txt(`PRESS ${A} TO PARTY`,W/2,L.py,'#ffffff',1,'c',K);
   ctx.fillStyle='rgba(27,20,48,.62)';ctx.fillRect(0,L.by-4,W,L.boxB-L.by+4);
   txt(`${B} OR ${A}: DASH DOWN ON KIDS`,W/2,L.by,'#ffe0ef',1,'c');
   txt('BONKS SPEED REX UP,',W/2,L.by+11,'#ffe0ef',1,'c');
@@ -426,14 +441,14 @@ for(const[id,btn]of[['bD','b'],['bP','start']]){const el=document.getElementById
   el.addEventListener('pointerdown',e=>{e.preventDefault();unlock();try{el.setPointerCapture(e.pointerId)}catch(_){}el.classList.add('on');input(btn,true)});
   const up=()=>el.classList.remove('on');el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up)}
 /* tapping the picture dashes too, or starts a party from the title and game-over screens */
-cv.addEventListener('pointerdown',()=>{unlock();if(G.state==='play')dash();else if(G.state==='title'||(G.state==='over'&&G.overT<=0))newGame()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play')pause();music(false)}});
+cv.addEventListener('pointerdown',()=>{unlock();if(G.state==='play')dash();else if(G.state==='title')newGame(G.saved);else if(G.state==='over'&&G.overT<=0)newGame()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play')pause();music(false);saveProgress(true)}});
 
 /* ================= the console ================= */
 window.ZPCart={title:'Party Rex',
   input(btn,down){unlock();input(btn,down)},
   /* power switch: from the title or the game-over screen, just turn off; mid-party, pause and let the console ask */
-  home(){if(G.state==='title'||G.state==='over')return true;if(G.state!=='pause')pause();return'ask'},
+  home(){saveProgress(true);return true},
   snapshot(){return null}};
 if(ZP&&ZP.cartReady)try{ZP.cartReady(window.ZPCart)}catch(e){}
 

@@ -35,10 +35,11 @@ document.documentElement.classList.toggle('notilt',true);setInterval(()=>RT.clas
 /* ================= buttons ================= */
 function input(btn,down){unlock();requestTilt();held[btn]=down;if(!down)return;const s=G.state;
   const nav=(n,fn)=>{if(btn==='up'){G.menu=(G.menu+n-1)%n;SFX.move()}else if(btn==='down'){G.menu=(G.menu+1)%n;SFX.move()}else fn()};
-  if(s==='title')nav(3,()=>{if(btn!=='a'&&btn!=='start')return;SFX.pick();if(G.menu===0){SFX.start();newGame()}else if(G.menu===1)G.state='how';else{G.optBack='title';G.state='opts';G.menu=0}});
-  else if(s==='how'){if(btn==='a'||btn==='b'||btn==='start'){SFX.pick();G.state='title';G.menu=1}}
+  if(s==='title'){const it=titleItems();nav(it.length,()=>{if(btn!=='a'&&btn!=='start')return;SFX.pick();const k=it[G.menu][0];
+    if(k==='cont'){SFX.start();newGame(G.saved)}else if(k==='new'){SFX.start();G.saved=null;newGame()}else if(k==='how')G.state='how';else{G.optBack='title';G.state='opts';G.menu=0}})}
+  else if(s==='how'){if(btn==='a'||btn==='b'||btn==='start'){SFX.pick();G.state='title';G.menu=titleItems().findIndex(x=>x[0]==='how')}}
   else if(s==='opts')nav(6,()=>{const i=G.menu,ch=btn==='left'?-1:btn==='right'?1:btn==='a'?1:0;
-    if(btn==='b'||(btn==='a'&&i===5)||btn==='start'){SFX.pick();if(G.optBack==='pause'){G.state='pause';G.menu=2}else{G.state='title';G.menu=2}return}
+    if(btn==='b'||(btn==='a'&&i===5)||btn==='start'){SFX.pick();if(G.optBack==='pause'){G.state='pause';G.menu=2}else{G.state='title';G.menu=titleItems().length-1}return}
     if(!ch)return;if(i===0){const o=['auto','tilt','pad'];OPT.steer=o[(o.indexOf(OPT.steer)+ch+3)%3];store.set('steer',OPT.steer)}
     else if(i===1){OPT.sens=(OPT.sens+ch+3)%3;store.set('sens',OPT.sens)}else if(i===2){if(btn==='a')centerTilt();return}
     else if(i===3){setMute(!muted);if(!muted)unlock()}else if(i===4){HAP.on=!HAP.on;store.set('vib',HAP.on);if(HAP.on)haptic(25)}SFX.move()});
@@ -48,7 +49,10 @@ function input(btn,down){unlock();requestTilt();held[btn]=down;if(!down)return;c
   else if(s==='over'&&G.overT<=0){if(btn==='a'||btn==='start'){SFX.start();newGame()}else if(btn==='b'){SFX.pick();toTitle()}}}
 function pause(){if(G.state!=='play')return;G.state='pause';G.menu=0;music(false)}
 function resume(){G.state='play';music(true)}
-function toTitle(){G.state='title';G.menu=0;music(true)}
+function toTitle(){if(G.state==='pause'||G.state==='play')saveProgress(true);G.state='title';G.menu=0;music(true)}
+function titleItems(){return G.saved?[['cont','CONTINUE '+meters(G.saved.y)+'M'],['new','NEW CLIMB'],['how','HOW TO PLAY'],['opt','OPTIONS']]:[['new','CLIMB'],['how','HOW TO PLAY'],['opt','OPTIONS']]}
+setInterval(()=>{if(G.state==='play'||G.state==='pause')saveProgress()},1000);
+addEventListener('pagehide',()=>saveProgress(true));
 const KEYMAP={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',z:'a',Z:'a',k:'a',K:'a',' ':'a',x:'b',X:'b',j:'b',J:'b',Enter:'start',Escape:'start',p:'start',Shift:'select'};
 addEventListener('keydown',e=>{const b=KEYMAP[e.key];if(!b)return;e.preventDefault();if(e.repeat)return;input(b,true)});
 addEventListener('keyup',e=>{const b=KEYMAP[e.key];if(b)input(b,false)});
@@ -58,13 +62,13 @@ for(const[id,btn]of[['bA','a'],['bB','b'],['bP','start'],['bL','left'],['bR','ri
   const up=()=>{if(!el.classList.contains('on'))return;el.classList.remove('on');input(btn,false)};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up)}
 /* tapping the picture: choose on the menus (and asks for tilt on iPhone) */
 cv.addEventListener('pointerup',()=>{requestTilt();if(G.state==='title'||G.state==='how'||(G.state==='over'&&G.overT<=0))input('a',true),input('a',false)});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();music(false)}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();music(false);saveProgress(true)}});
 addEventListener('resize',()=>{if(G.state==='title'&&targetH()!==H)applySize();else fit()});
 
 /* ================= the console ================= */
 window.ZPCart={title:'Grim Ascent',input(btn,down){input(btn,down)},
   status(){return{state:G.state,tilt:tiltLive(),perm:TILT.perm,raw:Math.round(TILT.raw),steer:+steerX().toFixed(2),h:G.maxH}},
-  home(){if(G.state==='title'||G.state==='over'||G.state==='how'||G.state==='opts'&&G.optBack==='title')return true;pause();return'ask'},snapshot(){return null}};
+  home(){saveProgress(true);return true},snapshot(){return null}};
 if(ZP&&ZP.cartReady)try{ZP.cartReady(window.ZPCart)}catch(e){}
 
 /* ================= go ================= */

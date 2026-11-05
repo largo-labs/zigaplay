@@ -8,9 +8,12 @@ const MON={/* hp is counted in combos: a combo (slam + four slashes) does 6 */
 const G={state:'title',t:0,plats:[],mons:[],items:[],fx:[],shots:[],pops:[],camY:0,top:0,maxH:0,kills:0,souls:0,best:store.get('best',0),bestCombo:0,shake:0,hitstop:0,nextMon:0,nextHeart:0,soulBank:0,menu:0};
 const P={x:90,y:0,vx:0,vy:0,face:1,st:'air',hp:3,inv:0,slashT:0,slashN:0,canSlam:true,target:null,comboN:0,comboT:0,buf:{},ft:0};
 const meters=y=>Math.max(0,Math.floor(-y/10));
-function newGame(){Object.assign(G,{state:'play',t:0,plats:[],mons:[],items:[],fx:[],shots:[],pops:[],camY:-H+40,top:0,maxH:0,kills:0,souls:0,bestCombo:0,shake:0,hitstop:0,nextMon:-220,nextHeart:-3000,soulBank:0,deadT:0});
-  Object.assign(P,{x:W/2,y:0,vx:0,vy:-JUMP,face:1,st:'air',hp:3,inv:0,slashT:0,slashN:0,canSlam:true,target:null,comboN:0,comboT:0,buf:{},ft:0});
-  G.plats.push({x:W/2,y:6,w:W+40,kind:'stone',vx:0});/* the tower floor: nothing to fall off at the start */G.top=6;genUpTo(G.camY-H);music(true)}
+/* a new climb, or (with a saved run) carrying on from the height where the reaper last landed */
+function newGame(cont){const y0=cont?cont.y:0;
+  Object.assign(G,{state:'play',t:0,plats:[],mons:[],items:[],fx:[],shots:[],pops:[],camY:y0-H+40,top:0,maxH:0,kills:0,souls:0,bestCombo:0,shake:0,hitstop:0,nextMon:y0-220,nextHeart:y0-3000,soulBank:0,deadT:0,pts:0});
+  Object.assign(P,{x:W/2,y:y0,vx:0,vy:-JUMP,face:1,st:'air',hp:3,inv:cont?90:0,slashT:0,slashN:0,canSlam:true,target:null,comboN:0,comboT:0,buf:{},ft:0,lastY:y0});
+  if(cont){for(const k of['kills','souls','soulBank','maxH','bestCombo','pts'])G[k]=cont[k]||0;P.hp=clamp(cont.hp||3,1,5);G.pops.push({x:W/2,y:y0-40,s:'CARRYING ON',c:'#7af0ff',t:80})}
+  G.plats.push({x:W/2,y:y0+6,w:W+40,kind:'stone',vx:0});/* a floor to start from: nothing to fall off at first */G.top=y0+6;genUpTo(G.camY-H);music(true);saveProgress()}
 /* ---------- building the tower upward ---------- */
 function genUpTo(yTarget){while(G.top>yTarget){const m=meters(G.top),gapMax=36+Math.min(34,m*.034),gapMin=22+Math.min(14,m*.012);
     const y=G.top-(gapMin+rnd()*(gapMax-gapMin)),w=m>600?24+Math.floor(rnd()*8):28+Math.floor(rnd()*8);let x=14+w/2+rnd()*(W-28-w);
@@ -57,7 +60,7 @@ function stepPlayer(){P.ft++;if(P.inv>0)P.inv--;if(P.slashT>0)P.slashT--;
     if(P.vy>1&&P.y-(m.y-m.h)<6&&m.st!=='stun'){P.vy=-JUMP*.8;P.canSlam=true;m.safe=20;SFX.jump();G.pops.push({x:m.x,y:m.y-m.h-8,s:'BOUNCE',c:'#c8b8ff',t:30});continue}
     if(m.safe<=0&&m.st==='live'&&P.inv<=0)hurt(sgn(P.x-m.x)||-P.face)}}
 const touch=m=>{const r=P.st==='slam'?9:5;return Math.abs(P.x-m.x)<m.w+r&&P.y>m.y-m.h-(P.st==='slam'?4:2)&&P.y-16<m.y+m.h}
-function land(p){P.y=p.y;let v=JUMP,slam=P.st==='slam';
+function land(p){P.y=p.y;P.lastY=p.y;let v=JUMP,slam=P.st==='slam';
   const sp=G.items.find(i=>i.t==='spring'&&i.plat===p&&Math.abs(P.x-(p.x+i.dx))<9);
   if(sp){v=JUMP*1.7;SFX.spring();sp.boing=12;G.pops.push({x:P.x,y:P.y-22,s:'SPRING!',c:'#e8c8ff',t:40})}
   else if(slam){v=JUMP*1.32;SFX.thud();G.shake=3;haptic(14);for(let i=0;i<10;i++)G.fx.push({k:'dust',x:P.x+(rnd()-.5)*14,y:p.y,vx:(rnd()-.5)*2,vy:-rnd()*1.2,t:22})}
@@ -91,7 +94,17 @@ function hurt(dir){if(P.inv>0||P.st==='dead')return;P.hp--;P.inv=90;P.st='hurt';
   G.pops.push({x:P.x,y:P.y-24,s:'-1',c:'#ff6a7a',t:36});if(P.hp<=0)die('hit')}
 function die(why){if(P.st==='dead')return;P.st='dead';P.vx=0;G.state='dying';G.deadT=why==='fall'?50:90;SFX.die();music(false);haptic(90);
   if(why==='hit'){P.vy=-3;for(let i=0;i<20;i++)G.fx.push({k:'smoke',x:P.x+(rnd()-.5)*10,y:P.y-rnd()*16,vx:(rnd()-.5)*1.5,vy:-rnd()*1.2,t:40})}}
-function gameOver(){G.state='over';G.overT=40;G.newBest=G.maxH>G.best;if(G.newBest){G.best=G.maxH;store.set('best',G.best)}}
+function gameOver(){G.state='over';G.overT=40;G.newBest=G.maxH>G.best;if(G.newBest){G.best=G.maxH;store.set('best',G.best)}G.saved=null;saveProgress(true)}
+/* ---------- saving: every second, on this device and (on the ZigaPlay) to your account ----------
+   The Claude app can clear this device's storage when it closes; the account copy is what comes back then.
+   A climb in progress is kept as the height you last landed on, your hearts, kills and souls. */
+G.saved=store.get('run',null);G.savedAt=store.get('at',0);
+const cloud=()=>{try{return ZP&&ZP.cloud||null}catch(e){return null}};
+function runNow(){return G.state==='play'||G.state==='pause'?{y:P.lastY,hp:P.hp,kills:G.kills,souls:G.souls,soulBank:G.soulBank,maxH:G.maxH,bestCombo:G.bestCombo,pts:G.pts||0}:G.saved}
+function saveProgress(now){if(G.state==='play'||G.state==='pause')G.saved=runNow();G.savedAt=Date.now();store.set('run',G.saved);store.set('best',G.best);store.set('at',G.savedAt);
+  const c=cloud();if(c)try{c.save('grim',JSON.stringify({best:G.best,run:G.saved,at:G.savedAt}),{at:G.savedAt},'progress');if(now)c.flush('grim')}catch(e){}}
+(async()=>{const c=cloud();if(!c)return;try{const r=await c.load('grim','progress');if(!r||!r.ok||!r.json)return;const d=JSON.parse(r.json);
+  G.best=Math.max(G.best,d.best||0);if((d.at||0)>G.savedAt&&G.state==='title'){G.saved=d.run||null;G.savedAt=d.at;store.set('run',G.saved);store.set('at',G.savedAt)}store.set('best',G.best)}catch(e){}})();
 const spark=(x,y,c,n)=>{for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,s=.6+rnd()*1.8;G.fx.push({k:'spark',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:10+rnd()*8,c})}};
 /* ---------- the world moving ---------- */
 function stepPlats(){for(const p of G.plats){if(!p.vx)continue;p.x+=p.vx;if(p.x<p.w/2+4||p.x>W-p.w/2-4)p.vx*=-1}}
