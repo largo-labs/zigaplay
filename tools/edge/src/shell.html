@@ -1,0 +1,82 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Over the Edge</title>
+<style>
+/* Over the Edge: a 3D canvas filling the screen, and the menus and HUD as an HTML layer over it.
+   The HTML layer is laid out on a 640 x 360 design and scaled to fit, so it looks the same on every screen. */
+:root{color-scheme:dark;--ink:#f4f6ff;--dim:#9aa6d8;--gold:#ffcc4a;--red:#ff4a5a;--blue:#4ab0ff;--grn:#5ad87a;--bgA:#0a0f24;--bgB:#141d44;
+  --A:#ff4a5a;--B:#ffc23a;--C:#4ab0ff;--D:#5ad87a;--ui:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+html,body{height:100%;margin:0;background:#05070f;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:var(--ui);color:var(--ink)}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+#ui{position:fixed;left:50%;top:50%;width:640px;height:360px;transform-origin:50% 50%;pointer-events:none}
+#ui *{box-sizing:border-box}
+.scr{position:absolute;inset:0;display:none}.scr.on{display:block}
+.pane{background:linear-gradient(180deg,rgba(28,40,92,.92),rgba(10,15,40,.94));border:2px solid rgba(160,190,255,.45);border-radius:10px;box-shadow:0 0 0 2px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18),0 10px 30px rgba(0,0,0,.5)}
+.hdr{font:900 italic 26px/1 var(--ui);letter-spacing:.04em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #0a0f24,0 0 18px rgba(74,176,255,.6)}
+.sub{font:700 13px/1.25 var(--ui);color:var(--dim)}
+.k{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border-radius:10px;font:900 12px/1 var(--ui);color:#10142a;vertical-align:middle;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25),0 1px 0 rgba(0,0,0,.5)}
+.k.A{background:var(--A)}.k.B{background:var(--B)}.k.C{background:var(--C)}.k.D{background:var(--D)}.k.S{background:#c8ccdc;border-radius:5px}.k.X{background:#3a4470;color:#c8d2ff}
+.st{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;background:#2a3460;color:#e8ecff;font:900 12px/1 var(--ui);vertical-align:middle;box-shadow:inset 0 0 0 2px #5a6aa8}
+/* menus */
+.menu{position:absolute;display:flex;flex-direction:column;gap:6px}
+.item{position:relative;height:34px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;font:900 italic 17px/1 var(--ui);letter-spacing:.03em;text-transform:uppercase;color:#cfd8ff;
+  background:linear-gradient(90deg,rgba(40,56,120,.85),rgba(20,28,66,.6));border:2px solid rgba(120,150,230,.35);border-radius:8px;transform:skewX(-8deg)}
+.item>*{transform:skewX(8deg)}
+.item.sel{color:#10142a;background:linear-gradient(90deg,#ffe07a,#ffb83a);border-color:#fff3c4;box-shadow:0 0 18px rgba(255,204,74,.55)}
+.item .val{font:900 15px/1 var(--ui);font-style:normal}
+.item.sel .val{color:#3a1a00}
+.hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font:700 12px/1 var(--ui);color:var(--dim);text-shadow:0 1px 2px #000}
+.hint .k{transform:scale(.9)}
+/* character select */
+.cards{position:absolute;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.card{position:relative;height:76px;border-radius:9px;overflow:hidden;background:linear-gradient(160deg,#2a3a7a,#121a3c);border:2px solid rgba(140,170,255,.35)}
+.card img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+.card b{position:absolute;left:0;right:0;bottom:0;padding:3px 6px;font:900 italic 12px/1 var(--ui);letter-spacing:.04em;background:linear-gradient(0deg,rgba(0,0,0,.8),rgba(0,0,0,0))}
+.card.p1{border-color:var(--red);box-shadow:0 0 0 2px var(--red),0 0 16px rgba(255,74,90,.6)}
+.card.p2{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue),0 0 16px rgba(74,176,255,.6)}
+.card.p1.p2{box-shadow:0 0 0 2px var(--red),0 0 0 5px var(--blue)}
+.tag{position:absolute;top:4px;padding:2px 5px;border-radius:4px;font:900 10px/1 var(--ui);color:#fff}.tag.p1{left:4px;background:var(--red)}.tag.p2{right:4px;background:var(--blue)}
+.bars{display:grid;grid-template-columns:62px 1fr;gap:4px 8px;align-items:center;font:800 10px/1 var(--ui);color:var(--dim);letter-spacing:.06em}
+.bar{height:7px;border-radius:4px;background:#1a2450;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#4ab0ff,#9af0ff);border-radius:4px}
+.mv{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;align-items:center;font:800 12px/1.15 var(--ui)}
+.mv .in{white-space:nowrap}.mv .nm{color:#fff}.mv .ds{grid-column:2;font:600 10.5px/1.2 var(--ui);color:var(--dim);margin-top:-3px}
+/* HUD */
+#hud{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;gap:22px}
+.pl{position:relative;width:176px;height:58px}
+.pl .face{position:absolute;left:0;bottom:2px;width:58px;height:58px;border-radius:10px;overflow:hidden;border:2px solid #fff;background:#1a2450;box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.pl .face img{width:100%;height:100%;object-fit:cover}
+.pl .nm{position:absolute;left:64px;bottom:2px;font:900 italic 12px/1 var(--ui);letter-spacing:.05em;text-shadow:0 1px 2px #000,0 0 6px #000}
+.pl .pc{position:absolute;left:62px;bottom:14px;font:900 italic 40px/1 var(--ui);letter-spacing:-.01em;-webkit-text-stroke:2px #10142a;paint-order:stroke fill;text-shadow:0 3px 0 #10142a}
+.pl .pc small{font-size:22px}
+.pl .stk{position:absolute;left:64px;top:-6px;display:flex;gap:3px}
+.pl .stk i{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 2px #000}
+.pl .call{position:absolute;left:62px;top:-26px;font:900 italic 11px/1 var(--ui);color:#fff;padding:3px 7px;border-radius:5px;background:rgba(0,0,0,.55);opacity:0;transition:opacity .15s;white-space:nowrap}
+.pl .call.on{opacity:1}
+.pl.p1 .face{border-color:var(--red)}.pl.p2 .face{border-color:var(--blue)}
+.ban{position:absolute;left:0;right:0;top:118px;text-align:center;font:900 italic 74px/1 var(--ui);letter-spacing:.02em;color:#fff;-webkit-text-stroke:3px #10142a;paint-order:stroke fill;text-shadow:0 6px 0 #10142a,0 0 30px rgba(255,204,74,.7);opacity:0}
+.ban.on{opacity:1;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(2.2);opacity:0}100%{transform:scale(1);opacity:1}}
+.combo{position:absolute;top:58px;font:900 italic 20px/1 var(--ui);color:var(--gold);-webkit-text-stroke:2px #10142a;paint-order:stroke fill;opacity:0;transition:opacity .2s}
+.combo.on{opacity:1}
+.flash{position:absolute;inset:-200px;background:#fff;opacity:0;pointer-events:none}
+.dim{position:absolute;inset:-400px;background:rgba(5,8,20,.62)}
+/* standalone touch controls: a stick on the left, four buttons on the right */
+#touch{position:fixed;inset:0;display:none;pointer-events:none}
+html.touch:not(.zp) #touch{display:block}
+#tstick{position:absolute;left:max(18px,env(safe-area-inset-left,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
+#tknob{position:absolute;left:39px;top:39px;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6)}
+.tb{position:absolute;width:54px;height:54px;border-radius:50%;border:2px solid rgba(0,0,0,.4);font:900 20px/1 var(--ui);color:#10142a;pointer-events:auto;touch-action:none;display:grid;place-items:center;opacity:.85}
+#tA{right:max(16px,env(safe-area-inset-right,0px));bottom:84px;background:var(--A)}#tB{right:max(74px,calc(env(safe-area-inset-right,0px) + 58px));bottom:30px;background:var(--B)}
+#tC{right:max(132px,calc(env(safe-area-inset-right,0px) + 116px));bottom:84px;background:var(--C)}#tD{right:max(74px,calc(env(safe-area-inset-right,0px) + 58px));bottom:138px;background:var(--D)}
+#tS{right:max(14px,env(safe-area-inset-right,0px));top:max(10px,env(safe-area-inset-top,0px));width:64px;height:30px;border-radius:15px;background:rgba(255,255,255,.3);font-size:11px;color:#fff}
+#err{position:fixed;left:0;right:0;top:40%;text-align:center;font:700 15px/1.4 var(--ui);color:#fff;display:none}
+</style>
+<canvas id="gl"></canvas>
+<div id="ui"></div>
+<div id="touch"><div id="tstick"><div id="tknob"></div></div><div class="tb" id="tD">D</div><div class="tb" id="tC">C</div><div class="tb" id="tA">A</div><div class="tb" id="tB">B</div><div class="tb" id="tS">START</div></div>
+<div id="err">This game needs WebGL (3D graphics), which this browser has turned off.</div>
+<script>
+(async()=>{'use strict';
+/*@@SCRIPTS@@*/
+})().catch(e=>{console.error(e);const el=document.getElementById('err');if(el){el.style.display='block';el.textContent='Over the Edge could not start: '+(e&&e.message||e)}});
+</script>
+</body></html>

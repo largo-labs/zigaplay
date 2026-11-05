@@ -390,6 +390,21 @@ html.wide .console.widegame .grille{display:none}
 .fx-partyrex i.bl{width:22px;height:27px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.65) 0 18%,rgba(255,255,255,0) 30%),var(--c);opacity:.75;animation:zbob 5s ease-in-out infinite}
 .fx-partyrex i.bl::after{content:"";position:absolute;left:10px;top:27px;width:1px;height:26px;background:rgba(60,15,42,.45)}
 
+/* Over the Edge: gunmetal with fine speed lines, the four face buttons in the game's own colours, embers rising and streaks flying past */
+.console[data-shell=edge]{--b1:#3a3f52;--b2:#262a3a;--b3:#151826;--edge:#06070d;--print:#e8ecff;--print2:#ffb04a;
+  --ab1:#ffb0a8;--ab2:#ff4a5a;--ab3:#9a1424;--abedge:#2a060c;--abshadow:#1a0408;--groove1:#10121c;--groove2:#1a1d2c;
+  --pill1:#5a6078;--pill2:#3a4058;--pilledge:#0a0c1c;--grille:#10121c;--bez1:#0d0f1a;--bez2:#05060c;--bezink:#ffb04a;--st1:#ff7a2a;--st2:#ffd36a;
+  --dp1:#2c3044;--dp2:#1a1d2c;--dpa:#8a94c4;--dpa2:#ffb04a;--dpsh:#05060c;--kn1:#6a7090;--kn2:#3c4260;--kn3:#252a40;
+  --lcd0:#2a0e06;--lcd1:#a0481e;--lcd2:#f0a060;--lcd3:#ffdcb0;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 2px,rgba(255,255,255,0) 2px 9px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
+.console[data-shell=edge] .btn-ab.b{--ab1:#ffe7a0;--ab2:#ffc23a;--ab3:#a86a08;--abedge:#2e1c02;--abshadow:#1e1202}
+.console[data-shell=edge] .btn-ab.c{--ab1:#b0dcff;--ab2:#4ab0ff;--ab3:#14548a;--abedge:#04182a;--abshadow:#02101c}
+.console[data-shell=edge] .btn-ab.d{--ab1:#b8f4c4;--ab2:#5ad87a;--ab3:#1c7a36;--abedge:#06240e;--abshadow:#041a0a}
+.fx-edge .glow{left:-20%;right:-20%;bottom:-70px;height:170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,90,50,.36),rgba(255,90,50,0));animation:zpulse 3.2s ease-in-out infinite}
+.fx-edge b{bottom:14px;width:3px;height:3px;border-radius:50%;background:#ffc06a;box-shadow:0 0 6px 2px rgba(255,110,40,.75);opacity:0;animation:zember 5s linear infinite}
+.fx-edge i.sl{height:2px;width:70px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.32));opacity:0;animation:zstreak 3s ease-in infinite}
+@keyframes zstreak{0%{transform:translateX(-90px) rotate(-12deg);opacity:0}20%{opacity:1}100%{transform:translateX(460px) rotate(-12deg);opacity:0}}
+
 /* Spellsteel: cool steel-blue with gold trim and violet spell buttons, five Embers aglow and a glint of steel */
 .console[data-shell=spellsteel]{--b1:#6482b4;--b2:#46649a;--b3:#2e4572;--edge:#0c1a34;--print:#fff0c0;--print2:#ffd86a;
   --ab1:#f0c4ff;--ab2:#a850e4;--ab3:#5e1c98;--abedge:#2a0a4a;--abshadow:#1c0630;--groove1:#2a4070;--groove2:#385688;
@@ -593,6 +608,9 @@ const CARTS=[
   {id:'partyrex',title:'Party Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#b8306e',ink:'#fff3c4',skin:'partyrex',
    blurb:'Rex runs on his own. Dash down onto the goblin kids to keep up his speed, and try not to hit the floor.',
    note:'B or A dash down · START pause'},
+  {id:'edge',title:'Over the Edge',file:'games/edge/index.html',art:'games/edge/cart.png',label:'#10142a',ink:'#ffb04a',skin:'edge',stick:true,face4:true,wide:true,
+   blurb:'A 3D platform fighter with eight fighters. Knock your rival off the stage to win.',
+   note:'Stick move · A attack · B special · C jump · D shield'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -604,6 +622,7 @@ const SKINS=[
   {id:'dronestrike',name:'Drone Strike',tag:'GAME',ed:'DRONE STRIKE EDITION',sw:['#4d5e36','#ffb627']},
   {id:'pitchfork',name:'Pitchfork Rising',tag:'GAME',ed:'PITCHFORK RISING EDITION',sw:['#933a22','#f0b830']},
   {id:'partyrex',name:'Party Rex',tag:'GAME',ed:'PARTY REX EDITION',sw:['#ff82bb','#56c25e']},
+  {id:'edge',name:'Over the Edge',tag:'GAME',ed:'OVER THE EDGE EDITION',sw:['#262a3a','#ff4a5a']},
   {id:'spellsteel',name:'Spellsteel',tag:'GAME',ed:'SPELLSTEEL EDITION',sw:['#46649a','#a850e4']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
@@ -644,6 +663,9 @@ const SKINFX={
     for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
   partyrex:()=>{const r=prng(71),C=['#ffd84a','#6ad0ff','#a8ff6a','#ffffff','#c8a8ff','#ff8a3a'];let h=`<i class="bl" style="left:3%;top:72%;--c:#6ad0ff;animation-delay:-1s"></i><i class="bl" style="left:89%;top:83%;--c:#ffd84a;animation-delay:-3s"></i>`;
     for(let i=0;i<22;i++)h+=`<b style="left:${pct(r()*100)};--c:${C[i%C.length]};--dx:${Math.round((r()-.5)*60)}px;--rot:${Math.round(360+r()*540)}deg;animation-duration:${sec(6+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
+  edge:()=>{const r=prng(83);let h='<i class="glow"></i>';
+    for(let i=0;i<5;i++)h+=`<i class="sl" style="left:0;top:${pct(8+i*17+r()*8)};animation-delay:${sec(-r()*3)};animation-duration:${sec(2.4+r()*1.6)}"></i>`;
+    for(let i=0;i<12;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*3)};animation-delay:${sec(-r()*7)}"></b>`;return h},
   spellsteel:()=>{const r=prng(67),C=['#ff5a3a','#ffb030','#6ae0ff','#9aff7a','#c88aff'];let h='<i class="gloss"></i>';
     C.forEach((c,i)=>h+=`<i class="em" style="left:${10+i*20}%;--c:${c};animation-delay:${sec(-i*.8)}"></i>`);
     for(let i=0;i<10;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(6+r()*8).toFixed(0)}px;animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},

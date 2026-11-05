@@ -10,6 +10,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 | **Party Rex** | A dinosaur's birthday party gone wild: Rex runs right through the house on his own, room after room, and keeps his speed up by dashing down onto the goblin kids rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
+| **Over the Edge** | A 3D platform fighter in the style of the 128-bit era: eight realistic fighters, four stages, smash percentages, specials, shields, grabs and ledges. Knock your rival off the stage to take their stocks. Played sideways with the control stick and four buttons. | Stick move · A attack · B special · C jump · D shield · START pause |
 
 ## Lynties in 3D
 
@@ -63,6 +64,19 @@ The console stays upright for Party Rex. The picture is 180 pixels wide and as t
 - **Endless:** the first seconds are free, then each level brings faster kids and new kinds (sprinters, kids who jump, big kids, kids arriving in pairs), misses cost a little more and bonks give a little less. The best score is kept in the browser (`partyrex-runbest`).
 - SELECT turns the sound on or off. The game is the single file `games/partyrex/index.html`; it draws its own sprites and plays its own music in code.
 
+## Over the Edge
+
+A platform fighter in 3D. Two fighters, one human and one computer, fight on a floating stage; each hit raises the target's damage percent, and the higher it is the farther they fly. Fall past the edge of the screen and you lose a stock. The console turns sideways and gives the game its control stick and four face buttons (A, B, C, D).
+
+- **Fighters:** Kaito (karate), Valeria (sword), Bruno (wrestler), Nia (kickboxer), Raven (ninja), Marcus (boxer), Sir Aldric (greatsword knight) and Mei (staff monk). Each has four special moves (B, and B with the stick pushed sideways, up or down), its own weight, speed and reach, and a recovery move for getting back to the stage.
+- **The stick:** tilt it to walk and push it all the way to run. Flick it with A for a smash attack, or press A and B together. Hold A to charge a smash. Flick down in the air to fast fall, or on a platform to drop through it.
+- **Defence:** hold D to shield (it shrinks as it takes hits and can break). Press D just as a hit lands to parry it, push the stick while shielding to roll or spot dodge, and press D in the air to air dodge. Press D as you hit the ground after a big hit to tech. Grab with D + A (or with a button set in Controls), then throw them by pushing the stick.
+- **Controls menu:** set which button does attack, special, jump, shield and grab (A, B, C, D or SELECT), and turn tap-up-to-jump and flick-for-smash on or off. It is saved on the device.
+- **Moves list:** every move for every fighter, with its input, and the fighter doing the selected move beside the list. It opens from the main menu, from character select (C) and from the pause menu.
+- **Modes:** stock matches against a computer player of level 1 to 9, and Training with a dummy that stands, walks, jumps, shields or fights back, plus combo damage on screen.
+- **Stages:** Sky Sanctuary (sunset ruins with three platforms), Final Horizon (flat, in orbit), Harbor Night (docks with crates to stand on) and Temple Garden (cherry trees and a pagoda).
+- Built from `tools/edge/src/` with `python3 tools/edge/build.py`, which writes `games/edge/index.html`. It draws with three.js from `games/edge/3d/`. On the published ZigaPlay it shares Lynties' copy, and the offline edition packs it inside the page.
+
 ## Strike at Night
 
 Strike at Night's story and its top-down world, with Spellsteel's battles, wardrobe and forge. It starts on a city street in October 2026: Lift walks home from a late shift and never sees the car. He wakes up in Larkfield as a sixteen-year-old farm boy, spends one quiet day there, and that night a hooded man leaves his parents dead and a knife at his feet. Chapter 1 is three months later, with the Crows (Rook, Jun, Moss) and the Baron's tax wagon; Chapter 2 is the road to Greyford and its tollhouse.
@@ -102,6 +116,7 @@ tools/lynties-3d/           the Lynties game, its 3D world and the script that b
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 tools/nightsteel/           Strike at Night: its source (src/*.js and the page shell), build script and label maker
+tools/edge/                 Over the Edge: its source (src/*.js and the page shell) and build script
 ```
 
 ## How the console works
