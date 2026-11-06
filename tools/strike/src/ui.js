@@ -23,8 +23,8 @@ function titleTick(){const it=titleItems(),d=menuDir();if(d==='up'){MSEL=(MSEL+i
 function titleDraw(){drawSky('roof');ctx.setTransform(DPR,0,0,DPR,0,0);const W=SW,Hh=SH;
   const gy=Hh*(PORT?.86:.8),ty=PORT?Hh*.07:16*U;ctx.fillStyle='#0a0b1e';ctx.fillRect(0,gy,W,Hh-gy);ctx.fillStyle='#ff4fa8';ctx.fillRect(0,gy,W,1.5);
   const k=(PORT?1.8:2.2)*U;drawDummy(dummy(ROSTER[TITLE_F[0]],1),W*(PORT?.2:.13),gy,k);drawDummy(dummy(ROSTER[TITLE_F[1]],-1),W*(PORT?.8:.87),gy,k);
-  const g=.5+.5*Math.sin(FRAME*.05);ctx.shadowColor='#ff4fa8';ctx.shadowBlur=18*U*g;text('STRIKE',W/2,ty,46,'#ffffff','center',900,'#2a0a2a');ctx.shadowBlur=0;
-  text('AT  NIGHT',W/2,ty+50*U,18,'#ff8ad0','center',900,'#14061a');
+  const g=.5+.5*Math.sin(FRAME*.05);ctx.shadowColor='#ff4fa8';ctx.shadowBlur=18*U*g;text('HAMMER',W/2,ty,PORT?40:46,'#ffffff','center',900,'#2a0a2a');ctx.shadowBlur=0;
+  text('F A L L',W/2,ty+46*U,22,'#ff8ad0','center',900,'#14061a');
   menuList(titleItems(),W/2,PORT?Math.max(ty+86*U,Hh*.3):104*U,15,22*U,MSEL);hint('▲▼ choose · A select · 50 fighters')}
 /* ---------- controls ---------- */
 const BTN_ORDER=['a','b','up','down','select'];
@@ -78,7 +78,7 @@ function selectDraw(){drawSky('roof');ctx.setTransform(DPR,0,0,DPR,0,0);const{ce
       text(q===0?'P1':'CPU',x+3*U,y+2*U,7,q===0?'#ff4a5a':'#7aa0ff','left',900,'#000')}}}
   /* who is under the cursor: beside the grid on a wide screen, under it on an upright one */
   const c=ROSTER[SEL.cur[p]];let px,py,pw,ph;if(PORT){px=gx;py=gy+cell*5+6*U;pw=SW-2*gx;ph=SH-py-26*U}else{px=gx+cell*10+10*U;py=gy;pw=SW-px-8*U;ph=SH-gy-30*U}panel(px,py,pw,ph);
-  const nx=PORT?px+92*U:px+pw*.48;const big=PORT&&ph>230*U;drawDummy(dummy(c,1),PORT?px+46*U:px+pw*.24,py+(big?112:PORT?82:88)*U,(big?2.3:PORT?1.65:1.8)*U);
+  const nx=PORT?px+(ph>230*U?106:92)*U:px+pw*.48;const big=PORT&&ph>230*U;drawDummy(dummy(c,1),PORT?px+46*U:px+pw*.24,py+(big?112:PORT?82:88)*U,(big?2.3:PORT?1.65:1.8)*U);
   text(c.name,nx,py+6*U,17,'#fff','left',900,'#000');text(c.title,nx,py+27*U,8.5,c.acc,'left',800);text(GROUPS[c.grp].name,nx,py+38*U,7.5,GROUPS[c.grp].col,'left',900);
   const bars=[['SPEED',c.spd],['POWER',c.pow],['WEIGHT',{l:1,m:3,h:5}[c.build]]];bars.forEach(([n,v],i)=>{const y=py+50*U+i*11*U;text(n,nx,y,7.5,'#a8a8c8','left',800);
     for(let k=0;k<5;k++){ctx.fillStyle=k<v?c.acc:'rgba(255,255,255,.12)';ctx.fillRect(nx+42*U+k*9*U,y+1*U,7*U,6*U)}});
@@ -87,12 +87,12 @@ function selectDraw(){drawSky('roof');ctx.setTransform(DPR,0,0,DPR,0,0);const{ce
   if(p===1){const a=ROSTER[SEL.cur[0]];if(PORT)text('YOU: '+a.name,SW-gx,12*U,8,'#ff4a5a','right',900);else text('YOU: '+a.name,px+10*U,SH-48*U,9,'#ff4a5a','left',900)}
   hint('D-pad move · A pick · SELECT random · B back')}
 /* ---------- stage select ---------- */
-function stageTick(){const d=menuDir();if(d==='left'){MSEL=(MSEL+3)%4;SFX.move()}if(d==='right'){MSEL=(MSEL+1)%4;SFX.move()}if(d==='up'||d==='down'){MSEL=PORT?(MSEL+2)%4:(MSEL+(d==='up'?3:1))%4;SFX.move()}
+function stageTick(){const d=menuDir(),n=STAGES.length,cols=PORT?2:4;if(d==='left'){MSEL=(MSEL+n-1)%n;SFX.move()}if(d==='right'){MSEL=(MSEL+1)%n;SFX.move()}if(d==='up'||d==='down'){MSEL=(MSEL+(d==='up'?n-cols:cols))%n;SFX.move()}
   if(TAP('a')||TAP('start')){SEL.stage=MSEL;SFX.go();startMatch({chars:[SEL.cur[0],SEL.cur[1]],stage:MSEL,train:SEL.mode==='train'})}
   if(TAP('b')){SFX.back();SEL.phase=1;go('select')}}
 function stageDraw(){drawSky(STAGES[MSEL].id);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,0,SW,SH);
-  text('PICK A STAGE',SW/2,PORT?SH*.12:14*U,18,'#fff','center',900,'#000');
-  const cols=PORT?2:4,w=PORT?(SW-30*U)/2:Math.min(96*U,(SW-50*U)/4),h=PORT?w*.8:64*U,gap=PORT?10*U:8*U,top=PORT?SH*.26:SH/2-30*U;
+  text('PICK A STAGE',SW/2,PORT?14*U:12*U,18,'#fff','center',900,'#000');
+  const cols=PORT?2:4,rows=Math.ceil(STAGES.length/cols),w=PORT?(SW-30*U)/2:Math.min(96*U,(SW-50*U)/4),gap=PORT?10*U:8*U,top=PORT?44*U:40*U,h=Math.min(PORT?w*.62:64*U,(SH-top-40*U)/rows-gap-16*U);
   STAGES.forEach((s,i)=>{const cx=i%cols,cy=Math.floor(i/cols),x=SW/2+(cx-(cols-1)/2)*(w+gap)-w/2,y=top+cy*(h+gap+16*U),on=i===MSEL;
     panel(x,y,w,h,on?'rgba(255,79,168,.25)':'rgba(8,8,22,.8)',on?'#ff4fa8':'rgba(255,255,255,.2)');
     const M=s.main,k=w/380,by=y+h*.78;ctx.fillStyle='#c8c8e8';ctx.fillRect(x+w/2+M.x1*k,by,(M.x2-M.x1)*k,3*U);for(const p of s.plats)ctx.fillRect(x+w/2+p.x1*k,by+p.y*k*.9,(p.x2-p.x1)*k,2*U);

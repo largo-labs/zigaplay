@@ -58,7 +58,7 @@ applySave();loadAccount(applySave);
 setInterval(()=>saveNow(),1000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SCR==='fight'&&!MATCH.ending)go('pause');saveNow(true)}});
 addEventListener('pagehide',()=>saveNow(true));
-window.ZPCart={title:'Strike at Night',input(b,d){rawInput(b,d)},home(){if(SCR==='fight'&&!MATCH.ending)go('pause');saveNow(true);return true}};
+window.ZPCart={title:'Hammer Fall',input(b,d){rawInput(b,d)},home(){if(SCR==='fight'&&!MATCH.ending)go('pause');saveNow(true);return true}};
 requestAnimationFrame(loop);
 /* a test hook, only when the address asks for it */
 if(/sntest/.test(location.href))window.SNT={get FT(){return FT},get MATCH(){return MATCH},get SCR(){return SCR},get SAVE(){return SAVE},get CTRL(){return CTRL},startMatch,ROSTER,STAGES,

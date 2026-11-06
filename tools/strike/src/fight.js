@@ -3,9 +3,13 @@ const STAGES=[
   {id:'roof',name:'ROOFTOP',main:{x1:-120,x2:120,y:0},plats:[{x1:-96,x2:-36,y:-56},{x1:36,x2:96,y:-56},{x1:-30,x2:30,y:-110},{x1:-88,x2:-40,y:-164},{x1:40,x2:88,y:-164}]},
   {id:'bridge',name:'MOON BRIDGE',main:{x1:-140,x2:140,y:0},plats:[]},
   {id:'clock',name:'CLOCK TOWER',main:{x1:-110,x2:110,y:0},plats:[{x1:-88,x2:-32,y:-52},{x1:32,x2:88,y:-52},{x1:-28,x2:28,y:-104},{x1:-28,x2:28,y:-158}]},
-  {id:'docks',name:'NEON DOCKS',main:{x1:-118,x2:118,y:0},plats:[{x1:-100,x2:-44,y:-50},{x1:10,x2:80,y:-90},{x1:-62,x2:-4,y:-142}]}];
+  {id:'docks',name:'NEON DOCKS',main:{x1:-118,x2:118,y:0},plats:[{x1:-100,x2:-44,y:-50},{x1:10,x2:80,y:-90},{x1:-62,x2:-4,y:-142}]},
+  {id:'foundry',name:'THE FOUNDRY',main:{x1:-125,x2:125,y:0},plats:[{x1:-100,x2:-40,y:-60},{x1:40,x2:100,y:-60},{x1:-30,x2:30,y:-122},{x1:20,x2:80,y:-182}]},
+  {id:'temple',name:'SKY TEMPLE',main:{x1:-105,x2:105,y:0},plats:[{x1:-140,x2:-80,y:-42},{x1:80,x2:140,y:-42},{x1:-40,x2:40,y:-100},{x1:-105,x2:-55,y:-160},{x1:55,x2:105,y:-160}]},
+  {id:'peak',name:'FROZEN PEAK',main:{x1:-135,x2:135,y:0},plats:[{x1:-72,x2:-20,y:-68},{x1:30,x2:92,y:-112},{x1:-42,x2:10,y:-172}]},
+  {id:'subway',name:'SUBWAY',main:{x1:-150,x2:150,y:0},plats:[{x1:-95,x2:95,y:-72}]}];
 /* the blast lines: past these you are out. The stages are narrow and tall, made for an upright screen */
-const BLAST={l:-280,r:280,t:-275,b:200};
+const BLAST={l:-390,r:390,t:-370,b:270};
 let STAGE=STAGES[0],PLATS=[],FT=[],PROJ=[],FX=[],SHAKE=0,UID=0,FRAME=0;
 function setStage(i){STAGE=STAGES[i];const M=STAGE.main;PLATS=[{x1:M.x1,x2:M.x2,y:M.y,solid:1},...STAGE.plats.map(p=>Object.assign({soft:1},p))]}
 function newFighter(ci,id,cpu,lvl){const c=ROSTER[ci];return{c,id,cpu,lvl,x:0,y:0,vx:0,vy:0,lvx:0,lvy:0,face:1,gr:null,jumps:1,st:'air',t:0,mv:null,pct:0,stocks:3,

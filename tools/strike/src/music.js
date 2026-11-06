@@ -8,6 +8,10 @@ const SONGS={
   roof:{bpm:140,root:52,prog:[0,5,6,4],k:'x.....x...x.....',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.',bass:'0.0.1.0.0.0.1.05',arp:'B',lead:1,seed:11},
   bridge:{bpm:128,root:50,prog:[0,5,2,6],k:'x...x...x...x...',s:'....x.......x...',h:'..x...x...x...x.',bass:'0..0..0.0..0..1.',arp:'AB',lead:1,seed:7},
   clock:{bpm:146,root:48,prog:[0,5,2,6],k:'x.....x.x.....x.',s:'....x.......x..x',h:'xxx.xxx.xxx.xxx.',bass:'0.0.0.0.5.5.1.1.',arp:'AB',lead:1,seed:23},
+  foundry:{bpm:152,root:45,prog:[0,6,5,6],k:'x.x...x.x.x...x.',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.',bass:'00.000.000.0.11.',arp:'B',lead:1,seed:31},
+  temple:{bpm:112,root:55,prog:[0,3,5,4],k:'x.......x..x....',s:'....x.......x...',h:'..x...x...x...x.',bass:'0...0.5.0...1...',arp:'AB',lead:.9,seed:41},
+  peak:{bpm:124,root:53,prog:[0,5,3,4],k:'x...x...x...x...',s:'....x.......x...',h:'x.xxx.xxx.xxx.xx',bass:'0.0.0.0.1.1.5.5.',arp:'AB',lead:1,seed:17},
+  subway:{bpm:140,root:49,prog:[0,2,5,4],k:'x..x..x...x.....',s:'....x.......x.x.',h:'x.x.x.xxx.x.x.xx',bass:'0.01.0.10.01.0.1',arp:'B',lead:1,seed:29},
   docks:{bpm:134,root:54,prog:[0,5,2,4],k:'x...x...x...x...',s:'....x.......x...',h:'.x.x.x.x.x.x.x.x',bass:'0.10.10.0.10.150',arp:'B',lead:1,seed:5}};
 const MINOR=[0,2,3,5,7,8,10],mf=n=>440*Math.pow(2,(n-69)/12);
 const MUS={on:false,song:null,step:0,next:0,timer:0,bus:null,vol:.34,dly:null,S:null,mel:null};

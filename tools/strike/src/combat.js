@@ -26,7 +26,7 @@ function applyHit(a,v,b,dir){
   if(v.held){const h=v.held;h.st='air';h.holder=null;v.held=null}
   const kb=calcKB(v,b,d);let ang=b.ang;
   if(b.radial){const cx=b.cx!=null?b.cx:b.x,cy=b.cy!=null?b.cy:b.y;dir=sgn(v.x-cx)||dir;ang=Math.atan2(-((v.y-20)-cy),Math.abs(v.x-cx))*180/Math.PI;ang=clamp(ang,25,85)}
-  const r=ang*Math.PI/180,L=kb*.1;v.vx=v.vy=0;v.mv=null;v.hide=0;v.ff=0;v.counter=v.reflect=false;
+  const r=ang*Math.PI/180,L=kb*.108;v.vx=v.vy=0;v.mv=null;v.hide=0;v.ff=0;v.counter=v.reflect=false;
   if(!b.kg){/* linking hits carry the target along */v.lvx=0;v.lvy=0;v.vx=a.vx*.9;v.vy=Math.min(0,a.vy*.9);if(b.x!=null){v.x+=(b.x-v.x)*.2;v.y+=((b.y+16)-v.y)*.15}v.hs=12;v.st='hit';v.t=0;if(!v.gr)v.vy=a.vy*.9}
   else{v.lvx=Math.cos(r)*L*dir;v.lvy=-Math.sin(r)*L;
     if(v.gr&&v.lvy>0)v.lvy=-v.lvy*.6;
@@ -36,6 +36,8 @@ function applyHit(a,v,b,dir){
   if(b.pop)v.hs+=10;
   v.hs=Math.max(6,Math.round(v.hs*Math.max(.5,1-.06*v.cmb)*(same?.7:1)));
   const hl=Math.min(8,Math.round(2+d*.3+(kb>90?2:0)));v.hl=hl;if(!b.proj)a.hl=hl;
+  /* getting hit gives back your double jump, dodge and specials, so you can always try to get back */
+  v.jumps=1;v.upUsed=v.sideUsed=v.dodged=0;
   v.lastHit=a;if(wasHit){a.combo++;a.comboD+=d}else{a.combo=1;a.comboD=d}a.comboT=90;
   const sx=b.x!=null?(b.x+v.x)/2:v.x,sy=b.y!=null?(b.y+v.y-20)/2:v.y-20;spark(sx,sy,a.c.grp==='M'&&!b.proj?'#fff2c0':a.c.fx,kb>70?12:6,kb);
   if(kb>70)shake(Math.min(10,kb*.06));SFX.hit(kb>85?2:kb>45?1:0);if(!a.cpu||!v.cpu)haptic(kb>85?35:kb>45?18:8);

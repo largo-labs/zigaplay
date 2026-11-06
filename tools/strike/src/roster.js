@@ -56,9 +56,17 @@ const R50=[
  ['MOSS','Mountain Monk','C','#e8a030','#3a6a2a','#c08458','#141414','bald','wraps','m',3,4,['uppercut','RISING PALM'],['palm','INNER FORCE']],
  ['GRIMM','Grave Brawler','C','#3a3a44','#8aff8a','#d8d0c0','#141414','hood','gauntlets','m',3,4,['flameup','SOUL FLAME'],['flurry','GRAVE BLOWS']],
  ['WRAITH','Phantom Fist','C','#c8c8e8','#7a5aa8','#e8e8ff','#7a5aa8','long','bare','l',4,3,['leapup','PHASE LEAP'],['flykick','SHADE KICK']]];
+/* what each fighter wears: jacket, coat, armor, gi, tank, robe, suit or vest, plus extras: cape, scarf, pads (shoulder armor), boots */
+const OUTFIT={NOVA:'jacket pads',COLT:'coat scarf',BUSTER:'vest pads boots',VOLT:'jacket scarf',TITAN:'armor pads boots',PIPER:'coat boots',LUNA:'robe cape',RUSTY:'armor pads',
+  ECHO:'jacket',SPRITZ:'tank',HAWK:'vest scarf boots',GLITCH:'jacket',OSIRIS:'robe cape',MIRA:'robe scarf',SARGE:'vest boots',BLAZE:'armor boots',FROST:'jacket scarf',
+  KAGE:'gi scarf',DUKE:'suit cape',RONIN:'gi',VALE:'armor cape pads',RAJA:'robe scarf',BRUTUS:'armor pads boots',YUKI:'gi scarf',CINDER:'armor pads boots',PIXIE:'robe',
+  OMEGA:'armor cape pads',MAMBA:'vest scarf',TORO:'suit cape',HALO:'armor cape',RAVEN:'coat scarf',TUSK:'armor pads boots',KOI:'gi',SAGE:'robe',
+  MAX:'tank',KONG:'tank',OKKO:'gi',SHIVA:'gi scarf',FANG:'vest',CHOMP:'tank boots',DIESEL:'vest boots',ZIGGY:'jacket',PEP:'tank',BOLT:'jacket',DRAKO:'vest scarf',
+  GALE:'gi scarf',ROOK:'armor pads',MOSS:'robe',GRIMM:'coat',WRAITH:'robe scarf'};
 const GROUPS={L:{name:'LONG RANGE',short:'LONG',col:'#5ad8ff'},M:{name:'MEDIUM RANGE',short:'MEDIUM',col:'#ffd84a'},C:{name:'CLOSE RANGE',short:'CLOSE',col:'#ff6a5a'}};
 const BUILDS={l:{w:84,sz:.95},m:{w:100,sz:1},h:{w:122,sz:1.07}};
 const ROSTER=R50.map((r,i)=>{const[name,title,grp,body,acc,skin,hair,head,weapon,build,spd,pow,up,side]=r,B=BUILDS[build];
   return{i,name,title,grp,body,acc,skin,hair,head,weapon,build,spd,pow,w:B.w,sz:B.sz,pants:shade(body,-.45),
     run:2.9+spd*.3+(grp==='C'?.2:0),air:2.2+spd*.18,jump:10.6+spd*.12-(build==='h'?.5:0),grav:build==='h'?.62:build==='l'?.54:.58,
-    up:{kind:up[0],name:up[1]},side:{kind:side[0],name:side[1]},fx:acc}});
+    up:{kind:up[0],name:up[1]},side:{kind:side[0],name:side[1]},fx:acc,
+    fit:(OUTFIT[name]||'jacket').split(' ')[0],ex:new Set((OUTFIT[name]||'').split(' ').slice(1))}});
