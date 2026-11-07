@@ -8,6 +8,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Chip City** | A casino with blackjack, roulette, slots, video poker, hi-lo, Rocket (cash out before it blows up), The Track (horse racing) and Texas Hold'em against three players, plus Downtown: 27 buildings to buy, from a hot dog cart to Planet Chip (a trillion chips a second), that earn chips while you're away. Every bet has a MAX step that bets your whole stack. After Big Sal (100,000) come six more loan sharks, each owed ten times more, up to The Chairman's 100 billion. Every win pays its winnings times a bonus multiplier that grows with the bet (2× at the smallest bet, 3× at 50, 4× at 500, 5× at 5,000, up to 10×); losing bets pay nothing back. Work pays 50 chips per 10 polishes and buildings earn three times what they used to, for 24 hours between visits. It uses play chips only. | D-pad choose · A press · START deal/spin · B back |
 | **Hammer Fall** | A fast 2D platform fighter at night, played upright, one on one against the CPU: knock your rival off the stage. 50 fighters in three groups (gunners, sword fighters and brawlers), each with their own up and side specials; five A attacks, double jumps, blocking, parries, grabs and smooth combos. A title screen to change the controls, plus training and records. | A attack · B block, B + ▲ or ◀▶ specials · ▲ jump · ▼ block · START pause |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
+| **Gridiron '88** | Arcade football with a full franchise mode: the real NFL (current rosters with their numbers, ages and career stats, ratings computed from those stats) or a classic league of original teams, an 18-game season with playoffs, free agency, contracts, the draft and a drag-and-drop card lineup. | Its own touch controls, full screen: joystick, drag back to throw, timed buttons |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 | **Neon Rex** | A cyber-raptor races through a neon city at night: Rex runs right on his own, district after district, and keeps his speed up by dashing down onto the glitch goblins rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
 | **Grim Ascent** | A Doodle Jump-style climb up a haunted tower as a little reaper in a black cloak and skull mask. Tilt the phone to steer; you bounce on the platforms by yourself. Slam into monsters with B and finish them with A combos; tougher monsters take two, three or four combos. Played upright. | Tilt steer · B slam · A attack · START pause |
@@ -139,6 +140,7 @@ tools/squares/              Gray Squares: its page shell, script and build scrip
   - `stick:true` puts a round control stick in place of the D-pad.
   - `wide:true` gives the game the console's sideways shape. If the phone is upright, the console turns itself a quarter turn.
   - `face4:true` gives the game four face buttons in a diamond (A, B, C, D).
+  - `touch:true` is for a game with its own on-screen controls: it fills the whole phone screen with no D-pad or buttons, and a small power tab (left edge, or top edge with the phone upright) turns it off.
   - `skin:'<id>'` names the console skin the game wears when the player picks *Match the game*.
 - **Home screen and Library:** the shelf shows the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
 - **Skins:** SELECT on the shelf opens the skin picker. Some skins move (aurora, galaxy and others), and each game can bring its own.
@@ -159,6 +161,10 @@ Edit the game in `tools/lynties-3d/lynties-2d.html`, or the 3D world in `tools/l
 python3 tools/build-offline.py . /tmp/out
 rm -rf app && cp -r /tmp/out/ZigaPlay-offline app
 ```
+
+## Gridiron '88
+
+`games/gridiron/index.html` is a single-file build of the Gridiron '88 game, which is developed in the `largo-labs/games` repo (`gridiron/`): `npm run build` there, then inline the CSS, JS and fonts into one page. It runs as a `touch:true` cartridge, so it plays exactly as it does on its own. Its NFL mode uses real team and player names (no logos); its ratings are its own formula from public career stats.
 
 ## Credits
 

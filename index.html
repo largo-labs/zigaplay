@@ -226,6 +226,13 @@ html.wide .console.widegame .bezel .ledlbl{display:none}
 html.wide .console.widegame .bezel .led{left:6px}
 html.wide .dpad,html.wide .stick,html.wide .ab,html.wide .pills{zoom:var(--cz,1)}
 html.wide .console.widegame .grille{display:none}
+/* a touch game (touch:true) brings its own on-screen controls: it gets the whole phone screen, the console's
+   controls stay hidden under it, and only a small power tab is left on the left edge to go back to the shelf */
+html.touchgame .screen{position:fixed;inset:0;z-index:50;border:0;border-radius:0}
+html.touchgame #power{position:fixed;z-index:60;left:0;top:50%;transform:translateY(-50%);flex-direction:column;gap:3px;padding:10px 5px 10px 4px;
+  background:rgba(10,12,20,.55);color:rgba(255,255,255,.75);border-radius:0 10px 10px 0;font-size:7px;letter-spacing:.08em;writing-mode:vertical-rl}
+@media (orientation:portrait){html.touchgame #power{left:50%;top:0;transform:translateX(-50%);writing-mode:horizontal-tb;flex-direction:row;padding:4px 10px 5px;border-radius:0 0 10px 10px}}
+html.touchgame .ask{position:fixed;z-index:70;left:50%;right:auto;top:50%;bottom:auto;width:min(86vw,360px);transform:translate(-50%,-50%)}
 /* ---------- skins ----------
    A skin is a set of the tokens above, sometimes an LCD tint and a printed edition name, and for the live and game
    skins a layer of moving decoration (.skinfx) that sits on the body behind every control. The decoration only
@@ -575,6 +582,9 @@ html.wide .keylist .cap{line-height:15px;font-size:12px;min-width:22px}
      gets the long side of the screen.
    - A game without ZPCart gets keyboard events instead (keydown and keyup on its document). The keys
      come from the cart's `keys` entry, or by default: arrows, A = z, B = x, START = Enter, SELECT = Shift.
+   - A touch game sets `touch:true`: it plays with its own on-screen controls, so while it runs it fills the whole
+     phone screen (no D-pad, no buttons, no console around it, never turned by the console) and only a small power
+     tab on the left edge stays to turn it off. It still gets keyboard events on a computer.
    - Optional ZPCart.home(): called when the player flips the power switch (or holds START + SELECT).
      Return true to turn off now, false to keep playing, or 'ask' to let the console ask first.
      Without it, the console asks whether to turn the game off.
@@ -608,6 +618,9 @@ const CARTS=[
   {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',skin:'dronestrike',lib:true,
    blurb:'A giant neighbor has invaded. Command your country\'s drone unit: research, build and choose what flies against five enemy generals.',
    note:'D-pad choose · ◀ ▶ amounts · A confirm · B back'},
+  {id:'gridiron',title:'Gridiron \'88',file:'games/gridiron/index.html',art:'games/gridiron/cart.png',label:'#0d1a33',ink:'#ffd23f',touch:true,
+   blurb:'Arcade football with a full franchise: real NFL teams and rosters or a classic league, an 18-game season, playoffs, free agency, the draft and a card lineup.',
+   note:'Touch controls · full screen · power tab on the left edge'},
   {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',skin:'pitchfork',stick:true,wide:true,lib:true,
    blurb:'Lead a peasant revolt from the village barn to the king\'s throne: arm your folk, set traps, and fight on the field yourself.',
    note:'A strike · B roll · SELECT orders · START pause'},
@@ -806,10 +819,11 @@ function libInput(b){if(!libUI)return;const n=libCarts().length;
   else if(b==='start')setLibEdit(!libUI.edit);
   else if(b==='b'){if(libUI.edit)setLibEdit(false);else closeLib()}}
 /* the console's shape: upright, or sideways (see the CSS); a wide game turns it sideways */
-function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide);
-  /* on a PC (mouse and keyboard) the console never turns itself a quarter turn: a window is not a phone you can rotate */
-  const pc=matchMedia('(hover:hover) and (pointer:fine)').matches,turned=wideGame&&!land&&!pc,wide=turned||(wideGame&&pc)||(land&&(H<=600||wideGame));
-  de.classList.toggle('wide',wide);de.classList.toggle('turned',turned);
+function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide),touchGame=!!(cur&&cur.touch);
+  /* on a PC (mouse and keyboard) the console never turns itself a quarter turn: a window is not a phone you can rotate.
+     A touch game is never turned and never wide: it fills the whole screen */
+  const pc=matchMedia('(hover:hover) and (pointer:fine)').matches,turned=wideGame&&!land&&!pc&&!touchGame,wide=!touchGame&&(turned||(wideGame&&pc)||(land&&(H<=600||wideGame)));
+  de.classList.toggle('wide',wide);de.classList.toggle('turned',turned);de.classList.toggle('touchgame',touchGame);
   /* the console's own width and height (a turned console is the screen's height wide), and how big its controls can be:
      the columns must hold the D-pad (or stick) and A and B */
   const cw=turned?H:W,chh=turned?W:Math.min(H,Math.min(W,1000)*.47);
