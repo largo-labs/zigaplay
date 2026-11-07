@@ -449,6 +449,15 @@ html.touchgame .ask{position:fixed;z-index:70;left:50%;right:auto;top:50%;bottom
 .cart.lt .stk i:nth-child(3){left:25px;transform:rotate(9deg);transform-origin:bottom center}
 .cart.lt .box b{font-size:13px;letter-spacing:.14em;line-height:1}
 .cart.lt .box em{font-style:normal;font-family:var(--num);font-size:14px;letter-spacing:.06em;opacity:.85;line-height:1}
+.cart.st .box{gap:5px}
+.cart.st .bag{position:relative;width:36px;height:27px;margin-top:9px;border-radius:3px 3px 7px 7px;background:var(--lcd2);box-shadow:inset 0 0 0 2px var(--lcd1)}
+.cart.st .bag::before{content:"";position:absolute;left:8px;right:8px;top:-10px;height:12px;border:3px solid var(--lcd2);border-bottom:0;border-radius:10px 10px 0 0}
+.cart.st .bag::after{content:"";position:absolute;left:50%;top:7px;margin-left:-6px;border:6px solid transparent;border-top:9px solid var(--lcd0);border-bottom:0}
+#storeList{overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain}#storeList::-webkit-scrollbar{display:none}
+.liblist .row.gone img{filter:grayscale(1);opacity:.55}
+.liblist .row.dl{position:relative}
+.liblist .row.dl::after{content:"";position:absolute;left:8px;right:8px;bottom:1px;height:3px;border-radius:2px;background:currentColor;transform-origin:left;animation:zdl .8s linear forwards}
+@keyframes zdl{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .libact{display:block;align-self:flex-start;margin-top:3px;font-family:var(--pix);font-size:13px;letter-spacing:.1em;padding:3px 10px 2px;border:0;border-radius:4px;background:var(--lcd0);color:var(--lcd3);cursor:pointer}
 .libact[hidden]{display:none}
 #home.editing .info small{display:none}
@@ -462,7 +471,7 @@ html.touchgame .ask{position:fixed;z-index:70;left:50%;right:auto;top:50%;bottom
 .liblist .row em{margin-left:auto;flex:0 0 auto;font-style:normal;font-family:var(--num);font-size:15px;letter-spacing:.06em;opacity:.85}
 .liblist .row.out{transition:transform .3s ease-in,opacity .3s;transform:translateY(-14px);opacity:0}
 .liblist .empty{margin:0;padding:10px 8px;font-family:var(--num);font-size:17px;line-height:1.1;color:var(--lcd1)}
-.libinfo{padding:4px 12px 5px;border-top:3px solid var(--lcd1);font-family:var(--num);font-size:16px;line-height:1.05;color:var(--lcd1);min-height:2.4em;
+.libinfo{padding:4px 12px 5px;border-top:3px solid var(--lcd1);font-family:var(--num);font-size:16px;line-height:1.05;color:var(--lcd1);min-height:2.4em;box-sizing:border-box;height:calc(2.1em + 6px);min-height:0;padding-bottom:0;margin-bottom:5px;flex:0 0 auto;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 @media (max-height:720px){.liblist .row{padding:2px 8px;font-size:14px}.liblist .row img{width:36px;height:24px}.libinfo{font-size:15px}}
 @media (prefers-reduced-motion:reduce){#home.editing .cart.game .cb{animation:none}}
@@ -509,6 +518,12 @@ html.wide .keylist .cap{line-height:15px;font-size:12px;min-width:22px}
           <div class="liblist" id="libList" role="listbox" aria-label="Library"></div>
           <div class="libinfo" id="libInfo" aria-live="polite"></div>
           <div class="lcd-help" id="libHelp"></div>
+        </div>
+        <div class="lcd" id="store" hidden>
+          <div class="lcd-top"><b>STORE</b><span class="tr"><span id="storeCount"></span></span></div>
+          <div class="liblist" id="storeList" role="listbox" aria-label="Store"></div>
+          <div class="libinfo" id="storeInfo" aria-live="polite"></div>
+          <div class="lcd-help" id="storeHelp"></div>
         </div>
         <div class="lcd" id="skins" hidden>
           <div class="lcd-top"><b>SKINS</b><span id="skinPos"></span></div>
@@ -739,18 +754,24 @@ let state='off',sel=Math.min(store.get('sel',0),CARTS.length),cur=null,frame=nul
    entry (lib:true starts it in the library); after that it follows the player. EDIT (or START) on the home screen lets
    them send a game to the library, and EDIT in the library sends it back. The choice is kept on this phone and, inside
    Claude, in the player's account with the skin, so it comes back on their other devices too. */
-let libPlace=(()=>{const o=store.get('lib',null);return o&&typeof o==='object'&&!Array.isArray(o)?o:{}})(),libTouched=false,editing=false,libUI=null,launchFrom='home';
+let libPlace=(()=>{const o=store.get('lib',null);return o&&typeof o==='object'&&!Array.isArray(o)?o:{}})(),libTouched=false,editing=false,libUI=null,storeUI=null,launchFrom='home';
+/* the store installs and uninstalls games (free): an uninstalled game is 'gone' in the same map, so it leaves the home screen
+   and the library, and the choice follows the player to their other devices like the rest. Its saves stay */
+const gone=c=>!!c&&libPlace[c.id]==='gone',installed=()=>CARTS.filter(c=>!gone(c));
 const inLib=c=>!!c&&!c.ghost&&!c.libtile&&(libPlace[c.id]?libPlace[c.id]==='lib':!!c.lib);
-const homeCarts=()=>CARTS.filter(c=>!inLib(c)),libCarts=()=>CARTS.filter(inLib);
+const homeCarts=()=>CARTS.filter(c=>!inLib(c)&&!gone(c)),libCarts=()=>CARTS.filter(inLib);
 const names=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const LIBTILE={id:'#library',libtile:true,title:'Library',note:'',
   get blurb(){const l=libCarts();return l.length?`${l.length} game${l.length===1?'':'s'} put away: ${names(l.map(c=>c.title))}.`:'Games you put away go here. Press EDIT on the home screen, then choose a game.'}};
-const items=()=>[...homeCarts(),LIBTILE,GHOST];
+/* the store's tile always sits just left of the library's; neither can be put away */
+const STORETILE={id:'#store',libtile:true,store:true,title:'Store',note:'A open · free to install',
+  get blurb(){const n=installed().length,m=CARTS.length;return`Install and uninstall games, all free. ${n} of ${m} installed. Uninstalling takes a game off your home screen and library; its saves stay, so it picks up where you left off if you install it again.`}};
+const items=()=>[...homeCarts(),STORETILE,LIBTILE,GHOST];
 const cartWin=()=>{try{return frame&&frame.contentWindow}catch(e){return null}};
 /* ---------- skins: what the player picked (skinChoice), and what the console wears right now ---------- */
 let skinChoice=SKIN[store.get('shell','classic')]?store.get('shell','classic'):'classic',skinTouched=false,skinUI=null;
 const fxEl=document.createElement('div');fxEl.className='skinfx';fxEl.setAttribute('aria-hidden','true');consoleEl.prepend(fxEl);
-function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:items()[sel]);return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
+function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:state==='store'&&storeUI?CARTS[storeUI.i]:items()[sel]);return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
 function wearSkin(id){if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
   consoleEl.dataset.shell=id;fxEl.dataset.on=id;fxEl.className='skinfx fx-'+id;fxEl.innerHTML=SKINFX[id]?SKINFX[id]():'';$('#edition').textContent=SKIN[id].ed||'POCKET CONSOLE'}
 function refreshSkin(){if(state!=='skins')wearSkin(skinChoice)}
@@ -760,16 +781,17 @@ function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoic
 async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r.ok||!r.json||skinTouched)return;
   const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}
   if(o&&o.lib&&typeof o.lib==='object'&&!libTouched&&JSON.stringify(o.lib)!==JSON.stringify(libPlace)){libPlace=o.lib;store.set('lib',libPlace);
-    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib()}}catch(e){}}
+    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib();else if(state==='store'&&storeUI)renderStore()}}catch(e){}}
 wearSkin(skinChoice);
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
-function show(id){for(const x of['home','lib','boot','loading','skins','keys'])$('#'+x).hidden=x!==id}
+function show(id){for(const x of['home','lib','store','boot','loading','skins','keys'])$('#'+x).hidden=x!==id}
 
 /* ---------- the library shelf ---------- */
 function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();sel=Math.max(0,Math.min(sel,all.length-1));
-  all.forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':c.libtile?' lt':' game');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
+  all.forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':c.store?' lt st':c.libtile?' lt':' game');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
     const n=libCarts().length;
     b.innerHTML=c.ghost?'<span class="shell"></span><span class="ghostbox"><b>+</b><span>ADD A GAME</span></span>'
+      :c.store?`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="box"><span class="bag"></span><b>STORE</b><em>${CARTS.length-installed().length?CARTS.length-installed().length+' TO GET':'ALL FREE'}</em></span><span class="arrow"></span></span>`
       :c.libtile?`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="box"><span class="stk"><i></i><i></i><i></i></span><b>LIBRARY</b><em>${n} GAME${n===1?'':'S'}</em></span><span class="arrow"></span></span>`
       :`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="label" style="--lb:${c.label};--lf:${c.ink}"><img src="${c.art}" alt=""><b></b></span><span class="arrow"></span></span><span class="rm" role="button" aria-label="Add to library">–</span>`;
     if(!c.ghost&&!c.libtile){b.querySelector('.rm').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home'&&editing)toLibrary(c)})}
@@ -777,7 +799,7 @@ function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();se
     b.setAttribute('aria-label',c.title);
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
-  $('#count').textContent=`${CARTS.length} GAME${CARTS.length===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
+  const ni=installed().length;$('#count').textContent=`${ni} GAME${ni===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
 function homeHelp(){$('#homeHelp').innerHTML=editing?'<span><i>A</i> ADD TO LIBRARY</span><span><i>START</i> DONE</span>':'<span><i>A</i> PLAY</span><span><i>START</i> EDIT</span><span><i>SELECT</i> SKINS</span>'}
 function markEdit(){$('#home').classList.toggle('editing',editing);$('#editBtn').textContent=editing?'DONE':'EDIT';homeHelp();
   const c=items()[sel],can=editing&&c&&!c.ghost&&!c.libtile;$('#libAct').hidden=!can}
@@ -818,6 +840,36 @@ function libInput(b){if(!libUI)return;const n=libCarts().length;
   else if(b==='a')libActivate();
   else if(b==='start')setLibEdit(!libUI.edit);
   else if(b==='b'){if(libUI.edit)setLibEdit(false);else closeLib()}}
+/* ---------- the store: every game, free to install or uninstall ---------- */
+function openStore(){if(state!=='home')return;if(editing){editing=false;markEdit()}
+  storeUI={i:Math.max(0,Math.min(store.get('storeSel',0),CARTS.length-1))};state='store';show('store');renderStore();SFX.pick()}
+function renderStore(){const L=$('#storeList');L.innerHTML='';if(!storeUI)return;
+  CARTS.forEach((c,n)=>{const b=document.createElement('button');b.className='row'+(gone(c)?' gone':'');b.tabIndex=-1;b.setAttribute('role','option');
+    b.innerHTML=`<img src="${c.art}" alt=""><span></span><em></em>`;b.querySelector('span').textContent=c.title.toUpperCase();b.setAttribute('aria-label',c.title);
+    b.addEventListener('click',()=>{sfxUnlock();if(state!=='store')return;if(storeUI.i===n)storeActivate();else{storeUI.i=n;markStore();SFX.tick()}});L.append(b)});
+  markStore()}
+function markStore(){if(!storeUI)return;const rows=$$('#storeList .row'),L=$('#storeList'),n=installed().length;
+  $('#storeCount').textContent=`${n}/${CARTS.length} INSTALLED`;
+  rows.forEach((r,k)=>{const on=k===storeUI.i,g=gone(CARTS[k]);r.setAttribute('aria-selected',String(on));r.classList.toggle('gone',g);
+    if(!r.classList.contains('dl'))r.querySelector('em').textContent=on?(g?'GET':'UNINSTALL'):(g?'FREE':'✓')});
+  const c=CARTS[storeUI.i];$('#storeInfo').textContent=c?(gone(c)?'FREE · ':'INSTALLED · ')+c.blurb:'';
+  $('#storeHelp').innerHTML=`<span><i>A</i> ${c&&gone(c)?'INSTALL':'UNINSTALL'}</span><span><i>B</i> HOME</span>`;
+  const r=rows[storeUI.i];if(r){if(r.offsetTop<L.scrollTop+4)L.scrollTop=Math.max(0,r.offsetTop-6);else if(r.offsetTop+r.offsetHeight>L.scrollTop+L.clientHeight-4)L.scrollTop=r.offsetTop+r.offsetHeight-L.clientHeight+6}
+  store.set('storeSel',storeUI.i);if(skinChoice==='auto')refreshSkin()}
+function storeActivate(){const c=CARTS[storeUI.i];if(!c){SFX.buzz();return}
+  if(gone(c))installGame(c);
+  else ask(`Uninstall ${c.title}? It comes off your home screen and library. Its saves stay on this console, so if you install it again you pick up where you left off.`,[['Uninstall',()=>uninstallGame(c)],['Keep it',()=>{}]])}
+/* installing is free and quick: a short download bar, then the game is back on the home screen */
+async function installGame(c){state='moving';SFX.pick();const r=$$('#storeList .row')[CARTS.indexOf(c)];
+  if(r){r.classList.add('dl');r.querySelector('em').textContent='INSTALLING';await sleep(820);r.classList.remove('dl')}
+  libPlace[c.id]='home';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='store';markStore();SFX.chime();toast(c.title.toUpperCase()+' INSTALLED')}
+function uninstallGame(c){libPlace[c.id]='gone';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();SFX.eject();markStore();toast(c.title.toUpperCase()+' UNINSTALLED')}
+function closeStore(){if(state!=='store')return;storeUI=null;state='home';show('home');sel=items().indexOf(STORETILE);renderShelf();SFX.eject();refreshSkin()}
+function storeInput(b){if(!storeUI)return;const n=CARTS.length;
+  if(b==='up'||b==='left'){if(storeUI.i>0){storeUI.i--;markStore();SFX.tick()}else SFX.buzz()}
+  else if(b==='down'||b==='right'){if(storeUI.i<n-1){storeUI.i++;markStore();SFX.tick()}else SFX.buzz()}
+  else if(b==='a'||b==='start')storeActivate();
+  else if(b==='b')closeStore()}
 /* the console's shape: upright, or sideways (see the CSS); a wide game turns it sideways */
 function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide),touchGame=!!(cur&&cur.touch);
   /* on a PC (mouse and keyboard) the console never turns itself a quarter turn: a window is not a phone you can rotate.
@@ -839,7 +891,7 @@ function layoutShelf(){const list=$$('#shelf .cart'),sh=$('#shelf'),k=Math.max(.
   const c=items()[sel];$('#gTitle').textContent=c.title;$('#gBlurb').textContent=c.blurb;$('#gNote').textContent=c.note||'';store.set('sel',sel);if(skinChoice==='auto')refreshSkin();
   $('#libAct').hidden=!(editing&&c&&!c.ghost&&!c.libtile)}
 function moveSel(d){const n=items().length,ns=Math.max(0,Math.min(n-1,sel+d));if(ns===sel){SFX.buzz();return}sel=ns;layoutShelf();SFX.tick()}
-function activate(){const c=items()[sel];if(editing){if(c.libtile)openLib();else if(c.ghost)SFX.buzz();else toLibrary(c);return}if(c.libtile){openLib();return}if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
+function activate(){const c=items()[sel];if(c.store){openStore();return}if(editing){if(c.libtile)openLib();else if(c.ghost)SFX.buzz();else toLibrary(c);return}if(c.libtile){openLib();return}if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
 
 /* ---------- power: boot, games in and out ---------- */
 async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#blackout').classList.remove('on');
@@ -875,7 +927,7 @@ let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
   if(state==='off'){SFX.click();await boot(false);return}
   if(state==='skins')closeSkins(false);if(state==='keys')closeKeys();
-  if(state==='home'||state==='lib'){editing=false;libUI=null;await powerOff();return}
+  if(state==='home'||state==='lib'||state==='store'){editing=false;libUI=null;storeUI=null;await powerOff();return}
   if(state!=='game')return;
   releaseAll();const w=cartWin();let r='ask';
   try{if(w&&w.ZPCart&&typeof w.ZPCart.home==='function')r=await w.ZPCart.home()}catch(e){r='ask'}
@@ -967,6 +1019,9 @@ function pressBtn(b){sfxUnlock();motionAsk();try{navigator.vibrate&&navigator.vi
       break;
     case 'lib':libInput(b);
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='lib'){libInput(d);repT=setTimeout(again,140)}},420)}
+      break;
+    case 'store':storeInput(b);
+      if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='store'){storeInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'keys':keysInput(b);
       if(/up|down/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='keys'){keysInput(d);repT=setTimeout(again,140)}},420)}
