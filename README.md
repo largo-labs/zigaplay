@@ -9,6 +9,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Gearfist** | A robot beat 'em up: four stages, four bosses, and four robots to buy. Every blow slides you in to meet the robot in front, and a launch can be chased into the air. | Stick: move, ▲ jump, ▼ guard · A light · B heavy · SELECT burst · START pause |
 | **Strike at Night** | A 16-bit style RPG. Lift was a tech worker in 2026 until a car hit him; he wakes up as a farm boy in Larkfield, is framed for his new parents' murder, and lives as a bandit with a price on his head. Beat strong foes to take their power as new forms. Prologue and two chapters. | D-pad move · A talk/confirm · B back · START menu · SELECT change form |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
+| **Gridiron '88** | Arcade football with a full franchise mode: the real NFL (current rosters with their numbers, ages and career stats, ratings computed from those stats) or a classic league of original teams, an 18-game season with playoffs, free agency, contracts, the draft and a drag-and-drop card lineup. | Its own touch controls, full screen: joystick, drag back to throw, timed buttons |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
 
 ## Lynties in 3D
@@ -94,6 +95,7 @@ tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build scri
   - `stick:true` puts a round control stick in place of the D-pad.
   - `wide:true` gives the game the console's sideways shape. If the phone is upright, the console turns itself a quarter turn.
   - `face4:true` gives the game four face buttons in a diamond (A, B, C, D).
+  - `touch:true` is for a game with its own on-screen controls: it fills the whole phone screen with no D-pad or buttons, and a small power tab (left edge, or top edge with the phone upright) turns it off.
   - `skin:'<id>'` names the console skin the game wears when the player picks *Match the game*.
 - **Home screen and Library:** the shelf shows the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
 - **Skins:** SELECT on the shelf opens the skin picker. Some skins move (aurora, galaxy and others), and each game can bring its own.
@@ -114,6 +116,10 @@ Edit the game in `tools/lynties-3d/lynties-2d.html`, or the 3D world in `tools/l
 python3 tools/build-offline.py . /tmp/out
 rm -rf app && cp -r /tmp/out/ZigaPlay-offline app
 ```
+
+## Gridiron '88
+
+`games/gridiron/index.html` is a single-file build of the Gridiron '88 game, which is developed in the `largo-labs/games` repo (`gridiron/`): `npm run build` there, then inline the CSS, JS and fonts into one page. It runs as a `touch:true` cartridge, so it plays exactly as it does on its own. Its NFL mode uses real team and player names (no logos); its ratings are its own formula from public career stats.
 
 ## Credits
 
