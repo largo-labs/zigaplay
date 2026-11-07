@@ -74,7 +74,7 @@ function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.las
 
 /* ================= saving: every second, on this device and (on the ZigaPlay) to your account =================
    The Claude app can clear this device's storage when it closes; the account copy is what comes back then. */
-const SAVE=Object.assign({at:0,set:{stocks:3,level:4,time:0},rec:{},picks:[0,1,0],match:null},store.get('save',{}));
+const SAVE=Object.assign({at:0,set:{stocks:3,level:4,time:0,speed:85},rec:{},picks:[0,1,0],match:null},store.get('save',{}));
 const acct=()=>{try{return ZP&&ZP.cloud||null}catch(e){return null}};
 let saveHook=null;
 function saveNow(flush){if(saveHook)saveHook();SAVE.at=Date.now();store.set('save',SAVE);const c=acct();if(c)try{c.save('strike',JSON.stringify(SAVE),{at:SAVE.at},'progress');if(flush)c.flush('strike')}catch(e){}}
@@ -253,7 +253,7 @@ const GROUPS={L:{name:'LONG RANGE',short:'LONG',col:'#5ad8ff'},M:{name:'MEDIUM R
 const BUILDS={l:{w:84,sz:.95},m:{w:100,sz:1},h:{w:122,sz:1.07}};
 const ROSTER=R50.map((r,i)=>{const[name,title,grp,body,acc,skin,hair,head,weapon,build,spd,pow,up,side]=r,B=BUILDS[build];
   return{i,name,title,grp,body,acc,skin,hair,head,weapon,build,spd,pow,w:B.w,sz:B.sz,pants:shade(body,-.45),
-    run:2.9+spd*.3+(grp==='C'?.2:0),air:2.2+spd*.18,jump:10.6+spd*.12-(build==='h'?.5:0),grav:build==='h'?.62:build==='l'?.54:.58,
+    run:2.45+spd*.25+(grp==='C'?.15:0),air:1.9+spd*.15,jump:10.6+spd*.12-(build==='h'?.5:0),grav:build==='h'?.62:build==='l'?.54:.58,
     up:{kind:up[0],name:up[1]},side:{kind:side[0],name:side[1]},fx:acc,
     fit:(OUTFIT[name]||'jacket').split(' ')[0],ex:new Set((OUTFIT[name]||'').split(' ').slice(1))}});
 
@@ -575,6 +575,21 @@ function applyHit(a,v,b,dir){
   if(kb>70)shake(Math.min(10,kb*.06));SFX.hit(kb>85?2:kb>45?1:0);if(!a.cpu||!v.cpu)haptic(kb>85?35:kb>45?18:8);
   if(kb>110&&v.pct>60)MATCH.flash=6}
 function hitNow(a,v,b,dir){b.x=v.x;b.y=v.y-20;applyHit(a,v,b,dir)}
+/* ---------- bodies are solid: two fighters at the same height can't walk, dash or roll through each other ---------- */
+/* a fighter flying off from a big hit sails past; everyone else is solid */
+const SOLID=f=>!['ko','spawn','held','ledge','holding'].includes(f.st)&&!f.hide&&!(f.st==='hit'&&Math.abs(f.lvx)>2.5);
+function bodyPush(){if(FT.length<2)return;const[a,b]=FT;if(!SOLID(a)||!SOLID(b))return;
+  if(Math.abs(a.y-b.y)>28*Math.min(a.c.sz,b.c.sz))return;
+  const min=13*(a.c.sz+b.c.sz)/2,dx=a.x-b.x,was=sgn(a.px0-b.px0)||sgn(dx)||(a.face>0?-1:1),side=sgn(dx);
+  if(side===was&&Math.abs(dx)>=min)return;
+  /* put them back on the sides they came from, just touching, around the middle */
+  const mid=(a.x+b.x)/2;let ax=mid+was*min/2,bx=mid-was*min/2;
+  /* someone standing at a platform's edge stays on it: the other one gives way */
+  for(const[f,o]of[[a,'a'],[b,'b']]){const p=f.gr;if(!p)continue;const x=o==='a'?ax:bx;const cx=clamp(x,p.x1,p.x2);if(cx!==x){const d=cx-x;ax+=d;bx+=d}}
+  a.x=ax;b.x=bx;
+  if(a.gr&&(a.x<a.gr.x1||a.x>a.gr.x2)){a.x=clamp(a.x,a.gr.x1,a.gr.x2)}if(b.gr&&(b.x<b.gr.x1||b.x>b.gr.x2)){b.x=clamp(b.x,b.gr.x1,b.gr.x2)}
+  /* running into someone stops you */
+  if(sgn(a.vx)===-was)a.vx*=.3;if(sgn(b.vx)===was)b.vx*=.3}
 /* ---------- projectiles ---------- */
 function proj(f,o){const p=Object.assign({o:f,t:0,hits:new Set(),col:f.c.fx,ang:o.ang||45,kb:o.kb||0,kg:o.kg||0},o),k=pwr(f),sp=.88+f.c.spd*.05;
   p.d=(o.d||0)*k;if(o.boom)p.boom=Object.assign({},o.boom,{d:o.boom.d*k});if(!o.stick){p.vx*=sp;if(o.ret)p.ret*=sp}p.r*=f.c.sz;p.x=f.x+f.face*o.x*f.c.sz;p.y=f.y+o.y*f.c.sz;p.dir=f.face;PROJ.push(p);return p}
@@ -1106,12 +1121,13 @@ function controlsDraw(){drawSky('clock');ctx.setTransform(DPR,0,0,DPR,0,0);ctx.f
     'block + '+N[CTRL.attack]+' grabs · block + ◀▶ rolls · ▼ in the air falls fast · ▼ twice drops through a platform'])yy=wrap(l,W/2,yy,mw,8.5,'#c8c8e8')+3*U;
   hint('▲▼ choose · ◀▶ change button · B back')}
 /* ---------- settings ---------- */
-const TIMES=[0,2,3,5];
-function setItems(){const S=SAVE.set;return['STOCKS  '+S.stocks,'CPU LEVEL  '+S.level,'TIME LIMIT  '+(S.time?S.time+' MIN':'OFF'),'SOUND  '+(muted?'OFF':'ON'),'VIBRATION  '+(HAP.on?'ON':'OFF'),'BACK']}
+const TIMES=[0,2,3,5],SPEEDS=[70,85,100];
+function setItems(){const S=SAVE.set;return['STOCKS  '+S.stocks,'CPU LEVEL  '+S.level,'TIME LIMIT  '+(S.time?S.time+' MIN':'OFF'),'GAME SPEED  '+gameSpeed()+'%','SOUND  '+(muted?'OFF':'ON'),'VIBRATION  '+(HAP.on?'ON':'OFF'),'BACK']}
 function settingsTick(){const it=setItems(),d=menuDir(),S=SAVE.set;if(d==='up'){MSEL=(MSEL+it.length-1)%it.length;SFX.move()}if(d==='down'){MSEL=(MSEL+1)%it.length;SFX.move()}
   const ch=d==='left'?-1:d==='right'||TAP('a')?1:0;
   if(ch&&MSEL===0){S.stocks=(S.stocks-1+ch+5)%5+1;SFX.move()}else if(ch&&MSEL===1){S.level=(S.level-1+ch+9)%9+1;SFX.move()}else if(ch&&MSEL===2){S.time=TIMES[(TIMES.indexOf(S.time)+ch+TIMES.length)%TIMES.length];SFX.move()}
-  else if(ch&&MSEL===3){setMute(!muted);if(!muted)SFX.pick()}else if(ch&&MSEL===4){HAP.on=!HAP.on;store.set('vib',HAP.on);haptic(20);SFX.move()}else if(TAP('a')&&MSEL===5){SFX.back();go('title',4)}
+  else if(ch&&MSEL===3){S.speed=SPEEDS[(Math.max(0,SPEEDS.indexOf(gameSpeed()))+ch+SPEEDS.length)%SPEEDS.length];SFX.move()}
+  else if(ch&&MSEL===4){setMute(!muted);if(!muted)SFX.pick()}else if(ch&&MSEL===5){HAP.on=!HAP.on;store.set('vib',HAP.on);haptic(20);SFX.move()}else if(TAP('a')&&MSEL===6){SFX.back();go('title',4)}
   if(TAP('b')){SFX.back();go('title',4)}}
 function settingsDraw(){drawSky('bridge');ctx.setTransform(DPR,0,0,DPR,0,0);text('SETTINGS',SW/2,12*U,22,'#fff','center',900,'#000');const it=setItems();panel(SW/2-130*U,44*U,260*U,it.length*22*U+16*U);
   menuList(it,SW/2,54*U,13,22*U,MSEL);hint('▲▼ choose · ◀▶ or A change · B back')}
@@ -1207,7 +1223,9 @@ function fightStep(){if(TAP('start')&&!MATCH.ending){SFX.back();go('pause');retu
   if(MATCH.count>0){MATCH.count--;if(MATCH.count===30)SFX.go();if(MATCH.count>30){fxTick();camTick();return}}
   if(MATCH.ending){MATCH.endT++;if(MATCH.endT===1)SFX.beep();if(MATCH.endT>110){finishMatch();return}if(MATCH.endT%2){fxTick();camTick();return}}
   for(const f of FT)if(f.cpu)aiTick(f);
+  for(const f of FT)f.px0=f.x;
   for(const f of FT)tick(f);
+  bodyPush();
   resolveHits();
   for(const p of PROJ)if(!p.dead)projTick(p);PROJ=PROJ.filter(p=>!p.dead);
   fxTick();if(SHAKE>0)SHAKE=Math.max(0,SHAKE-.6);if(MATCH.flash>0)MATCH.flash--;
@@ -1239,8 +1257,10 @@ function step(){FRAME++;SCREENS[SCR][0]();if(MSG&&--MSG.t<=0)MSG=null;
   if(AC&&AC.state==='running'){const want=['fight','pause','moves'].includes(SCR)||(SCR==='controls'&&BACKTO)?STAGE.id:'title';if(!MUS.on||MUS.song!==want)music(true,want)}}
 function draw(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.lineCap='round';ctx.lineJoin='round';SCREENS[SCR][1]();ctx.setTransform(DPR,0,0,DPR,0,0);
   if(MSG)text(MSG.s,SW/2,SH-34*U,11,'#ffd84a','center',900,'#000')}
-let last=performance.now(),acc=0;const STEP=1000/60;
-function loop(now){requestAnimationFrame(loop);acc+=Math.min(100,now-last);last=now;let n=0;while(acc>=STEP&&n<4){acc-=STEP;n++;step();clearTaps()}if(n>=4)acc=0;draw()}
+let last=performance.now(),acc=0;
+const gameSpeed=()=>SPEEDS.includes(SAVE.set&&SAVE.set.speed)?SAVE.set.speed:85;
+/* a match runs at the chosen game speed (85% by default) so the action is easier to follow; menus run at full speed */
+function loop(now){requestAnimationFrame(loop);acc+=Math.min(100,now-last);last=now;let n=0;const STEP=1000/60/(SCR==='fight'?gameSpeed()/100:1);while(acc>=STEP&&n<4){acc-=STEP;n++;step();clearTaps()}if(n>=4)acc=0;draw()}
 /* ---------- saving ---------- */
 saveHook=()=>{if(FT.length&&['fight','pause','moves'].includes(SCR)||(SCR==='controls'&&BACKTO)){if(!MATCH.ending&&!MATCH.res)SAVE.match={chars:MATCH.chars,stage:MATCH.stage,train:MATCH.train,lvl:MATCH.lvl,stocks:FT.map(f=>f.stocks),pct:FT.map(f=>Math.round(f.pct)),tleft:MATCH.tleft}}
   SAVE.ctrl=CTRL;SAVE.mute=muted;SAVE.vib=HAP.on};

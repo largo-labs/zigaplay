@@ -51,7 +51,7 @@ function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.las
 
 /* ================= saving: every second, on this device and (on the ZigaPlay) to your account =================
    The Claude app can clear this device's storage when it closes; the account copy is what comes back then. */
-const SAVE=Object.assign({at:0,set:{stocks:3,level:4,time:0},rec:{},picks:[0,1,0],match:null},store.get('save',{}));
+const SAVE=Object.assign({at:0,set:{stocks:3,level:4,time:0,speed:85},rec:{},picks:[0,1,0],match:null},store.get('save',{}));
 const acct=()=>{try{return ZP&&ZP.cloud||null}catch(e){return null}};
 let saveHook=null;
 function saveNow(flush){if(saveHook)saveHook();SAVE.at=Date.now();store.set('save',SAVE);const c=acct();if(c)try{c.save('strike',JSON.stringify(SAVE),{at:SAVE.at},'progress');if(flush)c.flush('strike')}catch(e){}}

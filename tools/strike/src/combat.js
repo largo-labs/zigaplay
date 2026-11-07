@@ -43,6 +43,21 @@ function applyHit(a,v,b,dir){
   if(kb>70)shake(Math.min(10,kb*.06));SFX.hit(kb>85?2:kb>45?1:0);if(!a.cpu||!v.cpu)haptic(kb>85?35:kb>45?18:8);
   if(kb>110&&v.pct>60)MATCH.flash=6}
 function hitNow(a,v,b,dir){b.x=v.x;b.y=v.y-20;applyHit(a,v,b,dir)}
+/* ---------- bodies are solid: two fighters at the same height can't walk, dash or roll through each other ---------- */
+/* a fighter flying off from a big hit sails past; everyone else is solid */
+const SOLID=f=>!['ko','spawn','held','ledge','holding'].includes(f.st)&&!f.hide&&!(f.st==='hit'&&Math.abs(f.lvx)>2.5);
+function bodyPush(){if(FT.length<2)return;const[a,b]=FT;if(!SOLID(a)||!SOLID(b))return;
+  if(Math.abs(a.y-b.y)>28*Math.min(a.c.sz,b.c.sz))return;
+  const min=13*(a.c.sz+b.c.sz)/2,dx=a.x-b.x,was=sgn(a.px0-b.px0)||sgn(dx)||(a.face>0?-1:1),side=sgn(dx);
+  if(side===was&&Math.abs(dx)>=min)return;
+  /* put them back on the sides they came from, just touching, around the middle */
+  const mid=(a.x+b.x)/2;let ax=mid+was*min/2,bx=mid-was*min/2;
+  /* someone standing at a platform's edge stays on it: the other one gives way */
+  for(const[f,o]of[[a,'a'],[b,'b']]){const p=f.gr;if(!p)continue;const x=o==='a'?ax:bx;const cx=clamp(x,p.x1,p.x2);if(cx!==x){const d=cx-x;ax+=d;bx+=d}}
+  a.x=ax;b.x=bx;
+  if(a.gr&&(a.x<a.gr.x1||a.x>a.gr.x2)){a.x=clamp(a.x,a.gr.x1,a.gr.x2)}if(b.gr&&(b.x<b.gr.x1||b.x>b.gr.x2)){b.x=clamp(b.x,b.gr.x1,b.gr.x2)}
+  /* running into someone stops you */
+  if(sgn(a.vx)===-was)a.vx*=.3;if(sgn(b.vx)===was)b.vx*=.3}
 /* ---------- projectiles ---------- */
 function proj(f,o){const p=Object.assign({o:f,t:0,hits:new Set(),col:f.c.fx,ang:o.ang||45,kb:o.kb||0,kg:o.kg||0},o),k=pwr(f),sp=.88+f.c.spd*.05;
   p.d=(o.d||0)*k;if(o.boom)p.boom=Object.assign({},o.boom,{d:o.boom.d*k});if(!o.stick){p.vx*=sp;if(o.ret)p.ret*=sp}p.r*=f.c.sz;p.x=f.x+f.face*o.x*f.c.sz;p.y=f.y+o.y*f.c.sz;p.dir=f.face;PROJ.push(p);return p}

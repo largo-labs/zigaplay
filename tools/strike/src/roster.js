@@ -67,6 +67,6 @@ const GROUPS={L:{name:'LONG RANGE',short:'LONG',col:'#5ad8ff'},M:{name:'MEDIUM R
 const BUILDS={l:{w:84,sz:.95},m:{w:100,sz:1},h:{w:122,sz:1.07}};
 const ROSTER=R50.map((r,i)=>{const[name,title,grp,body,acc,skin,hair,head,weapon,build,spd,pow,up,side]=r,B=BUILDS[build];
   return{i,name,title,grp,body,acc,skin,hair,head,weapon,build,spd,pow,w:B.w,sz:B.sz,pants:shade(body,-.45),
-    run:2.9+spd*.3+(grp==='C'?.2:0),air:2.2+spd*.18,jump:10.6+spd*.12-(build==='h'?.5:0),grav:build==='h'?.62:build==='l'?.54:.58,
+    run:2.45+spd*.25+(grp==='C'?.15:0),air:1.9+spd*.15,jump:10.6+spd*.12-(build==='h'?.5:0),grav:build==='h'?.62:build==='l'?.54:.58,
     up:{kind:up[0],name:up[1]},side:{kind:side[0],name:side[1]},fx:acc,
     fit:(OUTFIT[name]||'jacket').split(' ')[0],ex:new Set((OUTFIT[name]||'').split(' ').slice(1))}});

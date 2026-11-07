@@ -45,12 +45,13 @@ function controlsDraw(){drawSky('clock');ctx.setTransform(DPR,0,0,DPR,0,0);ctx.f
     'block + '+N[CTRL.attack]+' grabs · block + ◀▶ rolls · ▼ in the air falls fast · ▼ twice drops through a platform'])yy=wrap(l,W/2,yy,mw,8.5,'#c8c8e8')+3*U;
   hint('▲▼ choose · ◀▶ change button · B back')}
 /* ---------- settings ---------- */
-const TIMES=[0,2,3,5];
-function setItems(){const S=SAVE.set;return['STOCKS  '+S.stocks,'CPU LEVEL  '+S.level,'TIME LIMIT  '+(S.time?S.time+' MIN':'OFF'),'SOUND  '+(muted?'OFF':'ON'),'VIBRATION  '+(HAP.on?'ON':'OFF'),'BACK']}
+const TIMES=[0,2,3,5],SPEEDS=[70,85,100];
+function setItems(){const S=SAVE.set;return['STOCKS  '+S.stocks,'CPU LEVEL  '+S.level,'TIME LIMIT  '+(S.time?S.time+' MIN':'OFF'),'GAME SPEED  '+gameSpeed()+'%','SOUND  '+(muted?'OFF':'ON'),'VIBRATION  '+(HAP.on?'ON':'OFF'),'BACK']}
 function settingsTick(){const it=setItems(),d=menuDir(),S=SAVE.set;if(d==='up'){MSEL=(MSEL+it.length-1)%it.length;SFX.move()}if(d==='down'){MSEL=(MSEL+1)%it.length;SFX.move()}
   const ch=d==='left'?-1:d==='right'||TAP('a')?1:0;
   if(ch&&MSEL===0){S.stocks=(S.stocks-1+ch+5)%5+1;SFX.move()}else if(ch&&MSEL===1){S.level=(S.level-1+ch+9)%9+1;SFX.move()}else if(ch&&MSEL===2){S.time=TIMES[(TIMES.indexOf(S.time)+ch+TIMES.length)%TIMES.length];SFX.move()}
-  else if(ch&&MSEL===3){setMute(!muted);if(!muted)SFX.pick()}else if(ch&&MSEL===4){HAP.on=!HAP.on;store.set('vib',HAP.on);haptic(20);SFX.move()}else if(TAP('a')&&MSEL===5){SFX.back();go('title',4)}
+  else if(ch&&MSEL===3){S.speed=SPEEDS[(Math.max(0,SPEEDS.indexOf(gameSpeed()))+ch+SPEEDS.length)%SPEEDS.length];SFX.move()}
+  else if(ch&&MSEL===4){setMute(!muted);if(!muted)SFX.pick()}else if(ch&&MSEL===5){HAP.on=!HAP.on;store.set('vib',HAP.on);haptic(20);SFX.move()}else if(TAP('a')&&MSEL===6){SFX.back();go('title',4)}
   if(TAP('b')){SFX.back();go('title',4)}}
 function settingsDraw(){drawSky('bridge');ctx.setTransform(DPR,0,0,DPR,0,0);text('SETTINGS',SW/2,12*U,22,'#fff','center',900,'#000');const it=setItems();panel(SW/2-130*U,44*U,260*U,it.length*22*U+16*U);
   menuList(it,SW/2,54*U,13,22*U,MSEL);hint('▲▼ choose · ◀▶ or A change · B back')}

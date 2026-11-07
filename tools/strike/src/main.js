@@ -15,7 +15,9 @@ function fightStep(){if(TAP('start')&&!MATCH.ending){SFX.back();go('pause');retu
   if(MATCH.count>0){MATCH.count--;if(MATCH.count===30)SFX.go();if(MATCH.count>30){fxTick();camTick();return}}
   if(MATCH.ending){MATCH.endT++;if(MATCH.endT===1)SFX.beep();if(MATCH.endT>110){finishMatch();return}if(MATCH.endT%2){fxTick();camTick();return}}
   for(const f of FT)if(f.cpu)aiTick(f);
+  for(const f of FT)f.px0=f.x;
   for(const f of FT)tick(f);
+  bodyPush();
   resolveHits();
   for(const p of PROJ)if(!p.dead)projTick(p);PROJ=PROJ.filter(p=>!p.dead);
   fxTick();if(SHAKE>0)SHAKE=Math.max(0,SHAKE-.6);if(MATCH.flash>0)MATCH.flash--;
@@ -47,8 +49,10 @@ function step(){FRAME++;SCREENS[SCR][0]();if(MSG&&--MSG.t<=0)MSG=null;
   if(AC&&AC.state==='running'){const want=['fight','pause','moves'].includes(SCR)||(SCR==='controls'&&BACKTO)?STAGE.id:'title';if(!MUS.on||MUS.song!==want)music(true,want)}}
 function draw(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.lineCap='round';ctx.lineJoin='round';SCREENS[SCR][1]();ctx.setTransform(DPR,0,0,DPR,0,0);
   if(MSG)text(MSG.s,SW/2,SH-34*U,11,'#ffd84a','center',900,'#000')}
-let last=performance.now(),acc=0;const STEP=1000/60;
-function loop(now){requestAnimationFrame(loop);acc+=Math.min(100,now-last);last=now;let n=0;while(acc>=STEP&&n<4){acc-=STEP;n++;step();clearTaps()}if(n>=4)acc=0;draw()}
+let last=performance.now(),acc=0;
+const gameSpeed=()=>SPEEDS.includes(SAVE.set&&SAVE.set.speed)?SAVE.set.speed:85;
+/* a match runs at the chosen game speed (85% by default) so the action is easier to follow; menus run at full speed */
+function loop(now){requestAnimationFrame(loop);acc+=Math.min(100,now-last);last=now;let n=0;const STEP=1000/60/(SCR==='fight'?gameSpeed()/100:1);while(acc>=STEP&&n<4){acc-=STEP;n++;step();clearTaps()}if(n>=4)acc=0;draw()}
 /* ---------- saving ---------- */
 saveHook=()=>{if(FT.length&&['fight','pause','moves'].includes(SCR)||(SCR==='controls'&&BACKTO)){if(!MATCH.ending&&!MATCH.res)SAVE.match={chars:MATCH.chars,stage:MATCH.stage,train:MATCH.train,lvl:MATCH.lvl,stocks:FT.map(f=>f.stocks),pct:FT.map(f=>Math.round(f.pct)),tleft:MATCH.tleft}}
   SAVE.ctrl=CTRL;SAVE.mute=muted;SAVE.vib=HAP.on};
