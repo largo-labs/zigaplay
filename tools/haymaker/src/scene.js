@@ -12,7 +12,9 @@ function drawVenue(id,t){const{cx,ft}=RING();
   if(id==='gym'){RC(0,0,BW,ft+4,'#5a3328');for(let y=0;y<ft;y+=6){const off=(y/6)%2?6:0;RC(0,y,BW,1,'#3a231c');for(let x=-off;x<BW;x+=12)RC(x,y,1,6,'#3a231c')}
     G.globalAlpha=.25;for(let i=0;i<40;i++)RC(hash(i)*BW,hash(i+9)*ft,10,5,'#6a4234');G.globalAlpha=1;
     for(const s of[-1,1]){const x=cx+s*(BW*.5-14);LN(x,0,x,ft-70,1,'#2a2a2a');EO(x,ft-52,10,20,'#7a2a24');RC(x-10,ft-60,20,3,'#5a1c18')}
-    EO(cx,ft-82,12,11,'#d8a838');PL([cx-15,ft-74,cx+15,ft-74,cx+12,ft-80,cx-12,ft-80],'#c8962e');E(cx-4,ft-88,3,4,'#f4d878');E(cx,ft-70,2.5,2.5,'#6a4a1c');LN(cx,ft-93,cx,ft-104,1.5,'#3a3a3a');
+    /* the gym clock */
+    EO(cx,ft-84,11,11,'#2a2a30');E(cx,ft-84,9,9,'#f4efe2');for(let i=0;i<12;i++){const k=i/12*TAU;E(cx+Math.cos(k)*7.4,ft-84+Math.sin(k)*7.4,.6,.6,INK)}
+    {const m=t/60*TAU,h=t/720*TAU;LN(cx,ft-84,cx+Math.sin(h)*4.5,ft-84-Math.cos(h)*4.5,1.4,INK);LN(cx,ft-84,cx+Math.sin(m)*7,ft-84-Math.cos(m)*7,.9,INK);LN(cx,ft-84,cx+Math.sin(t*TAU/2)*7,ft-84-Math.cos(t*TAU/2)*7,.5,'#c8263a')}
     RC(cx-38,ft-62,76,13,OUT);RC(cx-37,ft-61,74,11,'#1d3a6a');RC(cx-37,ft-61,74,1,'#f2c14e');RC(cx-37,ft-51,74,1,'#f2c14e');for(let i=0;i<9;i++)RC(cx-31+i*7,ft-58,4,5,'#f2c14e');
     for(const s of[-1,1]){const x=cx+s*40;LN(x,0,x,10,1,'#222');E(x,12,3,3,'#fff6c8');lightCone(x,12,34,ft,'rgba(255,240,180,A)',.16)}
     tag(10,ft-32,'#3ee8ff',2);tag(BW-36,ft-40,'#ff3ea5',5,26);crowd(ft-6,1,['#3a3a4a','#5a3a2a','#2a3a2a'],t,0,.45)}

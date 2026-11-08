@@ -22,7 +22,7 @@ function gridMove(c,d){const col=c%4,row=c/4|0;if(d==='left')return row*4+(col+3
 function selectTick(dt){SEL.t+=dt;const d=menuDir();
   if(SEL.stage==='ring'){if(d==='left'||d==='right'){SEL.ring=(SEL.ring+(d==='right'?1:-1)+VKEYS.length+1)%(VKEYS.length+1);SFX.move()}
     if(TAP('b')){SFX.back();SEL.stage='p2';return}
-    if(TAP('a')||TAP('start')){SFX.bell(1);const v=SEL.ring===VKEYS.length?pick(VKEYS):VKEYS[SEL.ring];startMatch({mode:'vs',p1:ROSTER[SEL.c1].id,p2:ROSTER[SEL.c2].id,venue:v})}return}
+    if(TAP('a')||TAP('start')){SFX.horn();const v=SEL.ring===VKEYS.length?pick(VKEYS):VKEYS[SEL.ring];startMatch({mode:'vs',p1:ROSTER[SEL.c1].id,p2:ROSTER[SEL.c2].id,venue:v})}return}
   const k=SEL.stage==='p1'?'c1':'c2';if(d){SEL[k]=gridMove(SEL[k],d);SFX.move()}
   if(TAP('select')){SEL[k]=Math.floor(rnd()*8);SFX.pick()}
   if(TAP('b')){SFX.back();if(SEL.stage==='p2')SEL.stage='p1';else go('title',titleIdx(SEL.mode));return}

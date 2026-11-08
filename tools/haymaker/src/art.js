@@ -136,7 +136,7 @@ function drawBust(id,x,y,s,ex='neutral',o={}){const p=Object.assign({},o.alt?alt
 
 function drawTattoo(k,x,y){const c='#1a1424',w=1.4;G.save();G.globalAlpha=.8;G.strokeStyle=c;G.fillStyle=c;G.lineWidth=w;G.lineCap='round';G.lineJoin='round';
   if(k==='anchor'){LN(x,y-14,x,y+14,w*1.6,c);ARC(x,y-17,3.2,0,TAU,w,c);LN(x-8,y-8,x+8,y-8,w*1.4,c);ARC(x,y+2,13,.35,2.8,w*1.6,c);PL([x-13,y+5,x-15,y+1,x-10,y+2],c);PL([x+13,y+5,x+15,y+1,x+10,y+2],c)}
-  else if(k==='bell'){G.beginPath();G.moveTo(x-11,y+10);G.quadraticCurveTo(x-10,y-12,x,y-13);G.quadraticCurveTo(x+10,y-12,x+11,y+10);G.closePath();G.stroke();LN(x-13,y+10,x+13,y+10,w*1.4,c);E(x,y+13,2.4,2.4,c);LN(x,y-13,x,y-17,w,c)}
+  else if(k==='flame'){G.beginPath();G.moveTo(x,y+12);G.quadraticCurveTo(x-11,y+8,x-7,y-4);G.quadraticCurveTo(x-5,y+2,x-2,y+1);G.quadraticCurveTo(x-6,y-10,x+1,y-17);G.quadraticCurveTo(x+2,y-8,x+7,y-6);G.quadraticCurveTo(x+12,y+6,x,y+12);G.closePath();G.stroke();G.beginPath();G.moveTo(x,y+8);G.quadraticCurveTo(x-5,y+4,x-1,y-4);G.quadraticCurveTo(x+4,y+2,x,y+8);G.stroke()}
   else if(k==='wings'){for(const s of[-1,1])for(let i=0;i<5;i++){G.beginPath();G.moveTo(x+s*4,y-6+i*2);G.quadraticCurveTo(x+s*(16+i*3),y-16+i*5,x+s*(30-i*2),y-12+i*7);G.stroke()}}
   else if(k==='tiger'){for(const s of[-1,1])for(let i=0;i<5;i++)PL([x+s*42,y-26+i*13,x+s*(22-i*2),y-22+i*13,x+s*40,y-20+i*13],c)}
   else if(k==='stars'){for(let i=0;i<5;i++){const sx=x-18+i*9,sy=y-10+(i%2)*10;G.beginPath();for(let j=0;j<10;j++){const a=-Math.PI/2+j*Math.PI/5,rr_=j%2?1.8:4.2;j?G.lineTo(sx+Math.cos(a)*rr_,sy+Math.sin(a)*rr_):G.moveTo(sx+Math.cos(a)*rr_,sy+Math.sin(a)*rr_)}G.closePath();G.fill()}}

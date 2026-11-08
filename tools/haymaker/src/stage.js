@@ -15,7 +15,7 @@ function poseOf(f){const st=f.st,t=f.t,T=M?M.t:0;let P=idlePose(T,f.i);
     if(m.crouch)Object.assign(P,crouchP);if(m.air||f.y<-4)Object.assign(P,{hy:-46,lfx:9,lfy:-14,lnx:-7,lny:-9});
     if(m.wind&&mf<s)P=lerpP(P,m.wind,ease(mf/s));else P=lerpP(P,m.to,k);
     if(m.hits&&m.sp&&m.sp.k==='flurry'&&mf>s&&mf<=s+a)P=lerpP(P,Math.floor((mf-s)/4)%2?{fx:46,fy:-70,nx:16,ny:-72}:{nx:46,ny:-66,fx:20,fy:-70},1);
-    if(m.sp&&m.sp.k==='multi'&&mf>s&&mf<=s+a)P.flip=Math.floor((mf-s)/5)%2;
+    if(m.sp&&m.sp.k==='multi'&&mf>s&&mf<=s+a)P.flip=Math.floor((mf-s)/5)%2===1;
     if(m.sp&&m.sp.k==='tele')P.alpha=mf<s?1-mf/s:Math.min(1,(mf-s)/6);
     if(m.counter&&mf>s&&mf<=s+a)P.glow=m.sp.c;if(m.armor&&f.armor)P.glow='#ffd84a';if(m.fatal)P.glow=f.ch.sp[0].c;if(m.sp&&mf<s+2&&!P.glow)P.glow=m.sp.c;
     P.ex=m.to.ex||'angry'}
@@ -23,7 +23,7 @@ function poseOf(f){const st=f.st,t=f.t,T=M?M.t:0;let P=idlePose(T,f.i);
   else if(st==='air'||st==='thrown')Object.assign(P,{rot:-.7-Math.min(1,t*.05)*.4,fx:20,fy:-96,nx:-10,ny:-90,lfx:16,lfy:-6,lnx:-8,lny:-14,ex:'hurt'});
   else if(st==='launched')Object.assign(P,{rot:f.spin||0,fx:20,fy:-96,nx:-10,ny:-90,ex:'daze'});
   else if(st==='down')Object.assign(P,{rot:-1.48,hy:-10,fx:10,fy:-62,nx:0,ny:-60,lfx:16,lfy:-2,lnx:4,lny:-1,ex:'daze'});
-  else if(st==='getup')P=lerpP(Object.assign({},P,{rot:-1.48,hy:-10,ex:'hurt'}),P,ease(t/22));
+  else if(st==='getup')P=lerpP(Object.assign({},P,{rot:-1.48,hy:-10,ex:'hurt'}),P,ease(t/16));
   else if(st==='dizzy'){P.lean=Math.sin(t*.09)*.22;P.fx=16;P.fy=-46;P.nx=8;P.ny=-48;P.ex='daze';P.hx=Math.sin(t*.09)*3}
   else if(st==='throwing')P=lerpP(P,{fx:30,fy:-86,nx:26,ny:-90,lean:-.2,ex:'angry'},Math.min(1,t/14));
   else if(st==='cine'){const ct=M.cin?M.cin.t:0,ph=ct<30?0:ct<60?1:2,k=ease(((ct-[4,32,64][ph])%30)/12);
@@ -50,6 +50,7 @@ function drawNearRing(id){const v=VENUES[id],NX=STAGE+44;
 function drawProjs(){for(const p of M.proj){const s=p.sp,c=s.c;G.save();G.translate(p.x,p.y);if(p.vx<0)G.scale(-1,1);
   if(s.shape==='egg')cel(pE(0,0,6,4.6,p.t*.3),'#f4f0d8',{sx:1.4,sy:1.2,lw:1.4});
   else if(s.shape==='shard'){cel(pP([-10,0,0,-5,12,0,0,5]),c,{sx:1.4,sy:1,lw:1.4});G.globalAlpha=.5;LN(-22,0,-10,0,3,c);G.globalAlpha=1}
+  else if(s.shape==='fire'){G.globalAlpha=.6;for(let i=3;i>0;i--)E(-i*6,Math.sin(p.t*.6+i)*1.5,8-i*1.6,6-i*1.2,i%2?'#ffd84a':c);G.globalAlpha=1;cel(pE(0,0,8,6.5),c,{sx:1.4,sy:1.2,lw:1.5});E(1.5,-.5,4.2,3.4,'#ffe680');E(2.6,-1.2,1.8,1.4,'#fff')}
   else if(s.shape==='coin')cel(pE(0,0,5*Math.abs(Math.cos(p.t*.3))+1,5),'#f2c14e',{sx:1,sy:1,lw:1.4});
   else if(s.shape==='wave'){G.globalAlpha=.9;for(let i=0;i<3;i++){ARC(-i*6,0,12-i*2,-1.1,1.1,5-i,INK);ARC(-i*6,0,12-i*2,-1.1,1.1,3.4-i,c)}G.globalAlpha=1}
   else{const r=8+Math.sin(p.t*.5)*2;ARC(0,0,r,0,TAU,3.4,INK);ARC(0,0,r,0,TAU,2,c);ARC(-8,0,6,-1,1,2,c)}

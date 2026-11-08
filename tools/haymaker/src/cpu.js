@@ -30,7 +30,7 @@ function aiTick(f){const o=other(f),L=M.lvl,dx=o.x-f.x,d=Math.abs(dx),ai=f.ai,fw
   if(ai.hold>0||!canAct(f))return;
   if(f.y<0){if(d<46&&!ai.air&&rnd()<.25+L*.08){ai.air=1;startMove(f,rnd()<.5?'jA':'jB')}return}ai.air=0;
   if(--ai.t>0)return;
-  ai.t=Math.max(3,Math.round((d<56?18:24)-L*3.4+rnd()*10));
+  ai.t=Math.max(3,Math.round((d<56?15:20)-L*2.9+rnd()*9));
   const r=rnd();
   if(f.hp<=f.max*.3&&!f.fatalUsed&&d<50&&o.y>=0&&r<.15+L*.06){f.pad.held.d=true;if(tryFatal(f))return}
   if(['down','getup','thrown'].includes(o.st)){ai.held={[fw]:true};ai.hold=8;return}

@@ -1,9 +1,9 @@
 /* ================= the locker room: make Milo yours =================
    Every choice is free. Beating a fighter unlocks their gloves; clearing the Tower unlocks a crown tattoo and gold
    trunks. The look is saved with the game and shows in the ring, on the select screen and in the portraits. */
-const LOOK_DEF={skin:'#8a5536',hair:'curly',hairCol:'#1c130f',facial:'none',eye:'#2a1a10',trunks:'#1f3a7a',trim:'#f2c14e',gloves:'#d8322b',tattoo:'none',outCol:'#35507a',nick:'THE BELL'};
+const LOOK_DEF={skin:'#8a5536',hair:'curly',hairCol:'#1c130f',facial:'none',eye:'#2a1a10',trunks:'#1f3a7a',trim:'#f2c14e',gloves:'#d8322b',tattoo:'none',outCol:'#35507a',nick:'THE SPARK'};
 const NAMES={curly:'CURLY TOP',fade:'HIGH FADE',cornrows:'CORNROWS',mohawk:'MOHAWK',buzz:'BUZZ CUT',afro:'AFRO',locs:'LOCS',bald:'BALD',none:'CLEAN',stubble:'STUBBLE',mustache:'MUSTACHE',goatee:'GOATEE',beard:'FULL BEARD',
-  anchor:'ANCHOR',bell:'BRASS BELL',wings:'WINGS',tiger:'TIGER STRIPES',stars:'STARS',EMBER:'"EMBER"',crown:'CROWN ★'};
+  anchor:'ANCHOR',flame:'FLAME',wings:'WINGS',tiger:'TIGER STRIPES',stars:'STARS',EMBER:'"EMBER"',crown:'CROWN ★'};
 const LOOK_OPTS=[
   ['skin','SKIN',()=>['#f1c8a5','#e0a982','#c98c62','#a86e48','#8a5536','#6e4130','#55321f','#3d2417']],
   ['hair','HAIR',()=>['curly','fade','cornrows','mohawk','buzz','afro','locs','bald']],
@@ -13,11 +13,11 @@ const LOOK_OPTS=[
   ['trunks','TRUNKS',()=>['#1f3a7a','#c8263a','#141018','#2f6b2a','#f4f1ea','#6a2c96','#e8662a','#2bb3a6',...(SAVE.done?['#e5bd4f']:[])]],
   ['trim','TRIM',()=>['#f2c14e','#f4f1ea','#141018','#c8263a','#3ee8ff','#ff3ea5']],
   ['gloves','GLOVES',()=>['#d8322b','#141018','#f4f1ea','#2a5ac8',...ROSTER.filter(f=>f.id!=='milo'&&SAVE.beaten[f.id]).map(f=>PEOPLE[f.id].gloves)]],
-  ['tattoo','TATTOO',()=>['none','anchor','bell','wings','tiger','stars','EMBER',...(SAVE.done?['crown']:[])]],
-  ['nick','NICKNAME',()=>['THE BELL','KID BRASS','ANCHOR','HAYMAKER','DOCKSIDE','IRON','THE TIDE','RUSTY']]];
-function applyLook(){SAVE.look=Object.assign({},LOOK_DEF,SAVE.look||{});const m=PEOPLE.milo;Object.assign(m,SAVE.look);m.stubble=null}
+  ['tattoo','TATTOO',()=>['none','anchor','flame','wings','tiger','stars','EMBER',...(SAVE.done?['crown']:[])]],
+  ['nick','NICKNAME',()=>['THE SPARK','KID BRASS','ANCHOR','HAYMAKER','DOCKSIDE','IRON','THE TIDE','RUSTY']]];
+function applyLook(){SAVE.look=Object.assign({},LOOK_DEF,SAVE.look||{});if(SAVE.look.nick==='THE BELL')SAVE.look.nick='THE SPARK';if(SAVE.look.tattoo==='bell')SAVE.look.tattoo='flame';const m=PEOPLE.milo;Object.assign(m,SAVE.look);m.stubble=null}
 applyLook();
-const nick=()=>(SAVE.look&&SAVE.look.nick)||'THE BELL';
+const nick=()=>(SAVE.look&&SAVE.look.nick)||'THE SPARK';
 /* a second small canvas for Milo in the ring, side on */
 const BV=document.createElement('canvas');BV.width=360;BV.height=300;const bvx=BV.getContext('2d');
 function sideView(x,y,w,h,t){G=bvx;bvx.setTransform(1,0,0,1,0,0);bvx.clearRect(0,0,360,300);bvx.setTransform(3,0,0,3,0,0);

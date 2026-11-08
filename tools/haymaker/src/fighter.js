@@ -6,7 +6,7 @@ function ik(rx,ry,tx,ty,l1,l2,bend){let dx=tx-rx,dy=ty-ry,d=Math.hypot(dx,dy)||.
   const a=Math.atan2(dy,dx),b=Math.acos(clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1)),e=a+bend*b;return{ex:rx+Math.cos(e)*l1,ey:ry+Math.sin(e)*l1,hx:rx+dx,hy:ry+dy}}
 const rigOf=b=>({thigh:21,shin:21,torso:28+(b.h-44)*.35,neck:5,upper:14.5,fore:14,head:b.r*.86,depth:b.w*.62,gl:b.gl*.72,arm:b.arm*.95,leg:b.arm*1.25});
 /* the guard every pose starts from */
-const GUARD={hx:0,hy:-40,lean:.12,fx:22,fy:-68,nx:12,ny:-72,lfx:12,lfy:0,lnx:-11,lny:0,rot:0,ex:'guard',head:0,glow:null,flip:0,alpha:1};
+const GUARD={hx:0,hy:-40,lean:.12,fx:22,fy:-68,nx:12,ny:-72,lfx:12,lfy:0,lnx:-11,lny:0,rot:0,ex:'guard',head:0,glow:null,flip:false,alpha:1};
 function lerpP(a,b,k){const o=Object.assign({},a);for(const key in b){const v=b[key];o[key]=typeof v==='number'&&typeof a[key]==='number'?lerp(a[key],v,k):v}return o}
 function gloveSide(x,y,r,ang,col){G.save();G.translate(x,y);G.rotate(ang);
   cel(pE(0,0,r*1.12,r*.92),col,{sx:r*.28,sy:r*.26,rw:r*.14,lw:Math.max(1.3,r*.16),rimCol:shade(col,.55)});

@@ -48,7 +48,8 @@ const SFX={
   whoosh(){noise({d:.15,f:900,f2:2600,q:.9,v:.13})},
   block(){noise({d:.06,f:350,q:1,v:.25});tone({f:90,f2:60,d:.06,type:'sine',v:.18})},
   hurt(){noise({d:.12,f:420,q:.6,v:.42});tone({f:80,f2:30,d:.2,type:'sine',v:.45});noise({d:.08,f:3000,q:1,v:.08,t0:.02})},
-  bell(n=1){for(let i=0;i<n;i++){tone({f:1318,d:1.1,type:'triangle',v:.16,t0:i*.32});tone({f:1976,d:.8,type:'sine',v:.08,t0:i*.32});tone({f:3120,d:.4,type:'sine',v:.03,t0:i*.32})}},
+  horn(){[220,277,330,440].forEach((f,i)=>tone({f,f2:f*.98,d:.42,type:'sawtooth',v:.05,t0:i*.012,a:.01}));noise({d:.12,f:900,q:.6,v:.22})},
+  swish(){noise({d:.06,f:1700,f2:3400,q:.9,v:.07})},
   crowd(v=.14,d=1.4){noise({d,f:700,q:.35,v,type:'bandpass'});noise({d:d*.8,f:1600,q:.5,v:v*.4})},
   count(){tone({f:520,d:.14,v:.12,type:'square'})},
   perfect(){tone({f:1568,d:.08,type:'triangle',v:.09});tone({f:2093,d:.12,type:'triangle',v:.07,t0:.05})},
@@ -87,7 +88,7 @@ function buzz(pat){if(!HAP.on)return;if(canVibrate()){try{hapWin().navigator.vib
     if(HAP.queued&&HAP.grant-HAP.queued<700){HAP.queued=0;hapTick()}},true)})();
 const RUMBLE={dodge:()=>haptic(12),perfect:()=>buzz([14,30,10]),jab:()=>haptic(22),cross:()=>haptic(30),hay:()=>buzz([45,35,60]),block:()=>haptic(15),
   hurt:()=>buzz([70,40,40]),combo:()=>buzz([25,45,25,45,70]),odown:()=>buzz([90,60,90,60,140]),pdown:()=>buzz([160,90,80]),ko:()=>buzz([120,70,120,70,260]),
-  bell:()=>buzz([30,90,30]),count:()=>haptic(10),mash:()=>haptic(8),up:()=>buzz([40,50,40]),win:()=>buzz([40,60,40,60,40,60,180]),lose:()=>buzz([200])};
+  count:()=>haptic(10),mash:()=>haptic(8),up:()=>buzz([40,50,40]),win:()=>buzz([40,60,40,60,40,60,180]),lose:()=>buzz([200])};
 /* ================= buttons =================
    D-pad, A, B, START, SELECT. Presses are timestamped so the rhythm lanes judge them to the millisecond. */
 const RAW={held:{},tap:{}},PRESSES=[];
