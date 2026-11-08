@@ -1,14 +1,15 @@
 /* ================= steering: tilt the phone, or the D-pad where tilt isn't available =================
    Tilt comes from the phone's orientation sensor. iPhone asks permission first, and only inside a tap, so the game
    asks on the first button press. On the ZigaPlay the sensor is read from the console page, where the touches are. */
-const OPT={steer:store.get('steer','auto'),sens:store.get('sens',1)};
-const FULL=[30,20,13];
-const TILT={raw:0,abs:0,center:store.get('tc',0),live:false,lastAt:-1e9,perm:'unknown'};
+const OPT={steer:store.get('steer','auto'),sens:store.get('sens5',2)};
+/* how far (in degrees, past a small dead zone) you tilt for full speed, from VERY LOW to VERY HIGH sensitivity */
+const SENS=['VERY LOW','LOW','MEDIUM','HIGH','VERY HIGH'],FULL=[60,46,36,28,22],DEAD=4;
+const TILT={raw:0,sm:0,abs:0,center:store.get('tc',0),live:false,lastAt:-1e9,perm:'unknown'};
 const TW=(()=>{try{return ZP?window.parent:window}catch(e){return window}})();
 const held={};
 function orientAngle(){try{const o=TW.screen&&TW.screen.orientation;if(o&&typeof o.angle==='number')return o.angle;if(typeof TW.orientation==='number')return TW.orientation}catch(e){}return 0}
 function onTilt(e){if(e.gamma==null&&e.beta==null)return;const a=((orientAngle()%360)+360)%360,g=e.gamma||0,b=e.beta||0;
-  const lat=a===90?b:a===270?-b:a===180?-g:g;TILT.abs=lat;TILT.raw=lat-TILT.center;TILT.lastAt=performance.now();TILT.live=true}
+  const lat=a===90?b:a===270?-b:a===180?-g:g;TILT.abs=lat;TILT.raw=lat-TILT.center;TILT.sm+=(TILT.raw-TILT.sm)*.3;TILT.lastAt=performance.now();TILT.live=true}
 try{TW.addEventListener('deviceorientation',onTilt)}catch(e){addEventListener('deviceorientation',onTilt)}
 /* ask on every press and release until it is granted: iPhone only shows its question when asked inside a tap,
    and a release counts as a tap where a press may not. A page shown inside another site's page (the Claude app) is
@@ -21,7 +22,7 @@ const tiltOK=()=>tiltLive();
 function tiltLine(){if(tiltLive())return'TILT ON: TILT TO STEER';if(TILT.perm==='denied')return'TILT IS BLOCKED HERE\nHOLD A SIDE OF THE SCREEN';
   let D=null;try{D=TW.DeviceOrientationEvent}catch(e){}if(D&&typeof D.requestPermission==='function'&&TILT.perm!=='granted')return'PRESS A TO ALLOW TILT';return'NO TILT SIGNAL HERE\nHOLD A SIDE OF THE SCREEN'}
 function steerMode(){if(TOUCH.side)return'pad';if(OPT.steer==='pad')return'pad';if(OPT.steer==='tilt')return'tilt';return tiltLive()?'tilt':'pad'}
-function steerX(){if(steerMode()==='tilt'){let v=TILT.raw/FULL[OPT.sens];if(Math.abs(v)<.08)v=0;return clamp(v*Math.abs(v)*.35+v*.65,-1,1)}
+function steerX(){if(steerMode()==='tilt'){const g=TILT.sm,a=Math.abs(g);if(a<DEAD)return 0;const v=clamp(sgn(g)*(a-DEAD)/(FULL[OPT.sens]-DEAD),-1,1);return v*Math.abs(v)*.4+v*.6}
   return(held.right?1:0)-(held.left?1:0)||TOUCH.side}
 /* holding the left or right half of the picture steers too (the screen itself takes touches, also on the ZigaPlay) */
 const TOUCH={id:null,side:0};
@@ -29,7 +30,7 @@ function touchSide(e){const r=cv.getBoundingClientRect();TOUCH.side=e.clientX<r.
 cv.addEventListener('pointerdown',e=>{unlock();requestTilt();if(G.state!=='play')return;e.preventDefault();TOUCH.id=e.pointerId;touchSide(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}});
 cv.addEventListener('pointermove',e=>{if(e.pointerId===TOUCH.id)touchSide(e)});
 for(const t of['pointerup','pointercancel','lostpointercapture'])cv.addEventListener(t,e=>{if(e.pointerId===TOUCH.id){TOUCH.id=null;TOUCH.side=0}});
-function centerTilt(){TILT.center=TILT.abs;TILT.raw=0;store.set('tc',TILT.center);SFX.pick();if(G.state==='play'||G.state==='pause')G.pops.push({x:P.x,y:P.y-30,s:'TILT CENTERED',c:'#7af0ff',t:50})}
+function centerTilt(){TILT.center=TILT.abs;TILT.raw=0;TILT.sm=0;store.set('tc',TILT.center);SFX.pick();if(G.state==='play'||G.state==='pause')G.pops.push({x:P.x,y:P.y-30,s:'TILT CENTERED',c:'#7af0ff',t:50})}
 document.documentElement.classList.toggle('notilt',true);setInterval(()=>RT.classList.toggle('notilt',steerMode()!=='tilt'),500);
 
 /* ================= buttons ================= */
@@ -41,7 +42,7 @@ function input(btn,down){unlock();requestTilt();held[btn]=down;if(!down)return;c
   else if(s==='opts')nav(6,()=>{const i=G.menu,ch=btn==='left'?-1:btn==='right'?1:btn==='a'?1:0;
     if(btn==='b'||(btn==='a'&&i===5)||btn==='start'){SFX.pick();if(G.optBack==='pause'){G.state='pause';G.menu=2}else{G.state='title';G.menu=titleItems().length-1}return}
     if(!ch)return;if(i===0){const o=['auto','tilt','pad'];OPT.steer=o[(o.indexOf(OPT.steer)+ch+3)%3];store.set('steer',OPT.steer)}
-    else if(i===1){OPT.sens=(OPT.sens+ch+3)%3;store.set('sens',OPT.sens)}else if(i===2){if(btn==='a')centerTilt();return}
+    else if(i===1){OPT.sens=(OPT.sens+ch+5)%5;store.set('sens5',OPT.sens)}else if(i===2){if(btn==='a')centerTilt();return}
     else if(i===3){setMute(!muted);if(!muted)unlock()}else if(i===4){HAP.on=!HAP.on;store.set('vib',HAP.on);if(HAP.on)haptic(25)}SFX.move()});
   else if(s==='play'){if(btn==='a'||btn==='b')P.buf[btn]=G.t;else if(btn==='start'){pause()}else if(btn==='select')centerTilt()}
   else if(s==='pause')nav(4,()=>{if(btn==='start'||btn==='b'){resume();return}if(btn!=='a')return;SFX.pick();
