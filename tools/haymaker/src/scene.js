@@ -1,7 +1,6 @@
-/* ================= the rings =================
-   Each venue is a backdrop behind the far ropes, then the ring: far posts and ropes, side ropes coming toward
-   you, and the canvas. The camera sits behind and above Milo, close up. */
-const OPP_Y=106,PL_Y=44;/* the opponent's waist and your neck, up from the bottom */
+/* ================= the venues =================
+   Each venue's backdrop: the walls, the crowd and the lights behind the ring. stage.js raises it behind a side
+   view of the ring. Also the hit effects and the portrait buffer. */
 const RING=()=>({cx:BW/2,ft:BH-138,pl:BW/2-104,pr:BW/2+104});
 function hash(i){const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)}
 function crowd(y,rows,cols,t,flash=0,dens=1){const W=BW;for(let r=0;r<rows;r++){const yy=y-r*7,n=Math.ceil(W/(6-r*.5)*dens);for(let i=0;i<n;i++){const x=(i+(r%2)*.5)*(W/n)+hash(i+r*91)*2-1,c=cols[(i+r)%cols.length],bob=Math.sin(t*3+i*1.7+r)*.6;
@@ -53,18 +52,6 @@ function drawVenue(id,t){const{cx,ft}=RING();
     for(let i=0;i<3;i++){const x=BW*(.2+i*.3)+Math.sin(t*.7+i*2)*20;lightCone(x,0,26,ft+60,'rgba(255,255,230,A)',.12)}}}
 function tag(x,y,c,sd,w=22){G.save();G.lineCap='round';G.lineJoin='round';G.beginPath();for(let i=0;i<9;i++){const px=x+i*w/8,py=y+Math.sin(sd+i*1.7)*4-(i%3===1?4:0);i?G.lineTo(px,py):G.moveTo(px,py)}
   G.lineWidth=4.2;G.strokeStyle=INK;G.stroke();G.lineWidth=2.4;G.strokeStyle=c;G.stroke();G.restore()}
-function drawRing(id){const v=VENUES[id],{cx,ft,pl,pr}=RING();
-  RC(0,ft-3,BW,7,v.apron);RC(0,ft-3,BW,1.2,shade(v.apron,.35));LN(0,ft+4,BW,ft+4,2,INK);LN(0,ft-3,BW,ft-3,1.6,INK);
-  PL([pl-8,ft,pr+8,ft,BW+120,BH,-120,BH],v.canvas);G.globalAlpha=.5;PL([pl-8,ft+4,pr+8,ft+4,pr+30,ft+18,pl-30,ft+18],shade(v.canvas,-.18));G.globalAlpha=1;
-  const g=G.createLinearGradient(0,ft,0,BH);g.addColorStop(0,'rgba(0,0,0,.22)');g.addColorStop(.5,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.12)');G.fillStyle=g;G.fillRect(0,ft,BW,BH-ft);
-  G.globalAlpha=.12;for(let i=1;i<6;i++){const y=ft+i*i*4;LN(0,y,BW,y,1,'#000')}G.globalAlpha=1;
-  if(id==='crown'){G.globalAlpha=.5;EO(cx,ft+40,46,12,shade(v.canvas,.2),0);PL([cx-14,ft+44,cx-14,ft+36,cx-7,ft+40,cx,ft+34,cx+7,ft+40,cx+14,ft+36,cx+14,ft+44],'#e5bd4f');G.globalAlpha=1}
-  if(id==='roof'){G.globalAlpha=.3;for(let i=0;i<6;i++)E(cx-60+i*26+hash(i)*10,ft+20+hash(i+2)*60,10+hash(i)*8,2,i%2?'#ff3ea5':'#3ee8ff');G.globalAlpha=1}
-  /* posts and ropes */
-  for(const x of[pl,pr])cel(pP([x-3.5,ft-48,x+3.5,ft-48,x+3.5,ft+3,x-3.5,ft+3]),v.post,{sx:2,sy:0,rw:1,lw:1.8});
-  for(let k=0;k<3;k++){const y=ft-14-k*12,c=v.rope[k];LN(pl,y,pr,y,4.6,INK);LN(pl,y,pr,y,2.6,c);LN(pl,y-.7,pr,y-.7,.9,shade(c,.45));
-    for(const[x,s]of[[pl,-1],[pr,1]]){LN(x,y,x+s*160,y+64-k*4,6.6,INK);LN(x,y,x+s*160,y+64-k*4,4.4,c);LN(x,y-1,x+s*160,y+63-k*4,1.2,shade(c,.45))}
-    for(const x of[pl,pr])cel(pP([x-4.5,y-3.2,x+4.5,y-3.2,x+4.5,y+3.2,x-4.5,y+3.2]),shade(v.rope[1],-.05),{sx:1.4,sy:1,lw:1.4})}}
 function rain(t){G.globalAlpha=.45;G.strokeStyle='#9ad8ff';G.lineWidth=1;G.beginPath();for(let i=0;i<70;i++){const x=(hash(i)*BW*1.3+t*60)%(BW*1.3)-BW*.15,y=(hash(i+9)*BH+t*260)%BH;G.moveTo(x,y);G.lineTo(x-3,y+8)}G.stroke();G.globalAlpha=1}
 
 /* ---------- effects in the ring (ring pixels) ---------- */
@@ -90,12 +77,3 @@ function portrait(id,ex,x,y,size,bg,o={}){G=pbx;pbx.setTransform(4,0,0,4,0,0);pb
 
 /* ---------- putting the ring together and onto the screen ---------- */
 function blit(sx=0,sy=0){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(BUF,Math.round(sx*PS*DPR),Math.round(sy*PS*DPR))}
-function drawScene(venue,t,opp,player,o={}){G=bx;bx.setTransform(R,0,0,R,0,0);bx.clearRect(0,0,BW,BH);
-  drawVenue(venue,t);drawRing(venue);
-  let coming=[];if(opp)coming=drawOpp(opp.id,opp.pose,BW/2,BH-OPP_Y);
-  if(o.under)o.under();
-  if(player)drawPlayer(player,BW/2,BH-PL_Y);
-  for(const g of coming)glove(g.x,g.y,g.r,g.col,1,true);
-  drawFxRing();
-  if(venue==='roof')rain(t);
-  if(o.dim){bx.fillStyle=`rgba(5,4,12,${o.dim})`;bx.fillRect(0,0,BW,BH)}}

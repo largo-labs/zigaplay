@@ -4,7 +4,7 @@ standard page skeleton.
     python3 tools/haymaker/build.py [OUT]   (default: games/haymaker/index.html)"""
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-ORDER = ['core', 'music', 'data', 'look', 'art', 'scene', 'fight', 'map', 'ui', 'main']
+ORDER = ['core', 'music', 'data', 'look', 'art', 'fighter', 'scene', 'stage', 'vs', 'cpu', 'ui', 'menus', 'main']
 SKEL = ('<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">'
   '<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}'
   'html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}'

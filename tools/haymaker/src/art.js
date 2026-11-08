@@ -116,7 +116,7 @@ function glove(x,y,r,col,cuffDir=1,front=false){
   const cy=y+r*.68*cuffDir;G.save();G.beginPath();G.ellipse(x,y,r,r*.95,0,0,TAU);G.clip();RC(x-r,cy-(cuffDir>0?0:r*.34),r*2,r*.34,'#f4efe2');G.restore();LN(x-r*.9,cy,x+r*.9,cy,Math.max(1,r*.1),INK)}
 
 /* ---------- portraits (busts) for the story, the cards and the locker room ---------- */
-function drawBust(id,x,y,s,ex='neutral',o={}){const p=PEOPLE[id],sk=p.skin,r=13*s,hy=y-r*1.62,lw=Math.max(1.4,r*.12);
+function drawBust(id,x,y,s,ex='neutral',o={}){const p=Object.assign({},o.alt?altLook(id):PEOPLE[id],o.fighter?{outfit:null}:{}),sk=p.skin,r=13*s,hy=y-r*1.62,lw=Math.max(1.4,r*.12);
   const sh=(w,col)=>cel(pP([x-w,y+r*.25,x-w*.84,y-r*.16,x-r*.5,y-r*.46,x+r*.5,y-r*.46,x+w*.84,y-r*.16,x+w,y+r*.25,x+w,y+r*3,x-w,y+r*3]),col,{sx:r*.3,sy:r*.12,rw:r*.1,lw});
   const neck=()=>cel(pP([x-r*.44,y-r*.9,x+r*.44,y-r*.9,x+r*.5,y-r*.3,x-r*.5,y-r*.3]),sk,{sx:r*.14,sy:0,lw});
   if(p.outfit==='hoodie'){cel(pE(x,y-r*.32,r*1.25,r*.58),shade(p.outCol,-.25),{lw});sh(r*2.3,p.outCol);neck();cel(pP([x-r*.6,y-r*.4,x+r*.6,y-r*.4,x+r*.3,y+r*.1,x-r*.3,y+r*.1]),shade(p.outCol,-.15),{lw:lw*.8});
@@ -134,77 +134,6 @@ function drawBust(id,x,y,s,ex='neutral',o={}){const p=PEOPLE[id],sk=p.skin,r=13*
     glove(x-w*.6,y+r*1.8,r*1.02,p.gloves,1);glove(x+w*.6,y+r*1.8,r*1.02,p.gloves,1)}
   drawFace(p,x,hy,r,ex,o)}
 
-/* ---------- the opponent, facing you ----------
-   pose: {x,y (body offset), lean, head:{x,y,turn,ex}, gl, gr (screen-left / screen-right glove: {x,y,z}), fall (0..1 lying down)}
-   Positions are relative to the waist. A glove with z>1.15 is coming at you and is drawn later, over the player. */
-const OSC=1.3;/* fighters are drawn this much bigger than their build numbers */
-function drawOpp(id,pose,cx,wy){const p=PEOPLE[id],b=p.build,S=b.s*OSC,sk=p.skin;
-  G.save();G.translate(cx+pose.x,wy+pose.y);if(pose.fall){G.scale(1,1-pose.fall*.68);G.rotate(-pose.fall*.08)}G.rotate(pose.lean||0);G.scale(S,S);
-  const W=b.w*1.06,H=b.h,sx=W,sy=-H,o1={sx:3,sy:2,rw:1.1,lw:1.7};
-  /* legs and trunks */
-  for(const s of[-1,1])cel(pL(s*W*.36,14,s*W*.44,48,W*.46,W*.36),sk,o1);
-  cel(pP([-W*.76,-3,W*.76,-3,W*.84,23,W*.08,25,0,19,-W*.08,25,-W*.84,23]),p.trunks,{sx:3,sy:1.5,lw:1.7,inner(){RC(-W,-4,W*2,4.5,p.trim);RC(-W*.84,8,3.2,15,p.trim);RC(W*.84-3.2,8,3.2,15,p.trim)}});
-  if(p.rope){LNO(-W*.72,1,W*.72,1,1.6,'#d8c49a');LNO(W*.2,1,W*.3,14,1.2,'#d8c49a')}
-  /* torso: wide lats, narrow waist, traps rising to the neck */
-  const torso=pP([-sx*.98,sy+5,-sx*.82,sy+.5,-W*.32,sy-4,W*.32,sy-4,sx*.82,sy+.5,sx*.98,sy+5,sx*1.0,sy+H*.34,W*.66,-2,-W*.66,-2,-sx*1.0,sy+H*.34]);
-  cel(torso,sk,{sx:4,sy:1.5,rw:1.3,lw:1.8,inner(){const sd=shade(sk,-.26);
-    if(b.belly){cel(pE(0,-H*.27,W*.62,H*.31),shade(sk,.06),{sx:3,sy:3,lw:1.2})}
-    else{for(let i=0;i<3;i++){LN(-W*.16,sy+H*(.54+i*.13),-W*.04,sy+H*(.54+i*.13),1.1,sd);LN(W*.04,sy+H*(.54+i*.13),W*.16,sy+H*(.54+i*.13),1.1,sd)}LN(0,sy+H*.48,0,-5,1,sd);ARC(-W*.62,sy+H*.62,W*.3,-.5,.6,1,sd);ARC(W*.62,sy+H*.62,W*.3,2.5,3.6,1,sd)}
-    ARC(-W*.34,sy+H*.2,W*.36,.35,2.6,1.4,INK);ARC(W*.34,sy+H*.2,W*.36,.54,2.8,1.4,INK);
-    if(p.hairy){G.globalAlpha=.45;for(let i=0;i<16;i++)E(((i*37)%17-8)*W*.06,sy+H*(.22+((i*13)%9)*.06),.6,.6,shade(sk,-.55));G.globalAlpha=1}
-    if(p.tattoo)for(let i=0;i<3;i++)ARC(-sx*.82+i*3.2,sy+10,3.2,3.3,6,1.1,'#1c2a40')}});
-  if(p.top)cel(pP([-W*.74,sy+H*.12,W*.74,sy+H*.12,W*.72,sy+H*.5,-W*.72,sy+H*.5]),p.top,{sx:3,sy:1.5,lw:1.6});
-  if(p.chain)ARC(0,sy-5,W*.4,.4,2.74,1.4,'#f2c14e');
-  /* arms: deltoid, upper arm hanging by the ribs, a big forearm up to the glove */
-  const arm=(side,g)=>{const shx=side*sx*.9,shy=sy+5,gx=g.x,gy=g.y,d=clamp(Math.hypot(gx-side*W*.5,gy-(-H+9))/(W*.75),0,1);
-    const ex=lerp(side*W*.95,(shx+gx)/2+side*W*.2,d),ey=lerp(-H*.32,(shy+gy)/2+5,d),wx=gx+(ex-gx)*.15,wy=gy+(ey-gy)*.15+b.gl*.3;
-    cel(pL(shx,shy,ex,ey,b.arm*1.5,b.arm*1.2),sk,{sx:side>0?2.6:1,sy:1,rw:1,lw:1.6});cel(pL(ex,ey,wx,wy,b.arm*1.3,b.arm*1.05),sk,{sx:side>0?2.4:1,sy:1,rw:1,lw:1.6});
-    cel(pE(shx-side*1,shy+1,W*.27,W*.23),sk,{sx:2.2,sy:1.6,rw:1.1,lw:1.6})};
-  arm(-1,pose.gl);arm(1,pose.gr);
-  /* neck and head */
-  const hx=pose.head.x,hy=pose.head.y;cel(pP([-W*.24+hx*.3,sy-11,W*.24+hx*.3,sy-11,W*.3,sy+1,-W*.3,sy+1]),sk,{sx:2,sy:0,lw:1.5});
-  drawFace(p,hx,hy,b.r,pose.head.ex||'guard',{turn:pose.head.turn||0,look:pose.head.look||0});
-  const later=[];for(const k of['gl','gr']){const g=pose[k];if(g.z>1.15){later.push(g);continue}glove(g.x,g.y,b.gl*1.15*g.z,p.gloves,1)}
-  G.restore();
-  return later.map(g=>({x:cx+(pose.x+g.x*S),y:wy+(pose.y+g.y*S),r:b.gl*1.15*g.z*S,col:p.gloves}))}
-
-/* ---------- you, from behind and above ----------
-   pose: {x,y,rot,s, gl, gr: {x,y,r} gloves relative to the neck base, hurt (0..1)}.
-   Your arms are out in front of you, so your body hides most of them: you see the gloves beside your head and a
-   bit of forearm rising past your shoulders. They are drawn first, behind your back and head. */
-function drawPlayer(pose,cx,ny){const p=PEOPLE.milo,sk=p.skin,skD=shade(sk,-.28),h=p.hairCol;
-  G.save();G.translate(cx+pose.x,ny+pose.y);G.rotate(pose.rot||0);const s=pose.s||1;G.scale(s,s);
-  for(const[k,side]of[['gl',-1],['gr',1]]){const g=pose[k],ext=clamp((13-g.r)/4.5,0,1),wx=g.x+side*g.r*.12,wy=g.y+g.r*.72;
-    cel(pL(side*33,2,wx,wy,lerp(17,13,ext),Math.max(8,lerp(14,9,ext))),sk,{sx:side>0?2.6:-1,sy:1,rw:1.1,lw:1.8});
-    glove(g.x,g.y,g.r*1.08,p.gloves,1,!!g.front)}
-  /* the back: traps up to the neck, wide lats, the spine */
-  const back=(ox,oy)=>{const q=(a,b,c,d)=>G.quadraticCurveTo(a+ox,b+oy,c+ox,d+oy);G.moveTo(-15+ox,-14+oy);q(-30,-12,-40,-4);q(-51,1,-48,15);q(-47,30,-44,40);G.lineTo(-38+ox,96+oy);G.lineTo(38+ox,96+oy);G.lineTo(44+ox,40+oy);q(47,30,48,15);q(51,1,40,-4);q(30,-12,15,-14);G.closePath()};
-  cel(back,sk,{sx:5,sy:2,rw:1.4,lw:2,inner(){
-    if(p.tattoo&&p.tattoo!=='none')drawTattoo(p.tattoo,0,30);
-    G.globalAlpha=.85;ARC(-17,17,13,-.3,1.6,1.4,skD);ARC(17,17,13,1.54,3.44,1.4,skD);LN(0,-4,0,92,1.6,skD);ARC(-30,48,16,-1.1,.2,1.3,skD);ARC(30,48,16,2.94,4.24,1.3,skD);
-    ARC(-36,8,12,-.2,2.2,1.3,skD);ARC(36,8,12,.94,3.34,1.3,skD);G.globalAlpha=1}});
-  cel(pP([-41,66,41,66,42,96,-42,96]),p.trunks,{sx:3,sy:1,lw:1.8,inner(){RC(-44,66,88,6,p.trim);if(p.nick)G.save(),G.font='700 5px '+FONT_D,G.textAlign='center',G.fillStyle=INK,G.fillText(p.nick.replace(/^THE /,''),0,71.5),G.restore()}});
-  /* neck and the back of the head */
-  cel(pP([-10,-22,10,-22,12,-8,-12,-8]),sk,{sx:2,sy:0,lw:1.6});
-  for(const sd of[-1,1])cel(pE(sd*17,-31,3.2,5.2),sk,{sx:.8,sy:.6,lw:1.3});
-  cel(pE(0,-33,17.5,18.5),sk,{sx:3,sy:2,rw:1.2,lw:1.9});
-  drawHairBack(p.hair,h,0,-33);
-  G.restore()}
-/* the back of Milo's head, for each hairstyle */
-function drawHairBack(hs,h,x,y){const o={sx:2.6,sy:2,rw:1.1,lw:1.6};
-  if(hs==='bald'){E(x-6,y-10,6,3,'rgba(255,255,255,.4)');return}
-  if(hs==='afro'){cel(pE(x,y-6,25,23),h,{sx:4,sy:3,rw:1.6,lw:1.9});for(let i=0;i<10;i++)ARC(x-16+((i*7)%30),y-18+((i*11)%22),2.4,3.2,5.6,.9,shade(h,.4));return}
-  const cap=(pad,low)=>pE(x,y-2-low,17.5*pad,18.5*pad-low);
-  if(hs==='buzz'){G.globalAlpha=.85;cel(cap(1.02,2),h,o);G.globalAlpha=1;return}
-  if(hs==='fade'){G.globalAlpha=.45;cel(cap(1.02,0),h,{...o,sx:0,sy:0,lw:0,rim:false});G.globalAlpha=1;cel(cap(1.04,5),h,o);return}
-  cel(cap(1.05,1),h,o);
-  if(hs==='curly'){cel(pBumpy(x,y-3,18.5,19,16,.1),h,{sx:3,sy:2.4,rw:1.2,lw:1.7,inner(){G.globalAlpha=.55;for(let i=0;i<14;i++){const a=i*2.4,rr_=4+((i*7)%12);ARC(x+Math.cos(a)*rr_,y-4+Math.sin(a)*rr_,2.3,3.3,5.9,.9,shade(h,.5))}G.globalAlpha=1}})}
-  else if(hs==='cornrows'){G.save();G.beginPath();cap(1.05,1)(0,0);G.clip();for(let i=-3;i<=3;i++)LN(x+i*4.6,y-22,x+i*5.2,y+16,1.3,shade(h,.4));G.restore()}
-  else if(hs==='mohawk'){G.globalAlpha=.5;cel(cap(1.02,0),shade(h,.1),{...o,sx:0,sy:0,lw:0,rim:false});G.globalAlpha=1;cel(pP([x-4,y-24,x+4,y-24,x+5,y+14,x-5,y+14]),h,{sx:1.2,sy:0,lw:1.3});for(let i=0;i<5;i++)cel(pP([x-4,y-20+i*7,x,y-27+i*7,x+4,y-20+i*7]),h,{sx:.6,sy:0,lw:1})}
-  else if(hs==='locs'){for(let i=-3;i<=3;i++)cel(pL(x+i*4.6,y-4,x+i*5.6,y+30,4.6,3.8),shade(h,i%2?.1:0),{sx:1,sy:0,lw:1.1});cel(pE(x,y+6,6,3),'#c8962e',{lw:1})}
-  else if(hs==='bun'){cel(pE(x,y-14,7,6),h,o)}
-  else{G.globalAlpha=.5;for(let i=0;i<6;i++)ARC(x-10+i*4,y-10+(i%2)*4,2,3.4,5.8,.9,shade(h,.4));G.globalAlpha=1}}
-/* back tattoos (drawn inside the back's clip) */
 function drawTattoo(k,x,y){const c='#1a1424',w=1.4;G.save();G.globalAlpha=.8;G.strokeStyle=c;G.fillStyle=c;G.lineWidth=w;G.lineCap='round';G.lineJoin='round';
   if(k==='anchor'){LN(x,y-14,x,y+14,w*1.6,c);ARC(x,y-17,3.2,0,TAU,w,c);LN(x-8,y-8,x+8,y-8,w*1.4,c);ARC(x,y+2,13,.35,2.8,w*1.6,c);PL([x-13,y+5,x-15,y+1,x-10,y+2],c);PL([x+13,y+5,x+15,y+1,x+10,y+2],c)}
   else if(k==='bell'){G.beginPath();G.moveTo(x-11,y+10);G.quadraticCurveTo(x-10,y-12,x,y-13);G.quadraticCurveTo(x+10,y-12,x+11,y+10);G.closePath();G.stroke();LN(x-13,y+10,x+13,y+10,w*1.4,c);E(x,y+13,2.4,2.4,c);LN(x,y-13,x,y-17,w,c)}
