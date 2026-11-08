@@ -151,6 +151,6 @@ function howtoDraw(){drawScene('gym',TT,null,null,{dim:.62});blit();ctx.setTrans
 function setItems(){return['TIMING  '+TIM().n,'SOUND  '+(muted?'OFF':'ON'),'VIBRATION  '+(HAP.on?'ON':'OFF'),'BACK']}
 function settingsTick(){const it=setItems();const d=menuNav(it.length),ch=d==='left'?-1:d==='right'?1:TAP('a')?1:0;
   if(TAP('b')||(TAP('a')&&MSEL===3)){SFX.back();saveNow();go('title',titleIdx('set'));return}
-  if(ch&&MSEL===0){SAVE.timing=((SAVE.timing|0)+ch+3)%3;SFX.move()}else if(ch&&MSEL===1){setMute(!muted);if(!muted)SFX.pick()}else if(ch&&MSEL===2){HAP.on=!HAP.on;store.set('vib',HAP.on);haptic(20);SFX.move()}}
+  if(ch&&MSEL===0){SAVE.timing=((SAVE.timing|0)+ch+3)%3;SFX.move()}else if(ch&&MSEL===1){setMute(!muted);if(!muted)SFX.pick()}else if(ch&&MSEL===2){HAP.on=!HAP.on;store.set('vib',HAP.on);buzz([30,60,30]);SFX.move()}}
 function settingsDraw(){drawScene('gym',TT,null,null,{dim:.62});blit();ctx.setTransform(DPR,0,0,DPR,0,0);text('SETTINGS',SW/2,SH*.14,20,'#fff','center','#000',700);drawMenu(setItems(),SW/2,SH*.3,12,22*U);
   const notes=['EASY: wider timing, slower punches. HARD: tight timing.','',''];if(MSEL===0)wrap(notes[0],SW*.8,9).forEach((l,i)=>text(l,SW/2,SH*.3+4*22*U+6*U+i*12*U,9,'#c8c0e0','center'));help('◀ ▶ CHANGE · B BACK')}

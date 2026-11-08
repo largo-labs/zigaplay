@@ -10,6 +10,16 @@ function PLO(pts,c){G.lineJoin='round';G.strokeStyle=OUT;G.lineWidth=2;G.beginPa
 function LN(x1,y1,x2,y2,w,c,cap='round'){G.strokeStyle=c;G.lineWidth=w;G.lineCap=cap;G.beginPath();G.moveTo(x1,y1);G.lineTo(x2,y2);G.stroke()}
 function LNO(x1,y1,x2,y2,w,c){LN(x1,y1,x2,y2,w+2,OUT);LN(x1,y1,x2,y2,w,c)}
 function ARC(x,y,r,a0,a1,w,c){G.strokeStyle=c;G.lineWidth=w;G.lineCap='round';G.beginPath();G.arc(x,y,Math.max(.1,r),a0,a1);G.stroke()}
+/* an arm from shoulder (sx,sy) to elbow (ex,ey) to wrist (wx,wy): outlines first so the joints don't show seams,
+   then the skin, a muscle on the upper arm, and shading down one side so it reads round */
+function taper(ax,ay,bx_,by,wa,wb,c){const l=Math.hypot(bx_-ax,by-ay)||1,nx=-(by-ay)/l,ny=(bx_-ax)/l;PL([ax+nx*wa/2,ay+ny*wa/2,bx_+nx*wb/2,by+ny*wb/2,bx_-nx*wb/2,by-ny*wb/2,ax-nx*wa/2,ay-ny*wa/2],c);E(ax,ay,wa/2,wa/2,c);E(bx_,by,wb/2,wb/2,c)}
+function arm3(sx,sy,ex,ey,wx,wy,wu,wf,sk,ls=1,we=0){we=we||wu*.9;const skD=shade(sk,-.24),skL=shade(sk,.15),ua=Math.atan2(ey-sy,ex-sx),ul=Math.hypot(ex-sx,ey-sy),mx=(sx+ex)/2,my=(sy+ey)/2;
+  taper(sx,sy,ex,ey,wu+2,we+2,OUT);taper(ex,ey,wx,wy,we+2,wf+2,OUT);E(mx,my,ul*.46+1,wu*.6+1,OUT,ua);
+  taper(sx,sy,ex,ey,wu,we,sk);taper(ex,ey,wx,wy,we,wf,sk);E(mx,my,ul*.46,wu*.6,sk,ua);
+  const band=(ax,ay,bx_,by,w,off,c)=>{const l=Math.hypot(bx_-ax,by-ay)||1,nx=-(by-ay)/l*off,ny=(bx_-ax)/l*off;G.save();G.globalAlpha=.85;LN(ax+nx,ay+ny,bx_+nx,by+ny,w,c,'butt');G.restore()};
+  band(sx,sy,ex,ey,wu*.32,wu*.3*ls,skD);band(ex,ey,wx,wy,wf*.3,wf*.3*ls,skD);
+  band(sx+(ex-sx)*.2,sy+(ey-sy)*.2,ex-(ex-sx)*.2,ey-(ey-sy)*.2,wu*.2,-wu*.2*ls,skL);band(ex+(wx-ex)*.15,ey+(wy-ey)*.15,wx-(wx-ex)*.25,wy-(wy-ey)*.25,wf*.16,-wf*.2*ls,skL);
+  E(ex,ey,wf*.42,wf*.42,sk)}
 function clipHead(x,y,r,ry){G.save();G.beginPath();G.ellipse(x,y,r,ry,0,0,TAU);G.clip()}
 /* a tapered limb: thick at a, thinner at b */
 function limb(ax,ay,bx_,by,wa,wb,c){const dx=bx_-ax,dy=by-ay,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;
@@ -110,7 +120,9 @@ function drawOpp(id,pose,cx,wy){const p=PEOPLE[id],b=p.build,S=b.s*OSC,sk=p.skin
   PLO([-W*.74,-2,W*.74,-2,W*.8,22,W*.06,24,0,18,-W*.06,24,-W*.8,22],p.trunks);RC(-W*.74,-3,W*1.48,4,p.trim);RC(-W*.8,8,3,13,p.trim);RC(W*.8-3,8,3,13,p.trim);
   if(p.rope){LN(-W*.7,1,W*.7,1,2,'#d8c49a');LN(W*.2,1,W*.3,14,1.5,'#d8c49a')}
   /* arms behind the torso (shoulder to elbow) */
-  const arm=(side,g)=>{const shx=side*sx*.92,shy=sy+5,gx=g.x,gy=g.y,mx=(shx+gx)/2+side*W*.28,my=Math.max(shy,gy)+6;limb(shx,shy,mx,my,b.arm*1.15,b.arm,sk);limb(mx,my,gx,gy,b.arm,b.arm*.9,sk)};
+  const arm=(side,g)=>{const shx=side*sx*.9,shy=sy+5,gx=g.x,gy=g.y,d=clamp(Math.hypot(gx-side*W*.46,gy-(-H+4))/(W*.75),0,1);
+    const ex=lerp(side*W*.84,(shx+gx)/2+side*W*.2,d),ey=lerp(-H*.36,(shy+gy)/2+5,d),wx=gx+(ex-gx)*.18,wy=gy+(ey-gy)*.18+b.gl*.3;
+    arm3(shx,shy,ex,ey,wx,wy,b.arm*1.3,b.arm*.95,sk,side,b.arm*1.2)};
   /* torso */
   PLO([-sx,sy+4,-sx*.86,sy,-W*.25,sy-3,W*.25,sy-3,sx*.86,sy,sx,sy+4,W*.7,-2,-W*.7,-2],sk);
   E(sx*.92,sy+5,W*.24,W*.2,skL);E(-sx*.92,sy+5,W*.24,W*.2,skD);
@@ -136,8 +148,9 @@ function drawOpp(id,pose,cx,wy){const p=PEOPLE[id],b=p.build,S=b.s*OSC,sk=p.skin
 function drawPlayer(pose,cx,ny){const p=PEOPLE.milo,sk=p.skin,skD=shade(sk,-.22),skL=shade(sk,.12),h=p.hairCol;
   G.save();G.translate(cx+pose.x,ny+pose.y);G.rotate(pose.rot||0);const s=pose.s||1;G.scale(s,s);
   /* arms first: they rise from the shoulders up to the gloves */
-  const arm=(side,g)=>{const shx=side*40,shy=2,ex=side*Math.max(30,Math.abs(g.x)+12)+(g.x-side*24)*.3,ey=Math.max(-22,(g.y+shy)/2+16);
-    limb(shx,shy,ex,ey,17,14,sk);limb(ex,ey,g.x,g.y+g.r*.5,14,Math.max(8,g.r*.9),sk)};
+  const arm=(side,g)=>{const shx=side*39,shy=3,ext=clamp((13-g.r)/5,0,1),wx=g.x+side*g.r*.15,wy=g.y+g.r*.75;
+    const ex=lerp(side*45+g.x*.06,shx+(wx-shx)*.4+side*6,ext),ey=lerp(Math.max(6,g.y+44),shy+(wy-shy)*.4,ext);
+    arm3(shx,shy,ex,ey,wx,wy,lerp(19,16,ext),lerp(13,8,ext),sk,-side,lerp(19,15,ext))};
   /* back */
   PLO([-45,4,-40,-4,-14,-12,14,-12,40,-4,45,4,40,90,-40,90],sk);
   E(-34,6,14,12,skD);E(34,6,14,12,skL);

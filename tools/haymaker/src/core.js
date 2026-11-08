@@ -63,6 +63,14 @@ function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.las
   try{if(!HAP.lab||!HAP.lab.isConnected){const d=w.document,id='zp-haptic';let lab=d.getElementById(id+'-l');if(!lab){const inp=d.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id=id;lab=d.createElement('label');lab.id=id+'-l';lab.htmlFor=id;
     for(const e of[inp,lab]){e.setAttribute('aria-hidden','true');e.style.cssText='position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;pointer-events:none'}d.body.append(inp,lab)}HAP.lab=lab}HAP.lab.click()}catch(e){}}
 
+/* a rhythm of buzzes: [on, off, on, ...] in ms. Phones with a vibration motor play it as is; on iPhone each "on"
+   is one haptic tick */
+function buzz(pat){if(!HAP.on)return;let w=window;try{if(ZP)w=window.parent}catch(e){}
+  try{if(typeof w.navigator.vibrate==='function'){w.navigator.vibrate(pat);return}}catch(e){}
+  let t=0;pat.forEach((ms,i)=>{if(i%2===0){const at=t;setTimeout(()=>{HAP.last=0;haptic(ms)},at)}t+=ms})}
+const RUMBLE={dodge:()=>haptic(12),perfect:()=>buzz([14,30,10]),jab:()=>haptic(22),cross:()=>haptic(30),hay:()=>buzz([45,35,60]),block:()=>haptic(15),
+  hurt:()=>buzz([70,40,40]),combo:()=>buzz([25,45,25,45,70]),odown:()=>buzz([90,60,90,60,140]),pdown:()=>buzz([160,90,80]),ko:()=>buzz([120,70,120,70,260]),
+  bell:()=>buzz([30,90,30]),count:()=>haptic(10),mash:()=>haptic(8),up:()=>buzz([40,50,40]),win:()=>buzz([40,60,40,60,40,60,180]),lose:()=>buzz([200])};
 /* ================= buttons =================
    D-pad, A, B, START, SELECT. Presses are timestamped so the rhythm lanes judge them to the millisecond. */
 const RAW={held:{},tap:{}},PRESSES=[];
