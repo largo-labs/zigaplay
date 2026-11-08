@@ -42,12 +42,26 @@ const SFX={
   move(){tone({f:700,d:.03,v:.05})},pick(){tone({f:660,d:.05,v:.08});tone({f:990,d:.07,v:.08,t0:.05})},back(){tone({f:400,f2:300,d:.07,v:.07})},
   game(){[523,659,784,1047].forEach((f,i)=>tone({f,d:.2,type:'triangle',v:.12,t0:i*.09}))}};
 function setMute(m){muted=m;store.set('mute',m);if(master)master.gain.value=m?0:.5;if(MUS.bus)MUS.bus.gain.value=m?0:MUS.vol}
-/* a buzz on big hits: vibrate where it exists; on iPhone a hidden switch gives a haptic tick */
-const HAP={on:store.get('vib',true),lab:null,last:0};
-function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.last<45)return;HAP.last=now;let w=window;try{if(ZP)w=window.parent}catch(e){}
-  try{if(typeof w.navigator.vibrate==='function'){w.navigator.vibrate(ms);return}}catch(e){}
-  try{if(!HAP.lab||!HAP.lab.isConnected){const d=w.document,id='zp-haptic';let lab=d.getElementById(id+'-l');if(!lab){const inp=d.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id=id;lab=d.createElement('label');lab.id=id+'-l';lab.htmlFor=id;
-    for(const e of[inp,lab]){e.setAttribute('aria-hidden','true');e.style.cssText='position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;pointer-events:none'}d.body.append(inp,lab)}HAP.lab=lab}HAP.lab.click()}catch(e){}}
+/* ================= vibration =================
+   Phones with a vibration motor (Android) use navigator.vibrate. iPhones have no vibration API for web pages; a
+   page can only get a haptic tick by toggling a hidden switch, and since iOS 18.4 only within about a second of a
+   tap (a click). So on iPhone a buzz plays at once when you tapped a button in the last second, or else waits for
+   the click that ends the tap you're making (that's every dodge and punch). */
+const HAP={on:store.get('vib',true),lab:null,inp:null,last:0,grant:-1e9,queued:0};
+const hapWin=()=>{let w=window;try{if(ZP&&window.parent.document)w=window.parent}catch(e){}return w};
+const canVibrate=()=>{try{return typeof hapWin().navigator.vibrate==='function'}catch(e){return false}};
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function hapTick(){try{const w=hapWin(),d=w.document,id='zp-haptic';if(!HAP.lab||!HAP.lab.isConnected){let lab=d.getElementById(id+'-l'),inp=d.getElementById(id);
+    if(!lab||!inp){inp=d.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id=id;lab=d.createElement('label');lab.id=id+'-l';lab.htmlFor=id;
+      for(const e of[inp,lab]){e.setAttribute('aria-hidden','true');e.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none'}d.body.append(inp,lab)}HAP.lab=lab;HAP.inp=inp}
+  HAP.lab.click()}catch(e){}}
+function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.last<40)return;HAP.last=now;
+  if(canVibrate()){try{hapWin().navigator.vibrate(ms)}catch(e){}return}
+  if(!IOS)return;if(now-HAP.grant<950)hapTick();else HAP.queued=now}
+/* every real tap (on the console's buttons, or the touch pad here) opens a second's window, and plays a waiting buzz */
+(()=>{const docs=[document];try{if(ZP&&window.parent.document)docs.push(window.parent.document)}catch(e){}
+  for(const d of docs)d.addEventListener('click',e=>{if(!e.isTrusted||e.target===HAP.lab||e.target===HAP.inp)return;HAP.grant=performance.now();
+    if(HAP.queued&&HAP.grant-HAP.queued<700){HAP.queued=0;hapTick()}},true)})();
 
 /* ================= saving: every second, on this device and (on the ZigaPlay) to your account =================
    The Claude app can clear this device's storage when it closes; the account copy is what comes back then. */

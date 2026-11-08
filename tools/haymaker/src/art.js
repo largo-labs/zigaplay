@@ -147,17 +147,19 @@ function drawOpp(id,pose,cx,wy){const p=PEOPLE[id],b=p.build,S=b.s*OSC,sk=p.skin
    pose: {x,y,rot,s, gl, gr: {x,y,r} gloves relative to the neck base, hurt (0..1)} */
 function drawPlayer(pose,cx,ny){const p=PEOPLE.milo,sk=p.skin,skD=shade(sk,-.22),skL=shade(sk,.12),h=p.hairCol;
   G.save();G.translate(cx+pose.x,ny+pose.y);G.rotate(pose.rot||0);const s=pose.s||1;G.scale(s,s);
-  /* arms first: they rise from the shoulders up to the gloves */
-  const arm=(side,g)=>{const shx=side*39,shy=3,ext=clamp((13-g.r)/5,0,1),wx=g.x+side*g.r*.15,wy=g.y+g.r*.75;
-    const ex=lerp(side*45+g.x*.06,shx+(wx-shx)*.4+side*6,ext),ey=lerp(Math.max(6,g.y+44),shy+(wy-shy)*.4,ext);
-    arm3(shx,shy,ex,ey,wx,wy,lerp(19,16,ext),lerp(13,8,ext),sk,-side,lerp(19,15,ext))};
+  /* your arms are out in front of you, so your body hides most of them: you see the gloves beside your head and a
+     bit of forearm rising past your shoulders. They are drawn first, behind your back and head. */
+  const fore=(side,g)=>{const ext=clamp((13-g.r)/4.5,0,1),bx0=side*33,by0=2,wx=g.x+side*g.r*.12,wy=g.y+g.r*.72,wa=lerp(15,12,ext),wb=Math.max(7,lerp(12,8,ext));
+    taper(bx0,by0,wx,wy,wa+2,wb+2,OUT);taper(bx0,by0,wx,wy,wa,wb,sk);
+    const l=Math.hypot(wx-bx0,wy-by0)||1,nx=-(wy-by0)/l*side,ny=(wx-bx0)/l*side;G.save();G.globalAlpha=.8;LN(bx0-nx*wa*.28,by0-ny*wa*.28,wx-nx*wb*.28,wy-ny*wb*.28,wa*.3,skD,'butt');G.restore();
+    G.save();G.globalAlpha=.6;LN(bx0+nx*wa*.22,by0+ny*wa*.22,wx+nx*wb*.22,wy+ny*wb*.22,wa*.16,skL,'butt');G.restore()};
+  for(const[k,side]of[['gl',-1],['gr',1]]){const g=pose[k];fore(side,g);glove(g.x,g.y,g.r,p.gloves,1,!!g.front)}
   /* back */
   PLO([-45,4,-40,-4,-14,-12,14,-12,40,-4,45,4,40,90,-40,90],sk);
   E(-34,6,14,12,skD);E(34,6,14,12,skL);
   ARC(-16,16,12,-.3,1.6,1.5,skD);ARC(16,16,12,1.54,3.44,1.5,skD);LN(0,-2,0,90,1.5,skD);
   E(-30,40,9,22,skD);E(30,40,9,22,shade(sk,-.1));
   RC(-40,64,80,5,p.trim);RC(-40,69,80,30,p.trunks);
-  const later=[];for(const[k,side]of[['gl',-1],['gr',1]]){const g=pose[k];if(g.front){later.push([side,g]);continue}arm(side,g)}
   /* neck and back of the head */
   RC(-9,-22,18,14,sk);RC(-9,-22,18,4,skD);
   EO(-16.5,-30,3,5,skD);EO(16.5,-30,3,5,skD);
@@ -166,7 +168,4 @@ function drawPlayer(pose,cx,ny){const p=PEOPLE.milo,sk=p.skin,skD=shade(sk,-.22)
   for(let a=-.2;a<=Math.PI+.2;a+=.36)E(Math.cos(a)*15.5,-33+Math.sin(a)*-15-1,4.5,4.5,h);
   for(let i=-2;i<=2;i++)E(i*6.5,-21.5,4,3.5,h);
   G.globalAlpha=.4;for(let i=0;i<6;i++)E(-11+i*4.5,-44+(i%2)*3,1.4,1,shade(h,.4));G.globalAlpha=1;
-  /* gloves in guard sit over the head's sides */
-  for(const[k,side]of[['gl',-1],['gr',1]]){const g=pose[k];if(!g.front)glove(g.x,g.y,g.r,p.gloves,1)}
-  for(const[side,g]of later){arm(side,g);glove(g.x,g.y,g.r,p.gloves,1,true)}
   G.restore()}

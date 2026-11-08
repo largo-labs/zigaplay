@@ -137,7 +137,7 @@ function oppPose(){const p=PEOPLE[F.id],b=p.build,W=b.w,H=b.h,c=F.clk,ph=F.ph;
   else if(ph==='bell'||ph==='intro'){P.head.ex=F.okd?'angry':'guard'}
   if(c-F.O.sayT<1.6&&ph==='neutral')P.head.ex='grin';
   return P}
-function playerPose(){const c=F.clk,P={x:0,y:Math.sin(c*4.6+1)*1,rot:0,s:1,gl:{x:-27,y:-34,r:13},gr:{x:27,y:-34,r:13},hurt:0},ph=F.ph;
+function playerPose(){const c=F.clk,P={x:0,y:Math.sin(c*4.6+1)*1,rot:0,s:1,gl:{x:-28,y:-40,r:13},gr:{x:28,y:-40,r:13},hurt:0},ph=F.ph;
   const dg=F.P.dodge;if(dg){const a=c-dg.t;if(a>=0&&a<.42){const k=a<.06?a/.06:a<.3?1:1-(a-.3)/.12;
     if(dg.d==='L'){P.x=-36*k;P.rot=-.17*k}else if(dg.d==='R'){P.x=36*k;P.rot=.17*k}else if(dg.d==='D'){P.y+=28*k;P.gl.y+=6*k;P.gr.y+=6*k}else{P.y+=12*k;P.s=1+.08*k;P.gl.y+=10*k;P.gr.y+=10*k}}}
   const pu=F.P.punch;if(pu){const a=c-pu.t;if(a>=0&&a<.3){const b=PEOPLE[F.id].build;

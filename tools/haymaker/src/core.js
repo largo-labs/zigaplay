@@ -56,18 +56,29 @@ const SFX={
   win(){[523,659,784,1047,1319].forEach((f,i)=>tone({f,d:.28,type:'triangle',v:.12,t0:i*.1}))},
   lose(){[392,349,311,262].forEach((f,i)=>tone({f,d:.35,type:'triangle',v:.1,t0:i*.18}))}};
 function setMute(m){muted=m;store.set('mute',m);if(master)master.gain.value=m?0:.5;if(MUS.bus)MUS.bus.gain.value=m?0:MUS.vol}
-/* a buzz on big hits: vibrate where it exists; on iPhone a hidden switch gives a haptic tick */
-const HAP={on:store.get('vib',true),lab:null,last:0};
-function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.last<45)return;HAP.last=now;let w=window;try{if(ZP)w=window.parent}catch(e){}
-  try{if(typeof w.navigator.vibrate==='function'){w.navigator.vibrate(ms);return}}catch(e){}
-  try{if(!HAP.lab||!HAP.lab.isConnected){const d=w.document,id='zp-haptic';let lab=d.getElementById(id+'-l');if(!lab){const inp=d.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id=id;lab=d.createElement('label');lab.id=id+'-l';lab.htmlFor=id;
-    for(const e of[inp,lab]){e.setAttribute('aria-hidden','true');e.style.cssText='position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;pointer-events:none'}d.body.append(inp,lab)}HAP.lab=lab}HAP.lab.click()}catch(e){}}
-
-/* a rhythm of buzzes: [on, off, on, ...] in ms. Phones with a vibration motor play it as is; on iPhone each "on"
-   is one haptic tick */
-function buzz(pat){if(!HAP.on)return;let w=window;try{if(ZP)w=window.parent}catch(e){}
-  try{if(typeof w.navigator.vibrate==='function'){w.navigator.vibrate(pat);return}}catch(e){}
-  let t=0;pat.forEach((ms,i)=>{if(i%2===0){const at=t;setTimeout(()=>{HAP.last=0;haptic(ms)},at)}t+=ms})}
+/* ================= vibration =================
+   Phones with a vibration motor (Android) use navigator.vibrate. iPhones have no vibration API for web pages; a
+   page can only get a haptic tick by toggling a hidden switch, and since iOS 18.4 only within about a second of a
+   tap (a click). So on iPhone a buzz plays at once when you tapped a button in the last second, or else waits for
+   the click that ends the tap you're making (that's every dodge and punch). */
+const HAP={on:store.get('vib',true),lab:null,inp:null,last:0,grant:-1e9,queued:0};
+const hapWin=()=>{let w=window;try{if(ZP&&window.parent.document)w=window.parent}catch(e){}return w};
+const canVibrate=()=>{try{return typeof hapWin().navigator.vibrate==='function'}catch(e){return false}};
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function hapTick(){try{const w=hapWin(),d=w.document,id='zp-haptic';if(!HAP.lab||!HAP.lab.isConnected){let lab=d.getElementById(id+'-l'),inp=d.getElementById(id);
+    if(!lab||!inp){inp=d.createElement('input');inp.type='checkbox';inp.setAttribute('switch','');inp.id=id;lab=d.createElement('label');lab.id=id+'-l';lab.htmlFor=id;
+      for(const e of[inp,lab]){e.setAttribute('aria-hidden','true');e.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none'}d.body.append(inp,lab)}HAP.lab=lab;HAP.inp=inp}
+  HAP.lab.click()}catch(e){}}
+function haptic(ms){if(!HAP.on)return;const now=performance.now();if(now-HAP.last<40)return;HAP.last=now;
+  if(canVibrate()){try{hapWin().navigator.vibrate(ms)}catch(e){}return}
+  if(!IOS)return;if(now-HAP.grant<950)hapTick();else HAP.queued=now}
+/* a rhythm of buzzes: [on, off, on, ...] in ms; on iPhone each "on" is one tick (those after the first second are lost) */
+function buzz(pat){if(!HAP.on)return;if(canVibrate()){try{hapWin().navigator.vibrate(pat)}catch(e){}return}
+  if(!IOS)return;let t=0;pat.forEach((ms,i)=>{if(i%2===0){const at=t;if(at===0){HAP.last=0;haptic(ms)}else setTimeout(()=>{if(performance.now()-HAP.grant<950)hapTick()},at)}t+=ms})}
+/* every real tap (on the console's buttons, or the touch pad here) opens a second's window, and plays a waiting buzz */
+(()=>{const docs=[document];try{if(ZP&&window.parent.document)docs.push(window.parent.document)}catch(e){}
+  for(const d of docs)d.addEventListener('click',e=>{if(!e.isTrusted||e.target===HAP.lab||e.target===HAP.inp)return;HAP.grant=performance.now();
+    if(HAP.queued&&HAP.grant-HAP.queued<700){HAP.queued=0;hapTick()}},true)})();
 const RUMBLE={dodge:()=>haptic(12),perfect:()=>buzz([14,30,10]),jab:()=>haptic(22),cross:()=>haptic(30),hay:()=>buzz([45,35,60]),block:()=>haptic(15),
   hurt:()=>buzz([70,40,40]),combo:()=>buzz([25,45,25,45,70]),odown:()=>buzz([90,60,90,60,140]),pdown:()=>buzz([160,90,80]),ko:()=>buzz([120,70,120,70,260]),
   bell:()=>buzz([30,90,30]),count:()=>haptic(10),mash:()=>haptic(8),up:()=>buzz([40,50,40]),win:()=>buzz([40,60,40,60,40,60,180]),lose:()=>buzz([200])};
