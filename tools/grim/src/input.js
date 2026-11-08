@@ -3,13 +3,13 @@
    asks on the first button press. On the ZigaPlay the sensor is read from the console page, where the touches are. */
 const OPT={steer:store.get('steer','auto'),sens:store.get('sens5',2)};
 /* how far (in degrees, past a small dead zone) you tilt for full speed, from VERY LOW to VERY HIGH sensitivity */
-const SENS=['VERY LOW','LOW','MEDIUM','HIGH','VERY HIGH'],FULL=[60,46,36,28,22],DEAD=4;
+const SENS=['VERY LOW','LOW','MEDIUM','HIGH','VERY HIGH'],FULL=[48,38,30,24,18],DEAD=2.5;
 const TILT={raw:0,sm:0,abs:0,center:store.get('tc',0),live:false,lastAt:-1e9,perm:'unknown'};
 const TW=(()=>{try{return ZP?window.parent:window}catch(e){return window}})();
 const held={};
 function orientAngle(){try{const o=TW.screen&&TW.screen.orientation;if(o&&typeof o.angle==='number')return o.angle;if(typeof TW.orientation==='number')return TW.orientation}catch(e){}return 0}
 function onTilt(e){if(e.gamma==null&&e.beta==null)return;const a=((orientAngle()%360)+360)%360,g=e.gamma||0,b=e.beta||0;
-  const lat=a===90?b:a===270?-b:a===180?-g:g;TILT.abs=lat;TILT.raw=lat-TILT.center;TILT.sm+=(TILT.raw-TILT.sm)*.3;TILT.lastAt=performance.now();TILT.live=true}
+  const lat=a===90?b:a===270?-b:a===180?-g:g;TILT.abs=lat;TILT.raw=lat-TILT.center;TILT.sm+=(TILT.raw-TILT.sm)*.45;TILT.lastAt=performance.now();TILT.live=true}
 try{TW.addEventListener('deviceorientation',onTilt)}catch(e){addEventListener('deviceorientation',onTilt)}
 /* ask on every press and release until it is granted: iPhone only shows its question when asked inside a tap,
    and a release counts as a tap where a press may not. A page shown inside another site's page (the Claude app) is
@@ -22,7 +22,7 @@ const tiltOK=()=>tiltLive();
 function tiltLine(){if(tiltLive())return'TILT ON: TILT TO STEER';if(TILT.perm==='denied')return'TILT IS BLOCKED HERE\nHOLD A SIDE OF THE SCREEN';
   let D=null;try{D=TW.DeviceOrientationEvent}catch(e){}if(D&&typeof D.requestPermission==='function'&&TILT.perm!=='granted')return'PRESS A TO ALLOW TILT';return'NO TILT SIGNAL HERE\nHOLD A SIDE OF THE SCREEN'}
 function steerMode(){if(TOUCH.side)return'pad';if(OPT.steer==='pad')return'pad';if(OPT.steer==='tilt')return'tilt';return tiltLive()?'tilt':'pad'}
-function steerX(){if(steerMode()==='tilt'){const g=TILT.sm,a=Math.abs(g);if(a<DEAD)return 0;const v=clamp(sgn(g)*(a-DEAD)/(FULL[OPT.sens]-DEAD),-1,1);return v*Math.abs(v)*.4+v*.6}
+function steerX(){if(steerMode()==='tilt'){const g=TILT.sm,a=Math.abs(g);if(a<DEAD)return 0;const v=clamp(sgn(g)*(a-DEAD)/(FULL[OPT.sens]-DEAD),-1,1);return v*Math.abs(v)*.3+v*.7}
   return(held.right?1:0)-(held.left?1:0)||TOUCH.side}
 /* holding the left or right half of the picture steers too (the screen itself takes touches, also on the ZigaPlay) */
 const TOUCH={id:null,side:0};
