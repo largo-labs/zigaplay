@@ -13,6 +13,7 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Neon Rex** | A cyber-raptor races through a neon city at night: Rex runs right on his own, district after district, and keeps his speed up by dashing down onto the glitch goblins rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
 | **Grim Ascent** | A Doodle Jump-style climb up a haunted tower as a little reaper in a black cloak and skull mask. Tilt the phone to steer; you bounce on the platforms by yourself. Slam into monsters with B and finish them with A combos; tougher monsters take two, three or four combos. Played upright. | Tilt steer · B slam · A attack · START pause |
 | **Gray Squares** | Press the square to make a square, then buy things that make squares for you: an extra square, a small pile, a gray shelf, all the way up to gray everything. Everything is gray. It keeps going while you are away. | A press · ▲▼ choose · A buy · SELECT ×1/×10/max · START menu |
+| **Haymaker** | A boxing story in Port Ember: save your late father's gym by winning the Ember Circuit, seven fighters across seven rings, up to the crooked promoter Victor Sable. Rhythm combat seen from behind and above you: slip each punch on the beat, then land your own combo. | D-pad dodge (◀ ▶ slip, ▼ duck, ▲ lean back), A jab, B cross, A+B together haymaker, START pause |
 
 ## Lynties in 3D
 
@@ -101,6 +102,17 @@ These save every second, both on the device (localStorage, prefixed with the gam
 - **Matches:** damage builds up a percent, and the higher it is the farther hits send you. Fighters are solid: you can't walk, dash or roll through the other fighter (jump over them instead); only someone sent flying by a big hit sails past. Settings: 1 to 5 stocks, CPU level 1 to 9, an optional 2, 3 or 5 minute timer, game speed (70%, 85% or 100%; 85% by default, so the action is easy to follow), sound and vibration. Eight stages: Rooftop, Moon Bridge, Clock Tower (its clock shows the real time), Neon Docks, The Foundry, Sky Temple, Frozen Peak and Subway, each with its own battle track. The blast lines sit far out (390 to each side, 370 up), and getting hit gives back your double jump, dodge and specials, so there is time to get back. Training has a dummy and a combo counter. Records keep wins and losses for each fighter.
 - **Saving:** settings, controls, records and a match in progress save every second (see Saving below); RESUME MATCH on the title picks the match back up.
 - Built from `tools/strike/src/` with `python3 tools/strike/build.py`, which writes `games/strike/index.html` (opening it with `#sntest` adds a test hook, `window.SNT`). The fighters and stages are drawn in code.
+
+## Haymaker
+
+A rhythm boxing story (`games/haymaker`, built from `tools/haymaker/src` with `python3 tools/haymaker/build.py`).
+
+- **Story:** Milo Brass boxes to save the Bell & Anchor gym from Victor Sable. Auntie Dot trains him; the circuit is Gus "Bucket" Mahoney (the gym basement), Tiny Vex (the fish market pier), Brother Halloran (St. Brine's hall), Sergei "The Freezer" Volkov (the ice house), Lola Cadena (a neon rooftop in the rain), Big Tide Baraka (the harbor drydock) and Sable himself (the Crown Arena). Scenes before and after each fight; START skips one.
+- **Fighting:** the camera sits behind and above Milo. The opponent's combo slides along the lane at the top as arrows (for example R R D U); press each way on the D-pad as its arrow reaches the ring. Slip the whole combo and he is open: your punches slide in (for example A, A+B, B, B about a second apart), A jab, B cross, A+B pressed together a haymaker. Miss one and he recovers and starts his combo again; land them all for a COMBO bonus. Getting hit resets his combo.
+- **Fighter tricks:** Vex is fast; Halloran pauses on purpose; Volkov's arrows freeze halfway (remember them) and he punishes punches thrown while he waits; Lola throws feints (hollow blinking arrows: don't move); Big Tide hits hardest; Sable mixes everything and speeds up after his second knockdown.
+- **Rounds:** three rounds of 90 seconds, with Auntie Dot's tip in the corner between them. Enough knockdowns is a K.O.; otherwise the judges decide. Knocked down yourself, mash A and B to get up; three times is a T.K.O.
+- **Circuit:** rematch anyone you've met, with your best stars and time. **Settings:** timing EASY, NORMAL or HARD, sound, vibration.
+- **Saving:** every second and when the game is hidden or turned off, on the device (`haymaker-save`) and in the ZigaPlay account doc `progress`. Quitting mid-fight keeps the round; CONTINUE picks it back up.
 
 ## Playing it
 
