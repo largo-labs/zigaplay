@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ZigaPlay</title>
-<meta name="zigaplay-offline-build" content="2026-11-08 22:43 UTC">
+<meta name="zigaplay-offline-build" content="2026-11-08 23:11 UTC">
 <meta name="theme-color" content="#0d1222">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,7 +25,7 @@
   --num:'VT323',ui-monospace,monospace;
   --ui:system-ui,-apple-system,'Segoe UI',sans-serif;
 }
-html,body{height:100%}
+html,body{height:100%;touch-action:manipulation}
 body{background:radial-gradient(120% 70% at 50% 0%,var(--desk-glow) 0%,var(--desk-2) 38%,var(--desk) 100%);color:#e8ecff;font-family:var(--ui);
   margin:0;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
   display:flex;justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -1004,13 +1004,17 @@ async function launch(c,opts={}){if(state!=='home'&&state!=='lib'&&!opts.instant
   if(!matchMedia('(pointer:coarse)').matches)try{frame.focus({preventScroll:true})}catch(e){}}
 /* the console's sound and the game's own folder go in before the game's first script */
 function prepare(html,c,inline){const dir=new URL(c.file.replace(/[^/]*$/,''),document.baseURI).href;
-  const boot=`${inline?'':`<base href="${dir}">`}${GAME_HEAD}<script>try{var Z=parent.ZIGAPLAY;if(Z){window.AudioContext=Z.AudioContext;window.webkitAudioContext=Z.AudioContext}}catch(e){}<\/script>`;
+  const boot=`${inline?'':`<base href="${dir}">`}${GAME_HEAD}<style>html,body{touch-action:manipulation}</style><script>document.addEventListener('gesturestart',function(e){e.preventDefault()},{passive:false});try{var Z=parent.ZIGAPLAY;if(Z){window.AudioContext=Z.AudioContext;window.webkitAudioContext=Z.AudioContext}}catch(e){}<\/script>`;
   const m=/<head[^>]*>/i.exec(html);return m?html.slice(0,m.index+m[0].length)+boot+html.slice(m.index+m[0].length):boot+html}
 async function eject(){if(state!=='game')return;state='ejecting';SFX.eject();$('#blackout').classList.add('on');await sleep(260);
   for(const ac of gameContexts){try{ac.close()}catch(e){}}gameContexts.clear();
   if(frame){try{frame.srcdoc='';frame.removeAttribute('src')}catch(e){}frame.remove();frame=null}cur=null;held.clear();stickDirs.clear();stickId=null;knob.style.transform='';applyLayout();
   if(launchFrom==='lib'&&libUI){show('lib');state='lib';renderLib()}else{libUI=null;show('home');renderShelf();state='home'}
   refreshSkin();$('#blackout').classList.remove('on')}
+/* no zooming: a double tap or a pinch never zooms the console (Safari ignores the page's no-zoom setting, so this
+   stops the gesture itself; a second tap within a third of a second still presses buttons, it just can't zoom) */
+for(const ev of['gesturestart','gesturechange'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+{let lastEnd=0;document.addEventListener('touchend',e=>{const now=e.timeStamp;if(now-lastEnd<320&&!e.target.closest('input,textarea,select,[contenteditable]'))e.preventDefault();lastEnd=now},{passive:false})}
 /* the power switch: in a game it turns the game off (asking first when the game wants to), in the library it turns the console off */
 let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
