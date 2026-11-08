@@ -9,7 +9,7 @@ const TIM=()=>TIMING[clamp(SAVE.timing|0,0,2)];
 const DIRS={left:'L',right:'R',up:'U',down:'D'};
 let F=null;
 function newFight(oi,o={}){const op=OPP[oi],r=o.resume;FX.length=0;
-  F={oi,op,id:op.id,venue:op.venue,story:!!o.story,rd:r?r.rd:1,tleft:r?r.tleft:ROUND_T,php:r?r.php:100,ohp:r?r.ohp:100,pkd:r?r.pkd:0,okd:r?r.okd:0,
+  F={oi,op,id:op.id,venue:op.venue,story:!!o.story,from:o.from||(o.story?'map':'circuit'),rd:r?r.rd:1,tleft:r?r.tleft:ROUND_T,php:r?r.php:100,ohp:r?r.ohp:100,pkd:r?r.pkd:0,okd:r?r.okd:0,
     clk:0,ph:'intro',p0:0,toks:[],lastPat:'',next:0,until:0,sched:[],
     O:{hitT:-9,side:0,big:false,blockT:-9,sayT:-9,say:'',dazeT:-9},P:{dodge:null,punch:null,hurtT:-9},
     stats:Object.assign({taken:0,takenD:0,dealt:0,perfect:0,combos:0,dodges:0,miss:0,time:0},r?r.stats:{}),
@@ -63,7 +63,7 @@ function landPunch(n,tp){const o=F.op;n.st=1;const perf=Math.abs(tp-n.t)<.075*TI
   F.P.punch={b:n.b,t:F.clk};F.O.hitT=F.clk;F.O.side=n.b==='A'?1:n.b==='B'?-1:0;F.O.big=n.b==='AB';
   if(n.b==='AB'){SFX.hay();F.shake=5;RUMBLE.hay()}else{(n.b==='A'?SFX.jab:SFX.cross)();(n.b==='A'?RUMBLE.jab:RUMBLE.cross)()}
   const hx=BW/2+(F.O.side*4),hy=BH-OPP_Y-(PEOPLE[F.id].build.h+PEOPLE[F.id].build.r*1.15)*PEOPLE[F.id].build.s*OSC;
-  burst(hx,hy,n.b==='AB'?14:7,'#fff',n.b==='AB'?90:60);fx('star',hx,hy,{r:n.b==='AB'?20:12,life:.25,c:n.b==='AB'?'#ffd84a':'#fff'});
+  burst(hx,hy,n.b==='AB'?14:7,'#fff',n.b==='AB'?90:60);fx('splash',hx-F.O.side*4,hy,{r:n.b==='AB'?20:12,life:.32,c:n.b==='AB'?'#ffd84a':n.b==='A'?'#3ee8ff':'#ff3ea5',seed:Math.floor(F.clk*10)});
   pop(perf?'PERFECT':n.b==='AB'?'HAYMAKER!':n.b==='A'?'JAB!':'CROSS!',perf?'#7ae8ff':n.b==='AB'?'#ffd84a':'#fff');
   if(F.ohp<=0){startODown();return}
   if(F.toks.every(k=>k.k!=='c'||k.st===1)){const bonus=8*o.def;F.ohp-=bonus;F.stats.dealt+=bonus;F.stats.combos++;banner('COMBO!',.8,'#7dff9a');SFX.combo();setTimeout(RUMBLE.combo,120);SFX.crowd(.16,1.2);
@@ -71,7 +71,7 @@ function landPunch(n,tp){const o=F.op;n.st=1;const perf=Math.abs(tp-n.t)<.075*TI
 function failC(n,why){n.st=2;n.why=why;clearToks();pop(why,'#ff5a5a');SFX.block();RUMBLE.block();F.O.blockT=F.clk;F.stats.miss++;F.ph='block';F.p0=F.clk;F.until=F.clk+.55}
 function playerHit(n){n.landed=true;const o=F.op,dmg=o.dmg*(n.fake?.6:1)*(TIM().w>1?.85:1);
   F.php-=dmg;F.stats.taken++;F.stats.takenD+=dmg;F.P.hurtT=F.clk;F.shake=7;F.flash=1;SFX.hurt();RUMBLE.hurt();
-  burst(BW/2,BH-PL_Y-33,10,'#ffe0a0',80);fx('star',BW/2,BH-PL_Y-40,{r:22,life:.25,c:'#ff6a4a'});clearToks();
+  burst(BW/2,BH-PL_Y-33,10,'#ffe0a0',80);fx('splash',BW/2,BH-PL_Y-46,{r:24,life:.34,c:'#ff3a2a',c2:'#ffd84a',seed:Math.floor(F.clk*10)});clearToks();
   if(F.php<=0){startPDown();return}
   startRecover(.85)}
 /* ---------- knockdowns ---------- */
@@ -116,14 +116,14 @@ function fightTick(dt){const now=performance.now();F.clk+=dt;
 
 /* ---------- poses ---------- */
 const mix=(a,b,k)=>({x:lerp(a.x,b.x,k),y:lerp(a.y,b.y,k),z:lerp(a.z,b.z,k)});
-function punchGlove(kind,side,a,W,H,fake){const guard={x:side*W*.46,y:-H+4,z:1},tgt={x:0,y:20,z:2.3};
+function punchGlove(kind,side,a,W,H,fake){const guard={x:side*W*.5,y:-H+9,z:1},tgt={x:0,y:20,z:2.3};
   const wind=kind==='hook'?{x:side*W*1.02,y:-H+2,z:.95}:kind==='str'?{x:side*W*.55,y:-H-6,z:.9}:{x:side*W*.3,y:-H*.32,z:1};
   if(a<-.34)return guard;if(a<-.12)return mix(guard,wind,ease((a+.34)/.22));
   if(fake)return a<.1?mix(wind,guard,ease((a+.12)/.22)*.4):mix(wind,guard,ease((a-.1)/.2));
   if(a<=0){const k=(a+.12)/.12;if(kind==='hook'){const c={x:side*W*1.25,y:-H*.15,z:1.4},u=1-k;return{x:u*u*wind.x+2*u*k*c.x+k*k*tgt.x,y:u*u*wind.y+2*u*k*c.y+k*k*tgt.y,z:lerp(wind.z,tgt.z,k*k)}}return mix(wind,tgt,k*k)}
   if(a<.26)return mix(tgt,guard,ease(a/.26));return guard}
 function oppPose(){const p=PEOPLE[F.id],b=p.build,W=b.w,H=b.h,c=F.clk,ph=F.ph;
-  const P={x:Math.sin(c*2.3)*2.5,y:Math.sin(c*4.6)*1.2,lean:0,fall:0,head:{x:0,y:-H-b.r*1.15,ex:'guard',turn:0},gl:{x:-W*.46,y:-H+4,z:1},gr:{x:W*.46,y:-H+4,z:1}};
+  const P={x:Math.sin(c*2.3)*2.5,y:Math.sin(c*4.6)*1.2,lean:0,fall:0,head:{x:0,y:-H-b.r*1.15,ex:'guard',turn:0},gl:{x:-W*.5,y:-H+9,z:1},gr:{x:W*.5,y:-H+9,z:1}};
   if(ph==='defend'){let best=null,bd=9;for(const n of F.toks){if(n.k!=='d')continue;const a=c-n.t;if(a>-.36&&a<.3&&Math.abs(a)<bd){bd=Math.abs(a);best=n}}
     if(best){const a=c-best.t,kind=best.d==='D'?'str':best.d==='U'?'up':'hook',side=best.d==='R'?-1:best.d==='L'?1:best.d==='U'?1:(best.i%2?1:-1);
       const g=punchGlove(kind,side,a,W,H,best.fake&&best.st!==2);if(side<0)P.gl=g;else P.gr=g;P.lean=a<0&&a>-.34?side*.07*ease((a+.34)/.22):0;P.head.ex=best.fake&&a>-.1?'smug':'angry';P.head.x=-side*2}}

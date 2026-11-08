@@ -1,22 +1,22 @@
 /* ================= the people of Port Ember =================
    Looks for faces and bodies (art.js draws them all from these). */
 const PEOPLE={
-  milo:{name:'MILO BRASS',skin:'#8a5536',hair:'curly',hairCol:'#1c130f',eye:'#2a1a10',gloves:'#d8322b',trunks:'#1f3a7a',trim:'#f2c14e',outfit:'hoodie',outCol:'#35507a'},
-  dot:{name:'AUNTIE DOT',skin:'#c99674',hair:'bun',hairCol:'#cfcac4',eye:'#3a2c24',glasses:1,outfit:'cardigan',outCol:'#7c4867',lips:'#a0605c',old:1},
-  ann:{name:'ANNOUNCER',skin:'#e0b896',hair:'slick',hairCol:'#3b2a1c',eye:'#2a2018',outfit:'tux',outCol:'#16151d',mustache:'#3b2a1c'},
-  sable:{name:'VICTOR SABLE',skin:'#d9b38e',hair:'slick',hairCol:'#141018',streak:'#cfd0d8',eye:'#2a1a22',mustache:'#141018',outfit:'robe',outCol:'#4a2768',
+  milo:{jaw:0.8,chin:0.46,name:'MILO BRASS',skin:'#8a5536',hair:'curly',hairCol:'#1c130f',eye:'#2a1a10',gloves:'#d8322b',trunks:'#1f3a7a',trim:'#f2c14e',outfit:'hoodie',outCol:'#35507a'},
+  dot:{jaw:0.72,chin:0.4,name:'AUNTIE DOT',skin:'#c99674',hair:'bun',hairCol:'#cfcac4',eye:'#3a2c24',glasses:1,outfit:'cardigan',outCol:'#7c4867',lips:'#a0605c',old:1},
+  ann:{jaw:0.8,chin:0.46,name:'ANNOUNCER',skin:'#e0b896',hair:'slick',hairCol:'#3b2a1c',eye:'#2a2018',outfit:'tux',outCol:'#16151d',mustache:'#3b2a1c'},
+  sable:{jaw:0.72,chin:0.3,name:'VICTOR SABLE',skin:'#d9b38e',hair:'slick',hairCol:'#141018',streak:'#cfd0d8',eye:'#2a1a22',mustache:'#141018',outfit:'robe',outCol:'#4a2768',
     gloves:'#6a2c96',trunks:'#2a1838',trim:'#e5bd4f',chain:1,build:{w:27,h:46,r:11.5,arm:7,gl:9.5,s:1}},
-  gus:{name:'GUS MAHONEY',skin:'#e9b48f',hair:'bald',hairCol:'#b88a6a',eye:'#3a4a2a',stubble:'#9a7a62',gloves:'#5e9c3c',trunks:'#2f6b2a',trim:'#e8e2c8',hairy:1,
+  gus:{jaw:0.93,chin:0.6,name:'GUS MAHONEY',skin:'#e9b48f',hair:'bald',hairCol:'#b88a6a',eye:'#3a4a2a',stubble:'#9a7a62',gloves:'#5e9c3c',trunks:'#2f6b2a',trim:'#e8e2c8',hairy:1,
     build:{w:31,h:44,r:12.5,arm:8.5,gl:10,s:1,belly:1}},
-  vex:{name:'TINY VEX',skin:'#f1c6a4',hair:'spiky',hairCol:'#ef7a2a',eye:'#2e5a3a',freckles:1,bandana:'#2bb3a6',gap:1,gloves:'#2bb3a6',trunks:'#1d2b3a',trim:'#ef7a2a',top:'#1d2b3a',
+  vex:{jaw:0.7,chin:0.36,name:'TINY VEX',skin:'#f1c6a4',hair:'spiky',hairCol:'#ef7a2a',eye:'#2e5a3a',freckles:1,bandana:'#2bb3a6',gap:1,gloves:'#2bb3a6',trunks:'#1d2b3a',trim:'#ef7a2a',top:'#1d2b3a',
     build:{w:22,h:40,r:11,arm:6,gl:8.5,s:.86}},
-  hal:{name:'BROTHER HALLORAN',skin:'#d7a684',hair:'shaved',hairCol:'#7a6a5c',eye:'#3a3028',beard:'#b9b2a8',gloves:'#8a5a2c',trunks:'#5a3a22',trim:'#d8c49a',rope:1,
+  hal:{jaw:0.78,chin:0.42,name:'BROTHER HALLORAN',skin:'#d7a684',hair:'shaved',hairCol:'#7a6a5c',eye:'#3a3028',beard:'#b9b2a8',gloves:'#8a5a2c',trunks:'#5a3a22',trim:'#d8c49a',rope:1,
     build:{w:26,h:50,r:11.5,arm:7,gl:9,s:1}},
-  volk:{name:'SERGEI VOLKOV',skin:'#efd6c8',hair:'buzz',hairCol:'#e8e6dc',eye:'#5ab8e8',scar:1,gloves:'#e9f4fb',trunks:'#2a5a8a',trim:'#e9f4fb',
+  volk:{jaw:0.86,chin:0.46,name:'SERGEI VOLKOV',skin:'#efd6c8',hair:'buzz',hairCol:'#e8e6dc',eye:'#5ab8e8',scar:1,gloves:'#e9f4fb',trunks:'#2a5a8a',trim:'#e9f4fb',
     build:{w:29,h:46,r:11.5,arm:8,gl:9.5,s:1,cut:1}},
-  lola:{name:'LOLA CADENA',skin:'#c9926a',hair:'bun',hairCol:'#1a0f14',eye:'#2a1610',lips:'#c0263a',flower:'#e8263c',earrings:1,gloves:'#c0263a',trunks:'#141018',trim:'#e5bd4f',top:'#c0263a',
+  lola:{jaw:0.68,chin:0.34,name:'LOLA CADENA',skin:'#c9926a',hair:'bun',hairCol:'#1a0f14',eye:'#2a1610',lips:'#c0263a',flower:'#e8263c',earrings:1,gloves:'#c0263a',trunks:'#141018',trim:'#e5bd4f',top:'#c0263a',
     build:{w:23,h:44,r:11,arm:6,gl:8.5,s:.95}},
-  tide:{name:'BIG TIDE BARAKA',skin:'#6e4430',hair:'locs',hairCol:'#151010',eye:'#1a1010',beard:'#151010',gloves:'#e8b62c',trunks:'#1b3d6b',trim:'#e8b62c',tattoo:1,
+  tide:{jaw:0.94,chin:0.58,name:'BIG TIDE BARAKA',skin:'#6e4430',hair:'locs',hairCol:'#151010',eye:'#1a1010',beard:'#151010',gloves:'#e8b62c',trunks:'#1b3d6b',trim:'#e8b62c',tattoo:1,
     build:{w:37,h:50,r:13,arm:10,gl:11.5,s:1.06,cut:1}}};
 /* the rings */
 const VENUES={
@@ -166,7 +166,7 @@ const SCENES={
     ['dot','Everything you\'ve learned, Milo. Watch for fakes. Remember the frozen ones. And when he gets mad, you get calmer.','neutral'],
     ['dot','Your daddy\'s bell is listening.','grin']]},
   ending:{bg:'crown',lines:[
-    ['ann','IT\'S OVER! THE NEW CHAMPION OF PORT EMBER: MILO "THE BELL" BRASS!','shock'],
+    ['ann','IT\'S OVER! THE NEW CHAMPION OF PORT EMBER: MILO "{NICK}" BRASS!','shock'],
     ['sable','No... the deed, the gym... it\'s all mine...','hurt'],
     ['volk','The ice has melted, Mr. Sable. The police are reading your ledger now.','neutral'],
     ['lola','Adiós, Victor. Your books never balanced anyway.','smug'],
@@ -176,6 +176,6 @@ const SCENES={
     ['gus','Pickled eggs for everyone!','grin'],
     ['vex','I bet on you the whole time, rope-boy! Mostly!','grin'],
     ['hal','Ring the bell, Milo.','calm'],
-    ['','And over Anchor Street, the old brass bell rings out across the harbor.\n\nTHE END\n\nEvery fighter waits in the CIRCUIT for a rematch.']]}};
+    ['','And over Anchor Street, the old brass bell rings out across the harbor.\n\nTHE END\n\nPort Ember is yours to walk. Every fighter waits at their ring for a rematch.']]}};
 /* the story in order: scenes and fights */
 const STORY=['s:prologue','s:pre0','f:0','s:post0','s:pre1','f:1','s:post1','s:pre2','f:2','s:post2','s:pre3','f:3','s:post3','s:pre4','f:4','s:post4','s:pre5','f:5','s:post5','s:pre6','f:6','s:ending'];

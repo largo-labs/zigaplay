@@ -10,13 +10,13 @@ function crowd(y,rows,cols,t,flash=0,dens=1){const W=BW;for(let r=0;r<rows;r++){
 function lightCone(x,y,w,h,col,a=.12){const g=G.createLinearGradient(0,y,0,y+h);g.addColorStop(0,col.replace('A',a));g.addColorStop(1,col.replace('A',0));G.fillStyle=g;G.beginPath();G.moveTo(x-3,y);G.lineTo(x+3,y);G.lineTo(x+w,y+h);G.lineTo(x-w,y+h);G.closePath();G.fill()}
 function grad(y0,y1,stops){const g=G.createLinearGradient(0,y0,0,y1);stops.forEach((c,i)=>g.addColorStop(i/(stops.length-1),c));G.fillStyle=g;G.fillRect(0,y0,BW,y1-y0)}
 function drawVenue(id,t){const{cx,ft}=RING();
-  if(id==='gym'){RC(0,0,BW,ft+4,'#4e3128');for(let y=0;y<ft;y+=6){const off=(y/6)%2?6:0;RC(0,y,BW,1,'#3a231c');for(let x=-off;x<BW;x+=12)RC(x,y,1,6,'#3a231c')}
+  if(id==='gym'){RC(0,0,BW,ft+4,'#5a3328');for(let y=0;y<ft;y+=6){const off=(y/6)%2?6:0;RC(0,y,BW,1,'#3a231c');for(let x=-off;x<BW;x+=12)RC(x,y,1,6,'#3a231c')}
     G.globalAlpha=.25;for(let i=0;i<40;i++)RC(hash(i)*BW,hash(i+9)*ft,10,5,'#6a4234');G.globalAlpha=1;
     for(const s of[-1,1]){const x=cx+s*(BW*.5-14);LN(x,0,x,ft-70,1,'#2a2a2a');EO(x,ft-52,10,20,'#7a2a24');RC(x-10,ft-60,20,3,'#5a1c18')}
     EO(cx,ft-82,12,11,'#d8a838');PL([cx-15,ft-74,cx+15,ft-74,cx+12,ft-80,cx-12,ft-80],'#c8962e');E(cx-4,ft-88,3,4,'#f4d878');E(cx,ft-70,2.5,2.5,'#6a4a1c');LN(cx,ft-93,cx,ft-104,1.5,'#3a3a3a');
     RC(cx-38,ft-62,76,13,OUT);RC(cx-37,ft-61,74,11,'#1d3a6a');RC(cx-37,ft-61,74,1,'#f2c14e');RC(cx-37,ft-51,74,1,'#f2c14e');for(let i=0;i<9;i++)RC(cx-31+i*7,ft-58,4,5,'#f2c14e');
     for(const s of[-1,1]){const x=cx+s*40;LN(x,0,x,10,1,'#222');E(x,12,3,3,'#fff6c8');lightCone(x,12,34,ft,'rgba(255,240,180,A)',.16)}
-    crowd(ft-6,1,['#3a3a4a','#5a3a2a','#2a3a2a'],t,0,.45)}
+    tag(10,ft-32,'#3ee8ff',2);tag(BW-36,ft-40,'#ff3ea5',5,26);crowd(ft-6,1,['#3a3a4a','#5a3a2a','#2a3a2a'],t,0,.45)}
   else if(id==='pier'){grad(0,ft,['#07091e','#1a1d48','#3a2a5a']);for(let i=0;i<50;i++)RC(hash(i)*BW,hash(i+5)*ft*.6,1,1,hash(i+2)>.5?'#fff':'#9ab');
     EO(cx+BW*.28,26,11,11,'#f4f0d8',.6);E(cx+BW*.28+3,24,9,9,'#e8e2c4');
     RC(0,ft-46,BW,46,'#0c1a34');for(let i=0;i<14;i++){const y=ft-44+i*3,w=6+i*1.6;G.globalAlpha=.4+.3*Math.sin(t*2+i);RC(cx+BW*.28-w/2+Math.sin(t*1.5+i)*3,y,w,1,'#e8e2c4');G.globalAlpha=1}
@@ -42,27 +42,29 @@ function drawVenue(id,t){const{cx,ft}=RING();
     for(let i=0;i<12;i++){const w=14+hash(i)*20,h=30+hash(i+1)*60,x=i*(BW/10)-10;RC(x,ft-h,w,h,'#140c1e');for(let y=ft-h+4;y<ft-4;y+=5)for(let xx=x+3;xx<x+w-3;xx+=5)if(hash(xx*3+y)>.6)RC(xx,y,2,2,hash(xx+y)>.5?'#ffd27a':'#7ad8ff')}
     const neon=(x,y,w,h,c,on)=>{G.globalAlpha=on?1:.35;G.strokeStyle=c;G.lineWidth=2;G.strokeRect(x,y,w,h);G.globalAlpha=on?.18:.05;RC(x-4,y-4,w+8,h+8,c);G.globalAlpha=1};
     neon(cx-50,ft-92,40,14,'#ff3ea5',Math.sin(t*5)>-.7);neon(cx+14,ft-80,34,20,'#3ee8ff',true);for(let i=0;i<4;i++)E(cx-44+i*9,ft-85,2,2,'#ff7ac8');LN(cx+20,ft-70,cx+42,ft-70,2,'#3ee8ff');
-    crowd(ft-6,1,['#2a1a3a','#3a1a2a','#1a1a3a'],t,0,.5)}
+    tag(12,ft-22,'#ffd84a',7);crowd(ft-6,1,['#2a1a3a','#3a1a2a','#1a1a3a'],t,0,.5)}
   else if(id==='dock'){grad(0,ft,['#3a1a4a','#c84a3a','#f0a03a']);EO(cx-BW*.22,ft-58,16,16,'#ffd47a',.4);
     for(const s of[-1,1]){const x=cx+s*(BW*.32);LN(x,ft,x,10,4,'#1a1018');LN(x,14,x-s*50,14,3,'#1a1018');for(let i=0;i<6;i++)LN(x-s*i*8,14,x-s*(i+1)*8,20,1,'#1a1018');LN(x-s*40,14,x-s*40,40+Math.sin(t)*2,1,'#1a1018');RC(x-s*40-4,40+Math.sin(t)*2,8,6,'#1a1018')}
     PL([BW*.55,ft-8,BW+10,ft-70,BW+10,ft,BW*.6,ft],'#4a1a18');RC(BW*.6,ft-30,BW,4,'#2a0e0c');for(let i=0;i<4;i++)EO(BW*.68+i*14,ft-40-i*6,2.5,2.5,'#f0c060',.6);
     for(let i=0;i<8;i++){const k=Math.floor(t*12)+i;if(hash(k)>.5){const x=BW*.7+hash(k*2)*20,y=ft-50+hash(k*5)*20;RC(x,y,1,1,'#fff6a0');RC(x+hash(k)*4-2,y+2,1,1,'#ffa040')}}
-    crowd(ft-6,2,['#4a3a2a','#3a2a2a','#5a4a3a'],t,0,.7)}
+    tag(BW*.62,ft-18,'#3ee8ff',4);crowd(ft-6,2,['#4a3a2a','#3a2a2a','#5a4a3a'],t,0,.7)}
   else if(id==='crown'){RC(0,0,BW,ft,'#0c0818');crowd(ft-8,6,['#3a2a5a','#2a2a4a','#4a2a3a','#2a3a4a'],t,6,1);
     RC(cx-34,6,68,26,OUT);RC(cx-33,7,66,24,'#1a1430');PL([cx-12,26,cx-12,14,cx-6,20,cx,12,cx+6,20,cx+12,14,cx+12,26],'#e5bd4f');
     for(let i=0;i<3;i++){const x=BW*(.2+i*.3)+Math.sin(t*.7+i*2)*20;lightCone(x,0,26,ft+60,'rgba(255,255,230,A)',.12)}}}
+function tag(x,y,c,sd,w=22){G.save();G.lineCap='round';G.lineJoin='round';G.beginPath();for(let i=0;i<9;i++){const px=x+i*w/8,py=y+Math.sin(sd+i*1.7)*4-(i%3===1?4:0);i?G.lineTo(px,py):G.moveTo(px,py)}
+  G.lineWidth=4.2;G.strokeStyle=INK;G.stroke();G.lineWidth=2.4;G.strokeStyle=c;G.stroke();G.restore()}
 function drawRing(id){const v=VENUES[id],{cx,ft,pl,pr}=RING();
-  RC(0,ft-3,BW,7,v.apron);RC(0,ft-3,BW,1,shade(v.apron,.3));
-  PL([pl-8,ft,pr+8,ft,BW+120,BH,-120,BH],v.canvas);
+  RC(0,ft-3,BW,7,v.apron);RC(0,ft-3,BW,1.2,shade(v.apron,.35));LN(0,ft+4,BW,ft+4,2,INK);LN(0,ft-3,BW,ft-3,1.6,INK);
+  PL([pl-8,ft,pr+8,ft,BW+120,BH,-120,BH],v.canvas);G.globalAlpha=.5;PL([pl-8,ft+4,pr+8,ft+4,pr+30,ft+18,pl-30,ft+18],shade(v.canvas,-.18));G.globalAlpha=1;
   const g=G.createLinearGradient(0,ft,0,BH);g.addColorStop(0,'rgba(0,0,0,.22)');g.addColorStop(.5,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.12)');G.fillStyle=g;G.fillRect(0,ft,BW,BH-ft);
   G.globalAlpha=.12;for(let i=1;i<6;i++){const y=ft+i*i*4;LN(0,y,BW,y,1,'#000')}G.globalAlpha=1;
   if(id==='crown'){G.globalAlpha=.5;EO(cx,ft+40,46,12,shade(v.canvas,.2),0);PL([cx-14,ft+44,cx-14,ft+36,cx-7,ft+40,cx,ft+34,cx+7,ft+40,cx+14,ft+36,cx+14,ft+44],'#e5bd4f');G.globalAlpha=1}
   if(id==='roof'){G.globalAlpha=.3;for(let i=0;i<6;i++)E(cx-60+i*26+hash(i)*10,ft+20+hash(i+2)*60,10+hash(i)*8,2,i%2?'#ff3ea5':'#3ee8ff');G.globalAlpha=1}
   /* posts and ropes */
-  for(const x of[pl,pr]){RC(x-3,ft-46,6,48,OUT);RC(x-2,ft-45,4,46,v.post);RC(x-2,ft-45,1,46,shade(v.post,.35))}
-  for(let k=0;k<3;k++){const y=ft-14-k*12,c=v.rope[k];LN(pl,y,pr,y,2,shade(c,-.35));LN(pl,y-.5,pr,y-.5,1,c);
-    for(const[x,s]of[[pl,-1],[pr,1]]){LN(x,y,x+s*160,y+64-k*4,3,shade(c,-.35));LN(x,y-.5,x+s*160,y+63-k*4,2,c)}
-    for(const x of[pl,pr])RC(x-3,y-2,6,4,shade(v.rope[1],-.1))}}
+  for(const x of[pl,pr])cel(pP([x-3.5,ft-48,x+3.5,ft-48,x+3.5,ft+3,x-3.5,ft+3]),v.post,{sx:2,sy:0,rw:1,lw:1.8});
+  for(let k=0;k<3;k++){const y=ft-14-k*12,c=v.rope[k];LN(pl,y,pr,y,4.6,INK);LN(pl,y,pr,y,2.6,c);LN(pl,y-.7,pr,y-.7,.9,shade(c,.45));
+    for(const[x,s]of[[pl,-1],[pr,1]]){LN(x,y,x+s*160,y+64-k*4,6.6,INK);LN(x,y,x+s*160,y+64-k*4,4.4,c);LN(x,y-1,x+s*160,y+63-k*4,1.2,shade(c,.45))}
+    for(const x of[pl,pr])cel(pP([x-4.5,y-3.2,x+4.5,y-3.2,x+4.5,y+3.2,x-4.5,y+3.2]),shade(v.rope[1],-.05),{sx:1.4,sy:1,lw:1.4})}}
 function rain(t){G.globalAlpha=.45;G.strokeStyle='#9ad8ff';G.lineWidth=1;G.beginPath();for(let i=0;i<70;i++){const x=(hash(i)*BW*1.3+t*60)%(BW*1.3)-BW*.15,y=(hash(i+9)*BH+t*260)%BH;G.moveTo(x,y);G.lineTo(x-3,y+8)}G.stroke();G.globalAlpha=1}
 
 /* ---------- effects in the ring (ring pixels) ---------- */
@@ -74,17 +76,21 @@ function drawFxRing(){for(const f of FX){const k=f.t/f.life;
   if(f.k==='dot'){G.globalAlpha=1-k;RC(f.x,f.y,2,2,f.c)}
   else if(f.k==='star'){G.globalAlpha=1-k;const r=(f.r||12)*(.5+k);G.strokeStyle=f.c||'#fff';G.lineWidth=2;G.beginPath();for(let i=0;i<8;i++){const a=i*TAU/8+f.x;G.moveTo(f.x+Math.cos(a)*r*.4,f.y+Math.sin(a)*r*.4);G.lineTo(f.x+Math.cos(a)*r,f.y+Math.sin(a)*r)}G.stroke()}
   else if(f.k==='ring'){G.globalAlpha=1-k;ARC(f.x,f.y,(f.r||10)*(.3+k*1.2),0,TAU,2,f.c||'#fff')}
-  else if(f.k==='whiff'){G.globalAlpha=(1-k)*.6;ARC(f.x,f.y,14+k*10,f.a0,f.a1,3,'#fff')}}G.globalAlpha=1}
+  else if(f.k==='whiff'){G.globalAlpha=(1-k)*.6;ARC(f.x,f.y,14+k*10,f.a0,f.a1,3,'#fff')}
+  else if(f.k==='splash'){const g=Math.min(1,k*5),r=(f.r||14)*(.4+.6*g)*(1+k*.15),sd=f.seed||1;G.globalAlpha=k>.6?(1-k)/.4:1;
+    G.beginPath();for(let i=0;i<=16;i++){const a=i/16*TAU,rr_=r*(i%2?.55:1)*(.75+.5*hash(sd*31+i));i?G.lineTo(f.x+Math.cos(a)*rr_,f.y+Math.sin(a)*rr_):G.moveTo(f.x+Math.cos(a)*rr_,f.y+Math.sin(a)*rr_)}G.closePath();
+    G.fillStyle=f.c;G.fill();G.lineWidth=1.8;G.strokeStyle=INK;G.lineJoin='round';G.stroke();E(f.x,f.y,r*.32,r*.3,f.c2||'#fff');
+    for(let i=0;i<5;i++){const a=hash(sd*7+i)*TAU,d=r*(1.1+hash(sd+i*3)*.6+k*.6);EO(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d,r*.1+1,r*.1+1,f.c,.6)}}}G.globalAlpha=1}
 
 /* ---------- portraits: a small buffer scaled up ---------- */
-const PB=document.createElement('canvas');PB.width=72;PB.height=72;const pbx=PB.getContext('2d');
-function portrait(id,ex,x,y,size,bg,o={}){G=pbx;pbx.setTransform(1,0,0,1,0,0);pbx.clearRect(0,0,72,72);
-  if(bg){pbx.fillStyle=bg;pbx.fillRect(0,0,72,72)}drawBust(id,36,52,1.55,ex,o);G=bx;
-  ctx.imageSmoothingEnabled=false;ctx.drawImage(PB,x,y,size,size)}
+const PB=document.createElement('canvas');PB.width=PB.height=288;const pbx=PB.getContext('2d');
+function portrait(id,ex,x,y,size,bg,o={}){G=pbx;pbx.setTransform(4,0,0,4,0,0);pbx.clearRect(0,0,72,72);
+  if(bg){pbx.fillStyle=bg;pbx.fillRect(0,0,72,72);G.globalAlpha=.18;for(let i=-72;i<72;i+=7)LN(i,72,i+72,0,2.4,'#fff');G.globalAlpha=1}drawBust(id,36,52,1.55,ex,o);G=bx;
+  ctx.imageSmoothingEnabled=true;ctx.drawImage(PB,x,y,size,size)}
 
 /* ---------- putting the ring together and onto the screen ---------- */
-function blit(sx=0,sy=0){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(BUF,0,0,BW,BH,Math.round(sx*PS),Math.round(sy*PS),BW*PS,BH*PS)}
-function drawScene(venue,t,opp,player,o={}){G=bx;bx.setTransform(1,0,0,1,0,0);bx.clearRect(0,0,BW,BH);
+function blit(sx=0,sy=0){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(BUF,Math.round(sx*PS*DPR),Math.round(sy*PS*DPR))}
+function drawScene(venue,t,opp,player,o={}){G=bx;bx.setTransform(R,0,0,R,0,0);bx.clearRect(0,0,BW,BH);
   drawVenue(venue,t);drawRing(venue);
   let coming=[];if(opp)coming=drawOpp(opp.id,opp.pose,BW/2,BH-OPP_Y);
   if(o.under)o.under();

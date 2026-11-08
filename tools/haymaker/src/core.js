@@ -8,22 +8,28 @@ const rr=(a,b)=>a+rnd()*(b-a),ease=t=>t<=0?0:t>=1?1:t*t*(3-2*t),easeOut=t=>t<=0?
 const store={get(k,d){try{const v=localStorage.getItem('haymaker-'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('haymaker-'+k,JSON.stringify(v))}catch(e){}}};
 /* the view: the screen in CSS pixels, drawn at up to 2x. The ring is drawn into a small buffer (BW x BH, at least
    180 x 250 "ring pixels") and scaled up by PS with sharp pixels. UI sizes follow U. */
-let SW=300,SH=430,DPR=1,U=1,PORT=true,PS=2,BW=180,BH=250;
+let SW=300,SH=430,DPR=1,U=1,PORT=true,PS=2,BW=180,BH=250,R=2;/* R: real pixels per ring unit */
 const BUF=document.createElement('canvas'),bx=BUF.getContext('2d');
 let G=bx;/* the context the art functions draw into */
 function resize(){DPR=Math.min(2,devicePixelRatio||1);SW=innerWidth||300;SH=innerHeight||430;cv.width=Math.round(SW*DPR);cv.height=Math.round(SH*DPR);PORT=SH>SW*1.05;
   U=PORT?Math.min(SW/300,SH/440):Math.min(SH/290,SW/470);
-  PS=Math.max(1,Math.min(SW/180,SH/250));BW=Math.ceil(SW/PS);BH=Math.ceil(SH/PS);BUF.width=BW;BUF.height=BH}
+  PS=Math.max(1,Math.min(SW/180,SH/250));BW=Math.ceil(SW/PS);BH=Math.ceil(SH/PS);R=PS*DPR;BUF.width=Math.round(BW*R);BUF.height=Math.round(BH*R)}
 addEventListener('resize',resize);resize();
-const FONT="'Pixelify Sans','VT323',ui-monospace,Menlo,monospace";
-const font=(px,w=600)=>`${w} ${Math.max(7,Math.round(px*U))}px ${FONT}`;
-function text(s,x,y,px,col,al='left',out=null,w=600){ctx.font=font(px,w);ctx.textAlign=al;ctx.textBaseline='top';if(out){ctx.lineWidth=Math.max(2,px*U*.24);ctx.strokeStyle=out;ctx.lineJoin='round';ctx.strokeText(s,x,y)}ctx.fillStyle=col;ctx.fillText(s,x,y)}
-function tw(s,px,w=600){ctx.font=font(px,w);return ctx.measureText(s).width}
-function wrap(s,maxW,px,w=600){ctx.font=font(px,w);const out=[];for(const para of String(s).split('\n')){let line='';for(const word of para.split(' ')){const t=line?line+' '+word:word;if(ctx.measureText(t).width>maxW&&line){out.push(line);line=word}else line=t}out.push(line)}return out}
+/* Arcade Ink type: a comic display face for names, banners and menus; the system face for longer reading */
+const FONT_D="'Bangers','Avenir Next Condensed','Impact','Haettenschweiler','Arial Narrow Bold','Arial Black',sans-serif";
+const FONT_B="system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const font=(px,w=600,fam)=>`${fam==='b'?w:Math.max(w,700)} ${Math.max(7,Math.round(px*U*(fam==='b'?1:1.18)))}px ${fam==='b'?FONT_B:FONT_D}`;
+function text(s,x,y,px,col,al='left',out=null,w=600,fam){ctx.font=font(px,w,fam);ctx.textAlign=al;ctx.textBaseline='top';if(fam!=='b')s=String(s).toUpperCase();
+  if(out){ctx.lineWidth=Math.max(2.2,px*U*(fam==='b'?.22:.32));ctx.strokeStyle=out;ctx.lineJoin='round';ctx.strokeText(s,x,y)}ctx.fillStyle=col;ctx.fillText(s,x,y)}
+const textB=(s,x,y,px,col,al='left',out=null,w=600)=>text(s,x,y,px,col,al,out,w,'b');
+function tw(s,px,w=600,fam){ctx.font=font(px,w,fam);return ctx.measureText(fam==='b'?s:String(s).toUpperCase()).width}
+function wrap(s,maxW,px,w=600,fam='b'){ctx.font=font(px,w,fam);const out=[];for(const para of String(s).split('\n')){let line='';for(const word of para.split(' ')){const t=line?line+' '+word:word;if(ctx.measureText(t).width>maxW&&line){out.push(line);line=word}else line=t}out.push(line)}return out}
 function rrect(x,y,w,h,r,c=ctx){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
-function panel(x,y,w,h,fill='rgba(10,8,20,.86)',edge='#f2c14e',r=8){rrect(x,y,w,h,r*U);ctx.fillStyle=fill;ctx.fill();ctx.lineWidth=Math.max(1.5,2*U);ctx.strokeStyle=edge;ctx.stroke()}
+/* an ink panel: a hard drop shadow, a thick black outline and a coloured inner edge */
+function panel(x,y,w,h,fill='rgba(14,10,24,.92)',edge='#f2c14e',r=8){const k=Math.max(2,3*U);rrect(x+k,y+k,w,h,r*U);ctx.fillStyle='rgba(0,0,0,.55)';ctx.fill();
+  rrect(x,y,w,h,r*U);ctx.fillStyle=fill;ctx.fill();ctx.lineWidth=Math.max(2.4,3.2*U);ctx.strokeStyle='#0e0a14';ctx.stroke();rrect(x+k*.7,y+k*.7,w-k*1.4,h-k*1.4,Math.max(1,r*U-k*.7));ctx.lineWidth=Math.max(1.2,1.6*U);ctx.strokeStyle=edge;ctx.stroke()}
 const shade=(c,t)=>{const n=parseInt(c.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=t<0?0:255,a=Math.abs(t);r=Math.round(r+(f-r)*a);g=Math.round(g+(f-g)*a);b=Math.round(b+(f-b)*a);return'#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1)};
-if(document.fonts&&document.fonts.load){document.fonts.load(`20px 'Pixelify Sans'`).catch(()=>{})}
+if(document.fonts&&document.fonts.load){document.fonts.load(`20px 'Bangers'`).catch(()=>{})}
 
 /* ================= sound ================= */
 let AC=null,master=null,muted=!!store.get('mute',false);
