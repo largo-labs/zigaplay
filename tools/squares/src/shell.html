@@ -1,0 +1,54 @@
+<title>Gray Squares</title>
+<style>
+/* Gray Squares: a gray square, a number, and a list of things to buy. Nothing else. Everything scales with the screen. */
+:root{color-scheme:light;--bg:#cfcfcf;--ink:#5c5c5c;--dim:#8e8e8e;--sq:#9a9a9a;--sq2:#8a8a8a;--line:#bdbdbd;--sel:#c2c2c2;--f:Helvetica,Arial,sans-serif}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:background 2s}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top,0px)) 12px max(10px,env(safe-area-inset-bottom,0px));box-sizing:border-box;font-size:clamp(11px,3.6vw,16px)}
+#hd{display:flex;justify-content:space-between;color:var(--dim);font-size:.78em;letter-spacing:.08em}
+#num{font-size:2.9em;font-weight:300;letter-spacing:-.02em;margin-top:.25em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#unit{color:var(--dim);font-size:.9em}
+#rate{color:var(--dim);font-size:.8em;margin-top:.15em}
+#mid{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;padding:.8em 0 .5em}
+#sq{width:min(34vw,22vh);height:min(34vw,22vh);background:var(--sq);border:1px solid var(--sq2);box-sizing:border-box;transition:transform .05s,background .05s;outline:2px solid transparent;outline-offset:5px}
+#sq.on{outline-color:var(--line)}
+#sq.down{transform:scale(.96);background:var(--sq2)}
+#sq.dark{background:#7b7b7b;border-color:#6e6e6e}
+.plus{position:absolute;color:var(--dim);font-size:.85em;pointer-events:none;animation:up .9s ease-out forwards}
+@keyframes up{to{transform:translateY(-2.2em);opacity:0}}
+#msg{min-height:2.5em;margin-top:.6em;text-align:center;color:var(--dim);font-style:italic;font-size:.82em;line-height:1.25;padding:0 .5em;transition:opacity .4s}
+#shop{flex:1 1 auto;min-height:0;overflow:hidden;border-top:1px solid var(--line);position:relative}
+#list{position:relative;transition:transform .12s}
+.row{display:grid;grid-template-columns:1fr auto;gap:0 .6em;padding:.42em .5em;border-bottom:1px solid var(--line);font-size:.85em}
+.row .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .c{text-align:right;white-space:nowrap}
+.row .s{grid-column:1/3;color:var(--dim);font-size:.82em;margin-top:.1em}
+.row.sel{background:var(--sel)}
+.row.no .c{color:var(--dim)}
+.row.unk{color:var(--dim)}
+.row.flash{background:#d9d9d9}
+.row.shake{animation:sh .2s}
+@keyframes sh{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+#ft{display:flex;justify-content:space-between;color:var(--dim);font-size:.7em;padding-top:.45em;letter-spacing:.04em}
+#menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;padding:1.2em 1.2em;box-sizing:border-box;font-size:clamp(11px,3.6vw,16px)}
+#menu.on{display:flex}
+#menu h1{font-weight:300;font-size:1.4em;margin:0 0 .6em}
+#menu .st{color:var(--dim);font-size:.85em;line-height:1.6;margin-bottom:1em}
+#menu .it{padding:.5em .6em;border-bottom:1px solid var(--line)}
+#menu .it.sel{background:var(--sel)}
+#menu .it small{display:block;color:var(--dim);font-size:.78em;margin-top:.15em}
+#tap{display:none}
+html.touch:not(.zp) #ft .keys{display:none}
+</style>
+<div id="app">
+  <div id="hd"><span>GRAY SQUARES</span><span id="warm"></span></div>
+  <div id="num">0</div><div id="unit">squares</div><div id="rate">0 per second</div>
+  <div id="mid"><div id="sq" class="on"></div><div id="msg"></div></div>
+  <div id="shop"><div id="list"></div></div>
+  <div id="ft"><span class="keys">A press · ▲▼ choose · SELECT <span id="amt">×1</span></span><span>START menu</span></div>
+</div>
+<div id="menu"></div>
+<script>
+(()=>{'use strict';
+/*@@SCRIPTS@@*/
+})();
+</script>

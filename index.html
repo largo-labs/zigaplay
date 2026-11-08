@@ -1,5 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>ZigaPlay</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>ZigaPlay</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=VT323&display=swap">
@@ -227,6 +226,13 @@ html.wide .console.widegame .bezel .ledlbl{display:none}
 html.wide .console.widegame .bezel .led{left:6px}
 html.wide .dpad,html.wide .stick,html.wide .ab,html.wide .pills{zoom:var(--cz,1)}
 html.wide .console.widegame .grille{display:none}
+/* a touch game (touch:true) brings its own on-screen controls: it gets the whole phone screen, the console's
+   controls stay hidden under it, and only a small power tab is left on the left edge to go back to the shelf */
+html.touchgame .screen{position:fixed;inset:0;z-index:50;border:0;border-radius:0}
+html.touchgame #power{position:fixed;z-index:60;left:0;top:50%;transform:translateY(-50%);flex-direction:column;gap:3px;padding:10px 5px 10px 4px;
+  background:rgba(10,12,20,.55);color:rgba(255,255,255,.75);border-radius:0 10px 10px 0;font-size:7px;letter-spacing:.08em;writing-mode:vertical-rl}
+@media (orientation:portrait){html.touchgame #power{left:50%;top:0;transform:translateX(-50%);writing-mode:horizontal-tb;flex-direction:row;padding:4px 10px 5px;border-radius:0 0 10px 10px}}
+html.touchgame .ask{position:fixed;z-index:70;left:50%;right:auto;top:50%;bottom:auto;width:min(86vw,360px);transform:translate(-50%,-50%)}
 /* ---------- skins ----------
    A skin is a set of the tokens above, sometimes an LCD tint and a printed edition name, and for the live and game
    skins a layer of moving decoration (.skinfx) that sits on the body behind every control. The decoration only
@@ -332,22 +338,7 @@ html.wide .console.widegame .grille{display:none}
 @keyframes zsuit{0%,100%{transform:translateY(0) rotate(var(--r))}50%{transform:translateY(-9px) rotate(calc(var(--r) + 9deg))}}
 .fx-chipcity .gloss{top:-30%;bottom:-30%;left:0;width:38%;will-change:transform;background:linear-gradient(100deg,rgba(255,240,190,0),rgba(255,240,190,.2) 50%,rgba(255,240,190,0));animation:zsweep 7s ease-in-out infinite 1s}
 
-/* Gearfist: rusty sunset steel, rivets, hazard stripes and gears turning in the corners */
-.console[data-shell=gearfist]{--b1:#d26c2c;--b2:#b25522;--b3:#883c14;--edge:#2a1206;--print:#2a1406;--print2:#4a2410;
-  --ab1:#ffa090;--ab2:#e2382a;--ab3:#981a10;--abedge:#3a0804;--abshadow:#3e0e06;--groove1:#7a3412;--groove2:#8e4018;
-  --pill1:#64646e;--pill2:#3e3e46;--pilledge:#18181e;--grille:#5e280c;--bez1:#34302e;--bez2:#221e1c;--bezink:#ffb35a;
-  --dp1:#56565f;--dp2:#34343c;--dpa:#a2a2b0;--dpa2:#ffd25a;--dpsh:#2a1206;--kn1:#8e8e9a;--kn2:#5c5c66;--kn3:#3c3c44;
-  --lcd0:#3a1c02;--lcd1:#a05a10;--lcd2:#f0a830;--lcd3:#ffd27a;
-  background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,rgba(255,255,255,0) 1px 3px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
-.console[data-shell=gearfist] .bezel .stripes{height:6px;background:repeating-linear-gradient(135deg,#f2b21a 0 6px,#1a1206 6px 12px)}
-.fx-gearfist .gear path{fill:rgba(58,18,2,.34)}
-.fx-gearfist .g1{left:-62px;bottom:-62px;width:180px;height:180px;animation:zspin 26s linear infinite}
-.fx-gearfist .g2{right:-44px;top:-44px;width:108px;height:108px;animation:zspin 15s linear infinite reverse}
-.fx-gearfist .g3{right:-30px;bottom:-36px;width:96px;height:96px;animation:zspin 13s linear infinite reverse}
-.fx-gearfist .rv{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffd8b0,#b05a20 55%,#5a2408);box-shadow:0 1px 0 rgba(255,255,255,.25)}
-.fx-gearfist .haz{left:0;right:0;bottom:0;height:9px;opacity:.85;background:repeating-linear-gradient(135deg,#f2b21a 0 9px,#1a1206 9px 18px)}
-
-/* Strike at Night: night-navy body, ember-red buttons, a crescent moon over Millbrook's rooftops, embers rising */
+/* Hammer Fall: night-navy body, ember-red buttons, a crescent moon over the rooftops, embers rising */
 .console[data-shell=drownedmoon]{--b1:#1e2448;--b2:#141836;--b3:#0b0d22;--edge:#04050f;--print:#e8ecff;--print2:#ff9a66;
   --ab1:#ffa48a;--ab2:#d8342a;--ab3:#86140e;--abedge:#3a0806;--abshadow:#260604;--groove1:#0a0c20;--groove2:#121634;
   --pill1:#5a6078;--pill2:#3a4058;--pilledge:#0a0c1c;--grille:#0a0c20;--bez1:#0b0d1e;--bez2:#05060f;--bezink:#ff9a66;--st1:#ff6a3a;--st2:#ffd36a;
@@ -361,6 +352,82 @@ html.wide .console.widegame .grille{display:none}
 .fx-drownedmoon svg path{fill:#05060f}
 .fx-drownedmoon svg rect{fill:#ffc46a}
 .fx-drownedmoon b{bottom:20px;width:3px;height:3px;border-radius:50%;background:#ffb050;box-shadow:0 0 6px 2px rgba(255,110,30,.75);opacity:0;animation:zember 7s linear infinite}
+
+/* Drone Strike: army-olive body with amber trim, a radar sweep and little quadcopters drifting across the screen */
+.console[data-shell=dronestrike]{--b1:#66794a;--b2:#4d5e36;--b3:#34411f;--edge:#141c0a;--print:#f4e8b4;--print2:#ffd070;
+  --ab1:#ffe28a;--ab2:#ffb627;--ab3:#b8780a;--abedge:#4a2e02;--abshadow:#2a1a02;--groove1:#2c3a1a;--groove2:#3c4c26;
+  --pill1:#7a8a5a;--pill2:#505e38;--pilledge:#161e0a;--grille:#2c3a1a;--bez1:#1a2210;--bez2:#0e140a;--bezink:#ffb627;--st1:#ffb627;--st2:#9be06a;
+  --dp1:#3e4a2c;--dp2:#262e1a;--dpa:#9aaa74;--dpa2:#ffb627;--dpsh:#10160a;--kn1:#7a8a5a;--kn2:#505e38;--kn3:#323d22;
+  --lcd0:#0e2410;--lcd1:#2c6a2a;--lcd2:#8cc860;--lcd3:#c8f0a0;
+  background:repeating-linear-gradient(45deg,rgba(0,0,0,.05) 0 6px,rgba(255,255,255,0) 6px 12px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
+.console[data-shell=dronestrike] .bezel .stripes{height:6px;background:repeating-linear-gradient(135deg,#ffb627 0 6px,#141c0a 6px 12px)}
+.fx-dronestrike .rad{left:50%;top:84%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(140,255,110,0) 0deg,rgba(140,255,110,.22) 60deg,rgba(140,255,110,0) 62deg);animation:zspin 6s linear infinite}
+.fx-dronestrike .ring{left:50%;top:84%;border-radius:50%;border:1px solid rgba(140,255,110,.2)}
+.fx-dronestrike .r1{width:120px;height:120px;margin:-60px 0 0 -60px}.fx-dronestrike .r2{width:220px;height:220px;margin:-110px 0 0 -110px}
+.fx-dronestrike .dr{width:34px;height:20px;opacity:.5;animation:zdrone 22s linear infinite}
+.fx-dronestrike .dr path{fill:none;stroke:#0c1406;stroke-width:3;stroke-linecap:round}.fx-dronestrike .dr circle{fill:#ffb627}
+@keyframes zdrone{0%{transform:translate(-60px,0)}25%{transform:translate(120px,-14px)}50%{transform:translate(260px,6px)}75%{transform:translate(380px,-10px)}100%{transform:translate(520px,0)}}
+.fx-dronestrike .blip{width:5px;height:5px;border-radius:50%;background:#ffb627;box-shadow:0 0 7px 2px rgba(255,182,39,.8);animation:ztwk 2.6s ease-in-out infinite}
+
+/* Pitchfork Rising: barn-red planks with straw-gold trim, crossed pitchforks and torch sparks rising */
+.console[data-shell=pitchfork]{--b1:#b8502e;--b2:#933a22;--b3:#6c2814;--edge:#240a04;--print:#ffeab4;--print2:#ffd05a;
+  --ab1:#ffe48a;--ab2:#f0b830;--ab3:#a87208;--abedge:#4a2c02;--abshadow:#2e1a02;--groove1:#5a200e;--groove2:#722c16;
+  --pill1:#c8a468;--pill2:#8a6a36;--pilledge:#3a2606;--grille:#5a200e;--bez1:#2e1c10;--bez2:#1a0e08;--bezink:#ffd05a;--st1:#ffd05a;--st2:#e8482a;
+  --dp1:#5a3a24;--dp2:#36200e;--dpa:#b89468;--dpa2:#ffd05a;--dpsh:#1e0a04;--kn1:#9a7a50;--kn2:#6a4e2c;--kn3:#42301a;
+  --lcd0:#3a1a08;--lcd1:#8a5020;--lcd2:#e0b060;--lcd3:#ffe4a0;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.09) 0 2px,rgba(255,255,255,0) 2px 34px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%)}
+.fx-pitchfork .glow{left:-20%;right:-20%;bottom:-70px;height:170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,150,40,.42),rgba(255,150,40,0));animation:zpulse 3s ease-in-out infinite}
+.fx-pitchfork .pf{bottom:26px;width:52px;height:150px;opacity:.34;transform-origin:50% 100%}
+.fx-pitchfork .pf path{fill:none;stroke:#2a0e04;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.fx-pitchfork .p1{left:calc(50% - 62px);animation:zsway 7s ease-in-out infinite}.fx-pitchfork .p2{left:calc(50% + 10px);animation:zsway2 7s ease-in-out infinite}
+@keyframes zsway{0%,100%{transform:rotate(-17deg)}50%{transform:rotate(-12deg)}}
+@keyframes zsway2{0%,100%{transform:rotate(17deg)}50%{transform:rotate(12deg)}}
+.fx-pitchfork b{bottom:18px;width:3px;height:3px;border-radius:50%;background:#ffd05a;box-shadow:0 0 6px 2px rgba(255,150,30,.8);opacity:0;animation:zember 6s linear infinite}
+
+/* Neon Rex: a night-city body with a cyan edge, hot-pink and cyan buttons, rain falling past flickering neon */
+.console[data-shell=partyrex]{--b1:#1e2236;--b2:#151828;--b3:#0c0e1a;--edge:#3af0ff;--print:#e8f8ff;--print2:#ff2a8a;
+  --ab1:#ffa8d0;--ab2:#ff2a8a;--ab3:#a0105a;--abedge:#3a0420;--abshadow:#240214;--groove1:#0c0e1a;--groove2:#161a2a;
+  --pill1:#3a4260;--pill2:#262c44;--pilledge:#05060c;--grille:#0c0e1a;--bez1:#0a0c16;--bez2:#05060c;--bezink:#3af0ff;--st1:#ff2a8a;--st2:#3af0ff;
+  --dp1:#262c44;--dp2:#161a2a;--dpa:#6a78a8;--dpa2:#3af0ff;--dpsh:#05060c;--kn1:#4a5478;--kn2:#2e3654;--kn3:#1e2438;
+  --lcd0:#0c1430;--lcd1:#2a5aa0;--lcd2:#6ac8f0;--lcd3:#c8f4ff;
+  background:repeating-linear-gradient(90deg,rgba(58,240,255,.04) 0 1px,rgba(0,0,0,0) 1px 14px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);
+  box-shadow:inset 0 0 0 2px rgba(58,240,255,.55),inset 0 3px 0 3px rgba(255,255,255,.06),0 0 18px rgba(58,240,255,.25),0 16px 34px rgba(0,0,0,.6)}
+.console[data-shell=partyrex] .btn-ab.b{--ab1:#b0f8ff;--ab2:#3af0ff;--ab3:#0a7a8a;--abedge:#02303a;--abshadow:#012028}
+.fx-partyrex b{top:-20px;width:1px;height:14px;background:linear-gradient(180deg,rgba(150,230,255,0),rgba(150,230,255,.55));animation:zrain linear infinite}
+@keyframes zrain{to{transform:translate(-30px,700px)}}
+.fx-partyrex i.sg{width:46px;height:20px;border:2px solid var(--c);border-radius:4px;box-shadow:0 0 10px var(--c),inset 0 0 8px var(--c);opacity:.5;animation:zflick 5s steps(1) infinite}
+@keyframes zflick{0%,40%,44%,100%{opacity:.5}42%{opacity:.08}}
+
+/* Grim Ascent: a reaper's cloak, deep violet-black with bone-white buttons, ghost-teal eyes, and soul wisps drifting up */
+.console[data-shell=grim]{--b1:#2a2038;--b2:#1c1428;--b3:#110c1a;--edge:#05030a;--print:#eee8d4;--print2:#7af0ff;
+  --ab1:#ffffff;--ab2:#e2dcc6;--ab3:#9e967e;--abedge:#2a2418;--abshadow:#16120a;--groove1:#0e0a16;--groove2:#181222;
+  --pill1:#4a3c66;--pill2:#2e2444;--pilledge:#0a0612;--grille:#0e0a16;--bez1:#0e0a16;--bez2:#07050c;--bezink:#7af0ff;--st1:#c88aff;--st2:#7af0ff;
+  --dp1:#2e2444;--dp2:#1c1428;--dpa:#8a7ab0;--dpa2:#7af0ff;--dpsh:#05030a;--kn1:#5a4a7a;--kn2:#3a2e54;--kn3:#241c38;
+  --lcd0:#120c24;--lcd1:#4a3a8a;--lcd2:#9a8ad8;--lcd3:#d6ccf4}
+.console[data-shell=grim] .btn-ab span{color:var(--print)}
+.fx-grim .glow{left:-20%;right:-20%;bottom:-70px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(122,240,255,.18),rgba(122,240,255,0));animation:zpulse 4s ease-in-out infinite}
+.fx-grim b{bottom:-10px;width:5px;height:7px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 50% 60%,#e8fcff 0 30%,#5ab8ff 60%,rgba(90,184,255,0) 75%);opacity:0;animation:zsoul linear infinite}
+@keyframes zsoul{0%{transform:translate(0,0);opacity:0}10%{opacity:.85}80%{opacity:.6}100%{transform:translate(var(--dx),-420px);opacity:0}}
+
+/* Gray Squares: gray. The body, the buttons, the screen. Nothing moves. */
+.console[data-shell=grayskin]{--b1:#c4c4c4;--b2:#b8b8b8;--b3:#acacac;--edge:#3a3a3a;--print:#6a6a6a;--print2:#8a8a8a;
+  --ab1:#b0b0b0;--ab2:#909090;--ab3:#707070;--abedge:#3a3a3a;--abshadow:#5a5a5a;--groove1:#a4a4a4;--groove2:#b0b0b0;
+  --pill1:#a0a0a0;--pill2:#808080;--pilledge:#4a4a4a;--grille:#a0a0a0;--bez1:#6a6a6a;--bez2:#5a5a5a;--bezink:#c8c8c8;--st1:#8a8a8a;--st2:#9a9a9a;
+  --dp1:#7a7a7a;--dp2:#5e5e5e;--dpa:#9a9a9a;--dpa2:#d0d0d0;--dpsh:#3a3a3a;--kn1:#8a8a8a;--kn2:#6a6a6a;--kn3:#4a4a4a;
+  --lcd0:#3a3a3a;--lcd1:#6a6a6a;--lcd2:#a8a8a8;--lcd3:#cfcfcf}
+
+/* Spellsteel: cool steel-blue with gold trim and violet spell buttons, five Embers aglow and a glint of steel */
+.console[data-shell=spellsteel]{--b1:#6482b4;--b2:#46649a;--b3:#2e4572;--edge:#0c1a34;--print:#fff0c0;--print2:#ffd86a;
+  --ab1:#f0c4ff;--ab2:#a850e4;--ab3:#5e1c98;--abedge:#2a0a4a;--abshadow:#1c0630;--groove1:#2a4070;--groove2:#385688;
+  --pill1:#d0b868;--pill2:#9a8038;--pilledge:#3e3010;--grille:#2a4070;--bez1:#161e3c;--bez2:#0a0f24;--bezink:#ffd86a;--st1:#ffd86a;--st2:#c07aff;
+  --dp1:#3a4a7a;--dp2:#222c52;--dpa:#9aaad8;--dpa2:#ffd86a;--dpsh:#0a1226;--kn1:#8a9ad0;--kn2:#5a6aa4;--kn3:#38457a;
+  --lcd0:#101a4a;--lcd1:#3a52b0;--lcd2:#9ab0f0;--lcd3:#d0dcff;
+  background:linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);box-shadow:inset 0 0 0 3px #e2c068,inset 0 0 0 5px #6a5018,inset 0 3px 0 4px rgba(255,255,255,.12),0 16px 34px rgba(0,0,0,.6)}
+.fx-spellsteel .em{bottom:54px;width:22px;height:22px;border-radius:50%;margin-left:-11px;background:radial-gradient(circle at 38% 34%,#fff6c8,var(--c) 45%,rgba(0,0,0,0) 72%);box-shadow:0 0 16px 6px var(--c);animation:zbob 4s ease-in-out infinite}
+@keyframes zbob{0%,100%{transform:translateY(0);opacity:.7}50%{transform:translateY(-10px);opacity:1}}
+.fx-spellsteel .spk{width:var(--s);height:var(--s);background:#ffe9a0;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:ztwk 2.8s ease-in-out infinite}
+.fx-spellsteel .gloss{top:-30%;bottom:-30%;left:0;width:34%;will-change:transform;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.22) 50%,rgba(255,255,255,0));animation:zsweep 8s ease-in-out infinite 2s}
 
 /* the home screen's EDIT mode and the library */
 .lcd-top .tr{display:flex;align-items:center;gap:8px}
@@ -382,6 +449,37 @@ html.wide .console.widegame .grille{display:none}
 .cart.lt .stk i:nth-child(3){left:25px;transform:rotate(9deg);transform-origin:bottom center}
 .cart.lt .box b{font-size:13px;letter-spacing:.14em;line-height:1}
 .cart.lt .box em{font-style:normal;font-family:var(--num);font-size:14px;letter-spacing:.06em;opacity:.85;line-height:1}
+.cart.st .box{gap:5px}
+.cart.st .bag{position:relative;width:36px;height:27px;margin-top:9px;border-radius:3px 3px 7px 7px;background:var(--lcd2);box-shadow:inset 0 0 0 2px var(--lcd1)}
+.cart.st .bag::before{content:"";position:absolute;left:8px;right:8px;top:-10px;height:12px;border:3px solid var(--lcd2);border-bottom:0;border-radius:10px 10px 0 0}
+.cart.st .bag::after{content:"";position:absolute;left:50%;top:7px;margin-left:-6px;border:6px solid transparent;border-top:9px solid var(--lcd0);border-bottom:0}
+#storeList{overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;padding-top:2px}
+.stabs{flex:0 0 auto;display:flex;gap:5px;padding:6px 30px 6px 8px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);overflow-x:auto;scrollbar-width:none;border-bottom:2px solid var(--lcd2)}
+.stabs::-webkit-scrollbar{display:none}
+.stabs button{flex:0 0 auto;display:flex;align-items:baseline;gap:4px;border:0;border-radius:99px;padding:1px 9px 0;background:transparent;box-shadow:inset 0 0 0 2px var(--lcd1);
+  color:var(--lcd0);font-family:var(--num);font-size:16px;letter-spacing:.08em;cursor:pointer}
+.stabs button b{font-weight:400;font-size:13px;color:var(--lcd1)}
+.stabs button[aria-selected=true]{background:var(--lcd0);color:var(--lcd3);box-shadow:none}
+.stabs button[aria-selected=true] b{color:var(--lcd2)}
+#storeList .shead{display:flex;align-items:center;gap:7px;padding:6px 8px 2px;font-family:var(--num);font-size:15px;letter-spacing:.14em;color:var(--lcd1)}
+#storeList .shead::after{content:"";flex:1 1 auto;height:2px;background:var(--lcd2)}
+#storeList .shead b{font-weight:400;letter-spacing:.04em;opacity:.8}
+#storeList .row{gap:9px;padding:3px 8px}
+#storeHelp{gap:8px;letter-spacing:.02em}
+#storeList .row .tx{display:flex;flex-direction:column;line-height:1.08}
+#storeList .row .tx small{font-family:var(--num);font-size:14px;letter-spacing:.05em;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#storeList .row em{min-width:2.4em;padding:1px 6px 0;border-radius:99px;text-align:center;font-size:13px;letter-spacing:.02em;opacity:1;box-shadow:inset 0 0 0 2px currentColor}
+#storeList .row em.ok{box-shadow:none;opacity:.7;font-size:16px}
+#storeList .row[aria-selected=true] em{background:var(--lcd3);color:var(--lcd0);box-shadow:none;opacity:1}
+#storeList .row em.ok{font-size:16px;min-width:0;padding:0 7px}
+@media (max-width:380px){#storeHelp{font-size:13px;gap:6px}}
+#storeList .row.dl em{box-shadow:none}
+@media (max-height:720px){.stabs{padding:4px 8px}.stabs button{font-size:14px}#storeList .shead{padding:4px 8px 1px;font-size:13px}#storeList .row .tx small{font-size:13px}}
+html.wide .stabs{padding:3px 8px 4px}html.wide .stabs button{font-size:14px}html.wide #storeList .shead{padding:3px 8px 1px;font-size:13px}#storeList::-webkit-scrollbar{display:none}
+.liblist .row.gone img{filter:grayscale(1);opacity:.55}
+.liblist .row.dl{position:relative}
+.liblist .row.dl::after{content:"";position:absolute;left:8px;right:8px;bottom:1px;height:3px;border-radius:2px;background:currentColor;transform-origin:left;animation:zdl .8s linear forwards}
+@keyframes zdl{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .libact{display:block;align-self:flex-start;margin-top:3px;font-family:var(--pix);font-size:13px;letter-spacing:.1em;padding:3px 10px 2px;border:0;border-radius:4px;background:var(--lcd0);color:var(--lcd3);cursor:pointer}
 .libact[hidden]{display:none}
 #home.editing .info small{display:none}
@@ -395,7 +493,7 @@ html.wide .console.widegame .grille{display:none}
 .liblist .row em{margin-left:auto;flex:0 0 auto;font-style:normal;font-family:var(--num);font-size:15px;letter-spacing:.06em;opacity:.85}
 .liblist .row.out{transition:transform .3s ease-in,opacity .3s;transform:translateY(-14px);opacity:0}
 .liblist .empty{margin:0;padding:10px 8px;font-family:var(--num);font-size:17px;line-height:1.1;color:var(--lcd1)}
-.libinfo{padding:4px 12px 5px;border-top:3px solid var(--lcd1);font-family:var(--num);font-size:16px;line-height:1.05;color:var(--lcd1);min-height:2.4em;
+.libinfo{padding:4px 12px 5px;border-top:3px solid var(--lcd1);font-family:var(--num);font-size:16px;line-height:1.05;color:var(--lcd1);min-height:2.4em;box-sizing:border-box;height:calc(2.1em + 6px);min-height:0;padding-bottom:0;margin-bottom:5px;flex:0 0 auto;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 @media (max-height:720px){.liblist .row{padding:2px 8px;font-size:14px}.liblist .row img{width:36px;height:24px}.libinfo{font-size:15px}}
 @media (prefers-reduced-motion:reduce){#home.editing .cart.game .cb{animation:none}}
@@ -411,6 +509,15 @@ html.wide .console.widegame .grille{display:none}
 html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .head{padding:4px 8px 1px;font-size:13px}
 @media (prefers-reduced-motion:reduce){.skinfx *{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#boot .logo{animation:none;transform:none}.cart{transition:none}.cart.sel::before{animation:none}}
+
+/* the keyboard controls screen: each console button with two keys you can change */
+.keylist .row{cursor:pointer}.keylist .row em{display:flex;gap:5px;opacity:1}
+.keylist .cap{display:inline-block;min-width:26px;padding:0 6px;border:2px solid currentColor;border-radius:5px;text-align:center;font-family:var(--num);font-size:14px;letter-spacing:.04em;opacity:.7;font-style:normal;line-height:18px}
+.keylist .cap.on{opacity:1;background:var(--lcd3);color:var(--lcd0);border-color:var(--lcd3)}
+.keylist .row[aria-selected=true] .cap.on{background:var(--lcd3);color:var(--lcd0)}
+.keylist .cap.wait{animation:capblink .5s steps(2) infinite}@keyframes capblink{50%{opacity:.35}}
+.keylist .row.reset{justify-content:center;margin-top:3px;font-size:14px;letter-spacing:.1em;opacity:.85}
+html.wide .keylist .cap{line-height:15px;font-size:12px;min-width:22px}
 </style>
 
 <div id="zp">
@@ -423,7 +530,7 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
       <span class="stripes" aria-hidden="true"></span><span class="led" aria-hidden="true"></span><span class="ledlbl" aria-hidden="true">POWER</span>
       <div class="screen" id="screen">
         <div class="lcd" id="home" hidden>
-          <div class="lcd-top"><b>ZIGAPLAY</b><span class="tr"><span id="count"></span><button class="editbtn" id="editBtn" tabindex="-1">EDIT</button></span></div>
+          <div class="lcd-top"><b>ZIGAPLAY</b><span class="tr"><span id="count"></span><button class="editbtn" id="keysBtn" tabindex="-1" title="Keyboard controls (K)">KEYS</button><button class="editbtn" id="editBtn" tabindex="-1">EDIT</button></span></div>
           <div class="shelf" id="shelf" role="listbox" aria-label="Games"></div>
           <div class="info" aria-live="polite"><h2 id="gTitle"></h2><p id="gBlurb"></p><small id="gNote"></small><button class="libact" id="libAct" tabindex="-1" hidden>ADD TO LIBRARY</button></div>
           <div class="lcd-help" id="homeHelp"></div>
@@ -434,10 +541,22 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
           <div class="libinfo" id="libInfo" aria-live="polite"></div>
           <div class="lcd-help" id="libHelp"></div>
         </div>
+        <div class="lcd" id="store" hidden>
+          <div class="lcd-top"><b>STORE</b><span class="tr"><span id="storeCount"></span></span></div>
+          <div class="stabs" id="storeTabs" role="tablist" aria-label="Game types"></div>
+          <div class="liblist" id="storeList" role="listbox" aria-label="Store"></div>
+          <div class="libinfo" id="storeInfo" aria-live="polite"></div>
+          <div class="lcd-help" id="storeHelp"></div>
+        </div>
         <div class="lcd" id="skins" hidden>
           <div class="lcd-top"><b>SKINS</b><span id="skinPos"></span></div>
           <div class="skinlist" id="skinList" role="listbox" aria-label="Console skins"></div>
           <div class="lcd-help"><span><i>▲▼</i> CHOOSE</span><span><i>A</i> WEAR</span><span><i>B</i> BACK</span></div>
+        </div>
+        <div class="lcd" id="keys" hidden>
+          <div class="lcd-top"><b>KEYBOARD</b><span id="keyHint"></span></div>
+          <div class="skinlist keylist" id="keyList" aria-label="Keyboard controls"></div>
+          <div class="lcd-help"><span><i>▲▼◀▶</i> PICK</span><span><i>A</i> CHANGE</span><span><i>B</i> BACK</span></div>
         </div>
         <div class="lcd" id="boot" hidden><div class="logo">ZIGAPLAY<small>POCKET CONSOLE</small></div></div>
         <div class="lcd" id="loading" hidden><b id="loadName"></b><span class="dots">LOADING</span></div>
@@ -492,11 +611,21 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
    - A game can take the buttons directly by defining   window.ZPCart = { input(btn, isDown) {...} }
      where btn is 'up' 'down' 'left' 'right' 'a' 'b' 'start' 'select' (and 'c' 'd' for face4 carts). The call happens inside the player's
      own press, so a game may start sound from it.
+   - A game steered by tilting the phone sets `tilt:true`: the console then asks the phone for its motion sensor on
+     the player's own taps (iPhone only allows the question inside a tap), and the game reads 'deviceorientation'
+     on the console's window. Inside another site's page (the Claude app) the browser refuses it; the Home Screen
+     edition can read it.
    - A widescreen game sets `wide:true`: while it runs, the console takes its sideways shape (D-pad left,
      screen middle, buttons right), and with the phone upright it turns itself a quarter turn so the game
      gets the long side of the screen.
    - A game without ZPCart gets keyboard events instead (keydown and keyup on its document). The keys
      come from the cart's `keys` entry, or by default: arrows, A = z, B = x, START = Enter, SELECT = Shift.
+   - genre:['action'|'explore'|'rpg'|'idle'|'strategy'|'sports'] places the game in the Store's sections (the first
+     one is its main section; it also shows under the others' tabs), and kind:'<a short type>' is the line under its
+     name there. A cart without them goes under MORE.
+   - A touch game sets `touch:true`: it plays with its own on-screen controls, so while it runs it fills the whole
+     phone screen (no D-pad, no buttons, no console around it, never turned by the console) and only a small power
+     tab on the left edge stays to turn it off. It still gets keyboard events on a computer.
    - Optional ZPCart.home(): called when the player flips the power switch (or holds START + SELECT).
      Return true to turn off now, false to keep playing, or 'ask' to let the console ask first.
      Without it, the console asks whether to turn the game off.
@@ -522,23 +651,45 @@ html.wide .skinlist .row{padding:2px 8px;font-size:14px}html.wide .skinlist .hea
    ===================================================================================================== */
 const CARTS=[
   {id:'lynties',title:'Lynties',file:'games/lynties/index.html',art:'games/lynties/cart.png',label:'#1a2550',ink:'#ffd36a',skin:'lynties',
+   genre:['rpg','explore'],kind:'Creature RPG',
    blurb:'Explore the Long Road, beat eight Wardens and bond with 146 Lynties, eight of them legends.',
    note:'Saves to this ZigaPlay · START menu · SELECT map'},
   {id:'chipcity',title:'Chip City',file:'games/chipcity/index.html',art:'games/chipcity/cart.png',label:'#3d1046',ink:'#ffd36a',skin:'chipcity',
-   blurb:'Blackjack, roulette, slots, video poker and hi-lo. Play chips only.',
+   genre:['idle'],kind:'Casino tycoon',
+   blurb:"Blackjack, roulette, slots, poker, Texas Hold'em and more, plus loan sharks to pay off. Play chips only.",
    note:'A press · START deal or spin · B back'},
-  {id:'gearfist',title:'Gearfist',file:'games/gearfist/index.html',art:'games/gearfist/cart.png',label:'#6a2a14',ink:'#ffd36a',skin:'gearfist',stick:true,
-   blurb:'Punch through a junkyard city of robots, beat four bosses and buy new fighters with the bolts you win.',
-   note:'A light · B heavy · ▲ jump · ▼ guard · SELECT burst'},
-  {id:'drownedmoon',title:'Strike at Night',file:'games/drownedmoon/index.html',art:'games/drownedmoon/cart.png',label:'#140c1c',ink:'#ffb070',skin:'drownedmoon',
-   lib:true,blurb:'Lift was a tech worker in 2026, until a car. Now he\'s a farm boy in a world of swords, framed for his parents\' murder, with a price on his head. Beat strong foes to take their power. Chapters 1 and 2.',
-   note:'A talk · B back · START menu'},
-  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',lib:true,
+  {id:'dronestrike',title:'Drone Strike',file:'games/dronestrike/index.html',art:'games/dronestrike/cart.png',label:'#13200f',ink:'#ffb627',skin:'dronestrike',lib:true,
+   genre:['strategy'],kind:'Drone war',
    blurb:'A giant neighbor has invaded. Command your country\'s drone unit: research, build and choose what flies against five enemy generals.',
    note:'D-pad choose · ◀ ▶ amounts · A confirm · B back'},
-  {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',stick:true,wide:true,lib:true,
+  {id:'gridiron',title:'Gridiron \'88',file:'games/gridiron/index.html',art:'games/gridiron/cart.png',label:'#0d1a33',ink:'#ffd23f',touch:true,
+   genre:['sports'],kind:'Arcade football',
+   blurb:'Arcade football with a full franchise: real NFL teams and rosters or a classic league, an 18-game season, playoffs, free agency, the draft and a card lineup.',
+   note:'Touch controls · full screen · power tab on the left edge'},
+  {id:'pitchfork',title:'Pitchfork Rising',file:'games/pitchfork/index.html',art:'games/pitchfork/cart.png',label:'#4a1e10',ink:'#ffd05a',skin:'pitchfork',stick:true,wide:true,lib:true,
+   genre:['strategy','action'],kind:'Peasant revolt',
    blurb:'Lead a peasant revolt from the village barn to the king\'s throne: arm your folk, set traps, and fight on the field yourself.',
    note:'A strike · B roll · SELECT orders · START pause'},
+  {id:'strike',title:'Hammer Fall',file:'games/strike/index.html',art:'games/strike/cart.png',label:'#140c1c',ink:'#ff8ad0',skin:'drownedmoon',
+   genre:['action'],kind:'Platform fighter',
+   blurb:'Night brawls with 50 fighters: gunners, sword fighters and brawlers. Knock your rival off the stage.',
+   note:'A attack · B block, +▲ or ◀▶ special · ▲ jump · ▼ block · START pause'},
+  {id:'partyrex',title:'Neon Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#0c0e1a',ink:'#3af0ff',skin:'partyrex',
+   genre:['action'],kind:'Neon runner',
+   blurb:'A cyber-raptor races through a neon city at night. Dash down onto the glitch goblins to keep up speed.',
+   note:'B or A dash down · START pause'},
+  {id:'grim',title:'Grim Ascent',file:'games/grim/index.html',art:'games/grim/cart.png',label:'#140c24',ink:'#eee8d4',skin:'grim',tilt:true,
+   genre:['explore','action'],kind:'Tower climber',
+   blurb:'Climb a haunted tower as a little reaper. Tilt to steer, slam monsters with B and finish them with A combos.',
+   note:'Tilt steer · B slam · A attack · START pause'},
+  {id:'squares',title:'Gray Squares',file:'games/squares/index.html',art:'games/squares/cart.png',label:'#bdbdbd',ink:'#5c5c5c',skin:'grayskin',
+   genre:['idle'],kind:'Idle clicker',
+   blurb:'Press the square. Get a square. Buy things that make squares. It is gray. You will not stop.',
+   note:'A press · ▲▼ choose · A buy · START menu'},
+  {id:'haymaker',title:'Haymaker',file:'games/haymaker/index.html',art:'games/haymaker/cart.png',label:'#7a1c24',ink:'#ffd84a',
+   genre:['action'],kind:'Arcade fighter',
+   blurb:'Eight Port Ember boxers, three specials each, Fatal Haymakers and finishers. Versus the CPU or climb the Tower.',
+   note:'D-pad move · A jab · B cross · ↓→A specials · START pause'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -546,8 +697,13 @@ const SKINS=[
   {id:'auto',name:'Match the game',tag:'AUTO',sw:['#2e377e','#d26c2c']},
   {id:'lynties',name:'Lynties',tag:'GAME',group:'GAME SKINS',ed:'LYNTIES EDITION',sw:['#2e377e','#ffc83a']},
   {id:'chipcity',name:'Chip City',tag:'GAME',ed:'CHIP CITY EDITION',sw:['#1a6c3e','#d8262e']},
-  {id:'gearfist',name:'Gearfist',tag:'GAME',ed:'GEARFIST EDITION',sw:['#b25522','#56565f']},
-  {id:'drownedmoon',name:'Strike at Night',tag:'GAME',ed:'STRIKE AT NIGHT EDITION',sw:['#141a3a','#d8342a']},
+  {id:'drownedmoon',name:'Hammer Fall',tag:'GAME',ed:'HAMMER FALL EDITION',sw:['#141a3a','#d8342a']},
+  {id:'dronestrike',name:'Drone Strike',tag:'GAME',ed:'DRONE STRIKE EDITION',sw:['#4d5e36','#ffb627']},
+  {id:'pitchfork',name:'Pitchfork Rising',tag:'GAME',ed:'PITCHFORK RISING EDITION',sw:['#933a22','#f0b830']},
+  {id:'partyrex',name:'Neon Rex',tag:'GAME',ed:'NEON REX EDITION',sw:['#151828','#ff2a8a']},
+  {id:'grim',name:'Grim Ascent',tag:'GAME',ed:'GRIM ASCENT EDITION',sw:['#1c1428','#eee8d4']},
+  {id:'grayskin',name:'Gray Squares',tag:'GAME',ed:'GRAY SQUARES EDITION',sw:['#b8b8b8','#909090']},
+  {id:'spellsteel',name:'Spellsteel',tag:'GAME',ed:'SPELLSTEEL EDITION',sw:['#46649a','#a850e4']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
   {id:'lava',name:'Lava',tag:'LIVE',sw:['#271c1a','#ff7a1a']},
@@ -563,9 +719,6 @@ const SKINS=[
 const SKIN=Object.fromEntries(SKINS.map(k=>[k.id,k]));
 const prng=seed=>()=>(seed=(seed*16807)%2147483647)/2147483647;
 const pct=v=>v.toFixed(1)+'%',sec=v=>v.toFixed(2)+'s';
-function gearSvg(cls,n){let d='';const R=48,r=38,st=Math.PI*2/n;
-  for(let i=0;i<n;i++){const a=i*st;for(const[t,rr]of[[a-st*.24,r],[a-st*.15,R],[a+st*.15,R],[a+st*.24,r],[a+st*.5,r]])d+=(d?'L':'M')+(50+Math.cos(t)*rr).toFixed(2)+' '+(50+Math.sin(t)*rr).toFixed(2)}
-  return `<svg class="gear ${cls}" viewBox="0 0 100 100"><path fill-rule="evenodd" d="${d}Z M50 33a17 17 0 1 0 .01 0Z M50 43a7 7 0 1 0 .01 0Z"/></svg>`}
 const WAVE='<svg viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M0 8 Q12.5 2 25 8 T50 8 T75 8 T100 8 T125 8 T150 8 T175 8 T200 8 V20 H0Z"/></svg>';
 const SKINFX={
   aurora:()=>'<i class="a a1"></i><i class="a a2"></i><i class="a a3"></i>',
@@ -581,10 +734,28 @@ const SKINFX={
     for(let i=0;i<12;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(7+r()*8).toFixed(0)}px;--c:${i%3?'#ffd36a':'#8fd0ff'};animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
   chipcity:()=>{const S=[['♠',8,62,-14],['♥',74,58,12],['♣',40,76,8],['♦',86,88,-10],['♥',20,90,16],['♠',60,94,-6],['♦',6,30,10],['♣',88,24,-12]];
     return '<i class="gloss"></i>'+S.map(([c,x,y,rot],i)=>`<b class="${c==='♥'||c==='♦'?'r':''}" style="left:${x}%;top:${y}%;--r:${rot}deg;animation-delay:${-i*1.3}s;margin:-23px 0 0 -16px">${c}</b>`).join('')},
-  gearfist:()=>gearSvg('g1',12)+gearSvg('g2',9)+gearSvg('g3',8)+'<i class="haz"></i>'+[['8px','8px'],['calc(100% - 16px)','8px'],['8px','calc(100% - 24px)']].map(([x,y])=>`<i class="rv" style="left:${x};top:${y}"></i>`).join(''),
   drownedmoon:()=>{const r=prng(31);let h='<i class="glow"></i><i class="moon"></i><svg viewBox="0 0 200 46" preserveAspectRatio="none"><path d="M0 46 V30 H10 L18 22 L26 30 H34 V26 H40 L48 16 L56 26 H62 V32 H72 L80 20 L88 32 H98 V28 H106 L116 14 L126 28 H134 V31 H142 L150 21 L158 31 H166 V27 H172 L182 17 L192 27 H200 V46 Z"/><rect x="45" y="30" width="3" height="3"/><rect x="113" y="28" width="3" height="3"/><rect x="178" y="31" width="3" height="3"/><rect x="77" y="34" width="3" height="3"/></svg>';
     for(let i=0;i<9;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(5+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+  dronestrike:()=>{const r=prng(41),dr=(t,d)=>`<svg class="dr" style="top:${t}%;animation-delay:${d}s" viewBox="0 0 34 20"><path d="M7 11 H27 M17 11 V6 M4 5 H10 M24 5 H30"/><circle cx="17" cy="12" r="3"/></svg>`;
+    let h='<i class="rad"></i><i class="ring r1"></i><i class="ring r2"></i>'+dr(76,-3)+dr(88,-12)+dr(93,-18);
+    for(let i=0;i<6;i++)h+=`<i class="blip" style="left:${pct(8+r()*84)};top:${pct(10+r()*70)};animation-delay:${sec(-r()*3)}"></i>`;return h},
+  pitchfork:()=>{const r=prng(53),f=c=>`<svg class="pf PFC" viewBox="0 0 52 150"><path d="M26 148 V50 M8 8 V34 Q8 50 26 50 Q44 50 44 34 V8 M26 50 V6"/></svg>`.replace('PFC',c);let h='<i class="glow"></i>'+f('p1')+f('p2');
+    for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+  partyrex:()=>{const r=prng(71);let h=`<i class="sg" style="left:6%;top:70%;--c:#ff2a8a;animation-delay:-1s"></i><i class="sg" style="left:78%;top:84%;--c:#3af0ff;animation-delay:-3.2s"></i>`;
+    for(let i=0;i<26;i++)h+=`<b style="left:${pct(r()*110)};animation-duration:${sec(.8+r()*.8)};animation-delay:${sec(-r()*2)}"></b>`;return h},
+  grim:()=>{const r=prng(97);let h='<i class="glow"></i>';
+    for(let i=0;i<12;i++)h+=`<b style="left:${pct(4+r()*90)};--dx:${Math.round((r()-.5)*40)}px;animation-duration:${sec(7+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
+  spellsteel:()=>{const r=prng(67),C=['#ff5a3a','#ffb030','#6ae0ff','#9aff7a','#c88aff'];let h='<i class="gloss"></i>';
+    C.forEach((c,i)=>h+=`<i class="em" style="left:${10+i*20}%;--c:${c};animation-delay:${sec(-i*.8)}"></i>`);
+    for(let i=0;i<10;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(6+r()*8).toFixed(0)}px;animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
 };
+/* the keyboard the player can change: every console button has two keys (a slot may be empty) */
+const BTNS=[['up','UP'],['down','DOWN'],['left','LEFT'],['right','RIGHT'],['a','A'],['b','B'],['c','C'],['d','D'],['start','START'],['select','SELECT']];
+const DEFBINDS={up:['ArrowUp','w'],down:['ArrowDown','s'],left:['ArrowLeft','a'],right:['ArrowRight','d'],a:['z',' '],b:['x','Escape'],c:['c',null],d:['v',null],start:['Enter',null],select:['Shift',null]};
+const normKey=k=>typeof k==='string'&&k.length===1?k.toLowerCase():k;
+function loadBinds(){let o=null;try{o=store.get('keys',null)}catch(e){}const out={};for(const[b]of BTNS){const v=o&&Array.isArray(o[b])?o[b]:DEFBINDS[b];out[b]=[normKey(v[0])||null,normKey(v[1])||null]}return out}
+let binds=null,KB={};
+function buildKB(){KB={};for(const[b]of BTNS)for(const k of binds[b]){if(!k)continue;KB[k]=b;if(k.length===1)KB[k.toUpperCase()]=b}}
 const DEFKEYS={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight',a:'z',b:'x',c:'c',d:'v',start:'Enter',select:'Shift'};
 const KEYINFO={ArrowUp:['ArrowUp',38],ArrowDown:['ArrowDown',40],ArrowLeft:['ArrowLeft',37],ArrowRight:['ArrowRight',39],Enter:['Enter',13],Shift:['ShiftLeft',16],' ':['Space',32],Escape:['Escape',27],Backspace:['Backspace',8],Tab:['Tab',9]};
 const keyInfo=k=>KEYINFO[k]?{key:k,code:KEYINFO[k][0],keyCode:KEYINFO[k][1]}:{key:k,code:/^[a-z]$/i.test(k)?'Key'+k.toUpperCase():/^\d$/.test(k)?'Digit'+k:k,keyCode:k.length===1?k.toUpperCase().charCodeAt(0):0};
@@ -622,18 +793,24 @@ let state='off',sel=Math.min(store.get('sel',0),CARTS.length),cur=null,frame=nul
    entry (lib:true starts it in the library); after that it follows the player. EDIT (or START) on the home screen lets
    them send a game to the library, and EDIT in the library sends it back. The choice is kept on this phone and, inside
    Claude, in the player's account with the skin, so it comes back on their other devices too. */
-let libPlace=(()=>{const o=store.get('lib',null);return o&&typeof o==='object'&&!Array.isArray(o)?o:{}})(),libTouched=false,editing=false,libUI=null,launchFrom='home';
+let libPlace=(()=>{const o=store.get('lib',null);return o&&typeof o==='object'&&!Array.isArray(o)?o:{}})(),libTouched=false,editing=false,libUI=null,storeUI=null,launchFrom='home';
+/* the store installs and uninstalls games (free): an uninstalled game is 'gone' in the same map, so it leaves the home screen
+   and the library, and the choice follows the player to their other devices like the rest. Its saves stay */
+const gone=c=>!!c&&libPlace[c.id]==='gone',installed=()=>CARTS.filter(c=>!gone(c));
 const inLib=c=>!!c&&!c.ghost&&!c.libtile&&(libPlace[c.id]?libPlace[c.id]==='lib':!!c.lib);
-const homeCarts=()=>CARTS.filter(c=>!inLib(c)),libCarts=()=>CARTS.filter(inLib);
+const homeCarts=()=>CARTS.filter(c=>!inLib(c)&&!gone(c)),libCarts=()=>CARTS.filter(inLib);
 const names=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const LIBTILE={id:'#library',libtile:true,title:'Library',note:'',
   get blurb(){const l=libCarts();return l.length?`${l.length} game${l.length===1?'':'s'} put away: ${names(l.map(c=>c.title))}.`:'Games you put away go here. Press EDIT on the home screen, then choose a game.'}};
-const items=()=>[...homeCarts(),LIBTILE,GHOST];
+/* the store's tile always sits just left of the library's; neither can be put away */
+const STORETILE={id:'#store',libtile:true,store:true,title:'Store',note:'A open · free to install',
+  get blurb(){const n=installed().length,m=CARTS.length;return`Install and uninstall games, all free. ${n} of ${m} installed. Uninstalling takes a game off your home screen and library; its saves stay, so it picks up where you left off if you install it again.`}};
+const items=()=>[...homeCarts(),STORETILE,LIBTILE,GHOST];
 const cartWin=()=>{try{return frame&&frame.contentWindow}catch(e){return null}};
 /* ---------- skins: what the player picked (skinChoice), and what the console wears right now ---------- */
 let skinChoice=SKIN[store.get('shell','classic')]?store.get('shell','classic'):'classic',skinTouched=false,skinUI=null;
 const fxEl=document.createElement('div');fxEl.className='skinfx';fxEl.setAttribute('aria-hidden','true');consoleEl.prepend(fxEl);
-function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:items()[sel]);return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
+function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:state==='store'&&storeUI?storeCur():items()[sel]);return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
 function wearSkin(id){if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
   consoleEl.dataset.shell=id;fxEl.dataset.on=id;fxEl.className='skinfx fx-'+id;fxEl.innerHTML=SKINFX[id]?SKINFX[id]():'';$('#edition').textContent=SKIN[id].ed||'POCKET CONSOLE'}
 function refreshSkin(){if(state!=='skins')wearSkin(skinChoice)}
@@ -643,16 +820,17 @@ function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoic
 async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r.ok||!r.json||skinTouched)return;
   const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}
   if(o&&o.lib&&typeof o.lib==='object'&&!libTouched&&JSON.stringify(o.lib)!==JSON.stringify(libPlace)){libPlace=o.lib;store.set('lib',libPlace);
-    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib()}}catch(e){}}
+    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib();else if(state==='store'&&storeUI)renderStore()}}catch(e){}}
 wearSkin(skinChoice);
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
-function show(id){for(const x of['home','lib','boot','loading','skins'])$('#'+x).hidden=x!==id}
+function show(id){for(const x of['home','lib','store','boot','loading','skins','keys'])$('#'+x).hidden=x!==id}
 
 /* ---------- the library shelf ---------- */
 function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();sel=Math.max(0,Math.min(sel,all.length-1));
-  all.forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':c.libtile?' lt':' game');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
+  all.forEach((c,i)=>{const b=document.createElement('button');b.className='cart'+(c.ghost?' ghost':c.store?' lt st':c.libtile?' lt':' game');b.dataset.i=i;b.setAttribute('role','option');b.tabIndex=-1;
     const n=libCarts().length;
     b.innerHTML=c.ghost?'<span class="shell"></span><span class="ghostbox"><b>+</b><span>ADD A GAME</span></span>'
+      :c.store?`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="box"><span class="bag"></span><b>STORE</b><em>${CARTS.length-installed().length?CARTS.length-installed().length+' TO GET':'ALL FREE'}</em></span><span class="arrow"></span></span>`
       :c.libtile?`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="box"><span class="stk"><i></i><i></i><i></i></span><b>LIBRARY</b><em>${n} GAME${n===1?'':'S'}</em></span><span class="arrow"></span></span>`
       :`<span class="cb"><span class="shell"></span><span class="ridges"></span><span class="label" style="--lb:${c.label};--lf:${c.ink}"><img src="${c.art}" alt=""><b></b></span><span class="arrow"></span></span><span class="rm" role="button" aria-label="Add to library">–</span>`;
     if(!c.ghost&&!c.libtile){b.querySelector('.rm').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home'&&editing)toLibrary(c)})}
@@ -660,7 +838,7 @@ function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();se
     b.setAttribute('aria-label',c.title);
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
-  $('#count').textContent=`${CARTS.length} GAME${CARTS.length===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
+  const ni=installed().length;$('#count').textContent=`${ni} GAME${ni===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
 function homeHelp(){$('#homeHelp').innerHTML=editing?'<span><i>A</i> ADD TO LIBRARY</span><span><i>START</i> DONE</span>':'<span><i>A</i> PLAY</span><span><i>START</i> EDIT</span><span><i>SELECT</i> SKINS</span>'}
 function markEdit(){$('#home').classList.toggle('editing',editing);$('#editBtn').textContent=editing?'DONE':'EDIT';homeHelp();
   const c=items()[sel],can=editing&&c&&!c.ghost&&!c.libtile;$('#libAct').hidden=!can}
@@ -690,6 +868,7 @@ function libActivate(){const c=libCarts()[libUI.i];if(!c){SFX.buzz();return}if(l
 async function toHome(c){state='moving';SFX.pick();const r=$$('#libList .row')[libCarts().indexOf(c)];if(r){r.classList.add('out');await sleep(300)}
   libPlace[c.id]='home';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='lib';renderLib();toast(c.title.toUpperCase()+' → HOME')}
 function setLibEdit(on){if(state!=='lib'||!libUI)return;libUI.edit=on;SFX[on?'pick':'eject']();renderLib()}
+$('#keysBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')openKeys()});
 $('#editBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')setEditing(!editing)});
 $('#libEdit').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='lib'&&libUI)setLibEdit(!libUI.edit)});
 $('#libAct').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home'&&editing)toLibrary(items()[sel])});
@@ -700,10 +879,68 @@ function libInput(b){if(!libUI)return;const n=libCarts().length;
   else if(b==='a')libActivate();
   else if(b==='start')setLibEdit(!libUI.edit);
   else if(b==='b'){if(libUI.edit)setLibEdit(false);else closeLib()}}
+/* ---------- the store: every game, free to install or uninstall, sorted into types ---------- */
+const GENRES=[['action','ACTION'],['explore','EXPLORE'],['rpg','RPG'],['idle','IDLE'],['strategy','STRATEGY'],['sports','SPORTS'],['more','MORE']],
+  GKEYS=GENRES.map(g=>g[0]),GNAME=Object.fromEntries(GENRES);
+const genresOf=c=>{const g=(Array.isArray(c.genre)?c.genre:c.genre?[c.genre]:[]).filter(x=>GKEYS.includes(x));return g.length?g:['more']};
+const storeTabs=()=>['all',...GKEYS.filter(k=>CARTS.some(c=>genresOf(c).includes(k)))];
+/* what a tab shows: ALL has a section per type (each game once, under its main type); a type tab lists every game of that type */
+function storeEntries(tab){const out=[];
+  if(tab==='all'){for(const k of GKEYS){const g=CARTS.filter(c=>genresOf(c)[0]===k);if(g.length){out.push({head:GNAME[k],n:g.length});g.forEach(c=>out.push({c}))}}}
+  else{const g=CARTS.filter(c=>genresOf(c).includes(tab));out.push({head:GNAME[tab],n:g.length});g.forEach(c=>out.push({c}))}
+  return out}
+const storeGames=()=>storeEntries(storeUI.tab).filter(e=>e.c).map(e=>e.c);
+const storeCur=()=>{const g=storeGames();return g.find(c=>c.id===storeUI.id)||g[0]};
+function openStore(){if(state!=='home')return;if(editing){editing=false;markEdit()}
+  const tabs=storeTabs(),t=store.get('storeTab','all');storeUI={tab:tabs.includes(t)?t:'all',id:store.get('storeId','')};
+  state='store';show('store');renderStore();SFX.pick()}
+function renderStore(){if(!storeUI)return;const T=$('#storeTabs'),L=$('#storeList');T.innerHTML='';L.innerHTML='';
+  for(const k of storeTabs()){const b=document.createElement('button');b.tabIndex=-1;b.setAttribute('role','tab');b.dataset.tab=k;
+    const n=k==='all'?CARTS.length:CARTS.filter(c=>genresOf(c).includes(k)).length;b.innerHTML=`${k==='all'?'ALL':GNAME[k]}<b>${n}</b>`;
+    b.addEventListener('click',()=>{sfxUnlock();if(state==='store'&&storeUI.tab!==k)storeTab(k)});T.append(b)}
+  for(const e of storeEntries(storeUI.tab)){
+    if(e.head){const h=document.createElement('div');h.className='shead';h.innerHTML=`${e.head}<b>${e.n}</b>`;L.append(h);continue}
+    const c=e.c,b=document.createElement('button');b.className='row';b.tabIndex=-1;b.setAttribute('role','option');b.dataset.id=c.id;b.setAttribute('aria-label',c.title);
+    b.innerHTML=`<img src="${c.art}" alt=""><span class="tx"><span></span><small></small></span><em></em>`;
+    b.querySelector('.tx span').textContent=c.title.toUpperCase();b.querySelector('.tx small').textContent=c.kind||GNAME[genresOf(c)[0]];
+    b.addEventListener('click',()=>{sfxUnlock();if(state!=='store')return;if(storeCur()===c)storeActivate();else{storeUI.id=c.id;markStore();SFX.tick()}});L.append(b)}
+  L.scrollTop=0;markStore()}
+function markStore(){if(!storeUI)return;const c=storeCur(),L=$('#storeList'),n=installed().length;if(c)storeUI.id=c.id;
+  $('#storeCount').textContent=`${n}/${CARTS.length} INSTALLED`;
+  for(const t of $$('#storeTabs button'))t.setAttribute('aria-selected',String(t.dataset.tab===storeUI.tab));
+  let selRow=null;
+  for(const r of $$('#storeList .row')){const g=CARTS.find(x=>x.id===r.dataset.id),on=g===c,out=gone(g);r.setAttribute('aria-selected',String(on));r.classList.toggle('gone',out);if(on)selRow=r;
+    if(!r.classList.contains('dl')){const em=r.querySelector('em');em.textContent=out?'GET':'✓';em.classList.toggle('ok',!out)}}
+  $('#storeInfo').textContent=c?`${gone(c)?'FREE':'INSTALLED'} · ${c.blurb}`:'';
+  $('#storeHelp').innerHTML=`<span><i>◀▶</i> TYPE</span><span><i>A</i> ${c&&gone(c)?'GET':'UNINSTALL'}</span><span><i>B</i> HOME</span>`;
+  /* keep the chosen game in view, with its section's heading when it's the first of the section */
+  if(selRow){const h=selRow.previousElementSibling,top=(h&&h.classList.contains('shead')?h:selRow).offsetTop;
+    if(top<L.scrollTop+2)L.scrollTop=Math.max(0,top-4);else if(selRow.offsetTop+selRow.offsetHeight>L.scrollTop+L.clientHeight-2)L.scrollTop=selRow.offsetTop+selRow.offsetHeight-L.clientHeight+6}
+  const tb=$(`#storeTabs button[data-tab="${storeUI.tab}"]`),T=$('#storeTabs');
+  if(tb){if(tb.offsetLeft<T.scrollLeft+6)T.scrollLeft=tb.offsetLeft-24;else if(tb.offsetLeft+tb.offsetWidth>T.scrollLeft+T.clientWidth-6)T.scrollLeft=tb.offsetLeft+tb.offsetWidth-T.clientWidth+24}
+  store.set('storeTab',storeUI.tab);store.set('storeId',storeUI.id);if(skinChoice==='auto')refreshSkin()}
+/* a new type keeps the same game chosen when it's there too */
+function storeTab(k){storeUI.tab=k;renderStore();SFX.tick()}
+function storeActivate(){const c=storeCur();if(!c){SFX.buzz();return}
+  if(gone(c))installGame(c);
+  else ask(`Uninstall ${c.title}? It comes off your home screen and library. Its saves stay on this console, so if you install it again you pick up where you left off.`,[['Uninstall',()=>uninstallGame(c)],['Keep it',()=>{}]])}
+/* installing is free and quick: a short download bar, then the game is back on the home screen */
+async function installGame(c){state='moving';SFX.pick();const r=$(`#storeList .row[data-id="${c.id}"]`);
+  if(r){r.classList.add('dl');r.querySelector('em').textContent='INSTALLING';await sleep(820);r.classList.remove('dl')}
+  libPlace[c.id]='home';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='store';markStore();SFX.chime();toast(c.title.toUpperCase()+' INSTALLED')}
+function uninstallGame(c){libPlace[c.id]='gone';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();SFX.eject();markStore();toast(c.title.toUpperCase()+' UNINSTALLED')}
+function closeStore(){if(state!=='store')return;storeUI=null;state='home';show('home');sel=items().indexOf(STORETILE);renderShelf();SFX.eject();refreshSkin()}
+function storeInput(b){if(!storeUI)return;
+  if(b==='left'||b==='right'){const t=storeTabs(),i=t.indexOf(storeUI.tab)+(b==='left'?-1:1);if(i<0||i>=t.length){SFX.buzz();return}storeTab(t[i])}
+  else if(b==='up'||b==='down'){const g=storeGames(),i=g.indexOf(storeCur())+(b==='up'?-1:1);if(i<0||i>=g.length){SFX.buzz();return}storeUI.id=g[i].id;markStore();SFX.tick()}
+  else if(b==='a'||b==='start')storeActivate();
+  else if(b==='b'||b==='select')closeStore()}
 /* the console's shape: upright, or sideways (see the CSS); a wide game turns it sideways */
-function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide);
-  const turned=wideGame&&!land,wide=turned||(land&&(H<=600||wideGame));
-  de.classList.toggle('wide',wide);de.classList.toggle('turned',turned);
+function applyLayout(){const de=document.documentElement,vv=window.visualViewport,W=Math.round(vv?vv.width:innerWidth),H=Math.round(vv?vv.height:innerHeight),land=W>H,wideGame=!!(cur&&cur.wide),touchGame=!!(cur&&cur.touch);
+  /* on a PC (mouse and keyboard) the console never turns itself a quarter turn: a window is not a phone you can rotate.
+     A touch game is never turned and never wide: it fills the whole screen */
+  const pc=matchMedia('(hover:hover) and (pointer:fine)').matches,turned=wideGame&&!land&&!pc&&!touchGame,wide=!touchGame&&(turned||(wideGame&&pc)||(land&&(H<=600||wideGame)));
+  de.classList.toggle('wide',wide);de.classList.toggle('turned',turned);de.classList.toggle('touchgame',touchGame);
   /* the console's own width and height (a turned console is the screen's height wide), and how big its controls can be:
      the columns must hold the D-pad (or stick) and A and B */
   const cw=turned?H:W,chh=turned?W:Math.min(H,Math.min(W,1000)*.47);
@@ -719,7 +956,7 @@ function layoutShelf(){const list=$$('#shelf .cart'),sh=$('#shelf'),k=Math.max(.
   const c=items()[sel];$('#gTitle').textContent=c.title;$('#gBlurb').textContent=c.blurb;$('#gNote').textContent=c.note||'';store.set('sel',sel);if(skinChoice==='auto')refreshSkin();
   $('#libAct').hidden=!(editing&&c&&!c.ghost&&!c.libtile)}
 function moveSel(d){const n=items().length,ns=Math.max(0,Math.min(n-1,sel+d));if(ns===sel){SFX.buzz();return}sel=ns;layoutShelf();SFX.tick()}
-function activate(){const c=items()[sel];if(editing){if(c.libtile)openLib();else if(c.ghost)SFX.buzz();else toLibrary(c);return}if(c.libtile){openLib();return}if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
+function activate(){const c=items()[sel];if(c.store){openStore();return}if(editing){if(c.libtile)openLib();else if(c.ghost)SFX.buzz();else toLibrary(c);return}if(c.libtile){openLib();return}if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
 
 /* ---------- power: boot, games in and out ---------- */
 async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#blackout').classList.remove('on');
@@ -754,8 +991,8 @@ async function eject(){if(state!=='game')return;state='ejecting';SFX.eject();$('
 let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
   if(state==='off'){SFX.click();await boot(false);return}
-  if(state==='skins')closeSkins(false);
-  if(state==='home'||state==='lib'){editing=false;libUI=null;await powerOff();return}
+  if(state==='skins')closeSkins(false);if(state==='keys')closeKeys();
+  if(state==='home'||state==='lib'||state==='store'){editing=false;libUI=null;storeUI=null;await powerOff();return}
   if(state!=='game')return;
   releaseAll();const w=cartWin();let r='ask';
   try{if(w&&w.ZPCart&&typeof w.ZPCart.home==='function')r=await w.ZPCart.home()}catch(e){r='ask'}
@@ -783,6 +1020,41 @@ function skinsInput(b){if(!skinUI)return;
 function keepSkin(){const k=SKINS[skinUI.i];chooseSkin(k.id);closeSkins(true);toast('SKIN: '+k.name.toUpperCase())}
 function closeSkins(kept){if(!kept)SFX.eject();skinUI=null;state='home';show('home');wearSkin(skinChoice);requestAnimationFrame(layoutShelf)}
 
+
+/* ---------- keyboard controls screen ---------- */
+let keyUI=null,keyCap=null;
+const KEYNAME={ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',' ':'SPACE',Enter:'ENTER',Shift:'SHIFT',Escape:'ESC',Backspace:'BKSP',Tab:'TAB',Delete:'DEL'};
+const keyLabel=k=>!k?'—':KEYNAME[k]||(k.length===1?k.toUpperCase():k.toUpperCase());
+function openKeys(){if(state!=='home')return;if(editing){editing=false;markEdit()}keyUI={r:0,s:0};state='keys';show('keys');renderKeys();SFX.pick()}
+function closeKeys(){keyCap=null;keyUI=null;SFX.eject();state='home';show('home');requestAnimationFrame(layoutShelf)}
+function renderKeys(){const L=$('#keyList');L.innerHTML='';
+  BTNS.forEach(([b,name],r)=>{const row=document.createElement('button');row.className='row';row.tabIndex=-1;
+    row.innerHTML=`<span>${name}</span><em>${[0,1].map(s=>`<i class="cap" data-s="${s}"></i>`).join('')}</em>`;
+    row.querySelectorAll('.cap').forEach(c=>c.addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state!=='keys')return;keyUI.r=r;keyUI.s=+c.dataset.s;markKeys();beginCap()}));
+    row.addEventListener('click',()=>{sfxUnlock();if(state!=='keys')return;keyUI.r=r;markKeys();SFX.tick()});L.append(row)});
+  const rs=document.createElement('button');rs.className='row reset';rs.tabIndex=-1;rs.textContent='RESET TO DEFAULTS';rs.addEventListener('click',()=>{sfxUnlock();if(state!=='keys')return;keyUI.r=BTNS.length;resetKeys()});L.append(rs);markKeys()}
+function markKeys(){const rows=$$('#keyList .row');rows.forEach((row,r)=>{row.setAttribute('aria-selected',String(r===keyUI.r));
+    row.querySelectorAll('.cap').forEach(c=>{const s=+c.dataset.s,b=BTNS[r]&&BTNS[r][0],on=r===keyUI.r&&s===keyUI.s;c.textContent=keyCap&&on?'PRESS…':keyLabel(b?binds[b][s]:null);c.classList.toggle('on',on);c.classList.toggle('wait',!!keyCap&&on)})});
+  const r=rows[keyUI.r],L=$('#keyList');if(r){if(r.offsetTop<L.scrollTop+4)L.scrollTop=Math.max(0,r.offsetTop-4);else if(r.offsetTop+r.offsetHeight>L.scrollTop+L.clientHeight-4)L.scrollTop=r.offsetTop+r.offsetHeight-L.clientHeight+6}
+  $('#keyHint').textContent=keyCap?'PRESS A KEY · ESC CANCELS':'';}
+function beginCap(){keyCap={r:keyUI.r,s:keyUI.s};markKeys();SFX.pick()}
+function capKey(e){if(e.key==='Escape'){keyCap=null;markKeys();SFX.back&&SFX.back();return}
+  if(e.key==='Backspace'||e.key==='Delete'){const b=BTNS[keyCap.r][0];binds[b][keyCap.s]=null;saveBinds();keyCap=null;markKeys();SFX.tick();return}
+  if(['Meta','Control','Alt','CapsLock','Tab','Dead','Unidentified','F5','F11','F12'].includes(e.key)||/^F\d+$/.test(e.key))return;
+  const k=normKey(e.key),b=BTNS[keyCap.r][0];let moved=null;
+  for(const[b2]of BTNS)for(let s2=0;s2<2;s2++)if(binds[b2][s2]===k&&!(b2===b&&s2===keyCap.s)){binds[b2][s2]=null;moved=b2}
+  binds[b][keyCap.s]=k;saveBinds();keyCap=null;markKeys();SFX.pick();if(moved&&moved!==b)toast(keyLabel(k)+' MOVED FROM '+moved.toUpperCase())}
+function saveBinds(){buildKB();store.set('keys',binds)}
+function resetKeys(){binds=JSON.parse(JSON.stringify(DEFBINDS));saveBinds();renderKeys();SFX.pick();toast('KEYBOARD RESET')}
+function keysInput(b){if(!keyUI||keyCap)return;
+  const n=BTNS.length;
+  if(b==='up'){if(keyUI.r>0){keyUI.r--;markKeys();SFX.tick()}else SFX.buzz()}
+  else if(b==='down'){if(keyUI.r<n){keyUI.r++;markKeys();SFX.tick()}else SFX.buzz()}
+  else if(b==='left'||b==='right'){keyUI.s=b==='left'?0:1;markKeys();SFX.tick()}
+  else if(b==='a'||b==='start'){if(keyUI.r===n)resetKeys();else beginCap()}
+  else if(b==='select'){if(keyUI.r<n){binds[BTNS[keyUI.r][0]][keyUI.s]=null;saveBinds();markKeys();SFX.tick()}}
+  else if(b==='b')closeKeys()}
+
 /* ---------- questions on the LCD ---------- */
 let askState=null;
 function ask(text,opts){const box=$('#ask'),o=$('#askOpts');$('#askText').textContent=text;o.innerHTML='';
@@ -796,7 +1068,7 @@ function askInput(b){const a=askState;if(!a)return;if(b==='up'||b==='left'){a.i=
 
 /* ---------- buttons ---------- */
 const held=new Set();let repT=0,comboT=0;
-function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
+function pressBtn(b){sfxUnlock();motionAsk();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
   if(held.has(b))return;held.add(b);
   if(held.has('start')&&held.has('select')&&state==='game'){clearTimeout(comboT);comboT=setTimeout(()=>{if(held.has('start')&&held.has('select'))powerSwitch()},800)}
   switch(state){
@@ -813,10 +1085,20 @@ function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}cat
     case 'lib':libInput(b);
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='lib'){libInput(d);repT=setTimeout(again,140)}},420)}
       break;
+    case 'store':storeInput(b);
+      if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='store'){storeInput(d);repT=setTimeout(again,140)}},420)}
+      break;
+    case 'keys':keysInput(b);
+      if(/up|down/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='keys'){keysInput(d);repT=setTimeout(again,140)}},420)}
+      break;
     case 'skins':skinsInput(b);
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='skins'){skinsInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'off':if(b==='start'||b==='a')powerSwitch();break}}
+/* tilt carts: ask for the motion sensor inside the player's taps until the phone says yes */
+let motionOK=false;function motionAsk(){if(motionOK||state!=='game'||!(cur&&cur.tilt))return;try{const D=window.DeviceOrientationEvent;
+  if(D&&typeof D.requestPermission==='function')D.requestPermission().then(r=>{if(r==='granted')motionOK=true}).catch(()=>{});else motionOK=true}catch(e){}}
+for(const ev of['touchend','pointerup','click'])addEventListener(ev,motionAsk,{capture:true,passive:true});
 function releaseBtn(b){if(!held.has(b))return;held.delete(b);if(state==='game')toCart(b,false)}
 function releaseAll(){for(const b of[...held])releaseBtn(b);setDpad(null);try{toCartStick(0,0)}catch(e){}stickDirs.clear();stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stick.querySelectorAll('.notch').forEach(n=>n.classList.remove('on'))}
 function toCart(b,down){const w=cartWin();if(!w)return;
@@ -864,9 +1146,14 @@ for(const el of $$('[data-btn]')){const b=el.dataset.btn;
   el.addEventListener('contextmenu',e=>e.preventDefault())}
 $('#power').addEventListener('click',()=>{sfxUnlock();powerSwitch()});
 /* keyboard, for when the console itself has focus (a game that has focus reads the keys itself) */
-const KB={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',z:'a',Z:'a',' ':'a',x:'b',X:'b',c:'c',C:'c',v:'d',V:'d',Escape:'b',Backspace:'b',Enter:'start',Shift:'select'};
-addEventListener('keydown',e=>{const b=KB[e.key];if(!b||e.metaKey||e.ctrlKey||e.altKey)return;e.preventDefault();if(e.repeat)return;pressBtn(b)});
-addEventListener('keyup',e=>{const b=KB[e.key];if(b)releaseBtn(b)});
+binds=loadBinds();buildKB();
+const FALLBACK={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'a',Escape:'b'};
+addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(keyCap){e.preventDefault();e.stopPropagation();capKey(e);return}
+  let b=KB[e.key];if(!b&&state==='keys')b=FALLBACK[e.key];            /* the controls screen always answers to arrows, Enter and Esc, so it can never lock you out */
+  if(!b){if(state==='home'&&(e.key==='k'||e.key==='K')){e.preventDefault();openKeys()}return}
+  e.preventDefault();if(e.repeat)return;pressBtn(b)});
+addEventListener('keyup',e=>{const b=KB[e.key]||(state==='keys'?FALLBACK[e.key]:null);if(b)releaseBtn(b)});
 addEventListener('blur',()=>{if(state!=='game')releaseAll()});
 for(const ev of['pointerdown','keydown'])addEventListener(ev,sfxUnlock,{capture:true,passive:true});
 
@@ -956,6 +1243,7 @@ window.ZIGAPLAY=Object.freeze({
   takeRestore(id){const r=restore[id];delete restore[id];return r||null},
   cartReady(api){},
   get cart(){return cur&&cur.id},
+  get keys(){const o={};for(const[b]of BTNS)o[b]=binds[b].slice();return Object.freeze(o)},
 });
 
 /* ---------- start, and come back to the same game after this page is updated ---------- */
@@ -970,5 +1258,4 @@ setTimeout(skinFromAccount,400);
 window.__zp={test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},lib:{open:openLib,close:closeLib,edit:setEditing,libEdit:setLibEdit,home:()=>homeCarts().map(c=>c.id),inLib:()=>libCarts().map(c=>c.id),get sel(){return sel},get libSel(){return libUI&&libUI.i}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
 })();
 </script>
-</body>
-</html>
+</body></html>

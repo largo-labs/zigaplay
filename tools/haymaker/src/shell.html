@@ -1,0 +1,28 @@
+<title>Haymaker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+<style>
+/* Haymaker: a side-view fighting game on one canvas filling the screen, in an Arcade Ink style: the ring and the
+   fighters are drawn in ring units scaled to the screen's real pixels; the health bars and menus are drawn on top.
+   Outside the ZigaPlay, touch screens get a D-pad and A / B buttons over the bottom corners. */
+:root{color-scheme:dark}
+html,body{height:100%;margin:0;background:#07060c;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+#pad{position:fixed;inset:0;pointer-events:none;display:none}
+html.touch:not(.zp) #pad{display:block}
+.pb{position:absolute;pointer-events:auto;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(20,18,34,.55);color:#fff;font:700 16px/1 system-ui,sans-serif;display:grid;place-items:center;touch-action:none;padding:0}
+.pb.on{background:rgba(255,120,80,.6)}
+#dp{position:absolute;left:max(14px,env(safe-area-inset-left,0px));bottom:14px;width:150px;height:150px;pointer-events:auto;touch-action:none}
+#dp i{position:absolute;width:50px;height:50px;border-radius:10px;background:rgba(20,18,34,.55);border:2px solid rgba(255,255,255,.3);box-sizing:border-box}
+#dp i.on{background:rgba(255,120,80,.6)}
+#bA{right:max(16px,env(safe-area-inset-right,0px));bottom:62px}#bB{right:max(84px,calc(env(safe-area-inset-right,0px) + 68px));bottom:20px}
+#bS{right:max(16px,env(safe-area-inset-right,0px));top:12px;width:44px;height:44px;font-size:13px}
+</style>
+<canvas id="cv"></canvas>
+<div id="pad"><div id="dp"><i data-d="up" style="left:50px;top:0"></i><i data-d="left" style="left:0;top:50px"></i><i data-d="right" style="left:100px;top:50px"></i><i data-d="down" style="left:50px;top:100px"></i></div>
+<button class="pb" id="bA">A</button><button class="pb" id="bB">B</button><button class="pb" id="bS">II</button></div>
+<script>
+(()=>{'use strict';
+/*@@SCRIPTS@@*/
+})();
+</script>
