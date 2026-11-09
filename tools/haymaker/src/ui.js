@@ -37,44 +37,47 @@ function hpBar(x,y,w,h,f,right){if(f.lag==null||f.hp>f.lag)f.lag=f.hp;else if(f.
 function fightHud(){ctx.setTransform(DPR,0,0,DPR,0,0);const m=M,tw_=34*U,w=(SW-14*U-tw_)/2,y=7*U,h=13*U,need=Math.ceil(m.bestOf/2);
   m.F.forEach((f,i)=>{const x=i?SW-7*U-w:7*U,al=i?'right':'left',ax=i?SW-7*U:7*U;hpBar(x,y,w,h,f,i);
     text(short(f.id),ax+(i?-4:4)*U,y+h+2*U,9,'#fff',al,'#0e0a14',700);
-    for(let k=0;k<need;k++){const cx=i?x+w-6*U-k*12*U:x+6*U+k*12*U;circ(cx,y+h+20*U,4*U,k<m.rw[i]?'#ffd84a':'rgba(0,0,0,.5)','#fff',1.4)}
-    if(f.hp<=f.max*.3&&!f.fatalUsed&&m.ph==='fight'){const p=.6+.4*Math.sin(TT*8);ctx.globalAlpha=p;text(f.cpu?'FATAL READY':'FATAL ▼+A+B',ax+(i?-4:4)*U,y+h+28*U,8,'#ff5a5a',al,'#0e0a14',700);ctx.globalAlpha=1}});
+    if(!m.train)for(let k=0;k<need;k++){const cx=i?x+w-6*U-k*12*U:x+6*U+k*12*U;circ(cx,y+h+20*U,4*U,k<m.rw[i]?'#ffd84a':'rgba(0,0,0,.5)','#fff',1.4)}
+    if(f.cool>0&&m.ph==='fight')text('NO JAB '+(f.cool/60).toFixed(1),ax+(i?-4:4)*U,y+h+28*U,8,'#c8c0e0',al,'#0e0a14',700);
+    else if(f.stunT>0&&m.ph==='fight')text('STUNNED '+Math.ceil(f.stunT/60),ax+(i?-4:4)*U,y+h+28*U,8,'#ff5a5a',al,'#0e0a14',700)});
   const tx=SW/2;panel(tx-tw_/2+2*U,y-3*U,tw_-4*U,24*U,'rgba(14,10,24,.9)','#ffd84a',6);const secs=m.timer===Infinity?'∞':String(Math.max(0,Math.ceil(m.timer/60)));
   text(secs,tx,y-.5*U,15,m.timer<600&&m.ph==='fight'?'#ff5a5a':'#fff','center',null,700);text(m.train?'TRAINING':'ROUND '+m.rd,tx,y+24*U,7,'#c8c0e0','center','#0e0a14',600);
   if(m.train)trainHud(y+h);
-  /* combo counter */
-  const c=m.cmb;if(c&&c.n>=2&&m.t-c.t<80){const left=c.i===0,x=left?10*U:SW-10*U,yy=SH*.24,a=clamp(1-(m.t-c.t-50)/30,0,1);ctx.globalAlpha=a;
-    text(c.n+' HITS',x,yy,16,'#ffd84a',left?'left':'right','#2a0c0c',700);text(Math.round(c.dmg/c.max*100)+'%',x,yy+20*U,10,'#fff',left?'left':'right','#0e0a14',700);ctx.globalAlpha=1}
   /* banners */
-  const ms=m.msg;if(ms&&ms.s&&m.t-ms.t<ms.d){const k=m.t-ms.t,sc=k<8?.6+.4*easeOut(k/8):1,a=clamp((ms.d-k)/12,0,1),big=ms.s.length<10,px=big?30:18,yy=SH*.33;
+  const ms=m.msg;if(ms&&ms.s&&ms.small&&m.t-ms.t<ms.d){const k=m.t-ms.t,a=clamp((ms.d-k)/10,0,1),sc=k<6?.7+.3*easeOut(k/6):1;ctx.save();ctx.globalAlpha=a;ctx.translate(SW/2,SH*.21);ctx.scale(sc,sc);text(ms.s,0,0,15,ms.c,'center','#0e0a14',700);ctx.restore()}
+  else if(ms&&ms.s&&m.t-ms.t<ms.d){const k=m.t-ms.t,sc=k<8?.6+.4*easeOut(k/8):1,a=clamp((ms.d-k)/12,0,1),big=ms.s.length<10,px=big?30:18,yy=SH*.33;
     ctx.save();ctx.globalAlpha=a;ctx.translate(SW/2,yy);ctx.scale(sc,sc);const ww=Math.min(SW*.31,tw(ms.s,px,700)*.36+10*U);splashUI(0,px*U*.6,ww,'#1c1030',(ms.s.length*7)|0);
     text(ms.s,0,0,px,ms.c,'center','#0e0a14',700);ctx.restore()}
-  /* the specials, under the ring when there's room */
-  const me=m.F[0],gyPx=(groundY()+50)*PS,room=SH-gyPx;if(!me.cpu&&room>30*U&&m.ph!=='done'){const sp=me.ch.sp,rows=room>58*U&&SW<420*U?3:1;
-    if(rows===3)sp.forEach((s,i)=>{const yy=gyPx+(room-3*15*U)/2+i*15*U;text(SPIN[i],SW/2-8*U,yy,9,'#ffd84a','right','#0e0a14',700);text(s.n,SW/2,yy,9,'#fff','left','#0e0a14',600)});
-    else{const s=sp.map((s,i)=>SPIN[i]+' '+s.n).join('   ');text(s,SW/2,gyPx+room/2-6*U,8,'#e8e2d0','center','#0e0a14',600)}}}
+  /* your prompts: B after a jab lands, then the four A punches, each with its one second running out */
+  const me=m.F[0],gyPx=(groundY()+50)*PS,room=SH-gyPx;
+  if(!me.cpu&&m.ph==='fight'){const py=Math.min(SH*.56,gyPx-6*U);
+    if(me.st==='jabbed'){const k=1-me.t/TIME.bwin,r=22*U;circ(SW/2,py,r,'rgba(14,10,24,.85)','#ffd84a',2);ctx.beginPath();ctx.arc(SW/2,py,r,-Math.PI/2,-Math.PI/2+k*TAU);ctx.lineWidth=4*U;ctx.strokeStyle='#ff5a5a';ctx.stroke();
+      text('B',SW/2,py-12*U,20,'#ffd84a','center','#0e0a14',700)}
+    else if(me.st==='combo'){const k=1-me.t/TIME.awin;for(let q=0;q<4;q++){const cx=SW/2+(q-1.5)*26*U;circ(cx,py,10*U,q<me.hits?'#ffd84a':'rgba(14,10,24,.85)','#fff',1.6);text('A',cx,py-7*U,11,q<me.hits?'#0e0a14':'#fff','center',null,700)}
+      rrect(SW/2-52*U,py+15*U,104*U,5*U,2*U);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fill();rrect(SW/2-52*U,py+15*U,104*U*k,5*U,2*U);ctx.fillStyle='#ffd84a';ctx.fill()}}
+  /* the controls, under the ring when there's room */
+  if(!me.cpu&&room>30*U&&m.ph!=='done'){const rows=[['→','JAB'],['←','BLOCK (ONLY WHEN A JAB IS COMING)'],['B','COMBO, AFTER A JAB LANDS'],['A × 4','THE FOUR PUNCHES']];
+    if(room>70*U&&SW<420*U)rows.forEach(([k,v],q)=>{const yy=gyPx+(room-4*14*U)/2+q*14*U;text(k,SW*.3,yy,9,'#ffd84a','right','#0e0a14',700);text(v,SW*.3+8*U,yy,8,'#fff','left','#0e0a14',600)});
+    else text('→ JAB   ← BLOCK   B COMBO   A × 4',SW/2,gyPx+room/2-6*U,8,'#e8e2d0','center','#0e0a14',600)}}
 
-/* the training room's readouts: the last move's frame data, the last combo, the dummy, your inputs */
-const ARROW={N:'•',F:'→',B:'←',D:'↓',U:'↑',DF:'↘',DB:'↙',UF:'↗',UB:'↖'};
-function trainHud(y){const m=M,T=m.tr,c=m.cmb;
+/* the training room's readouts: the dummy, the block window filling while a jab comes, what just happened */
+function trainHud(y){const m=M,T=m.tr,me=m.F[0],o=m.F[1];
   text('DUMMY: '+DUMMYN[T.dummy],SW-11*U,y+28*U,7,'#9ae8ff','right','#0e0a14',600);
-  if(T.mv)text(T.mv.n+'  '+T.mv.s+' · '+T.mv.a+' · '+T.mv.r,SW/2,y+30*U,8,'#fff','center','#0e0a14',700);
-  textB('startup · active · recovery',SW/2,y+42*U,6,'rgba(255,255,255,.6)','center','#000');
-  if(c&&c.i===0)text('COMBO '+c.n+(c.n===1?' HIT':' HITS')+' · '+Math.round(c.dmg/c.max*100)+'%',SW/2,y+52*U,9,'#ffd84a','center','#0e0a14',700);
-  T.inputs.slice().reverse().forEach((e,k)=>{ctx.globalAlpha=1-k*.07;text((e.d!=='N'?ARROW[e.d]||'':'')+(e.b?(e.d!=='N'?' ':'')+e.b:''),11*U,y+64*U+k*13*U,9,k?'#e8e2d0':'#fff','left','#0e0a14',700)});ctx.globalAlpha=1}
+  if(o.st==='lunge'){const k=o.t/o.W,bw=120*U,bx0=SW/2-bw/2;text('BLOCK WINDOW',SW/2,y+28*U,7,'#9ae8ff','center','#0e0a14',700);rrect(bx0,y+40*U,bw,6*U,3*U);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fill();
+    rrect(bx0,y+40*U,bw*k,6*U,3*U);ctx.fillStyle='#9ae8ff';ctx.fill()}
+  if(T.last&&m.t-T.last.t<150)text(T.last.s,SW/2,y+52*U,9,T.last.c,'center','#0e0a14',700);
+  textB('Your jab: '+(me.W/60).toFixed(2)+' s · theirs: '+(o.W/60).toFixed(2)+' s',SW/2,y+66*U,7,'rgba(255,255,255,.7)','center','#000')}
 /* ---------- pause ---------- */
-const DUMMY=['stand','crouch','jump','block','blocklow','random','cpu'],DUMMYN={stand:'STAND',crouch:'CROUCH',jump:'JUMP',block:'BLOCK HIGH',blocklow:'BLOCK LOW',random:'MIXED BLOCK',cpu:'FIGHT BACK'};
-function pauseItems(){if(!M.train)return['RESUME','MOVE LIST','QUIT · SAVES THE MATCH'];const T=M.tr;
-  return['RESUME','DUMMY: '+DUMMYN[T.dummy],'HITBOXES: '+(T.boxes?'ON':'OFF'),'HEALTH REFILL: '+(T.refill?'ON':'OFF'),'YOUR HEALTH: '+(T.low?'30% · FATAL':'FULL'),'RESET POSITIONS','MOVE LIST','QUIT TRAINING']}
+const DUMMY=['stand','block','jab','cpu'],DUMMYN={stand:'STAND STILL',block:'BLOCK EVERY JAB',jab:'KEEP JABBING',cpu:'FIGHT BACK'};
+function pauseItems(){if(!M.train)return['RESUME','HOW TO FIGHT','QUIT · SAVES THE MATCH'];const T=M.tr;
+  return['RESUME','DUMMY: '+DUMMYN[T.dummy],'HEALTH REFILL: '+(T.refill?'ON':'OFF'),'RESET POSITIONS','HOW TO FIGHT','QUIT TRAINING']}
 function pauseTick(){const it=pauseItems(),d=menuNav(it.length),ch=d==='left'?-1:d==='right'?1:0;if(TAP('start')||TAP('b')){SFX.back();go('fight');return}
-  if(M.train&&(ch||TAP('a'))&&MSEL>=1&&MSEL<=4){const T=M.tr,c=ch||1;SFX.move();
-    if(MSEL===1){T.dummy=DUMMY[(DUMMY.indexOf(T.dummy)+c+DUMMY.length)%DUMMY.length];M.F[1].ai={t:30,hold:0,held:null,react:null}}
-    else if(MSEL===2)T.boxes=!T.boxes;else if(MSEL===3)T.refill=!T.refill;else{T.low=!T.low;const f=M.F[0];f.hp=T.low?f.max*.3:f.max;f.fatalUsed=false}return}
+  if(M.train&&(ch||TAP('a'))&&MSEL>=1&&MSEL<=2){const T=M.tr,c=ch||1;SFX.move();
+    if(MSEL===1){T.dummy=DUMMY[(DUMMY.indexOf(T.dummy)+c+DUMMY.length)%DUMMY.length];M.F[1].ai={t:40}}else T.refill=!T.refill;return}
   if(!TAP('a'))return;SFX.pick();const k=it[MSEL];
-  if(k==='RESUME')go('fight');else if(k==='MOVE LIST')openMoves(M.p1,'pause');else if(k==='RESET POSITIONS'){resetTraining();go('fight')}
+  if(k==='RESUME')go('fight');else if(k==='HOW TO FIGHT')openMoves(M.p1,'pause');else if(k==='RESET POSITIONS'){resetTraining();go('fight')}
   else{if(!M.train)saveNow(true);M=null;go('title')}}
-function resetTraining(){M.F.forEach((f,i)=>Object.assign(f,{x:i?55:-55,y:0,vx:0,vy:0,face:i?-1:1,st:'idle',mv:null,combo:0,juggle:0,frz:0,pull:null,buff:0,shield:0,
-  hp:i===0&&M.tr.low?f.max*.3:f.max,fatalUsed:false,crushUsed:false}));M.proj=[];M.traps=[];M.cmb=null;CAMV.x=0}
+function resetTraining(){M.F.forEach(f=>Object.assign(f,{x:homeX(f),y:0,vx:0,vy:0,face:f.dir,st:'idle',t:0,cool:0,stunT:0,hits:0,hp:f.max}));M.tr.last=null;CAMV.x=0}
 function pauseDraw(){fightDraw();dimAll(.62);const it=pauseItems();text(M.train?'TRAINING':'PAUSED',SW/2,SH*.18,24,'#fff','center','#0e0a14');drawMenu(it,SW/2,SH*.3,11,21*U);
   help(M.train?'◀ ▶ CHANGE · A SELECT · START RESUME':'A SELECT · START RESUME')}
 

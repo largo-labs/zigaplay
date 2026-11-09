@@ -28,6 +28,6 @@ addEventListener('pagehide',()=>saveNow(true));
 window.ZPCart={title:'Haymaker',input(b,d){rawInput(b,d)},home(){hold();return true}};
 requestAnimationFrame(loop);
 /* a test hook, only when the address asks for it */
-if(/hmtest/.test(location.href))window.HMT={get M(){return M},get SCR(){return SCR},get SAVE(){return SAVE},get SEL(){return SEL},get RES(){return RES},ROSTER,MOVES,SPK,newMatch,startMatch,go,step,draw,matchStep,startMove,
+if(/hmtest/.test(location.href))window.HMT={get M(){return M},get SCR(){return SCR},get SAVE(){return SAVE},get SEL(){return SEL},get RES(){return RES},ROSTER,newMatch,startMatch,go,step,draw,matchStep,
   openSelect,newTower,startTowerFight,openLocker,openMoves,poseOf,RAW,PT,
   run(n,dt=1/60){for(let i=0;i<n;i++){step(dt);clearTaps()}},press(b){rawInput(b,true);rawInput(b,false)},hold(b,d){rawInput(b,d)}};

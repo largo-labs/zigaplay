@@ -1,5 +1,5 @@
 /* ================= menus: title, fighter select, the tower, moves, settings ================= */
-function titleItems(){const it=[];if(SAVE.match)it.push(['CONTINUE MATCH','cont']);it.push(['VERSUS','vs'],[SAVE.tower?'TOWER · FIGHT '+(SAVE.tower.i+1)+'/'+SAVE.tower.ladder.length:'TOWER','tower'],['TRAINING','train'],['TIER LIST','tiers'],['LOCKER ROOM','lock'],['MOVES','moves'],['SETTINGS','set']);return it}
+function titleItems(){const it=[];if(SAVE.match)it.push(['CONTINUE MATCH','cont']);it.push(['VERSUS','vs'],[SAVE.tower?'TOWER · FIGHT '+(SAVE.tower.i+1)+'/'+SAVE.tower.ladder.length:'TOWER','tower'],['TRAINING','train'],['TIER LIST','tiers'],['LOCKER ROOM','lock'],['HOW TO FIGHT','moves'],['SETTINGS','set']);return it}
 const titleIdx=k=>Math.max(0,titleItems().findIndex(x=>x[1]===k));
 function titleTick(){const it=titleItems();menuNav(it.length);if(!(TAP('a')||TAP('start')))return;const k=it[MSEL][1];SFX.pick();
   if(k==='cont'){const s=SAVE.match;newMatch(s);VI={t:0};go('vsintro')}
@@ -48,9 +48,9 @@ function selectDraw(){const s=SEL,a=ROSTER[s.c1],b=ROSTER[s.c2],two=s.stage!=='p
     textB('A FIGHT · B BACK',SW/2,iy+infoH-16*U,8,'#ffd84a','center')}
   else{const f=show,tier=tierOf(f.id);text(fname(f.id),16*U,iy+6*U,11,'#fff','left','#0e0a14',700);textB((f.id==='milo'?'':'"'+f.nick+'" · ')+f.style,16*U,iy+21*U,8,'#c8c0e0','left');
     if(tier){rrect(SW-34*U,iy+6*U,20*U,16*U,4*U);ctx.fillStyle=TIERC[tier];ctx.fill();text(tier,SW-24*U,iy+6.5*U,11,'#0e0a14','center',null,700)}
-    const cw=(SW-40*U)/2,y0=iy+33*U,gap=Math.min(11*U,(infoH-38*U)/4),st=[['SPEED',f.spd],['POWER',f.pow],['HEALTH',f.hp],['REACH',reachOf(f)]];
+    const cw=(SW-40*U)/2,y0=iy+33*U,gap=Math.min(11*U,(infoH-38*U)/4),st=[['SPEED',f.spd],['POWER',f.pow],['HEALTH',f.hp],['SIZE',PEOPLE[f.id].build.s]];
     if(gap>=9*U)st.forEach(([l,v],k)=>statBar(l,v,16*U,y0+gap*k,cw*.9));else st.forEach(([l,v],k)=>statBar(l,v,16*U+(k%2)*cw*.5,y0+Math.floor(k/2)*11*U,cw*.46));
-    const sg=Math.min(13*U,(infoH-36*U)/3);f.sp.forEach((sp,i)=>{const yy=y0+i*sg,x=16*U+cw+6*U;text(SPIN[i],x,yy,7,'#ffd84a','left','#0e0a14',700);textB(sp.n,x+30*U,yy+1*U,7,'#fff','left')})}
+    const x=16*U+cw+6*U;[['JAB',(jabTime(f)/60).toFixed(2)+' S'],['KO IN','~'+combosToKO(f)+' COMBOS'],['COMBO',Math.round(comboDmg(f))+' DAMAGE']].forEach(([k,v],q)=>{const yy=y0+q*Math.min(13*U,(infoH-36*U)/3);text(k,x,yy,7,'#ffd84a','left','#0e0a14',700);textB(v,x+38*U,yy+1*U,7,'#fff','left')})}
   /* the grid, scrolling to keep the cursor in view */
   const cur=s.stage==='p1'?s.c1:s.c2,row=Math.floor(cur/C),rows=Math.ceil(n/C);if(row<s.scroll)s.scroll=row;if(row>s.scroll+vr-1)s.scroll=row-vr+1;s.scroll=clamp(s.scroll,0,Math.max(0,rows-vr));
   const gx=(SW-C*(ts+3*U)+3*U)/2;
@@ -87,13 +87,13 @@ const KIND={proj:'Thrown across the ring',dash:'Rushing punch',rise:'Rising uppe
   heal:'Gets back some health (slow)',buff:'Hits 25% harder for 5 seconds',shield:'Shrugs off the next two hits',trap:'Sets a trap on the floor',quake:'Shockwave on the ground: crouch',
   reflect:'Sends projectiles back',drain:'Steals health back',barrage:'Three-hit rush, the last launches'};
 function openMoves(id,back){MV={i:RIX[id]||0,back};go('moves')}
-function movesTick(){const d=menuDir();if(d==='left'||d==='right'){MV.i=(MV.i+(d==='right'?1:ROSTER.length-1))%ROSTER.length;SFX.move()}if(TAP('b')||TAP('a')||TAP('start')){SFX.back();if(MV.back==='pause')go('pause',M&&M.train?6:1);else if(MV.back==='tiers')go('tiers');else go('title',titleIdx('moves'))}}
+function movesTick(){const d=menuDir();if(d==='left'||d==='right'){MV.i=(MV.i+(d==='right'?1:ROSTER.length-1))%ROSTER.length;SFX.move()}if(TAP('b')||TAP('a')||TAP('start')){SFX.back();if(MV.back==='pause')go('pause',M&&M.train?4:1);else if(MV.back==='tiers')go('tiers');else go('title',titleIdx('moves'))}}
 function movesDraw(){const f=ROSTER[MV.i];drawStage(homeRing(f),[{id:f.id,P:idlePose(TT*60),x:BW/2-40,y:0,face:-1}],{dim:.6});blit();ctx.setTransform(DPR,0,0,DPR,0,0);
-  text('◀  '+short(f.id)+'  ▶',SW/2,8*U,15,'#ffd84a','center','#0e0a14',700);textB(f.style,SW/2,28*U,8,'#c8c0e0','center');
-  const rows=[['SPECIALS',null],...f.sp.map((s,i)=>[SPIN[i]+'  '+s.n,KIND[s.k]]),['BASICS',null],['A · A · B','Jab, jab, cross string'],['▼ + A','Low jab: crouch blocks it'],['▼ + B','Uppercut: launches them'],['→ + B','Overhead: beats a crouch'],
-    ['A + B (CLOSE)','Throw'],['▲ THEN A / B','Jump-in attack'],['HOLD ←','Block (not lows)'],['HOLD ▼','Ducks highs, blocks lows'],
-    ['FINISHERS',null],['▼ + A + B','Fatal Haymaker, under 30% health'],['COUNTER-HIT ▼B','Crushing Blow, once a match'],['↓ → ↓ + B','Finisher, at FINISH THEM']];
-  const top=44*U,lw=Math.max(...rows.filter(r=>r[1]).map(r=>tw(r[0],8,700))),dx=14*U+lw+8*U,dw=SW-dx-8*U,two=dw<120*U,rh=Math.min(two?24*U:16*U,(SH-top-24*U)/rows.length);let y=top;
+  text('HOW TO FIGHT',SW/2,8*U,15,'#ffd84a','center','#0e0a14',700);
+  const rows=[['THE JAB DUEL',null],['→','Jab. You lunge across; it lands in about 0.8 s'],['←','Block. Only works while a jab is coming at you'],['← TOO EARLY','No jab coming? You\'re stunned for 5 seconds'],
+    ['BLOCKED','The jabber goes home and can\'t jab for 1 s'],['JAB LANDS','You have 1 second to press B'],['B, THEN A × 4','1 second to throw all four punches'],['▲ ▼','Nothing yet'],
+    ['FINISH THEM','B for the knockout finisher'],[short(f.id)+'  ◀ ▶',null],['JAB','Lands in '+(jabTime(f)/60).toFixed(2)+' s'],['HEALTH','Down in about '+combosToKO(f)+' full combos'],['COMBO','A full combo does '+Math.round(comboDmg(f))]];
+  const top=36*U,lw=Math.max(...rows.filter(r=>r[1]).map(r=>tw(r[0],8,700))),dx=14*U+lw+8*U,dw=SW-dx-8*U,two=dw<120*U,rh=Math.min(two?24*U:16*U,(SH-top-24*U)/rows.length);let y=top;
   for(const[a,b]of rows){if(!b){text(a,14*U,y+(two?5:2)*U,9,'#ff5a5a','left','#0e0a14',700)}else{text(a,14*U,y,8,'#fff','left','#0e0a14',700);textB(b,two?22*U:dx,two?y+10.5*U:y+1*U,7,'#e8e2d0','left','#000')}y+=rh}
   help('◀ ▶ FIGHTER · B BACK')}
 
