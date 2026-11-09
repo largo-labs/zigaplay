@@ -1,12 +1,16 @@
 /* ================= the climb =================
    World y grows downward like the screen; climbing means going to smaller y. 10 pixels are a metre.
-   The reaper bounces on every platform by itself; tilt steers, B slams down, A slashes. */
-const GRAV=.22,JUMP=5.9,AIRSPD=2.7,SLAMV=8.2,MAXFALL=7.2;
+   The reaper bounces on every platform by itself; tilt steers, A slashes. B dashes straight at the nearest monster
+   in reach (about half the screen) and starts a combo on contact; with none in reach, B slams down. */
+const GRAV=.22,JUMP=5.9,AIRSPD=2.7,SLAMV=8.2,MAXFALL=7.2,DASHV=7.5,DASHR=.5;
 const MON={/* hp is counted in combos: a combo (slam + four slashes) does 6 */
   wisp:{c:1,w:6,h:7,pts:100,from:0},bat:{c:1,w:8,h:5,pts:100,from:0},ghoul:{c:2,w:6,h:9,pts:250,from:60},
   wraith:{c:2,w:7,h:10,pts:250,from:250},garg:{c:3,w:9,h:8,pts:400,from:350},golem:{c:4,w:13,h:15,pts:700,from:600}};
 const G={state:'title',t:0,plats:[],mons:[],items:[],fx:[],shots:[],pops:[],camY:0,top:0,maxH:0,kills:0,souls:0,best:store.get('best',0),bestCombo:0,shake:0,hitstop:0,nextMon:0,nextHeart:0,soulBank:0,menu:0};
-const P={x:90,y:0,vx:0,vy:0,face:1,st:'air',hp:3,inv:0,slashT:0,slashN:0,canSlam:true,target:null,comboN:0,comboT:0,buf:{},ft:0};
+const P={x:90,y:0,vx:0,vy:0,face:1,st:'air',hp:3,inv:0,slashT:0,slashN:0,canSlam:true,target:null,comboN:0,comboT:0,buf:{},ft:0,dashT:0};
+/* the monster B would dash to: the nearest live one on screen within half a screen of the reaper */
+function dashTarget(){let best=null,bd=H*DASHR;for(const m of G.mons){if(m.st!=='live')continue;const my=m.y-m.h*.5;if(my<G.camY-4||my>G.camY+H+4)continue;
+  const d=Math.hypot(m.x-P.x,my-(P.y-8));if(d<bd){bd=d;best=m}}return best}
 const meters=y=>Math.max(0,Math.floor(-y/10));
 /* a new climb, or (with a saved run) carrying on from the height where the reaper last landed */
 function newGame(cont){const y0=cont?cont.y:0;
@@ -35,6 +39,7 @@ function update(){G.t++;if(G.state==='dying'){if(--G.deadT<=0)gameOver();stepFx(
   if(G.hitstop>0){G.hitstop--;stepFx();return}
   if(G.shake>0)G.shake*=.85;if(G.shake<.2)G.shake=0;
   stepPlayer();stepPlats();stepMons();stepItems();stepShots();stepFx();
+  G.aim=(P.st==='air'||P.st==='hurt')&&P.canSlam?dashTarget():null;
   /* the camera only goes up */
   const want=P.y-H*.46;if(want<G.camY)G.camY=lerp(G.camY,want,.25);genUpTo(G.camY-H);
   const cut=G.camY+H+60;G.plats=G.plats.filter(p=>p.y<cut&&!p.gone);G.mons=G.mons.filter(m=>m.y<cut+40&&m.st!=='gone');G.items=G.items.filter(i=>(i.plat?i.plat.y:i.y)<cut&&!i.got);
@@ -43,12 +48,13 @@ function update(){G.t++;if(G.state==='dying'){if(--G.deadT<=0)gameOver();stepFx(
 function pressed(b){if(P.buf[b]!=null&&G.t-P.buf[b]<=(P.st==='combo'?18:8)){P.buf[b]=null;return true}return false}
 function stepPlayer(){P.ft++;if(P.inv>0)P.inv--;if(P.slashT>0)P.slashT--;
   if(P.st==='combo'){stepCombo();return}
+  if(P.st==='dash'){stepDash();return}
   const steer=steerX();if(Math.abs(steer)>.08)P.face=sgn(steer);
   if(P.st==='slam'){/* a slam homes in a little on a monster right below */const mt=G.mons.find(m=>m.st==='live'&&m.y>P.y-6&&m.y<P.y+90&&Math.abs(m.x-P.x)<28);
     P.vx=mt?lerp(P.vx,clamp((mt.x-P.x)*.2,-2.4,2.4),.35):lerp(P.vx,steer*AIRSPD*.35,.2);P.vy=SLAMV;if(G.t%2===0)G.fx.push({k:'trail',x:P.x,y:P.y-8,t:10})}
   else{P.vx=lerp(P.vx,steer*AIRSPD,P.st==='hurt'?.06:.22);P.vy=Math.min(MAXFALL,P.vy+GRAV)}
   if(P.st==='hurt'&&P.inv<70)P.st='air';
-  if(P.st==='air'&&P.canSlam&&pressed('b')){P.st='slam';P.vx*=.3;SFX.slam()}
+  if((P.st==='air'||P.st==='hurt'&&P.inv<80)&&P.canSlam&&pressed('b')){const m=dashTarget();if(m){startDash(m);return}if(P.st==='air'){P.st='slam';P.vx*=.3;SFX.slam()}}
   if(P.st!=='slam'&&pressed('a'))freeSlash();
   const oy=P.y;P.x+=P.vx;P.y+=P.vy;
   if(P.x<-8)P.x+=W+16;if(P.x>W+8)P.x-=W+16;
@@ -59,7 +65,14 @@ function stepPlayer(){P.ft++;if(P.inv>0)P.inv--;if(P.slashT>0)P.slashT--;
     if(P.st==='slam'){startCombo(m);return}
     if(P.vy>1&&P.y-(m.y-m.h)<6&&m.st!=='stun'){P.vy=-JUMP*.8;P.canSlam=true;m.safe=20;SFX.jump();G.pops.push({x:m.x,y:m.y-m.h-8,s:'BOUNCE',c:'#c8b8ff',t:30});continue}
     if(m.safe<=0&&m.st==='live'&&P.inv<=0)hurt(sgn(P.x-m.x)||-P.face)}}
-const touch=m=>{const r=P.st==='slam'?9:5;return Math.abs(P.x-m.x)<m.w+r&&P.y>m.y-m.h-(P.st==='slam'?4:2)&&P.y-16<m.y+m.h}
+const touch=m=>{const big=P.st==='slam'||P.st==='dash',r=big?9:5;return Math.abs(P.x-m.x)<m.w+r&&P.y>m.y-m.h-(big?4:2)&&P.y-16<m.y+m.h}
+/* the dash: straight at the target, through anything, and a combo the moment it lands */
+function startDash(m){P.st='dash';P.target=m;P.dashT=28;P.canSlam=false;P.face=sgn(m.x-P.x)||P.face;SFX.slam();haptic(12);
+  G.pops.push({x:P.x,y:P.y-24,s:'DASH!',c:'#c88aff',t:24})}
+function stepDash(){const m=P.target;if(!m||m.st!=='live'||--P.dashT<=0){P.st='air';P.target=null;P.vy=-2;P.vx*=.3;return}
+  const tx=m.x,ty=m.y-m.h*.5+8,dx=tx-P.x,dy=ty-P.y,d=Math.hypot(dx,dy)||1,v=Math.min(DASHV,d);P.vx=dx/d*v;P.vy=dy/d*v;P.face=sgn(dx)||P.face;
+  P.x+=P.vx;P.y+=P.vy;G.fx.push({k:'trail',x:P.x,y:P.y-8,t:10});
+  for(const o of G.mons){if(o.st!=='live'&&o.st!=='stun')continue;if(touch(o)){startCombo(o);return}}}
 function land(p){P.y=p.y;P.lastY=p.y;let v=JUMP,slam=P.st==='slam';
   const sp=G.items.find(i=>i.t==='spring'&&i.plat===p&&Math.abs(P.x-(p.x+i.dx))<9);
   if(sp){v=JUMP*1.7;SFX.spring();sp.boing=12;G.pops.push({x:P.x,y:P.y-22,s:'SPRING!',c:'#e8c8ff',t:40})}
@@ -123,7 +136,7 @@ function stepItems(){for(const i of G.items){if(i.got)continue;if(i.boing>0)i.bo
         if(G.soulBank>=40){G.soulBank-=40;if(P.hp<5){P.hp++;SFX.heart();G.pops.push({x:P.x,y:P.y-28,s:'+1 ♥',c:'#ff8a9a',t:50})}}}}
     if(i.t==='heart'&&Math.abs(P.x-i.x)<9&&Math.abs(P.y-8-i.y)<12){i.got=1;P.hp=Math.min(5,P.hp+1);SFX.heart();G.pops.push({x:P.x,y:P.y-28,s:'+1 ♥',c:'#ff8a9a',t:50})}}}
 function stepShots(){for(const s of G.shots){s.x+=s.vx;s.y+=s.vy;s.life--;if(G.t%3===0)G.fx.push({k:'ember',x:s.x,y:s.y,vx:0,vy:-.2,t:12});
-    if(P.st!=='combo'&&P.st!=='dead'&&Math.abs(s.x-P.x)<6&&s.y>P.y-16&&s.y<P.y+2){s.life=0;hurt(sgn(s.vx)||1)}}
+    if(P.st!=='combo'&&P.st!=='dash'&&P.st!=='dead'&&Math.abs(s.x-P.x)<6&&s.y>P.y-16&&s.y<P.y+2){s.life=0;hurt(sgn(s.vx)||1)}}
   G.shots=G.shots.filter(s=>s.life>0&&s.y<G.camY+H+20)}
 function stepFx(){for(const e of G.fx){e.t--;e.x+=e.vx||0;e.y+=e.vy||0;if(e.k==='chip'||e.k==='dust')e.vy=(e.vy||0)+.08}G.fx=G.fx.filter(e=>e.t>0);
   for(const q of G.pops){q.t--;q.y-=.35}G.pops=G.pops.filter(q=>q.t>0)}

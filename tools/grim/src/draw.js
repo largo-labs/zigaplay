@@ -8,11 +8,11 @@ function drawSword(hx,hy,ang,len=10){const c=Math.cos(ang),s=Math.sin(ang);
   pline(hx+c,hy+s,hx+c*len,hy+s*len,'#d8e2ee');ctx.fillStyle='#ffffff';ctx.fillRect(Math.round(hx+c*len),Math.round(hy+s*len),1,1)}
 /* where the sword points: resting low, and the arc of each slash in a combo */
 const SWING=[[-1.3,1.1],[-.9,.6],[.9,-.7],[-1.6,1.4],[-2.6,3.6]];
-function swordAngle(){if(P.st==='slam')return Math.PI/2;if(P.st==='dead')return .2;
+function swordAngle(){if(P.st==='slam')return Math.PI/2;if(P.st==='dash')return Math.atan2(P.vy,Math.abs(P.vx)+.01);if(P.st==='dead')return .2;
   if(P.slashT>0){const[a,b]=SWING[Math.min(4,P.slashN)],dur=P.slashN>=4?16:P.slashN?11:12,t=1-P.slashT/dur,e=1-(1-t)*(1-t);return a+(b-a)*e}
   return P.vy<0?1.2:.7}
 function drawReaper(){if(P.inv>0&&P.st!=='dead'&&Math.floor(P.inv/4)%2)return;
-  const pose=P.st==='dead'?'dead':P.st==='slam'?'slam':P.st==='hurt'?'hurt':P.slashT>0||P.st==='combo'?'hit':P.vy<0?'up':'fall';
+  const pose=P.st==='dead'?'dead':P.st==='slam'||P.st==='dash'?'slam':P.st==='hurt'?'hurt':P.slashT>0||P.st==='combo'?'hit':P.vy<0?'up':'fall';
   const im=reaperSpr(pose)[P.face<0?1:0],x=Math.round(P.x-8),y=sy(P.y)-20;ctx.drawImage(im,x,y);
   if(P.st==='dead')return;
   const h=HAND[pose]||HAND.up,hx=x+(P.face>0?h[0]:15-h[0]),hy=y+h[1];let a=swordAngle();if(P.face<0)a=Math.PI-a;
@@ -24,6 +24,8 @@ function drawMon(m){const t=m.t,fr=t==='garg'?(m.open>0?1:0):Math.floor((m.f+m.p
   if(m.flash>0||m.st==='dying'&&m.dieT%4<2)im=flashOf(im);
   const x=Math.round(m.x-im.width/2),y=sy(m.y+m.h)-im.height;if(m.st==='dying')ctx.globalAlpha=Math.max(0,m.dieT/26);ctx.drawImage(im,x,y);ctx.globalAlpha=1;
   if(m.st==='dying')return;
+  if(m===G.aim){const r=Math.max(m.w,m.h)+4+(G.t>>3)%2,cx=Math.round(m.x),cy=Math.round(sy(m.y+m.h)-im.height/2);ctx.fillStyle='#c88aff';
+    for(const[dx,dy]of[[-1,-1],[1,-1],[-1,1],[1,1]]){ctx.fillRect(cx+dx*r-(dx>0?2:0),cy+dy*r-(dy>0?0:0),3,1);ctx.fillRect(cx+dx*r-(dx>0?0:0),cy+dy*r-(dy>0?2:0),1,3)}}
   if(m.st==='stun'){for(let i=0;i<3;i++){const a=G.t*.12+i*2.1;ctx.fillStyle='#ffd84a';ctx.fillRect(Math.round(m.x+Math.cos(a)*7),y-3+Math.round(Math.sin(a)*2),1,1)}}
   /* how many combos it still takes: one red pip each; the bar is what is left of the current one */
   const left=Math.ceil(m.hp/6),part=(m.hp%6||6)/6,pw=left*4-1,px=Math.round(m.x-pw/2),py=y-5;
@@ -65,8 +67,8 @@ function drawTitle(){const z=ZONES[0];ctx.drawImage(skyCanvas(z),0,0);ctx.drawIm
   const it=titleItems(),dy=(it.length-3)*12;menuList(it.map(x=>x[1]),G.menu,76);
   if(G.best)txt('BEST '+G.best+'M',W/2,118+dy,'#ffd84a',1,'c',K);
   tiltLine().split('\n').forEach((l,i)=>txt(l,W/2,132+dy+i*10,tiltOK()?'#7af0ff':'#ff9aaa',1,'c',K))}
-const HOWTO=['TILT YOUR PHONE LEFT AND','RIGHT TO STEER (OR HOLD A','SIDE OF THE SCREEN).','YOU BOUNCE ON PLATFORMS','BY YOURSELF. GO UP!','','B: SLAM DOWN. SLAM INTO','A MONSTER TO START A','COMBO, THEN PRESS A 4X.','RED PIPS = COMBOS TO KILL.','','A ALONE: A QUICK SLASH.','SLAM A PLATFORM TO','BOUNCE HIGHER.','FALL OFF OR LOSE YOUR','HEARTS AND YOU DIE.','SELECT: CENTER TILT.'];
-function drawHow(){drawTitleBack();panel(6,10,W-12,H-20);txt('HOW TO PLAY',W/2,16,'#c88aff',1,'c');HOWTO.forEach((s,i)=>txt(s,W/2,28+i*10,s.startsWith('B:')||s.startsWith('A ')?'#ffd84a':'#e8e4ff',1,'c'));txt('B BACK',W/2,H-18,'#8a80b0',1,'c')}
+const HOWTO=['TILT YOUR PHONE LEFT AND','RIGHT TO STEER (OR HOLD A','SIDE OF THE SCREEN).','YOU BOUNCE ON PLATFORMS','BY YOURSELF. GO UP!','','B NEAR A MONSTER: DASH','TO IT. ELSE B SLAMS DOWN.','HIT ONE TO START A','COMBO, THEN PRESS A 4X.','RED PIPS = COMBOS TO KILL.','','A ALONE: A QUICK SLASH.','SLAM A PLATFORM TO','BOUNCE HIGHER.','FALL OFF OR LOSE YOUR','HEARTS AND YOU DIE.','SELECT: CENTER TILT.'];
+function drawHow(){drawTitleBack();panel(6,10,W-12,H-20);txt('HOW TO PLAY',W/2,16,'#c88aff',1,'c');HOWTO.forEach((s,i)=>txt(s,W/2,28+i*10,s.startsWith('B:')||s.startsWith('B ')||s.startsWith('A ')?'#ffd84a':'#e8e4ff',1,'c'));txt('B BACK',W/2,H-18,'#8a80b0',1,'c')}
 function drawTitleBack(){ctx.drawImage(skyCanvas(ZONES[0]),0,0);ctx.drawImage(silCanvas(ZONES[0]),0,H-200)}
 function optItems(){return['STEER: '+{auto:'AUTO',tilt:'TILT',pad:'D-PAD'}[OPT.steer],'TILT: '+SENS[OPT.sens],'CENTER TILT','SOUND: '+(muted?'OFF':'ON'),'VIBRATION: '+(HAP.on?'ON':'OFF'),'BACK']}
 function drawOpts(){drawTitleBack();panel(6,20,W-12,150);txt('OPTIONS',W/2,26,'#c88aff',1,'c');menuList(optItems(),G.menu,44);
