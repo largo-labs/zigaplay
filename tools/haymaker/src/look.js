@@ -12,7 +12,7 @@ const LOOK_OPTS=[
   ['eye','EYES',()=>['#2a1a10','#3a5a2a','#2a4a8a','#6a4a2a','#6a6a7a']],
   ['trunks','TRUNKS',()=>['#1f3a7a','#c8263a','#141018','#2f6b2a','#f4f1ea','#6a2c96','#e8662a','#2bb3a6',...(SAVE.done?['#e5bd4f']:[])]],
   ['trim','TRIM',()=>['#f2c14e','#f4f1ea','#141018','#c8263a','#3ee8ff','#ff3ea5']],
-  ['gloves','GLOVES',()=>['#d8322b','#141018','#f4f1ea','#2a5ac8',...ROSTER.filter(f=>f.id!=='milo'&&SAVE.beaten[f.id]).map(f=>PEOPLE[f.id].gloves)]],
+  ['gloves','GLOVES',()=>[...new Set(['#d8322b','#141018','#f4f1ea','#2a5ac8',...ROSTER.filter(f=>f.id!=='milo'&&SAVE.beaten[f.id]).map(f=>PEOPLE[f.id].gloves)])]],
   ['tattoo','TATTOO',()=>['none','anchor','flame','wings','tiger','stars','EMBER',...(SAVE.done?['crown']:[])]],
   ['nick','NICKNAME',()=>['THE SPARK','KID BRASS','ANCHOR','HAYMAKER','DOCKSIDE','IRON','THE TIDE','RUSTY']]];
 function applyLook(){SAVE.look=Object.assign({},LOOK_DEF,SAVE.look||{});if(SAVE.look.nick==='THE BELL')SAVE.look.nick='THE SPARK';if(SAVE.look.tattoo==='bell')SAVE.look.tattoo='flame';const m=PEOPLE.milo;Object.assign(m,SAVE.look);m.stubble=null}

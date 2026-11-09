@@ -1,9 +1,9 @@
 /* ================= the loop, saving, the console ================= */
 const SCREENS={title:[titleTick,titleDraw],select:[selectTick,selectDraw],ladder:[ladderTick,ladderDraw],vsintro:[vsTick,vsDraw],fight:[fightTick,fightDraw],
-  pause:[pauseTick,pauseDraw],result:[resultTick,resultDraw],champ:[champTick,champDraw],moves:[movesTick,movesDraw],settings:[settingsTick,settingsDraw],locker:[lockerTick,lockerDraw]};
+  pause:[pauseTick,pauseDraw],result:[resultTick,resultDraw],champ:[champTick,champDraw],moves:[movesTick,movesDraw],settings:[settingsTick,settingsDraw],locker:[lockerTick,lockerDraw],tiers:[tiersTick,tiersDraw]};
 /* the right song for the screen: the venue's own in a fight */
 function songFor(){if(['fight','pause','vsintro'].includes(SCR)||SCR==='moves'&&MV.back==='pause')return M?VENUES[M.venue].song:'title';
-  if(SCR==='result')return null;if(SCR==='champ')return'crown';if(['select','ladder','locker'].includes(SCR))return'corner';return'title'}
+  if(SCR==='result')return null;if(SCR==='champ')return'crown';if(['select','ladder','locker','tiers'].includes(SCR))return'corner';return'title'}
 function step(dt){TT+=dt;SCREENS[SCR][0](dt);if(MSG&&(MSG.t-=dt)<=0)MSG=null;
   if(AC&&AC.state==='running'){const want=songFor();if(want===null){if(MUS.on)music(false)}else if(!MUS.on||MUS.song!==want)music(true,want)}}
 function draw(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.lineCap='round';ctx.lineJoin='round';SCREENS[SCR][1]();ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -14,7 +14,7 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,Math.max(0,
 const DEF={cpu:3,rounds:3,time:60,beaten:{},wins:0,losses:0,tower:null,match:null,cleared:{}};
 for(const k in DEF)if(SAVE[k]===undefined)SAVE[k]=DEF[k];
 delete SAVE.fight;delete SAVE.step;delete SAVE.pos;
-const inMatch=()=>M&&!M.res&&M.ph!=='done'&&(['fight','pause','vsintro'].includes(SCR)||SCR==='moves'&&MV.back==='pause');
+const inMatch=()=>M&&!M.train&&!M.res&&M.ph!=='done'&&(['fight','pause','vsintro'].includes(SCR)||SCR==='moves'&&MV.back==='pause');
 saveHook=()=>{if(inMatch()){
     SAVE.match={mode:M.mode,p1:M.p1,p2:M.p2,venue:M.venue,lvl:M.lvl,bestOf:M.bestOf,rw:M.rw.slice(),rd:M.rd,hp:M.ph==='fight'?M.F.map(f=>Math.max(f.max*.2,Math.round(f.hp))):null}}
   else if(M&&M.res)SAVE.match=null;
