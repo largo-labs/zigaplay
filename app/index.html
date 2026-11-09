@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ZigaPlay</title>
-<meta name="zigaplay-offline-build" content="2026-11-09 21:20 UTC">
+<meta name="zigaplay-offline-build" content="2026-11-09 21:23 UTC">
 <meta name="theme-color" content="#0d1222">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -245,46 +245,6 @@ html.touchgame #power{position:fixed;z-index:60;left:0;top:50%;transform:transla
   background:rgba(10,12,20,.55);color:rgba(255,255,255,.75);border-radius:0 10px 10px 0;font-size:7px;letter-spacing:.08em;writing-mode:vertical-rl}
 @media (orientation:portrait){html.touchgame #power{left:50%;top:0;transform:translateX(-50%);writing-mode:horizontal-tb;flex-direction:row;padding:4px 10px 5px;border-radius:0 0 10px 10px}}
 html.touchgame .ask{position:fixed;z-index:70;left:50%;right:auto;top:50%;bottom:auto;width:min(86vw,360px);transform:translate(-50%,-50%)}
-/* ---------- fullscreen: no console around the game ----------
-   VIEW (top of the SELECT screen) is the console, FULLSCREEN VERTICAL or FULLSCREEN HORIZONTAL. Fullscreen drops the
-   handheld: the game runs edge to edge on black, like a phone game.
-   Vertical: the game fills the top of the phone and the controls sit in a plain strip under it, so nothing covers it.
-   Horizontal: the game fills the whole phone and the D-pad, A and B float over its lower corners half see-through;
-   the power tab sits above the D-pad and SELECT and START above A and B. On the shelf the controls keep to side
-   columns. Each view turns a quarter turn when the phone is held the other way, like an orientation lock (never on a
-   computer). --fs-* are the phone's safe areas, turned with the view. */
-html.full,html.full body{background:#000}
-html.full body{padding:0;overflow:hidden}
-html.full #zp{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;max-width:none;padding:0;transform:none}
-html.full.fullturn #zp{left:50%;top:50%;width:var(--zw);height:var(--zh);transform:translate(-50%,-50%) rotate(90deg)}
-html.full .console{position:absolute;inset:0;display:block;padding:0;border:0;border-radius:0;background:#000;box-shadow:none}
-html.full .console::before,html.full .console::after{display:none}
-html.full .brand,html.full .grille,html.full .skinfx,html.full .model,html.full .bezel .stripes,html.full .bezel .led,html.full .bezel .ledlbl{display:none}
-html.full .topedge{display:contents}
-html.full .console .bezel{position:absolute;inset:0;padding:var(--fs-t) var(--fs-r) var(--fs-b) var(--fs-l);border-radius:0;background:#000;box-shadow:none}
-html.full .console .screen{border:0;border-radius:0}
-html.full .controls{position:absolute;inset:0;height:auto;z-index:40;pointer-events:none}
-html.full .dpad,html.full .stick,html.full .ab,html.full .pills,html.full #power{pointer-events:auto}
-html.full .pills{transform:none;gap:2px}
-html.full .pill{color:rgba(255,255,255,.75)}
-html.full #power{position:absolute;z-index:60;display:flex;gap:6px;padding:4px 10px 5px;border-radius:10px;background:rgba(255,255,255,.08);
-  color:rgba(255,255,255,.7);font-size:8px;letter-spacing:.1em;transform:none}
-/* vertical: a strip under the game */
-html.full.fport .console .bezel{padding-bottom:calc(178px + var(--fs-b))}
-html.full.fport .dpad,html.full.fport .stick{left:calc(10px + var(--fs-l));top:auto;bottom:calc(36px + var(--fs-b));zoom:.84}
-html.full.fport .ab{right:calc(4px + var(--fs-r));top:auto;bottom:calc(48px + var(--fs-b));zoom:.84}
-html.full.fport .pills{left:50%;bottom:calc(2px + var(--fs-b));transform:translateX(-50%)}
-html.full.fport #power{left:50%;bottom:calc(150px + var(--fs-b));transform:translateX(-50%)}
-/* horizontal: over the game */
-html.full.fland .dpad,html.full.fland .stick{left:calc(14px + var(--fs-l));top:auto;bottom:calc(12px + var(--fs-b));zoom:.74}
-html.full.fland .ab{right:calc(8px + var(--fs-r));top:auto;bottom:calc(16px + var(--fs-b));zoom:.74}
-html.full.fland .pills{left:auto;right:calc(4px + var(--fs-r));bottom:calc(112px + var(--fs-b))}
-html.full.fland .pill{width:54px}
-html.full.fland #power{left:calc(10px + var(--fs-l));bottom:calc(122px + var(--fs-b))}
-html.full.fland.fgame .dpad,html.full.fland.fgame .stick,html.full.fland.fgame .ab,html.full.fland.fgame .pills,html.full.fland.fgame #power{opacity:.42}
-html.full.fland:not(.fgame) .console .bezel{padding-left:calc(126px + var(--fs-l));padding-right:calc(126px + var(--fs-r))}
-html.full #power .sw{transform:scale(.8)}
-html.full .ask{position:absolute;z-index:70;left:50%;right:auto;top:50%;bottom:auto;width:min(86%,360px);transform:translate(-50%,-50%)}
 /* ---------- skins ----------
    A skin is a set of the tokens above, sometimes an LCD tint and a printed edition name, and for the live and game
    skins a layer of moving decoration (.skinfx) that sits on the body behind every control. The decoration only
@@ -601,8 +561,8 @@ html.wide .keylist .cap{line-height:15px;font-size:12px;min-width:22px}
           <div class="lcd-help" id="storeHelp"></div>
         </div>
         <div class="lcd" id="skins" hidden>
-          <div class="lcd-top"><b>VIEW &amp; SKINS</b><span id="skinPos"></span></div>
-          <div class="skinlist" id="skinList" role="listbox" aria-label="View and console skins"></div>
+          <div class="lcd-top"><b>SKINS</b><span id="skinPos"></span></div>
+          <div class="skinlist" id="skinList" role="listbox" aria-label="Console skins"></div>
           <div class="lcd-help"><span><i>▲▼</i> CHOOSE</span><span><i>A</i> WEAR</span><span><i>B</i> BACK</span></div>
         </div>
         <div class="lcd" id="keys" hidden>
@@ -758,10 +718,7 @@ const CARTS=[
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf. On this offline ZigaPlay, get a fresh copy of the offline edition after that.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
 const SKINS=[
-  {id:'view-console',name:'Console',view:'console',group:'VIEW',sw:['#d2cec3','#a8265e']},
-  {id:'view-v',name:'Fullscreen · vertical',view:'v',sw:['#05060a','#f4f4f4']},
-  {id:'view-h',name:'Fullscreen · horizontal',view:'h',sw:['#05060a','#ffd84a']},
-  {id:'auto',name:'Match the game',tag:'AUTO',group:'SKINS',sw:['#2e377e','#d26c2c']},
+  {id:'auto',name:'Match the game',tag:'AUTO',sw:['#2e377e','#d26c2c']},
   {id:'lynties',name:'Lynties',tag:'GAME',group:'GAME SKINS',ed:'LYNTIES EDITION',sw:['#2e377e','#ffc83a']},
   {id:'chipcity',name:'Chip City',tag:'GAME',ed:'CHIP CITY EDITION',sw:['#1a6c3e','#d8262e']},
   {id:'drownedmoon',name:'Hammer Fall',tag:'GAME',ed:'HAMMER FALL EDITION',sw:['#141a3a','#d8342a']},
@@ -875,21 +832,17 @@ const STORETILE={id:'#store',libtile:true,store:true,title:'Store',note:'A open 
 const items=()=>[...homeCarts(),STORETILE,LIBTILE,GHOST];
 const cartWin=()=>{try{return frame&&frame.contentWindow}catch(e){return null}};
 /* ---------- skins: what the player picked (skinChoice), and what the console wears right now ---------- */
-let skinChoice=SKIN[store.get('shell','classic')]&&!SKIN[store.get('shell','classic')].view?store.get('shell','classic'):'classic',skinTouched=false,skinUI=null;
-/* the view: the console around the game, or fullscreen (vertical or horizontal) */
-let VIEW=['console','v','h'].includes(store.get('view','console'))?store.get('view','console'):'console',viewTouched=false;
-function setView(v){VIEW=v;viewTouched=true;store.set('view',v);applyLayout();saveConsoleDoc()}
+let skinChoice=SKIN[store.get('shell','classic')]?store.get('shell','classic'):'classic',skinTouched=false,skinUI=null;
 const fxEl=document.createElement('div');fxEl.className='skinfx';fxEl.setAttribute('aria-hidden','true');consoleEl.prepend(fxEl);
 function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:state==='store'&&storeUI?storeCur():items()[sel]);return c&&c.skin&&SKIN[c.skin]?c.skin:'classic'}
-function wearSkin(id){if(SKIN[id]&&SKIN[id].view)id=skinChoice;if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
+function wearSkin(id){if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
   consoleEl.dataset.shell=id;fxEl.dataset.on=id;fxEl.className='skinfx fx-'+id;fxEl.innerHTML=SKINFX[id]?SKINFX[id]():'';$('#edition').textContent=SKIN[id].ed||'POCKET CONSOLE'}
 function refreshSkin(){if(state!=='skins')wearSkin(skinChoice)}
 function chooseSkin(id){skinChoice=id;skinTouched=true;store.set('shell',id);wearSkin(id);saveConsoleDoc()}
-function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoice,view:VIEW,lib:libPlace,at:Date.now()}),{shell:skinChoice})}catch(e){}}
+function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoice,lib:libPlace,at:Date.now()}),{shell:skinChoice})}catch(e){}}
 /* the skin is kept in the player's account too, so it comes back when the phone has wiped this page's storage */
 async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r.ok||!r.json||skinTouched)return;
-  const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&!SKIN[o.shell].view&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}
-  if(o&&['console','v','h'].includes(o.view)&&o.view!==VIEW&&!viewTouched){VIEW=o.view;store.set('view',VIEW);applyLayout()}
+  const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}
   if(o&&o.lib&&typeof o.lib==='object'&&!libTouched&&JSON.stringify(o.lib)!==JSON.stringify(libPlace)){libPlace=o.lib;store.set('lib',libPlace);
     if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib();else if(state==='store'&&storeUI)renderStore()}}catch(e){}}
 wearSkin(skinChoice);
@@ -910,7 +863,7 @@ function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();se
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
   const ni=installed().length;$('#count').textContent=`${ni} GAME${ni===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
-function homeHelp(){$('#homeHelp').innerHTML=editing?'<span><i>A</i> ADD TO LIBRARY</span><span><i>START</i> DONE</span>':'<span><i>A</i> PLAY</span><span><i>START</i> EDIT</span><span><i>SELECT</i> VIEW</span>'}
+function homeHelp(){$('#homeHelp').innerHTML=editing?'<span><i>A</i> ADD TO LIBRARY</span><span><i>START</i> DONE</span>':'<span><i>A</i> PLAY</span><span><i>START</i> EDIT</span><span><i>SELECT</i> SKINS</span>'}
 function markEdit(){$('#home').classList.toggle('editing',editing);$('#editBtn').textContent=editing?'DONE':'EDIT';homeHelp();
   const c=items()[sel],can=editing&&c&&!c.ghost&&!c.libtile;$('#libAct').hidden=!can}
 function setEditing(on){if(state!=='home')return;if(on===editing)return;editing=on;SFX[on?'pick':'eject']();markEdit();layoutShelf()}
@@ -1011,14 +964,6 @@ function applyLayout(){const de=document.documentElement,vv=window.visualViewpor
   /* on a PC (mouse and keyboard) the console never turns itself a quarter turn: a window is not a phone you can rotate.
      A touch game is never turned and never wide: it fills the whole screen */
   const pc=matchMedia('(hover:hover) and (pointer:fine)').matches,turned=wideGame&&!land&&!pc&&!touchGame,wide=!touchGame&&(turned||(wideGame&&pc)||(land&&(H<=600||wideGame)));
-  /* fullscreen view: the game fills the phone, turned a quarter turn if the phone is held the other way */
-  const full=VIEW!=='console'&&!touchGame;de.classList.toggle('full',full);
-  if(full){const fl=pc?land:VIEW==='h',ft=!pc&&fl!==land;de.classList.toggle('fullturn',ft);de.classList.toggle('fland',fl);de.classList.toggle('fport',!fl);de.classList.toggle('fgame',!!cur);
-    de.classList.remove('wide','turned','touchgame');de.style.setProperty('--zw',(ft?H:W)+'px');de.style.setProperty('--zh',(ft?W:H)+'px');
-    const m=ft?{t:'right',r:'bottom',b:'left',l:'top'}:{t:'top',r:'right',b:'bottom',l:'left'};for(const k in m)de.style.setProperty('--fs-'+k,`env(safe-area-inset-${m[k]},0px)`);
-    consoleEl.classList.toggle('stickmode',!!(cur&&cur.stick));consoleEl.classList.toggle('face4',!!(cur&&cur.face4));consoleEl.classList.remove('widegame');
-    if(!$('#home').hidden)requestAnimationFrame(layoutShelf);return}
-  de.classList.remove('fullturn','fland','fport','fgame');
   de.classList.toggle('wide',wide);de.classList.toggle('turned',turned);de.classList.toggle('touchgame',touchGame);
   /* the console's own width and height (a turned console is the screen's height wide), and how big its controls can be:
      the columns must hold the D-pad (or stick) and A and B */
@@ -1088,7 +1033,7 @@ function openSkins(){if(state!=='home')return;if(editing){editing=false;markEdit
 function renderSkins(){const L=$('#skinList');L.innerHTML='';
   SKINS.forEach((k,n)=>{if(k.group){const h=document.createElement('div');h.className='head';h.textContent=k.group;L.append(h)}
     const b=document.createElement('button');b.className='row';b.tabIndex=-1;b.setAttribute('role','option');
-    b.innerHTML=`<i class="sw" style="--s1:${k.sw[0]};--s2:${k.sw[1]}"></i><span></span><em>${k.view?(k.view===VIEW?'ON':''):k.tag||''}</em>`;b.querySelector('span').textContent=k.name.toUpperCase();
+    b.innerHTML=`<i class="sw" style="--s1:${k.sw[0]};--s2:${k.sw[1]}"></i><span></span><em>${k.tag||''}</em>`;b.querySelector('span').textContent=k.name.toUpperCase();
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='skins')return;if(skinUI.i===n)keepSkin();else{skinUI.i=n;markSkins();SFX.tick()}});L.append(b)});
   markSkins()}
 function markSkins(){const rows=$$('#skinList .row'),L=$('#skinList');rows.forEach((r,n)=>r.setAttribute('aria-selected',String(n===skinUI.i)));
@@ -1100,7 +1045,7 @@ function skinsInput(b){if(!skinUI)return;
   else if(b==='down'||b==='right'){if(skinUI.i<SKINS.length-1){skinUI.i++;markSkins();SFX.tick()}else SFX.buzz()}
   else if(b==='a'||b==='start'||b==='select')keepSkin();
   else if(b==='b')closeSkins(false)}
-function keepSkin(){const k=SKINS[skinUI.i];if(k.view){closeSkins(true);setView(k.view);toast('VIEW: '+k.name.toUpperCase());return}chooseSkin(k.id);closeSkins(true);toast('SKIN: '+k.name.toUpperCase())}
+function keepSkin(){const k=SKINS[skinUI.i];chooseSkin(k.id);closeSkins(true);toast('SKIN: '+k.name.toUpperCase())}
 function closeSkins(kept){if(!kept)SFX.eject();skinUI=null;state='home';show('home');wearSkin(skinChoice);requestAnimationFrame(layoutShelf)}
 
 
@@ -1196,7 +1141,7 @@ const dpad=$('#dpad');let dpadDir=null;
 function setDpad(d){if(d===dpadDir)return;if(dpadDir)releaseBtn(dpadDir);dpadDir=d;
   dpad.dataset.d=d||'';for(const k of['u','d','l','r'])dpad.querySelector('.ar.'+k).classList.toggle('on',d&&d[0]===k);if(d)pressBtn(d)}
 function dpadAt(e){const r=dpad.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
-  if(/\b(turned|fullturn)\b/.test(document.documentElement.className))[dx,dy]=[dy,-dx];
+  if(document.documentElement.classList.contains('turned'))[dx,dy]=[dy,-dx];
   if(Math.hypot(dx,dy)<9)return dpadDir;return Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')}
 dpad.addEventListener('pointerdown',e=>{e.preventDefault();try{dpad.setPointerCapture(e.pointerId)}catch(_){}setDpad(dpadAt(e))});
 dpad.addEventListener('pointermove',e=>{if(dpad.hasPointerCapture&&dpad.hasPointerCapture(e.pointerId))setDpad(dpadAt(e))});
@@ -1212,7 +1157,7 @@ function stickSet(nx,ny){const on=d=>stickDirs.has(d),want=new Set();
   for(const d of want)if(!stickDirs.has(d)){stickDirs.add(d);pressBtn(d)}
   for(const k of['u','d','l','r'])stick.querySelector('.notch.'+k).classList.toggle('on',[...stickDirs].some(d=>d[0]===k))}
 function stickAt(e){const r=stick.getBoundingClientRect(),z=r.width/138||1;let dx=(e.clientX-(r.left+r.width/2))/z,dy=(e.clientY-(r.top+r.height/2))/z;
-  if(/\b(turned|fullturn)\b/.test(document.documentElement.className))[dx,dy]=[dy,-dx];
+  if(document.documentElement.classList.contains('turned'))[dx,dy]=[dy,-dx];
   const d=Math.hypot(dx,dy),k=d>STICK_R?STICK_R/d:1;dx*=k;dy*=k;
   knob.style.transform=`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`;stickSet(dx/STICK_R,dy/STICK_R);toCartStick(dx/STICK_R,dy/STICK_R)}
 function stickEnd(e){if(e&&e.pointerId!==stickId)return;stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stickSet(0,0);toCartStick(0,0)}
