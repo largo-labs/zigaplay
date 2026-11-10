@@ -458,10 +458,20 @@ body::before{content:"";position:fixed;inset:-50% 0 0;pointer-events:none;z-inde
 #btnMenu{position:relative}
 #btnMenu.dirty::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--coral);border:2px solid var(--line)}
 .tile.unsaved small{color:var(--coral)}
+/* stat changes beside the name, and a warning pulse on low HP */
+.hud .stg{display:flex;gap:3px;flex:0 0 auto;font-family:var(--ui);font-size:9px;font-weight:700;letter-spacing:.02em}
+.hud .stg i{font-style:normal;border-radius:3px;padding:1px 3px;background:#05081a}
+.hud .stg .up{color:#7be08a}.hud .stg .dn{color:#ff7a7a}
+#hudMe.low{animation:lowhp 1s ease-in-out infinite}
+@keyframes lowhp{50%{box-shadow:0 0 0 2px #ff5a5a,0 3px 0 rgba(5,8,26,.55)}}
+@media (prefers-reduced-motion:reduce){#hudMe.low{animation:none;box-shadow:0 0 0 2px #ff5a5a}}
 /* ---------- inside the ZigaPlay console ---------- */
 .zp #app{max-width:none;padding:4px 6px 6px;gap:4px}
 .zp #pad{display:none}
-.zp #controls{height:184px}
+.zp #controls{height:168px}
+/* B backs out of the move list, so the Back button gives its row to the moves */
+.zp .mv.back{display:none}
+.zp #bmoves{grid-template-rows:1fr 1fr}
 .zp .act{padding:4px 12px}
 .zp #bmsg{flex-basis:50px;font-size:15px}
 .zp #top{min-height:22px;gap:5px}
@@ -515,12 +525,12 @@ body::before{content:"";position:fixed;inset:-50% 0 0;pointer-events:none;z-inde
       <div id="regionToast"></div>
       <canvas id="mini" width="30" height="40" hidden aria-label="Mini map. Tap to open the full map."></canvas>
       <div id="hudFoe" class="hud" hidden>
-        <div class="hrow"><span class="nm" id="fName"></span><span class="own" id="fOwn" title="Already bonded">◆</span><span class="lv" id="fLv"></span></div>
+        <div class="hrow"><span class="nm" id="fName"></span><span class="own" id="fOwn" title="Already bonded">◆</span><span class="stg" id="fStg"></span><span class="lv" id="fLv"></span></div>
         <div class="hrow"><span class="chip" id="fEl"></span><div class="bar hpbar"><b id="fLag"></b><i id="fHp"></i></div></div>
         <div class="party" id="pFoe" role="img"></div>
       </div>
       <div id="hudMe" class="hud" hidden>
-        <div class="hrow"><span class="nm" id="mName"></span><span class="lv" id="mLv"></span></div>
+        <div class="hrow"><span class="nm" id="mName"></span><span class="stg" id="mStg"></span><span class="lv" id="mLv"></span></div>
         <div class="hrow"><span class="chip" id="mEl"></span><div class="bar hpbar"><b id="mLag"></b><i id="mHp"></i></div></div>
         <div class="hrow"><span class="hpn" id="mHpN"></span></div>
         <div class="xp"><i id="mXp"></i></div>
@@ -619,12 +629,14 @@ if(ZP)document.documentElement.classList.add('zp');
 /* ================= helpers ================= */
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* BT scales every wait and animation while a battle runs (the Battle speed setting) */
+let BT=1;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms*BT));
 const rnd=Math.random,pick=a=>a[(rnd()*a.length)|0],ri=(a,b)=>a+((rnd()*(b-a+1))|0);
 function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
-function tween(ms,fn){return new Promise(res=>{const t0=performance.now();const step=now=>{const t=Math.min(1,(now-t0)/ms);fn(t);if(t<1)requestAnimationFrame(step);else res()};requestAnimationFrame(step)})}
+function tween(ms,fn){ms*=BT;return new Promise(res=>{const t0=performance.now();const step=now=>{const t=Math.min(1,(now-t0)/ms);fn(t);if(t<1)requestAnimationFrame(step);else res()};requestAnimationFrame(step)})}
 
 /* ================= music + sound =================
    Every track is an original composition, written here as notes and synthesized live with Web Audio.
@@ -5480,6 +5492,7 @@ function openMenu(){openSheet({title:'Menu',render:body=>{
   sn.onclick=async()=>{const before=saveName(SLOT,S);SLOT=newSlotId();S.saveNo=nextSaveNo();writeSave();toast('Saving…');await cloudFlush();toast(`Saved as ${saveName(SLOT,S)}. ${before} stays as it was.`);drawSheet()};g.append(sn);
   const tt=tile('tile',`<b>Title screen</b><small>${dirty?'Asks you to save first':'Your progress is saved'}</small>`,'title','#9aa9d0');tt.onclick=()=>toTitle();g.append(tt);
   const sc=tile('tile','<b>Save code</b><small>Move this game to another ZigaPlay</small>','code','#7fe0d8');sc.onclick=saveCodeView;g.append(sc);
+  const bs=tile('tile wide',`<b>Battle speed</b><small>${BFAST?'Fast: battles play at double speed':'Normal'}</small>`,'chart','#ff7a5c');bs.onclick=()=>{setBFast(!BFAST);drawSheet()};g.append(bs);
   const so=tile('tile wide',`<b>Music and sound</b><small>${MUS.on?'On':'Off'}</small>`,'sound','#f1c66b');so.onclick=()=>{MUS.toggle();sndLabel();drawSheet()};g.append(so);
   body.append(g)}})}
 /* ---------- save codes ---------- */
@@ -5752,6 +5765,14 @@ async function champTalk(){const who='Champion Wren';
 
 /* ================= battle ================= */
 let B=null;
+/* battle speed: kept on the device, apart from the save */
+let BFAST=(()=>{try{return localStorage.getItem('lynties-bspeed')==='fast'}catch(e){return false}})();
+function setBFast(v){BFAST=!!v;try{localStorage.setItem('lynties-bspeed',BFAST?'fast':'normal')}catch(e){}if(B)BT=BFAST?.5:1}
+/* how likely a charm is to bond the Lynty in front of you */
+function bondChance(item){const f=B.foe,s=SP[f.sp],rate=(s.leg?.1:[.9,.5,.28][s.stage]*(s.rare?.75:1))*({star:1.6,nova:2.5}[item]||1);
+  return item==='crown'?1:clamp(rate*(1-.72*f.hp/stats(f).hp)+.04,.04,.97)}
+const bondWord=c=>c>=.97?'Certain':c>=.7?'Great':c>=.45?'Good':c>=.25?'Fair':c>=.12?'Low':'Very low';
+const stgTxt=s=>[['ATK',s.a],['DEF',s.d]].filter(x=>x[1]).map(([n,v])=>`<i class="${v>0?'up':'dn'}">${n}${v>0?'+':''}${v}</i>`).join('');
 const mkO=()=>({dx:0,dy:0,scale:1,hide:false,flash:false,sink:0,white:0});
 const cur=()=>S.team[B.me];
 const stg=s=>s>=0?(2+s)/2:2/(2-s);
@@ -5767,13 +5788,13 @@ function setHp(k,f){const i=$('#'+k+'Hp'),lag=$('#'+k+'Lag'),w=f*100;i.style.wid
   const cur=parseFloat(lag.style.width);if(isNaN(cur)||w>=cur-.01){lag.style.transition='none';lag.style.width=w+'%';void lag.offsetWidth;lag.style.transition=''}else lag.style.width=w+'%'}
 function updateHUD(){if(!B)return;updateParty();const f=B.foe,fs=stats(f),ff=f.hp/fs.hp;
   $('#fName').textContent=nmOf(f)+(f.shiny?' ✦':'');$('#hudFoe').classList.toggle('leg',!!SP[f.sp].leg);$('#fLv').textContent='Lv'+f.lvl;const fe=$('#fEl');fe.textContent=EL[SP[f.sp].el].n;fe.style.background=EL[SP[f.sp].el].c;
-  $('#fOwn').hidden=!(!B.trainer&&S.caught[f.sp]);setHp('f',ff);$('#hudFoe').style.setProperty('--hc',EL[SP[f.sp].el].c);
+  $('#fOwn').hidden=!(!B.trainer&&S.caught[f.sp]);setHp('f',ff);$('#fStg').innerHTML=stgTxt(B.st.foe);$('#mStg').innerHTML=B.me<0?'':stgTxt(B.st.me);$('#hudFoe').style.setProperty('--hc',EL[SP[f.sp].el].c);
   if(B.me<0)return;const m=cur(),ms=stats(m),mf=m.hp/ms.hp;
   $('#mName').textContent=nmOf(m)+(m.shiny?' ✦':'');$('#mLv').textContent='Lv'+m.lvl;const me=$('#mEl');me.textContent=EL[SP[m.sp].el].n;me.style.background=EL[SP[m.sp].el].c;
-  setHp('m',mf);$('#hudMe').style.setProperty('--hc',EL[SP[m.sp].el].c);$('#mHpN').textContent=`${m.hp}/${ms.hp}`;$('#mXp').style.width=(m.lvl>=MAXL?100:Math.min(100,m.xp/need(m.lvl)*100))+'%'}
+  $('#hudMe').classList.toggle('low',m.hp>0&&mf<=.25);setHp('m',mf);$('#hudMe').style.setProperty('--hc',EL[SP[m.sp].el].c);$('#mHpN').textContent=`${m.hp}/${ms.hp}`;$('#mXp').style.width=(m.lvl>=MAXL?100:Math.min(100,m.xp/need(m.lvl)*100))+'%'}
 function bmsgSet(t){$('#bmsg').textContent=t}
 async function bmsg(text,hold=900){const t=typer($('#bmsg'),text);advanceFn=()=>t.finish();await t.done;
-  await new Promise(r=>{const to=setTimeout(()=>{advanceFn=null;r()},hold);advanceFn=()=>{clearTimeout(to);advanceFn=null;r()}})}
+  await new Promise(r=>{const to=setTimeout(()=>{advanceFn=null;r()},hold*BT);advanceFn=()=>{clearTimeout(to);advanceFn=null;r()}})}
 async function vsSplash(t,sub,noVs){const v=$('#vs'),el2=t.el?EL[t.el].c:t.id==='wren'?'#e0b84a':'#ff7a5c';
   $('#vsName').textContent=t.name;$('#vsSub').textContent=sub||(t.id==='wren'?'Champion':WARD.includes(t)?'Warden':'Trainer');v.querySelector('.vs-x').hidden=!!noVs;
   v.style.setProperty('--vc',el2);v.style.setProperty('--vd',mix(el2,'#1b1430',.35));v.hidden=false;
@@ -5781,7 +5802,7 @@ async function vsSplash(t,sub,noVs){const v=$('#vs'),el2=t.el?EL[t.el].c:t.id===
   MUS.sfx('spot');await sleep(1150);v.hidden=true}
 async function runBattle(o){
   if(!canFight()){await talk(['Your Lynties are too worn out to battle!','Heal them at a Trading Post, or bring a rested Lynty from the Den.']);return 'none'}
-  mode='battle';held.clear();running=false;
+  mode='battle';held.clear();running=false;BT=BFAST?.5:1;
   const foes=o.wild?[o.wild]:o.team;
   B={legend:!!o.legend,altar:!!o.altar,boss:!!(o.trainer&&(WARD.includes(o.trainer)||o.trainer===CHAMP)),nums:[],shake:0,trainer:o.trainer||null,foes,fi:0,foe:foes[0],me:S.team.findIndex(m=>m.hp>0),bgKey:o.reg.bg,st:{me:{a:0,d:0},foe:{a:0,d:0}},part:new Set(),evos:new Set(),o:{me:mkO(),foe:mkO()},fx:[],amb:[],bolts:[],rings:[],charm:null,shown:false,over:false,result:null,runs:0};
   B.part.add(cur().uid);seenMark(B.foe.sp);
@@ -5834,13 +5855,14 @@ function showMoves(done){const acts=$('#bacts'),mv=$('#bmoves');acts.hidden=true
   const m=cur(),fe=SP[B.foe.sp].el,known=S.seen[B.foe.sp];
   m.moves.forEach(id=>{const x=MV[id],k=x.p?mult(x.el,fe):1;
     const b=el('button','mv',`<span class="mvn">${x.n}</span><span class="mvm">${chipH(x.el)}<em>${x.p?'<small class="pw">PWR</small> '+x.p:FXD[x.fx]}</em>${known&&k>1?'<span class="eff up">Strong</span>':known&&k<1?'<span class="eff dn">Weak</span>':''}</span>`);
-    b.style.setProperty('--el',EL[x.el].c);b.onclick=()=>done({t:'move',id});mv.append(b)});
+    b.style.setProperty('--el',EL[x.el].c);b.dataset.mv=id;b.onclick=()=>{(B.last||(B.last={}))[m.uid]=id;done({t:'move',id})};mv.append(b)});
   for(let i=m.moves.length;i<4;i++)mv.append(el('span',''));
-  const back=el('button','mv back','Back');back.onclick=()=>{mv.hidden=true;acts.hidden=false;acts.querySelector('button').focus({preventScroll:true})};mv.append(back);
-  mv.querySelector('button').focus({preventScroll:true})}
+  const back=el('button','mv back','Back');back.onclick=()=>{mv.hidden=true;acts.hidden=false;bmsgSet(`What will ${nmOf(cur())} do?`);acts.querySelector('button').focus({preventScroll:true})};mv.append(back);
+  bmsgSet(ZP?'Choose a move. B goes back.':'Choose a move.');
+  (mv.querySelector(`button[data-mv="${B.last&&B.last[m.uid]}"]`)||mv.querySelector('button')).focus({preventScroll:true})}
 function battleBag(done){openSheet({title:'Inventory',render:body=>{
   for(const k of Object.keys(ITEMS)){const it=ITEMS[k],n=S.bag[k]||0,note=it.kind==='charm'&&B.trainer?'Charms only work on wild Lynties.':it.kind==='level'?'Use this outside of battle.':null;
-    const b=itemRow(k,n,note);b.disabled=n<=0||!!note;
+    const b=itemRow(k,n,note||(it.kind==='charm'&&n>0?`Bond chance: ${bondWord(bondChance(k))}. ${B.foe.hp<stats(B.foe).hp*.35?'':'Weaken it first for better odds.'}`:null));b.disabled=n<=0||!!note;
     b.onclick=async()=>{if(it.kind==='charm'){closeSheetAll();done({t:'charm',item:k});return}
       if(it.kind==='teamheal'){closeSheetAll();done({t:'item',item:k,idx:-1});return}
       const idx=await pickTeam({title:`Use ${it.n} on…`,filter:m=>it.kind==='revive'?m.hp<=0:(m.hp>0&&m.hp<stats(m).hp)});
@@ -5860,9 +5882,9 @@ async function useMove(side,id){
   await lunge(side);
   if(rnd()*100>=x.acc){await bmsg('It missed!',700);return}
   if(x.fx){
-    if(x.fx==='atkUp'){if(aS.a>=3){await bmsg("Its attack can't go any higher.",700);return}aS.a++;burst(side,'buff',16);MUS.sfx('buff');await bmsg(`${label(side)}'s attack rose!`,700)}
-    else if(x.fx==='defUp'){if(aS.d>=3){await bmsg("Its defense can't go any higher.",700);return}aS.d++;burst(side,'buff',16);MUS.sfx('buff');await bmsg(`${label(side)}'s defense rose!`,700)}
-    else{if(dS.a<=-3){await bmsg("Its attack can't go any lower.",700);return}dS.a--;burst(other,'shadow',10);await bmsg(`${label(other)}'s attack fell!`,700)}
+    if(x.fx==='atkUp'){if(aS.a>=3){await bmsg("Its attack can't go any higher.",700);return}aS.a++;updateHUD();burst(side,'buff',16);MUS.sfx('buff');await bmsg(`${label(side)}'s attack rose!`,700)}
+    else if(x.fx==='defUp'){if(aS.d>=3){await bmsg("Its defense can't go any higher.",700);return}aS.d++;updateHUD();burst(side,'buff',16);MUS.sfx('buff');await bmsg(`${label(side)}'s defense rose!`,700)}
+    else{if(dS.a<=-3){await bmsg("Its attack can't go any lower.",700);return}dS.a--;updateHUD();burst(other,'shadow',10);await bmsg(`${label(other)}'s attack fell!`,700)}
     return}
   const A=stats(att),D=stats(def),tm=mult(x.el,SP[def.sp].el),stab=x.el===SP[att.sp].el?1.25:1,crit=rnd()<1/16?1.5:1;
   let dmg=Math.floor(((2*att.lvl/5+2)*x.p*(A.atk*stg(aS.a))/(D.def*stg(dS.d)))/50+2);
@@ -5921,8 +5943,7 @@ async function addXP(m,amt,announce){
   updateHUD()}
 async function throwCharm(item){
   S.bag[item]--;const f=B.foe,s=SP[f.sp],mx=stats(f).hp;
-  const rate=(s.leg?.1:[.9,.5,.28][s.stage]*(s.rare?.75:1))*({star:1.6,nova:2.5}[item]||1);
-  const ch=item==='crown'?1:clamp(rate*(1-.72*f.hp/mx)+.04,.04,.97),ok=rnd()<ch,shakes=ok?3:ri(0,2);
+  const ch=bondChance(item),ok=rnd()<ch,shakes=ok?3:ri(0,2);
   await bmsg(`You tossed a ${ITEMS[item].n}!`,1);
   /* your trainer steps in, winds up and throws */
   /* (your Lynty steps aside to make room) */
@@ -5958,7 +5979,7 @@ async function throwCharm(item){
   B.rings.push({x:bx2,y:by2,r:3,life:380,c:'#ffffff'});B.o.foe.hide=false;await tween(240,t=>B.o.foe.scale=t*1.15);await tween(140,t=>B.o.foe.scale=1.15-.15*t);B.o.foe.scale=1;
   await bmsg(pick([`${s.name} shook off the charm!`,'So close! It broke free.',`${s.name} isn't ready to bond yet.`]),900);return false}
 async function endBattle(){
-  const res=B.result;await sleep(150);
+  const res=B.result;await sleep(150);BT=1;
   let lost=0;
   await wipe(async()=>{showBattlePanel(false);B=null;
     if(res==='lose'){lost=Math.floor(S.shells/2);S.shells-=lost;healAll();const r=S.respawn&&MAPS[S.respawn.map]?S.respawn:{map:'shop_lynhaven',x:2,y:4,dir:'up'};setMap(r.map);syncMap(CM);Object.assign(P,{x:r.x,y:r.y,fx:r.x,fy:r.y,dir:r.dir,t:1,moving:false});curZone=null;updTop()}});
