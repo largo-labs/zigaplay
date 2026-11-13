@@ -1,6 +1,6 @@
 # ZigaPlay
 
-A pocket console for the browser. Its games are cartridges: you choose one from the shelf, it slides in, and you play it with the console's D-pad (or control stick), A, B, SELECT and START. The console was built for iPhone first, and it also works on desktop.
+A pocket console for the browser. It folds open: the game plays on the screen in the lid, a black hinge runs across the middle, and the base has a small second screen between the buttons. You choose a game from the shelf and play it with the console's D-pad (or control stick), A, B, SELECT and START. The console was built for iPhone first, and it also works on desktop.
 
 | Cartridge | What it is | Controls |
 |---|---|---|
@@ -10,6 +10,31 @@ A pocket console for the browser. Its games are cartridges: you choose one from 
 | **Strike at Night** | A 16-bit style RPG. Lift was a tech worker in 2026 until a car hit him; he wakes up as a farm boy in Larkfield, is framed for his new parents' murder, and lives as a bandit with a price on his head. Beat strong foes to take their power as new forms. Prologue and two chapters. | D-pad move · A talk/confirm · B back · START menu · SELECT change form |
 | **Drone Strike** | A strategy game about leading a small country's drone unit against an invasion. Choose which drones fly in each three-wave strike, research new ones, and outthink five enemy generals who adapt to your tactics. | D-pad choose · ◀ ▶ amounts · A confirm · B back |
 | **Pitchfork Rising** | Lead a peasant revolt in twelve real-time battles, from the village tithe barn to the king's palace. Between battles you arm your folk, buy traps and pick a scheme; in battle you place your squads and traps, then fight on the field as Wat, their leader. Played sideways. | Stick move · A strike · B roll · SELECT orders · START pause |
+| **Spellsteel** | An active-time RPG: win back five stolen Embers, dress up from more than 200 pieces and forge ten kinds of weapon part by part. Played sideways. | A choose · B back (hold to run) · START menu · SELECT pose |
+| **Drift Critters** | A kart racer: eight critters, six tracks, two cups and three speeds. Drift round the bends for a kick of speed and crack open crates for tricks. The second screen shows the track map and your place. | Stick or ◀ ▶ steer · A use your trick · B hop, hold to drift · ▼ brake · START pause |
+| **Pipsqueak** | A side-scroller: a small chick runs, jumps, stomps foes and bumps blocks across four lands to catch the balloon home. The second screen shows the stretch of level around you and your score. | ◀ ▶ run · A jump, hold for higher · B dash, or spit embers · START pause |
+| **Fourfall** | A falling-block puzzle: slide and turn the pieces and fill rows to clear them. Marathon, or a sprint to 40 lines. The second screen shows the held piece, the next three and your score. | ◀ ▶ slide · ▲ drop · ▼ faster · A and B turn · SELECT hold · START pause |
+
+## The fold-open console
+
+- **Two screens.** The lid's screen is where the game plays. With no game in, it shows the store: a banner for the game you're on and a row of covers to move through. The second screen, in the base, tells you about that game and what the buttons do.
+- **The second screen in a game** shows the game's cover, its buttons and how long it has been on. A game can put its own numbers and a small picture there instead (see `ZIGAPLAY.panel` below); Drift Critters, Pipsqueak and Fourfall do.
+- **CONTROLS** (next to START) swaps the second screen between the game's numbers and what the buttons do. On the shelf it opens the controls screen, where each button's keyboard keys can be changed.
+- **A and B sit on the left** and the D-pad on the right. The last row of the controls screen swaps the two sides.
+- **Sideways.** A wide game (Pitchfork Rising, Spellsteel) still turns the console a quarter turn on an upright phone, with the D-pad on the left, the buttons on the right and no second screen. A phone held sideways gets the same shape.
+
+## Drift Critters, Pipsqueak and Fourfall
+
+These three share one small kit: the hookup to the console (buttons, the second screen, saves), a little sound engine and the menus.
+
+- **Drift Critters.** The ground is one big picture of the track drawn row by row as seen from behind the kart, and every kart is a handful of boxes drawn once from sixteen sides. By default the kart drives itself and A uses your trick; *GAS: A BUTTON* on the title screen puts the gas on A and the trick on ▲. Grand Prix is three races for points; the Ember Cup opens once you finish the Sprout Cup in the top three.
+- **Pipsqueak.** Four lands (meadow, cave, treetops, keep), each written as pieces of level in `pipsqueak.js`. A berry makes Pip big, a pepper lets him spit embers, 100 coins is an extra try, and the last land ends with a king on a bridge and a bell behind him. Finishing all four opens Spicy mode.
+- **Fourfall.** A seven-piece bag, a ghost piece, hold, and a short grace before a piece locks. In the console the well takes the whole lid screen and the next pieces move to the second screen.
+- They are built from `tools/kit-games/src/`: `python3 tools/kit-games/build.py` writes the three `games/<id>/index.html` files, and `node tools/kit-games/make-cart.js` redraws their labels (it needs Playwright).
+
+## Spellsteel and Gearfist
+
+`games/spellsteel/index.html` and `games/gearfist/index.html` are kept as the finished single files; there is no separate source for them in this repo.
 
 ## Lynties in 3D
 
@@ -83,6 +108,7 @@ tools/lynties-3d/           the Lynties game, its 3D world and the script that b
 tools/drownedmoon/          Strike at Night's source (src/*.js), its build script and label maker
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
+tools/kit-games/            Drift Critters, Pipsqueak and Fourfall: their shared kit, sources, build script and label maker
 ```
 
 ## How the console works
@@ -90,12 +116,13 @@ tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build scri
 - **Cartridges:** each one is listed in `CARTS` near the top of the script in `index.html`. The console fetches the game's file and runs it in an iframe the size of the screen. Before the game's first script runs, the console gives it its own AudioContext, so presses on the console's buttons can start sound.
 - **Input:** a game can take the buttons directly by defining `window.ZPCart = { input(btn, isDown) {…} }`. Otherwise it gets keyboard events: arrows, z, x, Enter and Shift.
 - **Power switch:** `ZPCart.home()` lets a game save or ask before the power switch turns it off.
+- **The second screen:** `ZIGAPLAY.panel.rows([['SCORE','1,200'],['LEVEL',3]])` shows a short list of labels and values, `panel.canvas(w, h, 'MAP')` returns a small canvas to draw on, `panel.clear()` goes back to the game's cover, and `panel.shown` is false while the console is sideways.
 - **Game options in `CARTS`:**
   - `stick:true` puts a round control stick in place of the D-pad.
-  - `wide:true` gives the game the console's sideways shape. If the phone is upright, the console turns itself a quarter turn.
+  - `wide:true` gives the game the console's sideways shape, which has no second screen. If the phone is upright, the console turns itself a quarter turn.
   - `face4:true` gives the game four face buttons in a diamond (A, B, C, D).
   - `skin:'<id>'` names the console skin the game wears when the player picks *Match the game*.
-- **Home screen and Library:** the shelf shows the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
+- **Home screen and Library:** the shelf is a row of covers for the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
 - **Skins:** SELECT on the shelf opens the skin picker. Some skins move (aurora, galaxy and others), and each game can bring its own.
 - **Inside the console:** games detect it with `window.parent.ZIGAPLAY`, and each one still runs fine on its own. Every game prefixes its `localStorage` keys with its own id, because they all share one origin.
 

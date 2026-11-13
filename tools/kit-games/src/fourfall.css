@@ -1,0 +1,11 @@
+body{--bg:#0d0b20;--panel:#1b1740;--line:#3a3566;--hot:#ffd15c;--hotink:#1c1238;--veil:rgba(13,11,32,.84)}
+#hud{color:#fff}
+#hud .l{color:#9d95e0;letter-spacing:.08em;font-size:calc(var(--s)*6px)}
+#banner{text-align:center;font-size:calc(var(--s)*8px);font-weight:700;color:#fff;text-shadow:0 calc(var(--s)*1px) 0 #1c1238,0 0 calc(var(--s)*5px) #ffd15c;opacity:0;letter-spacing:.04em;white-space:normal;line-height:1.15}
+#banner.go{animation:ban 1.2s ease-out}
+@keyframes ban{0%{opacity:0;transform:translateY(calc(var(--s)*6px)) scale(.8)}14%{opacity:1;transform:none}72%{opacity:1}100%{opacity:0;transform:translateY(calc(var(--s)*-8px))}}
+#ov.title{background:rgba(13,11,32,.5)}
+.logo{display:flex;gap:.1em;justify-content:center;text-shadow:0 calc(var(--s)*2px) 0 #3b2a8c,0 calc(var(--s)*3px) 0 #120f2b}
+.logo b:first-child{color:#ffd15c}.logo b:last-child{color:#5cbcff}
+.keys{line-height:1.7}.keys b{color:#ffd15c;font-weight:700}
+#hud>[hidden]{display:none}

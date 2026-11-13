@@ -1,0 +1,12 @@
+body{--bg:#101a30;--panel:#27304f;--line:#56628f;--hot:#ffd23f;--hotink:#2a1a08;--veil:rgba(14,18,40,.78)}
+#hud .bar{left:0;right:0;top:calc(var(--s)*3px);display:flex;justify-content:space-between;padding:0 calc(var(--s)*5px);color:#fff;font-size:calc(var(--s)*7px);letter-spacing:.04em;
+  text-shadow:calc(var(--s)*1px) calc(var(--s)*1px) 0 #1a1230}
+#hud .bar b{font-weight:700}
+#hCoins{color:#ffd23f}
+#ov.title{background:rgba(14,18,40,.38)}
+#ov.card{background:#0e1228}
+#ov.card h2{color:#ffd23f}
+#ov.card .pip{margin-top:calc(var(--s)*4px)}
+.logo{color:#ffd23f;text-shadow:0 calc(var(--s)*2px) 0 #c8601a,0 calc(var(--s)*3px) 0 #3a1a08,calc(var(--s)*-1px) 0 0 #3a1a08,calc(var(--s)*1px) 0 0 #3a1a08,0 calc(var(--s)*-1px) 0 #3a1a08}
+#ov.title p{text-shadow:0 calc(var(--s)*1px) 0 #1a1230;opacity:1}
+.keys{line-height:1.6;text-align:left}.keys b{color:#ffd23f;font-weight:700}
