@@ -908,7 +908,7 @@ function titleScreen(){SCREEN='title';R=null;$('#hud').hidden=true;$('#bossbar')
   const ng=el('button','btn'+(SV.reached>1||run?'':' go'),`${SV.reached>1||run?'Start from stage 1':'Start'}<small>${run?'Starts a new run (your upgrades stay)':SV.reached>1?'Your upgrades come with you':'Four stages, four bosses'}</small>`);ng.addEventListener('click',()=>{SND.unlock();startStage(1)});pn.append(ng);first=first||ng;
   const r1=el('button','btn',`Garage<small>Upgrades and robots · driving ${BOT().name}</small>`);r1.addEventListener('click',()=>garage(titleScreen));
   const row=el('div','row'),hb=el('button','btn','How to play'),sd=el('button','btn sndb',`Sound<small>${SOUNDS[SV.sound]}</small>`);hb.addEventListener('click',()=>howScreen());sd.addEventListener('click',cycleSound);row.append(hb,sd);
-  pn.append(r1,row);if(!ZP&&!document.documentElement.classList.contains('touch'))pn.append(el('p','hint','← → move · ↑ jump · ↓ guard · Z light · X heavy · C burst · Enter pause'));o.append(pn);focusFirst(first)}
+  pn.append(r1,row);if(!document.documentElement.classList.contains('touch')){const kc=el('button','btn','PC controls');kc.addEventListener('click',()=>keysScreen());pn.append(kc)}if(!ZP&&!document.documentElement.classList.contains('touch'))pn.append(el('p','hint','← → move · ↑ jump · ↓ guard · Z light · X heavy · C burst · Enter pause'));o.append(pn);focusFirst(first)}
 function howScreen(back=titleScreen){const o=showOv(true),pn=el('div','panel');const B=BOT();pn.innerHTML=`<h2>HOW TO FIGHT</h2><p class="sub">${B.name}</p>`;const t=el('div','scroll text');
   const bk_=ZP?'SELECT':document.documentElement.classList.contains('touch')?'BURST':'C';
   t.innerHTML=`<p>Walk right, punch every robot in the junkyard city, and beat the boss at the end of each stage.</p>
@@ -919,6 +919,16 @@ function howScreen(back=titleScreen){const o=showOv(true),pn=el('div','panel');c
     <p>Shields block light hits: break them with heavies and finishers. Foes flash before they strike: jump, guard, or back off.</p>
     <p>Smash crates for <b>oil</b> (health), <b>power cells</b> (Burst meter), <b>bolts</b> and the odd spare battery (a life).</p>
     <p>Bolts buy upgrades and new robots in the <b>Garage</b>. ${ZP?'START':'Pause'} stops the fight.</p><p>Your run saves after every fight you win, so you can quit any time${ZP?' (pause, or just flip the power switch)':''} and pick it up later from the title screen.</p>`;
+  const bk=el('button','btn','Back');bk.addEventListener('click',()=>back());pn.append(t,bk);o.append(pn);backFn=()=>back();focusFirst(bk)}
+function keysScreen(back=titleScreen){const o=showOv(true),pn=el('div','panel'),B=BOT();pn.innerHTML=`<h2>PC CONTROLS</h2><p class="sub">Keyboard</p>`;const t=el('div','scroll text');
+  /* inside ZigaPlay the player can change the keys (KEYS on its home screen), so read what they are right now */
+  const live=ZP&&ZP.keys?ZP.keys:null,nice=k=>({ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',' ':'Space',Enter:'Enter',Shift:'Shift',Escape:'Esc'})[k]||String(k).toUpperCase(),
+    ks=b=>(live?live[b]:{left:['ArrowLeft','a'],right:['ArrowRight','d'],up:['ArrowUp','w'],down:['ArrowDown','s'],a:['z',' '],b:['x','Escape'],start:['Enter',null],select:['Shift',null]}[b]).filter(Boolean).map(nice),
+    pk=b=>ks(b)[0]||'—',ak=(...bs)=>{const a=[].concat(...bs.map(b=>ks(b).slice(1)));return a.length?`<small> or ${a.join(' / ')}</small>`:''},
+    mk=r=>`<div class="mv">${r.map(([k,v])=>`<i>${k}</i><span>${v}</span>`).join('')}</div>`;
+  const kb=s=>s.replace(/\bA\b/g,pk('a')).replace(/\bB\b/g,pk('b'));
+  t.innerHTML=mk([[`${pk('left')} ${pk('right')}`,`Walk${ak(['left'],['right'])}`],[pk('up'),`Jump${ak(['up'])}`],[`hold ${pk('down')}`,`Guard${ak(['down'])}`],[pk('a'),`Light attack (A). Tap or hold for the combo${ak(['a'])}`],[pk('b'),`Heavy attack (B), or the finisher mid-combo${ak(['b'])}`],[pk('select'),`Gear Burst, when the blue meter is full${ak(['select'])}`],[pk('start'),`Pause${ak(['start'])}`]])
+    +`<p><b>In menus:</b> ${pk('up')} ${pk('down')} move, ${pk('a')} picks, ${pk('b')} goes back.</p>${ZP?'<p class="sub">Change any key with KEYS on the ZigaPlay home screen.</p>':''}<p><b>${B.name}'s moves:</b></p>`+mk(B.help().map(([k,v])=>[kb(k),v]));
   const bk=el('button','btn','Back');bk.addEventListener('click',()=>back());pn.append(t,bk);o.append(pn);backFn=()=>back();focusFirst(bk)}
 function botIcon(k){const B=BOTS[k],c=document.createElement('canvas');c.width=28;c.height=30;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
   const fake={state:'idle',anim:0,T:{legH:B.o.legH||7,th:B.o.th||9,s:B.o.s||1}};cg.clearRect(0,0,BUF,BUF);humanoid(cg,1,pose(fake),PAL[B.pal],B.o);
@@ -943,7 +953,8 @@ function pauseScreen(){if(!R||R.state!=='play'||SCREEN!=='game')return;SCREEN='p
   const r=el('button','btn go','Keep fighting');r.addEventListener('click',resume);const h=el('button','btn','How to fight');h.addEventListener('click',()=>howScreen(pauseBack));
   const sd=el('button','btn sndb',`Sound<small>${SOUNDS[SV.sound]}</small>`);sd.addEventListener('click',cycleSound);
   const q=el('button','btn','Save and quit<small>Next time you pick up from your last won fight</small>');q.addEventListener('click',()=>{saveBolts();titleScreen();toast('Run saved.')});
-  pn.append(r,h,sd,q);o.append(pn);backFn=resume;focusFirst(r)}
+  const kc=el('button','btn','PC controls');kc.addEventListener('click',()=>keysScreen(pauseBack));
+  pn.append(r,h);if(!document.documentElement.classList.contains('touch'))pn.append(kc);pn.append(sd,q);o.append(pn);backFn=resume;focusFirst(r)}
 function pauseBack(){SCREEN='game';pauseScreen()}
 function resume(){hideOv();SCREEN='game';last=performance.now()}
 function saveBolts(){if(R&&R.bolts){SV.bolts+=R.bolts;R.bolts=0;save()}}
