@@ -533,7 +533,7 @@ const cv=$('#cv'),ctx=cv.getContext('2d'),stage=$('#stage'),dlgEl=$('#dlg'),banE
 let W3=300,H3=330,SNAP=null,RES_BASE=300;
 function resize(){const W=innerWidth||300,H=innerHeight||400;stage.style.width=W+'px';stage.style.height=H+'px';stage.style.setProperty('--s',(Math.min(W,H*.95)/192).toFixed(3));
   const k=Math.max(1,Math.min(W,H*1.1)/RES_BASE);W3=Math.max(160,Math.round(W/k));H3=Math.max(140,Math.round(H/k));cv.width=W3;cv.height=H3;ctx.imageSmoothingEnabled=false;
-  if(G3.r){G3.r.setSize(W3,H3,false);G3.cam.aspect=W3/H3;G3.cam.updateProjectionMatrix()}}
+  if(G3.r){glSize();G3.cam.aspect=W3/H3;G3.cam.updateProjectionMatrix()}}
 
 /* ---------- sound ---------- */
 const SFX={swing(){SND.noise(.07,{hp:2500,vol:.05})},hit(){SND.tone(220,.08,{type:'square',vol:.07,to:110})},clank(){SND.tone(1400,.06,{vol:.06,type:'square'});SND.tone(900,.08,{vol:.05,at:.03})},
@@ -923,10 +923,11 @@ function partHit(e,how,dmg){if(e.inv>0)return;if(e.kind==='arm'){e.hp-=1;e.inv=.
    The game still thinks in flat 16px tiles. This part lifts every room into low-poly 3D: soft 32px textures
    painted in code, vertex colours for baked light, fog, blob shadows, and a camera that follows behind you. */
 const TH=window.THREE;
-/* the picture: SOFT is a 64-bit console on a television (15-bit colour with an ordered dither, neighbouring pixels
-   blended, the whole frame blown up smoothly); SHARP keeps crisp square pixels. Kept per device. */
-let PIC='soft';try{if(localStorage.getItem('hollowmere-pic')==='sharp')PIC='sharp'}catch(e){}
-stage.classList.toggle('sharp',PIC!=='soft');RES_BASE=PIC==='soft'?320:300;
+/* the picture: HD draws the 3D view at the screen's own resolution with smoothed edges; RETRO draws it about 320 pixels
+   across like a 64-bit console on a television (15-bit colour, an ordered dither, blown up softly); PIXEL draws it small
+   with crisp square pixels. Kept per device. */
+let PIC='hd';try{const v=localStorage.getItem('hollowmere-pic');PIC=v==='retro'||v==='pixel'?v:v==='sharp'?'pixel':'hd'}catch(e){}
+stage.classList.toggle('sharp',PIC==='pixel');RES_BASE=PIC==='retro'?320:300;
 const col3=(h,m)=>{const n=parseInt(h.slice(1),16),k=(m==null?1:m)/255;return[(n>>16)*k,(n>>8&255)*k,(n&255)*k]};
 const mulc=(c,m)=>[c[0]*m,c[1]*m,c[2]*m];
 const hrand=(a,b,c)=>(hashN(a+999,b+999,c|0)%10007)/10007;
@@ -1222,11 +1223,15 @@ function postInit(){G3.rt=new TH.WebGLRenderTarget(Math.max(1,W3),Math.max(1,H3)
       'void main(){vec2 px=vec2(1./res.x,0.);vec3 c=texture2D(tex,vUv).rgb*.78+(texture2D(tex,vUv-px).rgb+texture2D(tex,vUv+px).rgb)*.11;\n'+
       'c=floor(c*31.+bay(gl_FragCoord.xy))/31.;gl_FragColor=vec4(c,1.);}'});
   G3.postS=new TH.Scene();const q=new TH.Mesh(new TH.PlaneGeometry(2,2),G3.postM);q.frustumCulled=false;G3.postS.add(q);G3.postC=new TH.OrthographicCamera(-1,1,1,-1,0,1)}
-function present(sc,cam){const r=G3.r;if(PIC!=='soft'||!G3.rt){r.render(sc,cam);return}
+/* how many pixels the 3D view is drawn with: HD uses the screen's own (up to a limit, so phones stay smooth); RETRO and PIXEL draw small */
+function glSize(){const r=G3.r;if(!r)return;if(PIC!=='hd'){r.setSize(W3,H3,false);return}
+  const dpr=Math.min(window.devicePixelRatio||1,2);let w=(stage.clientWidth||innerWidth||300)*dpr,h=(stage.clientHeight||innerHeight||400)*dpr;const cap=2.4e6;
+  if(w*h>cap){const f=Math.sqrt(cap/(w*h));w*=f;h*=f}r.setSize(Math.round(w),Math.round(h),false)}
+function present(sc,cam){const r=G3.r;if(PIC!=='retro'||!G3.rt){r.render(sc,cam);return}
   if(G3.rt.width!==W3||G3.rt.height!==H3){G3.rt.setSize(W3,H3);G3.postM.uniforms.res.value.set(W3,H3)}
   r.setRenderTarget(G3.rt);r.render(sc,cam);r.setRenderTarget(null);r.render(G3.postS,G3.postC)}
-function setPic(p){PIC=p;try{localStorage.setItem('hollowmere-pic',p)}catch(e){}stage.classList.toggle('sharp',p!=='soft');
-  const f=p==='soft'?TH.LinearFilter:TH.NearestFilter;for(const t of Object.values(PXT)){t.magFilter=t.minFilter=f;t.needsUpdate=true}RES_BASE=p==='soft'?320:300;resize()}
+function setPic(p){PIC=p;try{localStorage.setItem('hollowmere-pic',p)}catch(e){}stage.classList.toggle('sharp',p==='pixel');
+  const f=p==='retro'?TH.LinearFilter:TH.NearestFilter;for(const t of Object.values(PXT)){t.magFilter=t.minFilter=f;t.needsUpdate=true}RES_BASE=p==='retro'?320:300;resize()}
 /* ---------- the sword's trail: a ribbon from the blade's root to its point over the last few frames, bright and fading ---------- */
 function mkTrail(sc){const N=10,pos=new Float32Array(N*6),al=new Float32Array(N*2),idx=[];for(let i=0;i<N-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
   const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pos,3));g.setAttribute('alpha',new TH.BufferAttribute(al,1));g.setIndex(idx);
@@ -1260,8 +1265,8 @@ function lockTick(dt){const lk=lockT&&!lockT.dead&&E.includes(lockT)&&state==='p
   G3.lock.position.set(gx,gy+(big?1.4:.62),gz);G3.lock.quaternion.copy(G3.cam.quaternion);const rad=(big?1.2:.52)*(2-k)+Math.sin(T*6)*.015,sp=T*1.1;
   G3.lockP.forEach((p,i)=>{const a=sp+i*Math.PI/2;p.position.set(Math.cos(a)*rad,Math.sin(a)*rad,0);p.rotation.z=a-Math.PI/2;for(const m of p.children)m.material.opacity=k});
   G3.lockGem.position.set(gx,gy+(big?2.9:1.42)+Math.sin(T*6)*.06,gz);G3.lockGem.rotation.y=T*3;G3.lockGem.material.opacity=k}
-function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:false,powerPreference:'default'})}catch(e){G3.fail=1;return}
-  r.setPixelRatio(1);G3.r=r;postInit();const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
+function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:true,powerPreference:'default'})}catch(e){G3.fail=1;return}
+  r.setPixelRatio(1);G3.r=r;postInit();glSize();const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
   G3.hemi=new TH.HemisphereLight(0xffffff,0x5a5040,.75);sc.add(G3.hemi);G3.sun=new TH.DirectionalLight(0xfff0d8,.7);G3.sun.position.set(-4,10,3);sc.add(G3.sun);
   G3.pl=[];for(let n=0;n<6;n++){const l=new TH.PointLight(0xffa050,0,6,1.4);sc.add(l);G3.pl.push(l)}
   sc.fog=new TH.Fog(0x9ac8e8,12,32);
@@ -1484,7 +1489,7 @@ const PXT={};
 function pxt(key,w,h,draw){if(PXT[key])return PXT[key];const c=mkCanvas(w,h),x=c.getContext('2d');const p=(col,a,b,ww,hh)=>{x.fillStyle=col;x.fillRect(a,b,ww||1,hh||1)};
   const oval=(cx,cy,rx,ry,col)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++){const dx=(i+.5-cx)/rx,dy=(j+.5-cy)/ry;if(dx*dx+dy*dy<=1)p(col,i,j)}};
   const sym=(col,a,b)=>{p(col,a,b);p(col,w-1-a,b)};draw(p,oval,sym,w,h,x);
-  const t=new TH.CanvasTexture(c);t.magFilter=t.minFilter=PIC==='soft'?TH.LinearFilter:TH.NearestFilter;t.generateMipmaps=false;t.wrapS=t.wrapT=TH.RepeatWrapping;PXT[key]=t;return t}
+  const t=new TH.CanvasTexture(c);t.magFilter=t.minFilter=PIC==='retro'?TH.LinearFilter:TH.NearestFilter;t.generateMipmaps=false;t.wrapS=t.wrapT=TH.RepeatWrapping;PXT[key]=t;return t}
 const shade=(hx,m)=>{const n=parseInt(hx.slice(1),16),f=v=>clamp(Math.round(v*m),0,255).toString(16).padStart(2,'0');return'#'+f(n>>16)+f((n>>8)&255)+f(n&255)};
 /* cloth: a base colour with a dither of darker and lighter threads, and maybe stripes, a patch or checks */
 function cloth(base,pat,c2){return pxt('cl'+base+(pat||'')+(c2||''),8,8,p=>{const R=rngOf(hashN(parseInt(base.slice(1),16)%9973,(pat||'').length,7));p(base,0,0,8,8);const d=shade(base,.78),l=shade(base,1.18);
@@ -2981,7 +2986,7 @@ function hudText(){if(!PANEL||!room)return;const v=S.v,f=v.flames.filter(Boolean
 
 /* ---------- title, start, ending ---------- */
 const soundItem=()=>({t:'SOUND',v:()=>SOUND_NAMES[S.v.sound],adj:d=>{S.v.sound=(S.v.sound+d+3)%3;SND.mode=S.v.sound;S.save()}});
-const picItem=()=>({t:'PICTURE',v:()=>PIC==='soft'?'SOFT':'SHARP',adj:()=>setPic(PIC==='soft'?'sharp':'soft')});
+const picItem=()=>({t:'PICTURE',v:()=>({hd:'HD',retro:'RETRO',pixel:'PIXEL'})[PIC],adj:d=>{const L=['hd','retro','pixel'];setPic(L[(L.indexOf(PIC)+(d<0?-1:1)+3)%3])}});
 function title(){state='title';SND.play(SONGS.village);room=buildRoom('ow',2,5);E=[];P.x=cen(5);P.y=cen(6)+4;P.ang=Math.PI/2;P.inv=0;P.fall=0;P.hold=0;dlgEl.hidden=true;bagEl.hidden=true;mapEl.hidden=true;
   menu({cls:'title',html:'<h1 class="logo"><small>THE TALE OF</small>WICK</h1><p class="subt">HOLLOW WOOD</p><p>Stay on the path.</p>',i:SLOT,
     items:[0,1,2].map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>pickSlot(n)})).concat(SLOTS.some(sv=>sv.v.started)?[{t:'DELETE SAVES',fn:delMenu}]:[],[soundItem(),picItem(),{t:'HOW TO PLAY',fn:how}]),
