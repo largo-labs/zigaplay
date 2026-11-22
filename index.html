@@ -16,7 +16,7 @@
   --ui:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --s-bg:#0b0d13;--s-card:#1a1f2e;--s-line:rgba(255,255,255,.11);--s-ink:#f4f6fb;--s-dim:#9aa4b8;
 }
-html,body{height:100%}
+html,body{height:100%;touch-action:manipulation}
 body{background:radial-gradient(120% 70% at 50% 0%,var(--desk-glow) 0%,var(--desk-2) 38%,var(--desk) 100%);color:#e8ecff;font-family:var(--ui);
   margin:0;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
   display:flex;justify-content:center;padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
@@ -453,6 +453,38 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
 @keyframes zsway2{0%,100%{transform:rotate(17deg)}50%{transform:rotate(12deg)}}
 .fx-pitchfork b{bottom:18px;width:3px;height:3px;border-radius:50%;background:#ffd05a;box-shadow:0 0 6px 2px rgba(255,150,30,.8);opacity:0;animation:zember 6s linear infinite}
 
+/* Neon Rex: a night-city body with a cyan edge, hot-pink and cyan buttons, rain falling past flickering neon */
+.console[data-shell=partyrex]{--b1:#1e2236;--b2:#151828;--b3:#0c0e1a;--edge:#3af0ff;--print:#e8f8ff;--print2:#ff2a8a;
+  --ab1:#ffa8d0;--ab2:#ff2a8a;--ab3:#a0105a;--abedge:#3a0420;--abshadow:#240214;--groove1:#0c0e1a;--groove2:#161a2a;
+  --pill1:#3a4260;--pill2:#262c44;--pilledge:#05060c;--grille:#0c0e1a;--bez1:#0a0c16;--bez2:#05060c;--bezink:#3af0ff;--st1:#ff2a8a;--st2:#3af0ff;
+  --dp1:#262c44;--dp2:#161a2a;--dpa:#6a78a8;--dpa2:#3af0ff;--dpsh:#05060c;--kn1:#4a5478;--kn2:#2e3654;--kn3:#1e2438;
+  --lcd0:#0c1430;--lcd1:#2a5aa0;--lcd2:#6ac8f0;--lcd3:#c8f4ff;
+  background:repeating-linear-gradient(90deg,rgba(58,240,255,.04) 0 1px,rgba(0,0,0,0) 1px 14px),linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);
+  box-shadow:inset 0 0 0 2px rgba(58,240,255,.55),inset 0 3px 0 3px rgba(255,255,255,.06),0 0 18px rgba(58,240,255,.25),0 16px 34px rgba(0,0,0,.6)}
+.console[data-shell=partyrex] .btn-ab.b{--ab1:#b0f8ff;--ab2:#3af0ff;--ab3:#0a7a8a;--abedge:#02303a;--abshadow:#012028}
+.fx-partyrex b{top:-20px;width:1px;height:14px;background:linear-gradient(180deg,rgba(150,230,255,0),rgba(150,230,255,.55));animation:zrain linear infinite}
+@keyframes zrain{to{transform:translate(-30px,700px)}}
+.fx-partyrex i.sg{width:46px;height:20px;border:2px solid var(--c);border-radius:4px;box-shadow:0 0 10px var(--c),inset 0 0 8px var(--c);opacity:.5;animation:zflick 5s steps(1) infinite}
+@keyframes zflick{0%,40%,44%,100%{opacity:.5}42%{opacity:.08}}
+
+/* Grim Ascent: a reaper's cloak, deep violet-black with bone-white buttons, ghost-teal eyes, and soul wisps drifting up */
+.console[data-shell=grim]{--b1:#2a2038;--b2:#1c1428;--b3:#110c1a;--edge:#05030a;--print:#eee8d4;--print2:#7af0ff;
+  --ab1:#ffffff;--ab2:#e2dcc6;--ab3:#9e967e;--abedge:#2a2418;--abshadow:#16120a;--groove1:#0e0a16;--groove2:#181222;
+  --pill1:#4a3c66;--pill2:#2e2444;--pilledge:#0a0612;--grille:#0e0a16;--bez1:#0e0a16;--bez2:#07050c;--bezink:#7af0ff;--st1:#c88aff;--st2:#7af0ff;
+  --dp1:#2e2444;--dp2:#1c1428;--dpa:#8a7ab0;--dpa2:#7af0ff;--dpsh:#05030a;--kn1:#5a4a7a;--kn2:#3a2e54;--kn3:#241c38;
+  --lcd0:#120c24;--lcd1:#4a3a8a;--lcd2:#9a8ad8;--lcd3:#d6ccf4}
+.console[data-shell=grim] .btn-ab span{color:var(--print)}
+.fx-grim .glow{left:-20%;right:-20%;bottom:-70px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(122,240,255,.18),rgba(122,240,255,0));animation:zpulse 4s ease-in-out infinite}
+.fx-grim b{bottom:-10px;width:5px;height:7px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 50% 60%,#e8fcff 0 30%,#5ab8ff 60%,rgba(90,184,255,0) 75%);opacity:0;animation:zsoul linear infinite}
+@keyframes zsoul{0%{transform:translate(0,0);opacity:0}10%{opacity:.85}80%{opacity:.6}100%{transform:translate(var(--dx),-420px);opacity:0}}
+
+/* Gray Squares: gray. The body, the buttons, the screen. Nothing moves. */
+.console[data-shell=grayskin]{--b1:#c4c4c4;--b2:#b8b8b8;--b3:#acacac;--edge:#3a3a3a;--print:#6a6a6a;--print2:#8a8a8a;
+  --ab1:#b0b0b0;--ab2:#909090;--ab3:#707070;--abedge:#3a3a3a;--abshadow:#5a5a5a;--groove1:#a4a4a4;--groove2:#b0b0b0;
+  --pill1:#a0a0a0;--pill2:#808080;--pilledge:#4a4a4a;--grille:#a0a0a0;--bez1:#6a6a6a;--bez2:#5a5a5a;--bezink:#c8c8c8;--st1:#8a8a8a;--st2:#9a9a9a;
+  --dp1:#7a7a7a;--dp2:#5e5e5e;--dpa:#9a9a9a;--dpa2:#d0d0d0;--dpsh:#3a3a3a;--kn1:#8a8a8a;--kn2:#6a6a6a;--kn3:#4a4a4a;
+  --lcd0:#3a3a3a;--lcd1:#6a6a6a;--lcd2:#a8a8a8;--lcd3:#cfcfcf}
+
 /* Spellsteel: cool steel-blue with gold trim and violet spell buttons, five Embers aglow and a glint of steel */
 .console[data-shell=spellsteel]{--b1:#6482b4;--b2:#46649a;--b3:#2e4572;--edge:#0c1a34;--print:#fff0c0;--print2:#ffd86a;
   --ab1:#f0c4ff;--ab2:#a850e4;--ab3:#5e1c98;--abedge:#2a0a4a;--abshadow:#1c0630;--groove1:#2a4070;--groove2:#385688;
@@ -609,6 +641,10 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
    - A game can take the buttons directly by defining   window.ZPCart = { input(btn, isDown) {...} }
      where btn is 'up' 'down' 'left' 'right' 'a' 'b' 'start' 'select' (and 'c' 'd' for face4 carts). The call happens inside the player's
      own press, so a game may start sound from it.
+   - A game steered by tilting the phone sets `tilt:true`: the console then asks the phone for its motion sensor on
+     the player's own taps (iPhone only allows the question inside a tap), and the game reads 'deviceorientation'
+     on the console's window. Inside another site's page (the Claude app) the browser refuses it; the Home Screen
+     edition can read it.
    - A widescreen game sets `wide:true`: while it runs, the console takes its sideways shape (D-pad left,
      screen middle, buttons right, no second screen), and with the phone upright it turns itself a quarter turn so the game
      gets the long side of the screen.
@@ -645,7 +681,7 @@ const CARTS=[
    blurb:'Explore the Long Road, beat eight Wardens and bond with 146 Lynties, eight of them legends.',
    note:'Saves to this ZigaPlay · START menu · SELECT map'},
   {id:'chipcity',title:'Chip City',file:'games/chipcity/index.html',art:'games/chipcity/cart.png',label:'#3d1046',ink:'#ffd36a',skin:'chipcity',
-   blurb:'Blackjack, roulette, slots, video poker and hi-lo. Play chips only.',
+   blurb:"Blackjack, roulette, slots, poker, Texas Hold'em and more, plus loan sharks to pay off. Play chips only.",
    note:'A press · START deal or spin · B back'},
   {id:'gearfist',title:'Gearfist',file:'games/gearfist/index.html',art:'games/gearfist/cart.png',label:'#6a2a14',ink:'#ffd36a',skin:'gearfist',stick:true,
    blurb:'Punch through a junkyard city of robots, beat four bosses and buy new fighters with the bolts you win.',
@@ -674,6 +710,21 @@ const CARTS=[
   {id:'fourfall',title:'Fourfall',file:'games/fourfall/index.html',art:'games/fourfall/cart.png',label:'#1c184a',ink:'#ffd15c',skin:'fourfall',
    blurb:'Slide and turn the falling pieces, fill rows to clear them and keep the well from filling up. Marathon, or a sprint to 40 lines.',
    note:'◀ ▶ slide · ▲ drop · ▼ faster · A and B turn · SELECT hold · START pause'},
+  {id:'strike',title:'Hammer Fall',file:'games/strike/index.html',art:'games/strike/cart.png',label:'#140c1c',ink:'#ff8ad0',skin:'drownedmoon',
+   blurb:'Night brawls with 50 fighters: gunners, sword fighters and brawlers. Knock your rival off the stage.',
+   note:'A attack · B block, +▲ or ◀▶ special · ▲ jump · ▼ block · START pause'},
+  {id:'partyrex',title:'Neon Rex',file:'games/partyrex/index.html',art:'games/partyrex/cart.png',label:'#0c0e1a',ink:'#3af0ff',skin:'partyrex',
+   blurb:'A cyber-raptor races through a neon city at night. Dash down onto the glitch goblins to keep up speed.',
+   note:'B or A dash down · START pause'},
+  {id:'grim',title:'Grim Ascent',file:'games/grim/index.html',art:'games/grim/cart.png',label:'#140c24',ink:'#eee8d4',skin:'grim',tilt:true,
+   blurb:'Climb a haunted tower as a little reaper. Tilt to steer, dash at monsters with B and finish them with A combos.',
+   note:'Tilt steer · B dash / slam · A attack · START pause'},
+  {id:'squares',title:'Gray Squares',file:'games/squares/index.html',art:'games/squares/cart.png',label:'#bdbdbd',ink:'#5c5c5c',skin:'grayskin',
+   blurb:'Press the square. Get a square. Buy things that make squares. It is gray. You will not stop.',
+   note:'A press · ▲▼ choose · A buy · START menu'},
+  {id:'haymaker',title:'Haymaker',file:'games/haymaker/index.html',art:'games/haymaker/cart.png',label:'#7a1c24',ink:'#ffd84a',
+   blurb:'Jab, block on the beat, then land the four-punch combo. 49 Port Ember boxers, Training and a Tier List.',
+   note:'→ jab · ← block · B then A×4 combo · START pause'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -689,6 +740,9 @@ const SKINS=[
   {id:'driftcritters',name:'Drift Critters',tag:'GAME',ed:'DRIFT CRITTERS EDITION',sw:['#d63a30','#ffc41f']},
   {id:'pipsqueak',name:'Pipsqueak',tag:'GAME',ed:'PIPSQUEAK EDITION',sw:['#56aef2','#ffd23f']},
   {id:'fourfall',name:'Fourfall',tag:'GAME',ed:'FOURFALL EDITION',sw:['#2a2468','#ffd15c']},
+  {id:'partyrex',name:'Neon Rex',tag:'GAME',ed:'NEON REX EDITION',sw:['#151828','#ff2a8a']},
+  {id:'grim',name:'Grim Ascent',tag:'GAME',ed:'GRIM ASCENT EDITION',sw:['#1c1428','#eee8d4']},
+  {id:'grayskin',name:'Gray Squares',tag:'GAME',ed:'GRAY SQUARES EDITION',sw:['#b8b8b8','#909090']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
   {id:'lava',name:'Lava',tag:'LIVE',sw:['#271c1a','#ff7a1a']},
@@ -734,6 +788,10 @@ const SKINFX={
     for(let i=0;i<6;i++)h+=`<i class="blip" style="left:${pct(8+r()*84)};top:${pct(10+r()*70)};animation-delay:${sec(-r()*3)}"></i>`;return h},
   pitchfork:()=>{const r=prng(53),f=c=>`<svg class="pf PFC" viewBox="0 0 52 150"><path d="M26 148 V50 M8 8 V34 Q8 50 26 50 Q44 50 44 34 V8 M26 50 V6"/></svg>`.replace('PFC',c);let h='<i class="glow"></i>'+f('p1')+f('p2');
     for(let i=0;i<10;i++)h+=`<b style="left:${pct(4+r()*90)};animation-duration:${sec(4+r()*4)};animation-delay:${sec(-r()*8)}"></b>`;return h},
+  partyrex:()=>{const r=prng(71);let h=`<i class="sg" style="left:6%;top:70%;--c:#ff2a8a;animation-delay:-1s"></i><i class="sg" style="left:78%;top:84%;--c:#3af0ff;animation-delay:-3.2s"></i>`;
+    for(let i=0;i<26;i++)h+=`<b style="left:${pct(r()*110)};animation-duration:${sec(.8+r()*.8)};animation-delay:${sec(-r()*2)}"></b>`;return h},
+  grim:()=>{const r=prng(97);let h='<i class="glow"></i>';
+    for(let i=0;i<12;i++)h+=`<b style="left:${pct(4+r()*90)};--dx:${Math.round((r()-.5)*40)}px;animation-duration:${sec(7+r()*6)};animation-delay:${sec(-r()*12)}"></b>`;return h},
   spellsteel:()=>{const r=prng(67),C=['#ff5a3a','#ffb030','#6ae0ff','#9aff7a','#c88aff'];let h='<i class="gloss"></i>';
     C.forEach((c,i)=>h+=`<i class="em" style="left:${10+i*20}%;--c:${c};animation-delay:${sec(-i*.8)}"></i>`);
     for(let i=0;i<10;i++)h+=`<b class="spk" style="left:${pct(r()*96)};top:${pct(r()*100)};--s:${(6+r()*8).toFixed(0)}px;animation-duration:${sec(2.2+r()*2.5)};animation-delay:${sec(-r()*4)}"></b>`;return h},
@@ -949,13 +1007,15 @@ async function launch(c,opts={}){if(state!=='home'&&state!=='lib'&&!opts.instant
   if(!matchMedia('(pointer:coarse)').matches)try{frame.focus({preventScroll:true})}catch(e){}}
 /* the console's sound and the game's own folder go in before the game's first script */
 function prepare(html,c,inline){const dir=new URL(c.file.replace(/[^/]*$/,''),document.baseURI).href;
-  const boot=`${inline?'':`<base href="${dir}">`}${GAME_HEAD}<script>try{var Z=parent.ZIGAPLAY;if(Z){window.AudioContext=Z.AudioContext;window.webkitAudioContext=Z.AudioContext}}catch(e){}<\/script>`;
+  const boot=`${inline?'':`<base href="${dir}">`}${GAME_HEAD}<style>html,body{touch-action:manipulation}</style><script>document.addEventListener('gesturestart',function(e){e.preventDefault()},{passive:false});try{var Z=parent.ZIGAPLAY;if(Z){window.AudioContext=Z.AudioContext;window.webkitAudioContext=Z.AudioContext}}catch(e){}<\/script>`;
   const m=/<head[^>]*>/i.exec(html);return m?html.slice(0,m.index+m[0].length)+boot+html.slice(m.index+m[0].length):boot+html}
 async function eject(){if(state!=='game')return;state='ejecting';SFX.eject();$('#blackout').classList.add('on');await sleep(260);
   for(const ac of gameContexts){try{ac.close()}catch(e){}}gameContexts.clear();
   if(frame){try{frame.srcdoc='';frame.removeAttribute('src')}catch(e){}frame.remove();frame=null}cur=null;held.clear();stickDirs.clear();stickId=null;knob.style.transform='';applyLayout();
   if(launchFrom==='lib'&&libUI){show('lib');state='lib';renderLib()}else{libUI=null;show('home');renderShelf();state='home'}
   refreshSkin();$('#blackout').classList.remove('on')}
+for(const ev of['gesturestart','gesturechange'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+{let lastEnd=0;document.addEventListener('touchend',e=>{const now=e.timeStamp;if(now-lastEnd<320&&!e.target.closest('input,textarea,select,[contenteditable]'))e.preventDefault();lastEnd=now},{passive:false})}
 /* the power switch: in a game it turns the game off (asking first when the game wants to), in the library it turns the console off */
 let powering=false;
 async function powerSwitch(){if(powering)return;powering=true;try{
@@ -1039,7 +1099,7 @@ function askInput(b){const a=askState;if(!a)return;if(b==='up'||b==='left'){a.i=
 
 /* ---------- buttons ---------- */
 const held=new Set();let repT=0,comboT=0;
-function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
+function pressBtn(b){sfxUnlock();motionAsk();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
   if(held.has(b))return;held.add(b);
   if(held.has('start')&&held.has('select')&&state==='game'){clearTimeout(comboT);comboT=setTimeout(()=>{if(held.has('start')&&held.has('select'))powerSwitch()},800)}
   switch(state){
@@ -1063,6 +1123,10 @@ function pressBtn(b){sfxUnlock();try{navigator.vibrate&&navigator.vibrate(6)}cat
       if(/up|down|left|right/.test(b)){clearTimeout(repT);const d=b;repT=setTimeout(function again(){if(held.has(d)&&state==='skins'){skinsInput(d);repT=setTimeout(again,140)}},420)}
       break;
     case 'off':if(b==='start'||b==='a')powerSwitch();break}}
+/* tilt carts: ask for the motion sensor inside the player's taps until the phone says yes */
+let motionOK=false;function motionAsk(){if(motionOK||state!=='game'||!(cur&&cur.tilt))return;try{const D=window.DeviceOrientationEvent;
+  if(D&&typeof D.requestPermission==='function')D.requestPermission().then(r=>{if(r==='granted')motionOK=true}).catch(()=>{});else motionOK=true}catch(e){}}
+for(const ev of['touchend','pointerup','click'])addEventListener(ev,motionAsk,{capture:true,passive:true});
 function releaseBtn(b){if(!held.has(b))return;held.delete(b);if(state==='game')toCart(b,false)}
 function releaseAll(){for(const b of[...held])releaseBtn(b);setDpad(null);try{toCartStick(0,0)}catch(e){}stickDirs.clear();stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stick.querySelectorAll('.notch').forEach(n=>n.classList.remove('on'))}
 function toCart(b,down){const w=cartWin();if(!w)return;

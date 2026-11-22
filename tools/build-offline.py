@@ -149,7 +149,7 @@ def main():
     def page(pwa):
         head = [
             '<!doctype html>', '<html lang="en"><head>', '<meta charset="utf-8">',
-            '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
+            '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">',
             f'<title>{title}</title>',
             f'<meta name="zigaplay-offline-build" content="{built}">',
             '<meta name="theme-color" content="#0d1222">',

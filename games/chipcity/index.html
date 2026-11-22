@@ -103,7 +103,7 @@ button:focus{outline:none}
 .sign h1 b{color:#fff6cf;text-shadow:0 0 .4rem #f4c74f,0 0 .9rem #f4a32f,0 .15rem 0 #6a4200}
 .sign p{margin:.15rem 0 .2rem;font-size:.7rem;letter-spacing:.2em;color:var(--cyan);text-shadow:0 0 .35rem rgba(94,230,255,.8)}
 @keyframes neon{0%,18%,22%,62%,64%,100%{opacity:1}20%,63%{opacity:.55}}
-.wallet{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.25rem .8rem .35rem;font-size:.78rem;color:#d9c2e6}
+.wallet .cb{color:#7dffa8;font-weight:800;white-space:nowrap}.wallet{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.25rem .8rem .35rem;font-size:.78rem;color:#d9c2e6}
 .wallet b{color:var(--gold);font-family:var(--num);font-size:1.25rem;font-weight:400}
 .tier{display:inline-block;padding:.05rem .4rem;border-radius:.3rem;border:2px solid #000;font-weight:700;font-size:.72rem;color:#1a1020;background:var(--tc,#9fb7a8)}
 .scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -231,6 +231,19 @@ textarea.code{width:100%;min-height:5.5rem;margin-top:.35rem;background:#0b0710;
 .vpt div{display:flex;justify-content:space-between;padding:0 .2rem;border-radius:.2rem}
 .vpt b{font-family:var(--num);font-size:.95rem;font-weight:400;color:#fff}
 .vpt .lit{background:#ffe08a;color:#2a1600}.vpt .lit b{color:#2a1600}
+.th{gap:.25rem}.th-opps{display:flex;gap:.3rem;padding:.4rem .5rem 0}
+.th-opp{flex:1;min-width:0;background:rgba(10,6,14,.55);border:2px solid #000;border-radius:.5rem;padding:.2rem .2rem .25rem;text-align:center;position:relative;--cw:1.45rem}
+.th-opp b{display:block;font-size:.64rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;padding:0 .9rem}
+.th-oc{display:flex;justify-content:center;gap:.15rem;min-height:calc(var(--cw)*1.4);margin:.15rem 0}.th-oc .card{border-width:1px}
+.th-opp .th-st{display:block;font-style:normal;font-size:.6rem;color:#d9c2e6;min-height:.8rem;white-space:nowrap;overflow:hidden}
+.th-opp .th-bet{position:absolute;right:.25rem;bottom:-.55rem;font-style:normal;font-family:var(--num);font-size:.8rem;color:var(--gold);text-shadow:0 1px 0 #000}
+.th-opp.out{opacity:.4}.th-opp.turn{border-color:var(--gold);box-shadow:0 0 .5rem rgba(244,199,79,.5)}
+.th-opp.dealer::before,.th-d{content:'D';position:absolute;left:.2rem;top:.15rem;width:.85rem;height:.85rem;border-radius:50%;background:#fff4d8;color:#140c1c;font-size:.55rem;font-weight:800;line-height:.85rem;text-align:center;font-style:normal}
+.th-mid{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;margin:.3rem .4rem;border-radius:45%/35%;background:radial-gradient(ellipse at center,#1f6a3a 0,#154a2c 75%);border:3px solid #4a2c12;box-shadow:inset 0 0 0 2px #0c2a18,0 .2rem 0 rgba(0,0,0,.4)}
+.th-pot{font-size:.75rem;color:#d8f0dc;letter-spacing:.05em}.th-pot b{font-family:var(--num);color:var(--gold);font-size:1.15rem;font-weight:400}
+.th-board{display:flex;gap:.18rem}.th-me{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:0 .5rem}
+.th-hole{display:flex;gap:.25rem}.th-hole.dim .card{filter:brightness(.45)}
+.th-mine{position:relative;display:grid;gap:.1rem;font-size:.72rem;color:#d9c2e6;min-width:5.5rem;padding-left:1.1rem}.th-mine b{color:var(--gold);font-size:.82rem}.th-mine .th-d{top:0;left:0}
 .vpcards{flex:1;display:flex;align-items:center;justify-content:center;gap:.3rem}
 .vpc{display:flex;flex-direction:column;align-items:center;gap:.25rem;background:none;border:0;padding:.15rem;border-radius:.4rem}
 .vpc .hold{font-size:.66rem;font-weight:700;letter-spacing:.06em;padding:.05rem .3rem;border-radius:.25rem;background:var(--gold);color:#2a1600;border:2px solid #000;visibility:hidden}
@@ -326,19 +339,33 @@ const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const big=n=>Math.abs(n)>=1e6?short(n):fmt(n);
-const short=n=>{n=Math.floor(n);const f=(v,u)=>(v>=100?Math.floor(v):Math.floor(v*10)/10)+u;return n>=1e9?f(n/1e9,'B'):n>=1e6?f(n/1e6,'M'):n>=1e4?f(n/1e3,'K'):''+n};
+const UNITS=[[1e21,'Sx'],[1e18,'Qi'],[1e15,'Qa'],[1e12,'T'],[1e9,'B'],[1e6,'M']];
+const short=n=>{n=Math.floor(n);const f=(v,u)=>(v>=100?Math.floor(v):Math.floor(v*10)/10)+u;for(const[d,u]of UNITS)if(n>=d)return f(n/d,u);return n>=1e4?f(n/1e3,'K'):''+n};
+/* the chip counter: full digits up to a billion, then 1.25B, 3.4T and so on */
+const chipTxt=n=>n>=1e9?(()=>{for(const[d,u]of UNITS)if(n>=d){const v=n/d;return(v>=100?Math.floor(v):v>=10?Math.floor(v*10)/10:Math.floor(v*100)/100)+u}})():fmt(n);
 const rnd=(()=>{const c=window.crypto;if(c&&c.getRandomValues){const u=new Uint32Array(64);let i=64;return()=>{if(i>=64){c.getRandomValues(u);i=0}return u[i++]/4294967296}}return Math.random})();
 const ri=n=>Math.floor(rnd()*n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=ri(i+1),t=a[i];a[i]=a[j];a[j]=t}return a};
 
 /* ---------- the player's wallet, kept in this browser and (inside the ZigaPlay) in the cloud ---------- */
-const KEY='chipcity-save',START=1000,MINBET=5,WORK_N=10,WORK_PAY=5,DEBT=100000;
-const GAMES={bj:'Blackjack',rl:'Roulette',sl:'Slots',vp:'Video Poker',hl:'Hi-Lo',rk:'Rocket',hr:'The Track'};
+const KEY='chipcity-save',START=1000,MINBET=5,WORK_N=10,WORK_PAY=50,DEBT=100000;
+/* the loan sharks: pay one off and the next one comes calling, each owed ten times more */
+const SHARKS=[
+  {id:'sal',name:'Big Sal',debt:1e5,hi:"Big Sal is waiting. He has very big teeth."},
+  {id:'knux',name:'Knuckles Malone',debt:1e6,hi:"Big Sal sold me your old IOUs, pal. With interest. A million chips, and my knuckles are itchy."},
+  {id:'vex',name:'Madame Vex',debt:1e7,hi:"Knuckles owed me, darling, so now you owe me. Ten million chips. I do so hate waiting."},
+  {id:'baron',name:'The Baron',debt:1e8,hi:"Madame Vex has passed your account to me. One hundred million chips, old sport."},
+  {id:'ice',name:'Mister Ice',debt:1e9,hi:"The Baron's debts are mine now. So are you. A billion chips. Cold, isn't it?"},
+  {id:'twins',name:'The Moretti Twins',debt:1e10,hi:"We heard you're good for it. Ten billion chips. We're both waiting."},
+  {id:'chair',name:'The Chairman',debt:1e11,hi:"Every shark in this city works for me. Bring me a hundred billion chips and you're free. Truly free."}];
+const SK=()=>SHARKS[Math.min(ST.sk||0,SHARKS.length-1)],lastShark=()=>(ST.sk||0)>=SHARKS.length-1;
+const GAMES={bj:'Blackjack',rl:'Roulette',sl:'Slots',vp:'Video Poker',th:"Texas Hold'em",hl:'Hi-Lo',rk:'Rocket',hr:'The Track'};
 /* each casino you start gets its own id, so a brand-new stack can never be mistaken for (and overwrite) your saved one */
 const newRun=()=>Date.now().toString(36)+'-'+Math.floor(rnd()*1e9).toString(36);
-const fresh=()=>({v:1,run:newRun(),chips:START,peak:START,bailouts:0,wagered:0,biggest:{amt:0,game:''},games:{},tier:0,sound:2,bets:{bj:25,sl:10,vp:25,hl:25,rk:25,hr:25},rkAuto:0,props:{},propEarned:0,chip:25,rlLast:null,work:{n:0,clicks:0,earned:0},debt:DEBT,paid:0,freed:0,intro:0,boosts:{},bought:{},created:Date.now(),savedAt:0});
+const fresh=()=>({v:1,run:newRun(),chips:START,peak:START,bailouts:0,wagered:0,biggest:{amt:0,game:''},games:{},tier:0,sound:2,bets:{bj:25,sl:10,vp:25,th:10,hl:25,rk:25,hr:25},rkAuto:0,props:{},propEarned:0,chip:25,rlLast:null,work:{n:0,clicks:0,earned:0},debt:DEBT,paid:0,freed:0,intro:0,boosts:{},bought:{},created:Date.now(),savedAt:0});
 const valid=s=>!!s&&typeof s==='object'&&typeof s.chips==='number'&&isFinite(s.chips)&&s.chips>=0;
-const upgrade=s=>{const o=Object.assign(fresh(),s);if(!s.run)o.run='legacy';o.work=Object.assign({n:0,clicks:0,earned:0},s.work||{});o.boosts=Object.assign({},s.boosts||{});o.bought=Object.assign({},s.bought||{});o.props=Object.assign({},s.props||{});if(typeof s.debt!=='number'){o.debt=DEBT;o.paid=0}o.bets=Object.assign(fresh().bets,s.bets||{});o.games=s.games&&typeof s.games==='object'?s.games:{};o.biggest=s.biggest||{amt:0,game:''};o.chips=Math.floor(o.chips);return o};
+const upgrade=s=>{const o=Object.assign(fresh(),s);if(!s.run)o.run='legacy';o.work=Object.assign({n:0,clicks:0,earned:0},s.work||{});o.boosts=Object.assign({},s.boosts||{});o.bought=Object.assign({},s.bought||{});o.props=Object.assign({},s.props||{});if(typeof s.debt!=='number'){o.debt=DEBT;o.paid=0}if(o.sk==null)o.sk=0;
+  /* a paid-off shark hands you on to the next one */if(!o.debt&&o.sk<SHARKS.length-1){o.paidAll=(o.paidAll||0)+(o.paidAll?0:SHARKS[o.sk].debt);o.sk++;o.debt=SHARKS[o.sk].debt;o.paid=0;o.newShark=1}o.bets=Object.assign(fresh().bets,s.bets||{});o.games=s.games&&typeof s.games==='object'?s.games:{};o.biggest=s.biggest||{amt:0,game:''};o.chips=Math.floor(o.chips);return o};
 /* the wallet is kept in several separate stores on this device (this page's storage, the console's own storage,
    IndexedDB and the offline cache), so if a phone forgets one of them when the app is closed, the newest copy
    that survived comes back. Every store gets every save, so the newest copy is always the right one. */
@@ -403,10 +430,15 @@ function pay(n){n=Math.floor(n);if(n<=0)return;ST.chips+=n;if(ST.chips>ST.peak)S
 /* one finished round: what was staked, what came back */
 function record(game,bet,ret){const g=gs(game);g.rounds++;g.bet+=bet;g.ret+=ret;ST.wagered+=bet;const net=ret-bet;
   if(net>0){g.wins++;if(net>g.best)g.best=net;if(net>(ST.biggest.amt||0))ST.biggest={amt:net,game}}
+  /* win bonus: a winning round pays its winnings again and more, the bigger the bet the bigger the multiplier (2x at the smallest bet) */
+  if(net>0){const m=winMult(bet),bn=Math.round(net*(m-1));if(bn>0){ST.chips+=bn;ST.winBonus=(ST.winBonus||0)+bn;if(net+bn>g.best)g.best=net+bn;if(net+bn>(ST.biggest.amt||0))ST.biggest={amt:net+bn,game};showChips();
+    setTimeout(()=>{const b=$('#bal');if(b)floatAt(b,'+'+fmt(bn)+' ×'+m.toFixed(1))},400)}}
   if(ST.chips>ST.peak)ST.peak=ST.chips;save();checkTier()}
 
+/* the win multiplier: 2x at the smallest bet, one more for every ten times the bet (50 pays 3x, 500 pays 4x, 5,000 pays 5x...) */
+const winMult=bet=>Math.round(Math.min(10,2+Math.log10(Math.max(1,bet/MINBET)))*10)/10;
 /* VIP levels, by the most chips you have ever held */
-const TIERS=[[0,'Newcomer','#a9c4b2'],[5000,'Bronze','#d9935a'],[25000,'Silver','#cfd8e3'],[100000,'Gold','#f4c74f'],[1000000,'Platinum','#9ef0ff'],[10000000,'Diamond','#ff9af2']];
+const TIERS=[[0,'Newcomer','#a9c4b2'],[5000,'Bronze','#d9935a'],[25000,'Silver','#cfd8e3'],[100000,'Gold','#f4c74f'],[1000000,'Platinum','#9ef0ff'],[10000000,'Diamond','#ff9af2'],[1e9,'Black Card','#b8b8c8'],[1e12,'Titanium','#e8f4ff'],[1e15,'Legend','#ffd84a']];
 const tierIdx=()=>{let i=0;TIERS.forEach((t,k)=>{if(ST.peak>=t[0])i=k});return i};
 function checkTier(){const i=tierIdx();if(i>(ST.tier||0)){ST.tier=i;save();SND.sfx('big');
   setTimeout(()=>info(`<h3>VIP ${TIERS[i][1]}!</h3><p>You have held ${fmt(TIERS[i][0])} chips at once. Your VIP card is now <b>${TIERS[i][1]}</b>.</p>${TIERS[i+1]?`<p>Next level: ${TIERS[i+1][1]} at ${fmt(TIERS[i+1][0])} chips.</p>`:'<p>That is the top of the house. Chip City salutes you.</p>'}`),500)}}
@@ -439,7 +471,7 @@ async function cloudInit(){
   }catch(e){CL.state='off';if(++CL.tries<10)setTimeout(cloudInit,12000)}}
 /* bring the cloud copy in, but only away from the tables, so no hand in progress changes under you */
 function adoptSoon(cs){CL.later=cs;tryAdopt()}
-function tryAdopt(){const cs=CL.later;if(!cs)return;if(S&&(['bj','rl','sl','vp','hl','rk','hr'].includes(S.id)||(S.busy&&S.busy())))return;CL.later=null;adopt(cs)}
+function tryAdopt(){const cs=CL.later;if(!cs)return;if(S&&(['bj','rl','sl','vp','th','hl','rk','hr'].includes(S.id)||(S.busy&&S.busy())))return;CL.later=null;adopt(cs)}
 setInterval(tryAdopt,1000);
 function adopt(cs,why){const snd=ST.sound;ST=upgrade(cs);ST.sound=snd;persist();
   showChips(true);if(S&&['lobby','stats','work','shark','store','downtown'].includes(S.id))go({stats,work,shark,store:shop,downtown}[S.id]||lobby);showLuck();toast(why||'Your chips came back from the cloud.')}
@@ -518,10 +550,10 @@ $('#snd').addEventListener('click',cycleSound);
 let shown=ST.chips,chipAnim=0;
 function showChips(now){const target=ST.chips,from=shown,b=$('#bal');cancelAnimationFrame(chipAnim);
   b.classList.toggle('up',target>from);b.classList.toggle('down',target<from);
-  if(now||Math.abs(target-from)<2){shown=target;$('#chips').textContent=fmt(target);setTimeout(()=>b.classList.remove('up','down'),300);return}
+  if(now||Math.abs(target-from)<2){shown=target;$('#chips').textContent=chipTxt(target);setTimeout(()=>b.classList.remove('up','down'),300);return}
   const t0=performance.now(),dur=Math.min(900,250+Math.log10(Math.abs(target-from)+1)*160);
-  const f=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);shown=from+(target-from)*e;$('#chips').textContent=fmt(shown);
-    if(k<1)chipAnim=requestAnimationFrame(f);else{shown=target;$('#chips').textContent=fmt(target);setTimeout(()=>b.classList.remove('up','down'),250)}};
+  const f=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);shown=from+(target-from)*e;$('#chips').textContent=chipTxt(shown);
+    if(k<1)chipAnim=requestAnimationFrame(f);else{shown=target;$('#chips').textContent=chipTxt(target);setTimeout(()=>b.classList.remove('up','down'),250)}};
   chipAnim=requestAnimationFrame(f)}
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1900)}
 function floatAt(target,text,neg){const app=$('#app'),r=target.getBoundingClientRect(),a=app.getBoundingClientRect();
@@ -556,10 +588,14 @@ function slider(label,steps,get,set,f=fmt){const b=el('button','btn slider');b.d
     const j=Math.max(0,Math.min(opts.length-1,i+d));if(opts[j]===v&&d!==0){SND.sfx('buzz');return}set(opts[j]);show();SND.sfx('chip')};
   b.addEventListener('click',e=>{if(!e.detail)return;const r=b.getBoundingClientRect(),x=(e.clientX-r.left)/r.width;if(x<.4)b._slide(-1);else if(x>.6)b._slide(1)});
   b._show=show;show();return b}
-const BETS=[5,10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000,1000000];
+const BETS=(()=>{const a=[];for(let e=0;e<=17;e++)for(const m of[1,2.5,5]){const v=m*10**e;if(v>=5)a.push(v)}return a})();
+/* MAX is the last step of every bet: it bets your whole stack, whatever it is when the round starts */
+const MAXBET=-1;
+function betSlider(k){const sl=slider('BET',()=>[...betSteps(),MAXBET],()=>ST.maxOn&&ST.maxOn[k]?MAXBET:ST.bets[k],v=>{ST.maxOn=ST.maxOn||{};if(v===MAXBET)ST.maxOn[k]=1;else{ST.maxOn[k]=0;ST.bets[k]=v}},
+  v=>v===MAXBET?'MAX · '+short(Math.max(MINBET,ST.chips)):fmt(v));return sl}
 const betSteps=()=>{const a=BETS.filter(v=>v<=Math.max(MINBET,ST.chips));return a.length?a:[MINBET]};
 /* a bet bigger than the stack drops to the largest one the stack can cover */
-function fitBet(k,sl){if(ST.bets[k]<=ST.chips||ST.chips<MINBET)return;const a=BETS.filter(v=>v<=ST.chips);ST.bets[k]=a[a.length-1];sl&&sl._show();toast(`Bet lowered to ${fmt(ST.bets[k])} to fit your chips.`)}
+function fitBet(k,sl){if(ST.maxOn&&ST.maxOn[k]){ST.bets[k]=Math.max(MINBET,Math.floor(ST.chips));sl&&sl._show();return}if(ST.bets[k]<=ST.chips||ST.chips<MINBET)return;const a=BETS.filter(v=>v<=ST.chips);ST.bets[k]=a[a.length-1];sl&&sl._show();toast(`Bet lowered to ${fmt(ST.bets[k])} to fit your chips.`)}
 
 /* questions and notes in a box over the screen */
 let MOD=null;
@@ -646,6 +682,21 @@ ICON.cat=pix(16,16,P=>{P.disc(8,11,5,'#fff4d8');P.disc(8,6,4,'#fff4d8');P.poly([
 ICON.sal=pix(24,24,P=>{/* Big Sal: a shark in a hat and a pinstripe suit */P.ell(12,13,8.5,7,'#7a8aa6');P.ell(12,15.5,6,3.6,'#e8eef6');P.poly([[4,9],[2,2],[8,7]],'#5a6a86');
   P.rect(2,6,20,2,'#2a2238');P.rect(6,1,12,6,'#2a2238');P.rect(6,5,12,1,'#d8323f');P.disc(9,11,1.6,'#ffffff');P.set(9,11,'#140c1c');P.disc(15,11,1.6,'#ffffff');P.set(15,11,'#140c1c');
   P.line(7,9,10,10,'#2a2238');P.line(17,9,14,10,'#2a2238');for(let x=8;x<=16;x+=2){P.poly([[x,15],[x+1,15],[x+.5,17]],'#ffffff')}P.rect(6,19,12,5,'#3a3050');P.rect(11,19,2,5,'#e8eef6');P.poly([[11,19],[13,19],[12,22]],'#d8323f');for(const x of[7,9,15,17])P.rect(x,20,1,4,'#5a4e72')});
+function sharkIcon(o){return pix(24,24,P=>{P.ell(12,13,8.5,7,o.body);P.ell(12,15.5,6,3.6,o.belly);P.poly([[4,9],[2,2],[8,7]],o.fin);
+  if(o.hat==='top'){P.rect(4,6,16,2,o.hatc);P.rect(7,0,10,7,o.hatc);P.rect(7,5,10,1,o.band)}else if(o.hat==='crown'){P.poly([[6,8],[6,1],[9,4],[12,0],[15,4],[18,1],[18,8]],'#f4c74f');P.disc(12,4,1.2,'#d8323f')}
+  else if(o.hat==='cap'){P.ell(12,6,6.5,3,o.hatc);P.rect(12,5,9,2,o.hatc);P.rect(7,6,10,1,o.band)}else{P.rect(2,6,20,2,o.hatc);P.rect(6,1,12,6,o.hatc);P.rect(6,5,12,1,o.band);if(o.feather)P.poly([[16,4],[22,0],[18,5]],o.feather)}
+  P.disc(9,11,1.6,'#ffffff');P.set(9,11,'#140c1c');P.disc(15,11,1.6,'#ffffff');P.set(15,11,'#140c1c');
+  if(o.shades){P.rect(6,10,5,3,'#141414');P.rect(13,10,5,3,'#141414');P.rect(11,11,2,1,'#141414')}if(o.monocle){P.disc(15,11,2.3,'#f4c74f');P.disc(15,11,1.5,'#ffffff');P.set(15,11,'#140c1c')}
+  P.line(7,9,10,10,'#2a2238');P.line(17,9,14,10,'#2a2238');for(let x=8;x<=16;x+=2)P.poly([[x,15],[x+1,15],[x+.5,17]],o.teeth||'#ffffff');
+  P.rect(6,19,12,5,o.suit);P.rect(11,19,2,5,'#e8eef6');P.poly([[11,19],[13,19],[12,22]],o.tie);if(o.stripes)for(const x of[7,9,15,17])P.rect(x,20,1,4,o.stripes);
+  if(o.cigar){P.rect(16,16,5,1,'#8a5a2a');P.set(21,16,'#ff8a2a')}if(o.pearls)for(const x of[7,9,15,17])P.set(x,19,'#ffffff');if(o.chain)for(const x of[8,10,14,16])P.set(x,20,'#f4c74f');if(o.scar)P.line(14,7,17,13,'#d8323f')})}
+ICON.knux=sharkIcon({body:'#6a7a5a',belly:'#e0e4d0',fin:'#4a5a3a',hat:'cap',hatc:'#6a4a2a',band:'#3a2a1a',suit:'#2a3a2a',tie:'#ffb03a',cigar:1,scar:1});
+ICON.vex=sharkIcon({body:'#8a5aa8',belly:'#f0e0f8',fin:'#6a3a88',hatc:'#1a1020',band:'#ff4fa3',feather:'#ff4fa3',suit:'#1a1020',tie:'#ff4fa3',pearls:1});
+ICON.baron=sharkIcon({body:'#c8ccd8',belly:'#ffffff',fin:'#9aa0b0',hat:'top',hatc:'#141414',band:'#d8323f',suit:'#141414',tie:'#d8323f',monocle:1});
+ICON.ice=sharkIcon({body:'#9ad8f0',belly:'#f0faff',fin:'#6ab0d0',hatc:'#f0f4f8',band:'#2f7de0',suit:'#f0f4f8',tie:'#2f7de0',shades:1,stripes:'#c8d8e8'});
+ICON.twins=sharkIcon({body:'#5a6a86',belly:'#e8eef6',fin:'#3a4a66',hatc:'#7a1a1a',band:'#f4c74f',suit:'#7a1a1a',tie:'#141414',chain:1,scar:1,shades:1});
+ICON.chair=sharkIcon({body:'#e8e8f0',belly:'#ffffff',fin:'#b8b8c8',hat:'crown',suit:'#f4c74f',tie:'#141414',teeth:'#f4c74f',stripes:'#c49a2a'});
+ICON.th=pix(16,16,P=>{P.rect(1,3,8,11,'#fff4d8');P.rect(2,4,2,2,'#d8323f');P.poly([[4,8],[6,6],[8,8],[6,11]],'#d8323f');P.rect(6,1,8,11,'#fff4d8');P.rect(7,2,2,2,'#22242f');P.poly([[9,6],[11,4],[13,6],[11,9]],'#22242f');P.disc(12,13,2.6,'#1f9a52');P.disc(12,13,1.4,'#fff4d8')});
 ICON.store=pix(16,16,P=>{P.rect(2,6,12,9,'#c98f5a');P.rect(3,8,4,7,'#6fd3e8');P.rect(9,8,4,4,'#6fd3e8');P.poly([[1,6],[3,2],[13,2],[15,6]],'#d8323f');for(const x of[3,7,11])P.poly([[x,2],[x+2,2],[x+2.6,6],[x+.6,6]],'#fff4d8')});
 ICON.rk=pix(16,16,P=>{P.poly([[4,11],[1,15],[5,12]],'#ffb04f');P.poly([[4.5,11.5],[2.5,13.5],[5,12]],'#fff3b0');P.poly([[5,8.5],[2,9],[4.5,6.5]],'#d8323f');P.poly([[7.5,11],[7,14],[9.5,11.5]],'#d8323f');
   P.poly([[4.5,9.5],[11,3],[13,5],[6.5,11.5]],'#fff4d8');P.poly([[11,3],[15,1],[13,5]],'#d8323f');P.disc(9.6,6.6,1.3,'#5ee6ff')});
@@ -672,6 +723,7 @@ const TABLES=[
   ['rl','Roulette','Single zero wheel. A number pays 35 to 1.',()=>go(roulette)],
   ['sl','Slots','Three reels. Three diamonds pay 1,000×.',()=>go(slots)],
   ['vp','Video Poker','Jacks or Better. A royal flush pays 800×.',()=>go(poker)],
+  ['th',"Texas Hold'em",'You and three players. Your bet is the big blind.',()=>go(holdem)],
   ['hl','Hi-Lo','Higher or lower? Cash out whenever you like.',()=>go(hilo)],
   ['rk','Rocket','Cash out before it blows up. It could climb to 1,000×.',()=>go(rocket)],
   ['hr','The Track','Six horses, one race. Pick the winner.',()=>go(track)],
@@ -679,10 +731,10 @@ const TABLES=[
 function lobby(){const root=el('div','screen lobby');
   const t=TIERS[tierIdx()],nx=TIERS[tierIdx()+1];
   root.innerHTML=`<div class="sign"><h1>CHIP<b>CITY</b></h1><p>${owned('casino')?'OWNED BY YOU':'POCKET CASINO'}</p></div>
-    <div class="wallet"><span>VIP <span class="tier" style="--tc:${t[2]}">${t[1]}</span></span><span>${nx?`${nx[1]} at <b>${big(nx[0])}</b>`:'Top of the house'}</span></div>`;
+    <div class="wallet"><span>VIP <span class="tier" style="--tc:${t[2]}">${t[1]}</span> <b class="cb">wins ×2+</b></span><span>${nx?`${nx[1]} at <b>${big(nx[0])}</b>`:'Top of the house'}</span></div>`;
   /* the reason you're here: what you still owe Big Sal */
-  {const owe=ST.debt,b=el('button','btn debt'+(owe?'':' free'));b.append(iconEl('sal'));const s3=el('span');
-    s3.innerHTML=owe?`<b>You owe Big Sal <em>${fmt(owe)}</em></b><i class="dbar"><i style="width:${(DEBT-owe)/DEBT*100}%"></i></i><small>${salNag()}</small>`:`<b>Debt-free!</b><small>You paid Big Sal every chip. Stop by and gloat.</small>`;
+  {const owe=ST.debt,S=SK(),b=el('button','btn debt'+(owe?'':' free'));b.append(iconEl(S.id));const s3=el('span');
+    s3.innerHTML=owe?`<b>You owe ${S.name} <em>${big(owe)}</em></b><i class="dbar"><i style="width:${(S.debt-owe)/S.debt*100}%"></i></i><small>${salNag()}</small>`:`<b>Debt-free!</b><small>You paid off every loan shark in Chip City. Stop by and gloat.</small>`;
     b.append(s3);b.addEventListener('click',()=>{SND.sfx('ok');go(shark)});root.append(b)}
   if(ST.chips<MINBET){const c=el('button','btn gold cashier',`Go to work<small>Out of chips! Polish chips at the vault: every ${WORK_N} polishes earn ${WORK_PAY} chips</small>`);
     c.addEventListener('click',()=>{SND.sfx('ok');go(work)});root.append(c)}
@@ -691,7 +743,7 @@ function lobby(){const root=el('div','screen lobby');
     b.addEventListener('click',()=>{if(ST.chips<MINBET){SND.sfx('buzz');toast('You need chips first. Go to work to earn some.');return}SND.sfx('ok');open()});list.append(b)}
   /* downtown: buildings to buy, each one earning by the hour */
   {const b=el('button','btn table-btn dt-btn');b.append(iconEl('dt'));const s2=el('span'),n=ownedN(),t=tillAll();
-    s2.innerHTML=`<b>Downtown</b><small>${n?`You own ${n} of ${PROPS.length} buildings${t?` · <em>${fmt(t)}</em> chips to collect`:''}`:"Buy the town, one building at a time. Each one earns chips while you're away."}</small>`;b.append(s2);
+    s2.innerHTML=`<b>Downtown</b><small>${n?`You own ${n} of ${PROPS.length} buildings${t?` · <em>${big(t)}</em> chips to collect`:''}`:"Buy the town, one building at a time. Each one earns chips while you're away."}</small>`;b.append(s2);
     b.addEventListener('click',()=>{SND.sfx('ok');go(downtown)});list.append(b)}
   /* the corner store, for a little luck */
   {const b=el('button','btn table-btn store-btn');b.append(iconEl('store'));const s2=el('span');const l=luckNow();s2.innerHTML=`<b>Corner Store</b><small>${l?`Your luck: +${Math.round(l*100)}%. `:''}Beer, energy drinks and lucky charms. A little luck for a while.</small>`;b.append(s2);
@@ -703,10 +755,11 @@ function lobby(){const root=el('div','screen lobby');
   const st=el('button','btn ghost','Stats');st.addEventListener('click',()=>go(stats));
   const hp=el('button','btn ghost','How to play');hp.addEventListener('click',()=>info(`<h3>Welcome to Chip City</h3><p>Every table here uses play chips. There is no real money anywhere in this game.</p>
     <ul><li><b>D-pad</b> moves the cursor, <b>A</b> presses.</li><li><b>START</b> deals, spins or draws at every table.</li><li><b>B</b> takes you back (and takes a chip back at roulette).</li><li>On a bet, left and right change the amount.</li></ul>
-    <p><b>The goal:</b> you owe Big Sal ${fmt(DEBT)} chips. Win them at the tables and pay him off at his booth, a bit at a time or all at once.</p><p>You start with ${fmt(START)} chips. Run out, and it's time to go to work: at the vault, every ${WORK_N} polishes earn ${WORK_PAY} chips. You can go to work any time.</p><p>The <b>Corner Store</b> sells beer, energy drinks and charms that give you a little luck for a few minutes: when a round is about to go against you, luck gives it a second chance.</p><p><b>Downtown</b> sells buildings, from a hot dog cart to the Chip City Casino itself. Each one earns chips by the hour, even while the game is closed: drop by to collect.</p><p>Chips save by themselves after every round.</p>`));
+    <p><b>The goal:</b> you owe Big Sal ${fmt(DEBT)} chips. Win them at the tables and pay him off at his booth, a bit at a time or all at once. Pay him off and the next loan shark buys up your marker, each one owed ten times more, all the way to The Chairman's ${fmt(SHARKS[SHARKS.length-1].debt)}.</p><p>You start with ${fmt(START)} chips. Run out, and it's time to go to work: at the vault, every ${WORK_N} polishes earn ${WORK_PAY} chips. You can go to work any time.</p><p><b>Win bonus:</b> every win pays its winnings times a multiplier that grows with your bet: 2× at ${MINBET} chips, 3× at ${MINBET*10}, 4× at ${MINBET*100}, 5× at ${fmt(MINBET*1000)} and on up to 10×. Losing bets pay nothing back.</p><p>The <b>Corner Store</b> sells beer, energy drinks and charms that give you a little luck for a few minutes: when a round is about to go against you, luck gives it a second chance.</p><p><b>Downtown</b> sells buildings, from a hot dog cart to the Chip City Casino itself. Each one earns chips by the hour, even while the game is closed: drop by to collect.</p><p>Chips save by themselves after every round.</p>`));
   const sd=el('button','btn ghost sndbtn',sndLabel());sd.addEventListener('click',cycleSound);
   row.append(st,sd,hp);bar.append(row);root.append(bar,el('div','fine','PLAY CHIPS ONLY · NO REAL MONEY · '+saveWord()));
   if(!ST.intro)setTimeout(()=>{if(S&&S.id==='lobby'&&!ST.intro)introStory()},350);
+  else if(ST.newShark)setTimeout(()=>{if(S&&S.id==='lobby'&&ST.newShark){ST.newShark=0;save();sharkNews()}},350);
   return{id:'lobby',el:root,title:'',first:()=>$('.cashier',root)||$('.debt',root),select:()=>go(stats)}}
 
 /* ========================================================================================================
@@ -728,7 +781,7 @@ function blackjack(){
   const msg=(t,c='')=>{msgEl.textContent=t;msgEl.className='msg '+c};
   if(!BJ.shoe.length){BJ.shoe=newDeck(6);BJ.cut=Math.floor(BJ.shoe.length*.25)}
   const draw=()=>{if(!BJ.shoe.length){BJ.shoe=newDeck(6)}return BJ.shoe.pop()};
-  const sl=slider('BET',betSteps,()=>ST.bets.bj,v=>{ST.bets.bj=v});
+  const sl=betSlider('bj');
   const B={deal:el('button','btn gold','Deal'),hit:el('button','btn green','Hit'),stand:el('button','btn red','Stand'),dbl:el('button','btn','Double'),split:el('button','btn','Split'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
   B.deal.addEventListener('click',deal);B.hit.addEventListener('click',()=>doAct('hit'));B.stand.addEventListener('click',()=>doAct('stand'));B.dbl.addEventListener('click',()=>doAct('dbl'));B.split.addEventListener('click',()=>doAct('split'));
   B.help.addEventListener('click',()=>info(`<h3>Blackjack</h3><p>Get closer to 21 than the dealer without going over. Picture cards count 10, aces 1 or 11.</p>
@@ -803,7 +856,7 @@ function blackjack(){
   phase='bet';controls();msg('Place your bet, then Deal.');
   return{id:'bj',el:root,title:'Blackjack',first:()=>B.deal,start:()=>{if(phase==='bet')deal();else if(phase==='play'){SND.sfx('buzz')}},back:()=>{if(phase==='bet')go(lobby)},
     select:()=>{if(phase==='bet')sl._slide(1)},busy:()=>phase!=='bet',fit:()=>{sizeCards();refit()}}}
-const chipColor=v=>v>=100000?'#e05a1a':v>=10000?'#d6a11c':v>=1000?'#7a3fc9':v>=500?'#9c27b0':v>=100?'#22242f':v>=25?'#1f9a52':v>=5?'#c62f3a':'#6b7a8a';
+const chipColor=v=>v>=1e9?'#18a8c8':v>=1e6?'#c8c8d8':v>=100000?'#e05a1a':v>=10000?'#d6a11c':v>=1000?'#7a3fc9':v>=500?'#9c27b0':v>=100?'#22242f':v>=25?'#1f9a52':v>=5?'#c62f3a':'#6b7a8a';
 
 /* ========================================================================================================
    ROULETTE: single zero; numbers, dozens, columns and the even-money bets
@@ -815,7 +868,8 @@ const RBET={low:[n=>n>=1&&n<=18,2,'1-18'],high:[n=>n>=19,2,'19-36'],even:[n=>n>0
   d1:[n=>n>=1&&n<=12,3,'1st 12'],d2:[n=>n>=13&&n<=24,3,'2nd 12'],d3:[n=>n>=25,3,'3rd 12'],c1:[n=>n>0&&n%3===1,3,'Column 1'],c2:[n=>n>0&&n%3===2,3,'Column 2'],c3:[n=>n>0&&n%3===0,3,'Column 3']};
 const rWins=(id,n)=>id[0]==='n'?+id.slice(1)===n:RBET[id][0](n);
 const rPays=id=>id[0]==='n'?36:RBET[id][1];
-const CHIPS=[1,5,25,100,500,1000,5000,25000,100000];
+const CHIPS=[1,5,25,100,500,1000,5000,25000,100000,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15],CHIPSM=[...CHIPS,MAXBET];
+const chipVal=()=>ST.chip===MAXBET?Math.floor(ST.chips):ST.chip;
 function roulette(){
   const root=el('div','screen felt rl');let bets={},spinning=false,hist=(ST.rlHist||[]).slice(-9);
   root.innerHTML=`<div class="hist" id="hist"></div><div class="board" id="board"></div><div class="msg" id="rMsg"></div>`;
@@ -835,7 +889,7 @@ function roulette(){
   const tot=el('button','cell small nonav','');tot.style.gridArea='14/2/15/3';tot.disabled=true;tot.style.fontFamily='var(--num)';tot.style.fontSize='.95rem';board.append(tot);
   ['c1','c2','c3'].forEach((id,k)=>cell(id,'out','2:1',`14/${k+3}/15/${k+4}`,RBET[id][2]));
   const bar=el('div','bar'),row=el('div','row');bar.append(row);
-  const chipSl=slider('CHIP',()=>CHIPS,()=>ST.chip,v=>{ST.chip=v});
+  const chipSl=slider('CHIP',()=>CHIPSM,()=>ST.chip,v=>{ST.chip=v},v=>v===MAXBET?'MAX':short(v));
   const B={clear:el('button','btn ghost','Clear'),rebet:el('button','btn ghost','Rebet'),spin:el('button','btn gold','Spin')};
   B.clear.addEventListener('click',()=>{const n=total();if(!n){SND.sfx('buzz');return}refund(n);bets={};paintBets();SND.sfx('unchip');msg('Chips back in your stack.')});
   B.rebet.addEventListener('click',rebet);B.spin.addEventListener('click',spin);
@@ -846,9 +900,9 @@ function roulette(){
       if(!c){c=el('span','pchip');b.append(c)}c.textContent=short(v);c.style.setProperty('--c',chipColor(v))}
     const t=total();tot.textContent=t?short(t):'';B.clear.disabled=!t||spinning;B.rebet.disabled=spinning||!ST.rlLast||!!t;B.spin.disabled=spinning}
   function paintHist(){$('#hist',root).innerHTML=hist.length?'<em>LAST</em>'+hist.slice().reverse().map(n=>`<span class="${colOf(n)}">${n}</span>`).join(''):'<em>PLACE YOUR BETS</em>'}
-  function place(id){if(spinning)return;const v=ST.chip;if(v>ST.chips){SND.sfx('buzz');msg(ST.chips<1?'Out of chips.':'Not enough chips for that chip. Try a smaller one.','lose');return}
+  function place(id){if(spinning)return;const v=chipVal();if(v<1||v>ST.chips){SND.sfx('buzz');msg(ST.chips<1?'Out of chips.':'Not enough chips for that chip. Try a smaller one.','lose');return}
     spend(v);bets[id]=(bets[id]||0)+v;SND.sfx('chip');paintBets();msg(`${short(bets[id])} on ${label(id)}`)}
-  function unplace(id){if(spinning||!bets[id])return false;const v=Math.min(ST.chip,bets[id]);bets[id]-=v;if(!bets[id])delete bets[id];refund(v);SND.sfx('unchip');paintBets();msg(bets[id]?`${short(bets[id])} on ${label(id)}`:`Took your chips off ${label(id)}.`);return true}
+  function unplace(id){if(spinning||!bets[id])return false;const v=ST.chip===MAXBET?bets[id]:Math.min(ST.chip,bets[id]);bets[id]-=v;if(!bets[id])delete bets[id];refund(v);SND.sfx('unchip');paintBets();msg(bets[id]?`${short(bets[id])} on ${label(id)}`:`Took your chips off ${label(id)}.`);return true}
   const label=id=>id[0]==='n'?id.slice(1):RBET[id][2];
   function rebet(){if(spinning||total()||!ST.rlLast)return false;const need=Object.values(ST.rlLast).reduce((a,b)=>a+b,0);
     if(need>ST.chips){SND.sfx('buzz');msg('Not enough chips to repeat those bets.','lose');return false}
@@ -868,7 +922,7 @@ function roulette(){
     bets={};spinning=false;paintBets();if(!navList().includes(hot))setHot(B.spin)}
   paintBets();paintHist();msg('Place chips, then Spin.');
   return{id:'rl',el:root,title:'Roulette',first:()=>cells.red,
-    start:()=>spin(),select:()=>{if(spinning)return;const i=CHIPS.indexOf(ST.chip);ST.chip=CHIPS[(i+1)%CHIPS.length];chipSl._show();SND.sfx('chip');msg(`Chip: ${fmt(ST.chip)}`)},
+    start:()=>spin(),select:()=>{if(spinning)return;const i=CHIPSM.indexOf(ST.chip);ST.chip=CHIPSM[(i+1)%CHIPSM.length];chipSl._show();SND.sfx('chip');msg(ST.chip===MAXBET?'Chip: MAX (everything you have)':`Chip: ${fmt(ST.chip)}`)},
     back:()=>{if(spinning)return;if(hot&&hot.dataset.bet&&unplace(hot.dataset.bet))return;if(total()){choose('<p>Take your chips off the board and leave the table?</p>',['Stay','Leave']).then(c=>{if(c===1)leaveTable()})}else go(lobby)},
     key:btn=>{if(!spinning)return false;if((btn==='a'||btn==='start')&&root._skip)root._skip();return true},busy:()=>spinning,leave:()=>{const n=total();if(n){refund(n);bets={};save()}},powerOff(){const n=total();if(n){refund(n);bets={}}}}}
 /* the wheel, drawn at a low resolution and scaled up, so it looks like pixel art */
@@ -932,7 +986,7 @@ function slots(){if(!STRIPS)STRIPS=[makeStrip(),makeStrip(),makeStrip()];
       g.restore()}
     g.fillStyle=lit?'#ff3048':'rgba(216,50,63,.85)';g.fillRect(0,cv.height/2-1,cv.width,3);
     g.fillStyle=lit?'#fff3b0':'#d8323f';for(const x of[0,cv.width-5]){g.beginPath();g.moveTo(x===0?0:cv.width,cv.height/2-6);g.lineTo(x===0?7:cv.width-7,cv.height/2+.5);g.lineTo(x===0?0:cv.width,cv.height/2+7);g.fill()}}
-  const sl=slider('BET',betSteps,()=>ST.bets.sl,v=>{ST.bets.sl=v});
+  const sl=betSlider('sl');
   const B={spin:el('button','btn gold','Spin'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
   B.spin.addEventListener('click',spin);B.out.addEventListener('click',()=>{if(!spinning)go(lobby)});
   B.help.addEventListener('click',()=>info(`<h3>Slots</h3><p>Pick a bet and spin. Wins are read along the red line in the middle, and pay your bet times the number on the table below the reels.</p><ul><li>Three of a kind pays the most: three diamonds pay 1,000×.</li><li>Any three of BAR, 7 and diamond, mixed, pay 8×.</li><li>Cherries pay anywhere on the line: one pays 2×, two pay 6×.</li></ul><p>The machine pays back about 95% over a long run, like a real one.</p>`));
@@ -978,7 +1032,7 @@ function poker(){
   let phase='bet',deck=[],hand=[],held=[false,false,false,false,false],busy=false;
   const paintTable=lit=>{vpt.innerHTML=VPPAY.map(([n,m],i)=>`<div class="${i===lit?'lit':''}"><span>${n}</span><b>${m}×</b></div>`).join('')};paintTable(-1);
   const slots=[];for(let i=0;i<5;i++){const b=el('button','vpc');b.innerHTML='<span class="hold">HOLD</span>';const c=cardEl(null,true);b.prepend(c);b.addEventListener('click',()=>toggle(i));wrap.append(b);slots.push(b)}
-  const sl=slider('BET',betSteps,()=>ST.bets.vp,v=>{ST.bets.vp=v});
+  const sl=betSlider('vp');
   const B={go:el('button','btn gold','Deal'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
   B.go.addEventListener('click',act);B.out.addEventListener('click',()=>{if(phase==='bet'&&!busy)go(lobby)});
   B.help.addEventListener('click',()=>info(`<h3>Video Poker: Jacks or Better</h3><p>Deal five cards, choose which to <b>hold</b>, then draw new cards for the rest. Your final hand pays your bet times:</p><table>${VPPAY.map(([n,m])=>`<tr><td>${n}</td><td>${m}×</td></tr>`).join('')}</table><p>Jacks or Better means a pair of jacks, queens, kings or aces. It gives your bet back.</p><ul><li>Left and right pick a card, <b>A</b> holds it.</li><li><b>START</b> deals, then draws.</li></ul>`));
@@ -1010,6 +1064,122 @@ function poker(){
     fit:(W,H)=>{root.style.setProperty('--cw',Math.max(26,Math.min((W-30-5*5-4*4)/5,(H-vpt.offsetHeight-170)/1.65,78))+'px')}}}
 
 /* ========================================================================================================
+   TEXAS HOLD'EM: you and three players. Your bet sets the big blind; two cards each, five on the board,
+   four rounds of betting. Fold, check or call, or raise (all the way to MAX). Best five of seven wins the pot.
+   ======================================================================================================== */
+const HNAME=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush','Royal Flush'];
+function rank5(cs){const r=cs.map(c=>c.r===1?14:c.r).sort((a,b)=>b-a),fl=cs[0].s===cs[1].s&&cs[1].s===cs[2].s&&cs[2].s===cs[3].s&&cs[3].s===cs[4].s;
+  const cnt={};for(const x of r)cnt[x]=(cnt[x]||0)+1;const g=Object.keys(cnt).map(v=>[cnt[v],+v]).sort((a,b)=>b[0]-a[0]||b[1]-a[1]);
+  let st=0;if(g.length===5){if(r[0]-r[4]===4)st=r[0];else if(r[0]===14&&r[1]===5)st=5}
+  let cat,k;if(st&&fl){cat=st===14?9:8;k=[st]}else if(g[0][0]===4){cat=7;k=[g[0][1],g[1][1]]}else if(g[0][0]===3&&g[1][0]===2){cat=6;k=[g[0][1],g[1][1]]}
+  else if(fl){cat=5;k=r}else if(st){cat=4;k=[st]}else if(g[0][0]===3){cat=3;k=g.map(x=>x[1])}else if(g[0][0]===2&&g[1][0]===2){cat=2;k=g.map(x=>x[1])}
+  else if(g[0][0]===2){cat=1;k=g.map(x=>x[1])}else{cat=0;k=r}
+  let sc=cat;for(let i=0;i<5;i++)sc=sc*15+(k[i]||0);return sc}
+const handCat=sc=>Math.floor(sc/759375);
+function bestOf(cs){if(cs.length<5)return -1;if(cs.length===5)return rank5(cs);let b=-1;const n=cs.length;
+  if(n===6){for(let a=0;a<6;a++){const s=rank5(cs.filter((_,i)=>i!==a));if(s>b)b=s}return b}
+  for(let a=0;a<n;a++)for(let c=a+1;c<n;c++){const s=rank5(cs.filter((_,i)=>i!==a&&i!==c));if(s>b)b=s}return b}
+/* how often these two cards win against n random hands, by playing it out a hundred times */
+function equity(hole,board,nOpp,iters=110){const used=new Set([...hole,...board].map(c=>c.r*4+c.s)),deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)if(!used.has(r*4+s))deck.push({r,s});
+  let win=0;const need=5-board.length+nOpp*2;
+  for(let it=0;it<iters;it++){for(let i=0;i<need;i++){const j=i+ri(deck.length-i),t=deck[i];deck[i]=deck[j];deck[j]=t}
+    const bd=board.concat(deck.slice(0,5-board.length)),me=bestOf(hole.concat(bd));let k=5-board.length,ok=true,tie=0;
+    for(let o=0;o<nOpp&&ok;o++){const s=bestOf([deck[k],deck[k+1]].concat(bd));k+=2;if(s>me)ok=false;else if(s===me)tie++}
+    if(ok)win+=tie?1/(tie+1):1}
+  return win/iters}
+const TH_NAMES=['Lucky Lou','Dimes','Mama Rosa','Slick Vinnie','The Professor','Tex','Ruby','Jojo','Old Pete','Velvet'];
+const TH={seats:null,dealer:0};
+function holdem(){const root=el('div','screen th');
+  root.innerHTML=`<div class="th-opps"></div><div class="th-mid"><div class="th-pot"></div><div class="th-board"></div></div><div class="msg" id="tMsg"></div><div class="th-me"><div class="th-hole"></div><div class="th-mine"></div></div>`;
+  const oppsE=$('.th-opps',root),potE=$('.th-pot',root),boardE=$('.th-board',root),holeE=$('.th-hole',root),mineE=$('.th-mine',root),msgEl=$('#tMsg',root);
+  const msg=(t,c='')=>{msgEl.textContent=t;msgEl.className='msg '+c};
+  if(!TH.seats){const nm=shuffle(TH_NAMES.slice());TH.seats=[0,1,2].map(i=>({name:nm[i],tight:.9+rnd()*.3,aggr:.15+rnd()*.35,bluff:.03+rnd()*.06}));TH.dealer=ri(4)}
+  /* seat 0 is you, 1-3 are the other players (they never run out of chips) */
+  const P=[{you:1,name:'You'},...TH.seats.map(s=>Object.assign({},s))];
+  const oppE=[null];for(let i=1;i<4;i++){const d=el('div','th-opp');d.innerHTML=`<b>${P[i].name}</b><div class="th-oc"></div><i class="th-st"></i><em class="th-bet"></em>`;oppsE.append(d);oppE.push(d)}
+  for(let i=0;i<5;i++)boardE.append(cardEl(null,true));for(let i=0;i<2;i++)holeE.append(cardEl(null,true));
+  let phase='bet',board=[],deck=[],BB=0,cur=0,minRaise=0,raises=0,turnRes=null,busy=false,raiseTo=0;
+  const potAll=()=>P.reduce((a,p)=>a+(p.tot||0),0);
+  /* the controls */
+  const sl=betSlider('th');sl.querySelector('small').textContent='BIG BLIND';
+  const rsl=slider('RAISE TO',()=>raiseSteps(),()=>raiseTo,v=>{raiseTo=v},v=>v>=myMax()?'MAX · '+short(v):big(v));
+  const B={deal:el('button','btn gold','Deal'),fold:el('button','btn red','Fold'),call:el('button','btn green','Check'),raise:el('button','btn gold','Raise'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
+  const bar=el('div','bar'),r1=el('div','row'),r2=el('div','row'),r3=el('div','row');r1.append(sl,B.deal);r2.append(B.fold,B.call);r3.append(B.help,B.out);bar.append(r1,r2,r3);root.append(bar);
+  B.deal.addEventListener('click',()=>{if(phase==='bet')deal()});B.out.addEventListener('click',()=>{if(phase==='bet')go(lobby)});
+  B.fold.addEventListener('click',()=>answer('fold'));B.call.addEventListener('click',()=>answer('call'));B.raise.addEventListener('click',()=>answer('raise'));
+  B.help.addEventListener('click',()=>info(`<h3>Texas Hold'em</h3><p>You and three players. Your bet is the <b>big blind</b>; the small blind is half of it. The blinds move round the table each hand.</p><ul><li>Everyone gets two cards. Then five shared cards come on the board: three (the flop), one (the turn) and one (the river), with a round of betting before each and after the last.</li><li><b>Fold</b> gives up the hand. <b>Check</b> passes when there is nothing to pay; <b>Call</b> matches the bet. <b>Raise</b> bets more, up to <b>MAX</b>: everything you have.</li><li>The best five cards out of your two and the board's five win the pot. If everyone else folds, the pot is yours.</li><li>Going all in for less than a bet only lets you win what you matched from each player.</li></ul><p>Hands, best first: ${HNAME.slice().reverse().join(', ')}.</p><p>The win bonus applies to what you win back above what you put in.</p>`));
+  function myMax(){return P[0].bet+Math.floor(ST.chips)}
+  function raiseSteps(){const lo=Math.min(myMax(),cur+minRaise),hi=myMax(),a=[lo];for(const v of BETS)if(v>lo&&v<hi)a.push(v);if(hi>lo)a.push(hi);return a}
+  function controls(){const myTurn=phase==='act',inHand=phase!=='bet';
+    B.deal.hidden=sl.hidden=inHand;rsl.hidden=B.raise.hidden=!inHand;B.fold.parentNode.hidden=!inHand;
+    if(inHand&&!r1.contains(rsl)){r1.prepend(rsl,B.raise)}
+    for(const b of[B.fold,B.call,B.raise,rsl])b.disabled=!myTurn;
+    const toCall=Math.max(0,cur-P[0].bet);B.call.textContent=toCall?`Call ${big(Math.min(toCall,Math.floor(ST.chips)))}`:'Check';
+    B.raise.disabled=!myTurn||myMax()<=cur||P.some(p=>!p.you&&p.cap);B.raise.textContent=cur?'Raise':'Bet';
+    B.out.disabled=inHand;if(myTurn){const st=raiseSteps();if(!st.includes(raiseTo))raiseTo=st[0];rsl._show()}}
+  function paint(show){potE.innerHTML=`POT <b>${big(potAll())}</b>`;
+    for(let i=1;i<4;i++){const p=P[i],d=oppE[i];d.classList.toggle('out',!!p.folded);d.classList.toggle('dealer',TH.dealer===i);d.classList.toggle('turn',p.turn);
+      $('.th-st',d).textContent=p.last||'';$('.th-bet',d).textContent=p.bet?big(p.bet):''}
+    const me=P[0];mineE.innerHTML=`${TH.dealer===0?'<i class="th-d">D</i>':''}<span>${me.bet?'Bet '+big(me.bet):me.folded?'Folded':''}</span><b>${me.cards&&board.length>=3&&!me.folded?HNAME[handCat(bestOf(me.cards.concat(board)))]:''}</b>`;
+    controls()}
+  async function oppCards(i,up){const oc=$('.th-oc',oppE[i]);oc.innerHTML='';for(const c of P[i].cards||[]){const e=cardEl(up?c:null,!up);e.classList.add('deal');oc.append(e)}}
+  function put(i,n){const p=P[i];if(p.you){n=Math.min(n,Math.floor(ST.chips));spend(n);if(ST.chips<1)p.allin=true}p.bet+=n;p.tot+=n;return n}
+  async function deal(){fitBet('th',sl);BB=Math.max(2,ST.bets.th);if(BB>ST.chips){SND.sfx('buzz');msg(ST.chips<MINBET?'Out of chips. Go to work in the lobby to earn more.':'Not enough chips for that blind.','lose');return}
+    phase='deal';busy=true;TH.dealer=(TH.dealer+1)%4;board=[];deck=newDeck(1);raises=0;
+    for(const p of P){p.cards=[deck.pop(),deck.pop()];p.bet=0;p.tot=0;p.folded=false;p.allin=false;p.last='';p.turn=false;p.cap=false}
+    [...boardE.children].forEach(c=>{c.classList.add('back')});
+    const sb=(TH.dealer+1)%4,bb=(TH.dealer+2)%4;put(sb,Math.floor(BB/2));P[sb].last='Small blind';put(bb,BB);P[bb].last='Big blind';cur=BB;minRaise=BB;
+    msg('');SND.sfx('chip');for(let i=1;i<4;i++)oppCards(i,false);
+    for(let i=0;i<2;i++)await flipTo(holeE.children[i],P[0].cards[i]);paint();
+    const streets=[[0,'Preflop'],[3,'Flop'],[1,'Turn'],[1,'River']];let first=true;
+    for(const[n,name]of streets){if(!first){for(let k=0;k<n;k++){const c=deck.pop();board.push(c);await flipTo(boardE.children[board.length-1],c)}for(const p of P){p.bet=0;if(!p.folded&&!p.allin)p.last=''}cur=0;minRaise=BB;raises=0;paint()}
+      await betting(first?(TH.dealer+3)%4:(TH.dealer+1)%4);first=false;
+      if(P.filter(p=>!p.folded).length<2)break}
+    await showdown()}
+  /* one round of betting, starting at seat s */
+  async function betting(s){let acted=new Set(),i=s,guard=0;
+    const live=()=>P.filter(p=>!p.folded),can=p=>!p.folded&&!p.allin;
+    while(guard++<60){if(live().length<2)return;
+      const pending=P.filter(p=>can(p)&&(!acted.has(p)||p.bet<cur));if(!pending.length)return;
+      const p=P[i];i=(i+1)%4;if(!can(p)||(acted.has(p)&&p.bet>=cur))continue;
+      p.turn=true;paint();let a;
+      if(p.you){phase='act';controls();setHot(B.call);msg(cur>p.bet?`${big(cur-p.bet)} to call.`:'Your move.');a=await new Promise(r=>turnRes=r);phase='deal';msg('')}
+      else{await sleep(380+ri(300));a=botMove(p)}
+      p.turn=false;
+      if(a.t==='fold'){p.folded=true;p.last='Fold';SND.sfx('unchip');if(p.you)holeE.classList.add('dim')}
+      else if(a.t==='call'){const need=cur-p.bet;if(need>0){put(P.indexOf(p),need);p.last=p.allin?'All in':'Call';SND.sfx('chip')}else p.last='Check'}
+      else{const to=a.to,add=to-p.bet;const n=put(P.indexOf(p),add);const nb=p.bet;if(nb>cur){minRaise=Math.max(minRaise,nb-cur);cur=nb;raises++;acted=new Set()}p.last=p.allin?'All in':(raises>1?'Raise':'Bet')+' '+big(nb);SND.sfx('chip');if(p.you&&n<add)p.last='All in'}
+      acted.add(p);paint()}}
+  function answer(t){if(phase!=='act'||!turnRes)return;const r=turnRes;turnRes=null;
+    if(t==='raise'){const to=Math.max(raiseTo,Math.min(myMax(),cur+minRaise));r({t:'raise',to:Math.min(to,myMax())})}else r({t})}
+  /* the other players: they play their odds, with a little nerve and a little bluff each */
+  function botMove(p){const live=P.filter(q=>!q.folded&&q!==p).length,toCall=cur-p.bet,pot=potAll();
+    const eq=equity(p.cards,board,Math.max(1,live)),fair=1/(live+1),str=eq/fair,po=toCall/(pot+toCall||1),r=rnd(),youAllIn=P[0].allin;
+    const raiseTo=()=>{const base=board.length?Math.round(pot*(.5+rnd()*.5)):Math.round(BB*(2+rnd()*1.5));return cur+Math.max(minRaise,base)};
+    if(!youAllIn&&raises<3&&(str>1.7&&r<p.aggr+.4||str>2.3))return{t:'raise',to:raiseTo()};
+    if(toCall<=0){if(!youAllIn&&raises<2&&r<p.bluff)return{t:'raise',to:raiseTo()};return{t:'call'}}
+    if(eq*p.tight>=po*1.05||(str>.9&&toCall<=BB))return{t:'call'};
+    if(!youAllIn&&raises<2&&r<p.bluff*.6)return{t:'raise',to:raiseTo()};
+    return{t:'fold'}}
+  async function showdown(){phase='show';const live=P.filter(p=>!p.folded);let mine=0;const lines=[];
+    if(live.length>1){for(let i=1;i<4;i++)if(!P[i].folded)await oppCards(i,true);for(const p of live)p.score=bestOf(p.cards.concat(board))}
+    /* pots by level, so an all-in for less only wins what it matched */
+    const levels=[...new Set(live.map(p=>p.tot))].sort((a,b)=>a-b);let prev=0;
+    for(const L of levels){let pot=0;for(const p of P)pot+=Math.max(0,Math.min(p.tot,L)-prev);const el2=live.filter(p=>p.tot>=L);
+      const top=Math.max(...el2.map(p=>p.score||0)),win=el2.filter(p=>(p.score||0)===top);const each=Math.floor(pot/win.length);
+      for(const w of win){if(w.you)mine+=each;w.won=(w.won||0)+each}prev=L}
+    const winners=P.filter(p=>p.won);const best=winners.sort((a,b)=>b.won-a.won)[0];
+    const hn=p=>live.length>1?' with '+HNAME[handCat(p.score)]:'';
+    if(mine>0){pay(mine);const net=mine-P[0].tot;msg(net>0?`You win ${big(mine)}${hn(P[0])}!`:`You get back ${big(mine)}${hn(P[0])}.`,net>0?'gold':'');SND.sfx(net>0?(handCat(P[0].score||0)>=5?'big':'win'):'push');if(net>0)floatAt(potE,'+'+big(net))}
+    else{msg(`${best.name} ${best.name==='You'?'win':'wins'} ${big(best.won)}${hn(best)}.`,'lose');SND.sfx('lose')}
+    for(const p of P){p.won=0;p.score=0}
+    record('th',P[0].tot,mine);holeE.classList.remove('dim');phase='bet';busy=false;for(const p of P){p.bet=0}paint();setHot(B.deal)}
+  paint();msg('Pick the big blind and Deal.');
+  return{id:'th',el:root,title:"Texas Hold'em",first:()=>B.deal,start:()=>{if(phase==='bet')deal();else if(phase==='act')answer('call')},
+    back:()=>{if(phase==='bet')go(lobby)},select:()=>{if(phase==='bet')sl._slide(1);else if(phase==='act')rsl._slide(1)},busy:()=>phase!=='bet',
+    fit:(W,H)=>{root.style.setProperty('--cw',Math.max(24,Math.min((W-40)/5.8,H*.1,60))+'px')}}}
+
+/* ========================================================================================================
    HI-LO: guess whether the next card is higher or lower. Same rank is a push. Cash out any time.
    ======================================================================================================== */
 const hlMult=(r,dir)=>{const n=dir==='hi'?13-r:r-1;if(!n)return 0;return Math.max(1.01,Math.floor(.97*12/n*100)/100)};
@@ -1018,7 +1188,7 @@ function hilo(){
   const trail=$('#trail',root),cur=$('#cur',root),potEl=$('#pot',root),msgEl=$('#hMsg',root);
   const msg=(t,c='')=>{msgEl.textContent=t;msgEl.className='msg '+c};
   let phase='bet',card=null,pot=0,bet=0,streak=0,busy=false,cardE=cardEl(null,true);cur.append(cardE);
-  const sl=slider('BET',betSteps,()=>ST.bets.hl,v=>{ST.bets.hl=v});
+  const sl=betSlider('hl');
   const B={deal:el('button','btn gold','Deal'),hi:el('button','btn green','▲ Higher'),lo:el('button','btn red','▼ Lower'),cash:el('button','btn gold','Cash out'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
   B.deal.addEventListener('click',deal);B.hi.addEventListener('click',()=>guess('hi'));B.lo.addEventListener('click',()=>guess('lo'));B.cash.addEventListener('click',cash);B.out.addEventListener('click',()=>{if(phase==='bet')go(lobby)});
   B.help.addEventListener('click',()=>info(`<h3>Hi-Lo</h3><p>Pay your bet to see a card. Then guess whether the next card is <b>higher</b> or <b>lower</b>. Aces are low, kings are high.</p><ul><li>A right guess multiplies your pot by the number on the button: long shots pay more.</li><li>The same rank again is a push: nothing changes, guess again.</li><li>A wrong guess loses the pot.</li><li><b>Cash out</b> whenever you like to bank the pot.</li></ul>`));
@@ -1081,32 +1251,35 @@ function work(){const root=el('div','screen lobby work');
 /* ========================================================================================================
    BIG SAL: the loan shark. You owe him 100,000 chips; pay him whenever you like. Paying it all off wins the game.
    ======================================================================================================== */
-function salNag(){const f=(DEBT-ST.debt)/DEBT;return f<=0?'Big Sal is waiting. He has very big teeth.':f<.25?'Big Sal says: "A start. Keep \'em coming."':f<.5?'Big Sal says: "Tick tock, kid."':f<.75?'Big Sal says: "Now we\'re talkin\'."':'Big Sal says: "So close I can taste it."'}
-function salLine(){const f=(DEBT-ST.debt)/DEBT;
-  return ST.debt<=0?"Paid in full. I gotta say, kid, I didn't think you had it in you. Come back anytime. For a new loan, maybe.":
-    f<=0?`You borrowed ${fmt(DEBT)} chips, and you blew all but a thousand of 'em. I'm a patient shark. For now. Win it back and pay me.`:
+function salNag(){const S=SK(),f=(S.debt-ST.debt)/S.debt;return f<=0?(S.id==='sal'?S.hi:`${S.name} is waiting.`):f<.25?`${S.name}: "A start. Keep 'em coming."`:f<.5?`${S.name}: "Tick tock."`:f<.75?`${S.name}: "Now we're talkin'."`:`${S.name}: "So close I can taste it."`}
+function sharkNews(){const S=SK();info(`<h3>A new loan shark</h3><p><b>${S.name}</b> has bought up your marker. You now owe <b>${fmt(S.debt)}</b> chips.</p><p>"${S.hi}"</p><p>Shark ${(ST.sk||0)+1} of ${SHARKS.length}.</p>`)}
+function salLine(){const S=SK(),f=(S.debt-ST.debt)/S.debt;
+  return ST.debt<=0?"Paid in full. Every shark in the city, paid in full. Nobody owns you now, kid.":
+    f<=0?(S.id==='sal'?`You borrowed ${fmt(DEBT)} chips, and you blew all but a thousand of 'em. I'm a patient shark. For now. Win it back and pay me.`:S.hi):
     f<.25?"Every chip helps. Mostly it helps me.":f<.5?"Almost halfway. You're not sleeping with the fishes yet. Well, I'm a fish. But you know what I mean.":
-    f<.75?"More than half! My fins are tingling.":"You're nearly square with Big Sal. Don't go blowing it at the slots."}
+    f<.75?"More than half! My fins are tingling.":`You're nearly square with ${SK().name}. Don't go blowing it at the slots.`}
 function shark(){const root=el('div','screen lobby sal');
-  const head=el('div','sal-head');head.append(iconEl('sal'));const say=el('p','sal-say');head.append(say);root.append(head);
+  const SH=SK(),head=el('div','sal-head');head.append(iconEl(SH.id));const say=el('p','sal-say');head.append(say);root.append(head);
   const box=el('div','sal-box');root.append(box);
   let amt=0;const steps=()=>{const most=Math.min(ST.chips,ST.debt),a=BETS.filter(v=>v<=most);if(most>0&&!a.includes(most))a.push(most);return a.length?a:[0]};
   const sl=slider('Payment',steps,()=>amt,v=>{amt=v});
-  const pay1=el('button','btn gold','Pay Big Sal'),all=el('button','btn','Pay everything I can'),bk=el('button','btn ghost','Back to the lobby');
+  const pay1=el('button','btn gold','Pay '+SH.name.replace(/^The /,'')),all=el('button','btn','Pay everything I can'),bk=el('button','btn ghost','Back to the lobby');
   const show=()=>{const owe=ST.debt;say.textContent=salLine();
-    box.innerHTML=owe?`<div class="sal-owe"><small>STILL OWED</small><b>${fmt(owe)}</b></div><i class="dbar big"><i style="width:${(DEBT-owe)/DEBT*100}%"></i></i><p class="sal-note">Paid so far: ${fmt(ST.paid)} of ${fmt(DEBT)}</p>`:
+    box.innerHTML=owe?`<div class="sal-owe"><small>STILL OWED</small><b>${big(owe)}</b></div><i class="dbar big"><i style="width:${(SH.debt-owe)/SH.debt*100}%"></i></i><p class="sal-note">Paid so far: ${fmt(ST.paid)} of ${fmt(SH.debt)} · shark ${(ST.sk||0)+1} of ${SHARKS.length}</p>`:
       `<div class="sal-owe free"><small>YOU OWE</small><b>NOTHING</b></div><p class="sal-note">Paid off ${ST.freed?new Date(ST.freed).toLocaleDateString():''}. The rest of the chips are yours.</p>`;
     const st=steps();if(!st.includes(amt))amt=amt?st.filter(v=>v<=amt).pop()||st[0]:st.filter(v=>v<=Math.max(MINBET,Math.floor(Math.min(ST.chips,ST.debt)/2))).pop()||st[0];sl._show();
     sl.hidden=pay1.hidden=all.hidden=!owe;pay1.disabled=all.disabled=ST.chips<1}
   function payOff(n){n=Math.min(Math.floor(n),ST.chips,ST.debt);if(n<1){SND.sfx('buzz');toast(ST.chips<1?'You have no chips to give him.':'Pick an amount first.');return}
-    spend(n);ST.debt-=n;ST.paid+=n;SND.sfx('coin');floatAt(say,'-'+fmt(n),true);
+    spend(n);ST.debt-=n;ST.paid+=n;ST.paidAll=(ST.paidAll||0)+n;SND.sfx('coin');floatAt(say,'-'+big(n),true);
+    if(ST.debt<=0&&!lastShark()){const done=SK();ST.sk=(ST.sk||0)+1;ST.debt=SK().debt;ST.paid=0;save();SND.sfx('big');go(shark);
+      setTimeout(()=>info(`<h3>${done.name} is paid off!</h3><p>You paid ${done.name} all ${fmt(done.debt)} chips.</p><p>But word gets around. <b>${SK().name}</b> has bought up your marker: you now owe <b>${fmt(SK().debt)}</b> chips.</p><p>"${SK().hi}"</p>`),400);return}
     if(ST.debt<=0){ST.debt=0;ST.freed=Date.now();save();show();SND.sfx('big');
-      setTimeout(()=>info(`<h3>You're free!</h3><p>You paid Big Sal all ${fmt(DEBT)} chips. Nobody's leaning on you any more.</p><p>What next? Buy up Downtown, one building at a time, until the Chip City Casino itself is yours. Or keep playing for your VIP card.</p>`),400)}
-    else{save();show();toast(pick(['Pleasure doing business.','Big Sal counts every chip. Twice.','"That\'s more like it."','Big Sal tucks the chips into his hat.']))}}
+      setTimeout(()=>info(`<h3>You're free!</h3><p>You paid The Chairman all ${fmt(SK().debt)} chips, the last shark in Chip City. Nobody's leaning on you any more.</p><p>What next? Buy up Downtown, all the way to Planet Chip. Or keep playing for your VIP card.</p>`),400)}
+    else{save();show();toast(pick(['Pleasure doing business.',`${SK().name} counts every chip. Twice.`,'"That\'s more like it."',`${SK().name} tucks the chips away.`]))}}
   pay1.addEventListener('click',()=>payOff(amt));all.addEventListener('click',()=>payOff(Math.min(ST.chips,ST.debt)));bk.addEventListener('click',()=>go(lobby));
   const bar=el('div','bar'),row=el('div','row'),row2=el('div','row');row.append(sl);row2.append(pay1,all);bar.append(row,row2,bk);root.append(bar);
   show();
-  return{id:'shark',el:root,title:'Big Sal',first:()=>ST.debt?pay1:bk,back:()=>go(lobby),start:()=>{if(ST.debt)payOff(amt)}}}
+  return{id:'shark',el:root,title:SH.name,first:()=>ST.debt?pay1:bk,back:()=>go(lobby),start:()=>{if(ST.debt)payOff(amt)}}}
 const pick=a=>a[ri(a.length)];
 function introStory(){ST.intro=1;save();
   info(`<h3>You owe Big Sal</h3><p>Big Sal, the loan shark, lent you <b>${fmt(DEBT)}</b> chips. You lost all but ${fmt(START)} of them.</p><p>Win it back at the tables and pay him off at his booth. Go broke, and there's always work at the vault. The corner store sells a little luck.</p><p>Big Sal is waiting. Good luck. You'll need it.</p>`)}
@@ -1172,7 +1345,7 @@ function rocket(){const root=el('div','screen rk');
   let W=120,H=120,phase='bet',bet=0,crash=1,t0=0,tNow=0,mNow=1,cashAt=0,cashXY=null,cashT=0,boomT=0,lk=false,raf=0,parts=[],lastRumble=0,mark=0,hist=(ST.rkHist||[]).slice(-8);
   const stars=Array.from({length:70},()=>({x:rnd(),y:rnd(),s:rnd()<.12?2:1,tw:rnd()*6}));
   const city=[];{let x=0;while(x<400){const w=7+ri(9);city.push({x,w,h:7+ri(20),win:Array.from({length:40},()=>rnd()<.4)});x+=w+1}}
-  const sl=slider('BET',betSteps,()=>ST.bets.rk,v=>{ST.bets.rk=v});
+  const sl=betSlider('rk');
   const au=slider('AUTO CASH OUT',()=>RKAUTO,()=>ST.rkAuto||0,v=>{ST.rkAuto=v},v=>v?xfmt(v):'OFF');
   const B={go:el('button','btn gold','Launch'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
   B.go.addEventListener('click',()=>{if(phase==='bet')launch();else if(phase==='fly')cashOut(Math.min(rkAt((performance.now()-t0)/1000),crash))});
@@ -1278,7 +1451,7 @@ function track(){if(!TR.race)TR.race=newRace();const root=el('div','screen hr');
   const msg=(t,c='')=>{msgEl.textContent=t;msgEl.className='msg '+c};
   let W=140,H=80,phase='pick',pl=null,t0=0,tNow=0,raf=0,lead=-1,leadT=0,said={},bet=0,lk=false,lastHoof=0,crowd=Array.from({length:260},()=>pick(['#d8323f','#2f7de0','#f4c74f','#fff4d8','#3fcf7c','#ff8a2a','#b04fe0','#c9a9d6']));
   const R0=()=>TR.race,hs=()=>R0().hs;
-  const sl=slider('BET',betSteps,()=>ST.bets.hr,v=>{ST.bets.hr=v});
+  const sl=betSlider('hr');
   const B={go:el('button','btn gold','Race!'),help:el('button','btn ghost','Rules'),out:el('button','btn ghost','Lobby')};
   B.go.addEventListener('click',()=>{if(phase==='pick')race();else if(phase==='done')next()});B.out.addEventListener('click',()=>{if(phase!=='race')go(lobby)});
   B.help.addEventListener('click',()=>info(`<h3>The Track</h3><p>Six horses run each race. Pick the one you think will win, set your bet and press <b>Race!</b></p><ul><li>Each horse's price is what it pays if it wins: <b>×4</b> pays four times your bet.</li><li>The favorite (the lowest price) wins most often. Long shots pay big and come in now and then.</li><li>Prices are fixed before the gate opens, and a new field lines up after every race.</li></ul><p>The track pays back about 90% over a long run.</p>`));
@@ -1338,14 +1511,37 @@ function track(){if(!TR.race)TR.race=newRace();const root=el('div','screen hr');
    DOWNTOWN: buy the town one building at a time. Each one earns chips by the hour, even while the game is closed.
    ======================================================================================================== */
 const PROPS=[
-  ['cart','Hot Dog Cart',2000,60,'Mustard, onions and a line of hungry gamblers.'],
-  ['laundry','Laundromat',10000,250,'Clean clothes. Clean-ish money.'],
-  ['pawn','Pawn Shop',40000,900,'Everybody in Chip City pawns something sooner or later.'],
-  ['diner','The Diner',120000,2400,'Open all night. The pie is famous.'],
-  ['club','Nightclub',400000,7000,'Neon, bass and a velvet rope.'],
-  ['hotel','The Lucky Hotel',1500000,22000,'Four hundred rooms, every one of them booked.'],
-  ['casino','Chip City Casino',10000000,120000,'The house itself. Own it, and you own Chip City.']];
-const TILL_H=12;
+  ['cart','Hot Dog Cart',2000,180,'Mustard, onions and a line of hungry gamblers.'],
+  ['laundry','Laundromat',10000,750,'Clean clothes. Clean-ish money.'],
+  ['pawn','Pawn Shop',40000,2700,'Everybody in Chip City pawns something sooner or later.'],
+  ['diner','The Diner',120000,7200,'Open all night. The pie is famous.'],
+  ['club','Nightclub',400000,21000,'Neon, bass and a velvet rope.'],
+  ['hotel','The Lucky Hotel',1500000,66000,'Four hundred rooms, every one of them booked.'],
+  ['casino','Chip City Casino',10000000,360000,'The house itself. Own it, and you own Chip City.'],
+  /* past the casino: twenty more, each earning about three times the one before, up to a trillion chips a second */
+  ['arcade','Video Arcade',15e6,1.08e6,'Bleeps, bloops and a mountain of quarters.'],
+  ['carwash','Car Wash',45e6,3.6e6,'Every limo in town gets a shine here.'],
+  ['pizza','Pizza Palace',130e6,10.8e6,'Open till 4 a.m. Extra cheese, extra chips.'],
+  ['bowl','Bowling Alley',450e6,36e6,'Strikes, spares and a very sticky snack bar.'],
+  ['cinema','Movie Palace',1.3e9,108e6,'Gold seats, red curtains, sold-out shows.'],
+  ['mall','Shopping Mall',4.5e9,360e6,'Three floors of things nobody needs.'],
+  ['bank','First Chip Bank',13e9,1.08e9,'You hold the vault keys now.'],
+  ['stadium','Stadium',45e9,3.6e9,'Eighty thousand fans, all buying hot dogs.'],
+  ['tower','Chip Tower',130e9,10.8e9,'The tallest building for a hundred miles.'],
+  ['tv','TV Station',450e9,36e9,'Every channel shows your face.'],
+  ['harbor','The Harbor',1.3e12,108e9,'Ships come in loaded and leave lighter.'],
+  ['airport','Airport',4.5e12,360e9,'Private jets only on weekends.'],
+  ['rail','Railroad',13e12,1.08e12,'Every train in the country runs on your track.'],
+  ['park','Theme Park',45e12,3.6e12,'Roller coasters shaped like dice.'],
+  ['oil','Oil Field',130e12,10.8e12,'It pumps money straight out of the ground.'],
+  ['mine','Gold Mine',450e12,36e12,'Bring a bigger bucket.'],
+  ['strip','The Strip',1.3e15,108e12,'Every casino on the strip, lit up all night.'],
+  ['space','Spaceport',4.5e15,360e12,'Rockets to anywhere. The view is free.'],
+  ['moon','Moon Base',13e15,1.08e15,'Low gravity, high stakes.'],
+  ['planet','Planet Chip',45e15,3.6e15,'A whole planet that pays you a trillion chips a second.']];
+/* how fast a building earns, for the signs: per hour for small ones, per second once it is a lot */
+const rateTxt=perH=>perH>=360000?`${big(perH/3600)} a second`:`${fmt(perH)} an hour`;
+const TILL_H=24;
 const theName=p=>p[1].startsWith('The ')?p[1]:'the '+p[1],TheName=p=>{const t=theName(p);return t[0].toUpperCase()+t.slice(1)};
 const owned=id=>!!(ST.props||{})[id];
 const ownedN=()=>PROPS.filter(p=>owned(p[0])).length;
@@ -1367,6 +1563,27 @@ ICON.hotel=pix(16,16,P=>{P.rect(4,1,8,15,'#7a3a2a');P.rect(4,1,8,1,'#f4c74f');P.
   P.rect(1,9,3,7,'#5a2a20');P.rect(12,9,3,7,'#5a2a20')});
 ICON.casino=pix(16,16,P=>{P.ell(8,5,4,3.4,'#f4c74f');P.ell(8,5,3,2.4,'#ffe9a8');P.rect(7,0,2,2,'#d8323f');P.rect(1,6,14,10,'#4a1a55');P.rect(0,6,16,2,'#ff4fa3');for(let x=1;x<16;x+=2)P.set(x,6,'#fff3b0');
   P.rect(2,9,3,3,'#ffd36a');P.rect(11,9,3,3,'#ffd36a');P.rect(6,10,4,6,'#f4c74f');P.rect(7,11,2,5,'#2a1600');P.rect(5,13,1,3,'#f4c74f');P.rect(10,13,1,3,'#f4c74f')});
+(()=>{const B=(id,f)=>{ICON[id]=pix(16,16,f)},W=(P,x0,y0,x1,y1,c1,c2)=>{for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2)P.set(x,y,(x*7+y*3)%5?c1:c2)};
+  B('arcade',P=>{P.rect(2,4,12,12,'#3a2a6a');P.rect(2,3,12,2,'#ff4fa3');P.rect(4,6,8,5,'#5ee6ff');P.rect(5,12,2,2,'#f4c74f');P.rect(9,12,2,2,'#d8323f');P.rect(6,14,4,2,'#120a1e')});
+  B('carwash',P=>{P.rect(1,6,14,10,'#2f7de0');P.rect(1,5,14,2,'#ffffff');P.rect(4,9,8,7,'#120a1e');P.disc(5,3,1.6,'#9ef0ff');P.disc(9,2,1.3,'#9ef0ff');P.disc(12,4,1.1,'#9ef0ff')});
+  B('pizza',P=>{P.rect(1,7,14,9,'#c8402a');P.rect(1,6,14,2,'#fff4d8');P.poly([[4,1],[12,1],[8,6]],'#f4c74f');P.disc(7,3,.9,'#d8323f');P.disc(9.5,2.5,.9,'#d8323f');W(P,2,9,14,15,'#ffd36a','#5a1a10')});
+  B('bowl',P=>{P.rect(1,7,14,9,'#4a2a6a');P.rect(1,6,14,1,'#ff4fa3');P.ell(5,3.5,1.4,2.6,'#ffffff');P.rect(4.4,3,1.2,1,'#d8323f');P.disc(11,4,2.4,'#22242f');P.rect(6,11,4,5,'#120a1e')});
+  B('cinema',P=>{P.rect(1,4,14,12,'#8a1a2a');P.rect(1,3,14,2,'#f4c74f');for(let x=2;x<15;x+=2)P.set(x,3,'#fff3b0');P.rect(3,6,10,3,'#fff4d8');P.rect(5,11,6,5,'#2a0a12')});
+  B('mall',P=>{P.rect(0,6,16,10,'#c9d2dc');P.rect(0,5,16,2,'#2f7de0');W(P,1,8,15,15,'#9ef0ff','#3a5a8a');P.rect(6,12,4,4,'#3a5a8a')});
+  B('bank',P=>{P.poly([[0,5],[8,1],[16,5]],'#e8e0c8');P.rect(1,5,14,1,'#c8b890');for(const x of[2,5,9,12])P.rect(x,6,2,8,'#fff4d8');P.rect(0,14,16,2,'#c8b890');P.disc(8,3.4,1,'#f4c74f')});
+  B('stadium',P=>{P.ell(8,10,7.5,5.5,'#c9d2dc');P.ell(8,10,5.5,3.6,'#3fcf7c');P.rect(7.5,7,1,6,'#ffffff');for(const x of[1,14])P.rect(x,1,1,5,'#8a8a94');P.rect(0,0,3,2,'#fff3b0');P.rect(13,0,3,2,'#fff3b0')});
+  B('tower',P=>{P.rect(5,2,6,14,'#3a4a6a');P.rect(7,0,2,2,'#d8323f');W(P,6,3,11,16,'#ffd36a','#1a2238')});
+  B('tv',P=>{P.rect(3,8,10,8,'#5a5a6a');P.line(8,0,8,8,'#8a8a94');P.line(5,3,11,3,'#8a8a94');P.line(6,5,10,5,'#8a8a94');P.disc(8,0.5,1,'#d8323f');P.rect(5,10,6,4,'#5ee6ff')});
+  B('harbor',P=>{P.rect(0,12,16,4,'#2f5a9a');P.rect(2,8,10,4,'#d8323f');P.rect(4,6,5,2,'#fff4d8');P.rect(12,2,1,10,'#8a8a94');P.line(12,2,15,6,'#8a8a94')});
+  B('airport',P=>{P.rect(0,13,16,3,'#5a5a6a');P.rect(1,14,14,1,'#fff3b0');P.poly([[2,8],[14,6],[15,7],[3,9]],'#e8eef6');P.poly([[7,7],[9,3],[10,7]],'#c9d2dc');P.poly([[12,6],[14,4],[14,6]],'#d8323f')});
+  B('rail',P=>{P.rect(0,14,16,1,'#8a8a94');for(let x=0;x<16;x+=3)P.rect(x,15,2,1,'#6a4a2a');P.rect(1,7,10,6,'#2a6a3a');P.rect(11,9,4,4,'#2a6a3a');P.rect(2,5,3,2,'#22242f');P.rect(7,8,3,3,'#ffd36a');P.disc(3,13,1.4,'#22242f');P.disc(9,13,1.4,'#22242f')});
+  B('park',P=>{P.disc(8,7,6,'#d8323f');P.disc(8,7,4.6,'#ffd36a');P.disc(8,7,1.2,'#d8323f');for(let a=0;a<6;a++){const t=a/6*6.283;P.set(8+Math.round(Math.cos(t)*5),7+Math.round(Math.sin(t)*5),'#5ee6ff')}P.line(5,13,8,7,'#8a8a94');P.line(11,13,8,7,'#8a8a94');P.rect(3,14,10,2,'#3fcf7c')});
+  B('oil',P=>{P.rect(0,14,16,2,'#3a2a1a');P.line(3,14,7,2,'#8a8a94');P.line(11,14,7,2,'#8a8a94');P.line(4,10,10,10,'#8a8a94');P.line(5,6,9,6,'#8a8a94');P.disc(13,5,2,'#141414');P.disc(12,9,1.4,'#141414')});
+  B('mine',P=>{P.poly([[0,16],[8,2],[16,16]],'#7a5a3a');P.poly([[5,16],[8,10],[11,16]],'#22140a');P.disc(4,12,1,'#f4c74f');P.disc(12,11,1.2,'#f4c74f');P.disc(9,7,.9,'#f4c74f')});
+  B('strip',P=>{P.rect(0,6,4,10,'#ff4fa3');P.rect(5,2,5,14,'#f4c74f');P.rect(11,5,5,11,'#5ee6ff');W(P,1,8,4,15,'#fff3b0','#7a1a4a');W(P,6,4,10,15,'#fff3b0','#7a5a10');W(P,12,7,16,15,'#ffffff','#1a5a6a')});
+  B('space',P=>{P.rect(0,14,16,2,'#5a5a6a');P.poly([[8,0],[11,5],[11,12],[5,12],[5,5]],'#e8eef6');P.disc(8,6,1.3,'#5ee6ff');P.poly([[5,9],[2,13],[5,12]],'#d8323f');P.poly([[11,9],[14,13],[11,12]],'#d8323f');P.rect(7,12,2,2,'#ffb04f')});
+  B('moon',P=>{P.disc(8,9,7,'#c9d2dc');P.disc(5,8,1.6,'#9aa4b0');P.disc(11,11,1.3,'#9aa4b0');P.ell(8,4,4,2.4,'#5ee6ff');P.rect(4,4,8,2,'#e8eef6')});
+  B('planet',P=>{P.disc(8,8,5.6,'#f4c74f');P.disc(6.5,6.5,2,'#ffe9a8');P.ell(8,8,8,2,'#d8323f');P.ell(8,8,5.6,1.2,'#f4c74f');P.disc(8,8,1.4,'#ffffff')});})();
 /* a dark outline of a building nobody owns yet */
 const shade=c=>{const s=document.createElement('canvas');s.width=c.width;s.height=c.height;const q=s.getContext('2d');q.drawImage(c,0,0);q.globalCompositeOperation='source-atop';q.fillStyle='#2e3868';q.fillRect(0,0,s.width,s.height);return s};
 function downtown(){const root=el('div','screen lobby dt');
@@ -1380,28 +1597,29 @@ function downtown(){const root=el('div','screen lobby dt');
   const lights=Array.from({length:7},()=>rnd()*6);
   function sky(){g.imageSmoothingEnabled=false;const gr=g.createLinearGradient(0,0,0,30);gr.addColorStop(0,'#0a0f2a');gr.addColorStop(1,'#3a1e52');g.fillStyle=gr;g.fillRect(0,0,128,30);
     g.fillStyle='#fff3b0';g.fillRect(112,3,4,4);g.fillStyle='#0a0f2a';g.fillRect(114,3,2,2);
-    const t=performance.now()/600;PROPS.forEach((p,i)=>{const ic=owned(p[0])?ICON[p[0]]:shade(ICON[p[0]]),x=1+i*18,y=30-16;g.drawImage(ic,x,y);
+    const t=performance.now()/600,st=Math.max(0,Math.min(PROPS.length-7,ownedN()-3));PROPS.forEach((p,i)=>{if(i<st||i>=st+7)return;const ic=owned(p[0])?ICON[p[0]]:shade(ICON[p[0]]),x=1+(i-st)*18,y=30-16;g.drawImage(ic,x,y);
       if(owned(p[0])&&Math.sin(t+lights[i])>.6){g.fillStyle='rgba(255,243,176,.35)';g.fillRect(x+2,y+2,12,12)}
       if(!owned(p[0])){g.fillStyle='#d8323f';g.fillRect(x+5,y+8,7,3);g.fillStyle='#fff4d8';g.fillRect(x+6,y+9,5,1)}});
     g.fillStyle='#140c1c';g.fillRect(0,29,128,1)}
   function paint(){const n=ownedN(),tot=tillAll();
-    topE.innerHTML=`<span>You own <b>${n}</b> of ${PROPS.length}</span><span>To collect: <b>${fmt(tot)}</b></span>`;
+    const rate=PROPS.reduce((a,p)=>a+(owned(p[0])?p[3]:0),0);topE.innerHTML=`<span>You own <b>${n}</b> of ${PROPS.length} · earning <b>${rateTxt(rate)}</b></span><span>To collect: <b>${big(tot)}</b></span>`;
     let nextUp=true;rows.forEach(({p,b,s,pr})=>{const own=owned(p[0]),t=till(p),full=own&&Date.now()-ST.props[p[0]]>=TILL_H*3.6e6;
       b.classList.toggle('own',own);b.classList.toggle('locked',!own&&!nextUp);
-      s.innerHTML=`<b>${p[1]}</b><small>${own?`Earns ${fmt(p[3])} chips an hour${full?' · the till is full':''}`:nextUp?`${p[4]} Earns ${fmt(p[3])} an hour.`:`Opens up once you own ${theName(PROPS[PROPS.indexOf(p)-1])}.`}</small>`;
-      pr.innerHTML=own?`<i>${t?'+'+fmt(t):'—'}</i>${t?'collect':'earning'}`:`${big(p[2])}`;
+      s.innerHTML=`<b>${p[1]}</b><small>${own?`Earns ${rateTxt(p[3])}${full?' · the till is full':''}`:nextUp?`${p[4]} Earns ${rateTxt(p[3])}.`:`Opens up once you own ${theName(PROPS[PROPS.indexOf(p)-1])}.`}</small>`;
+      pr.innerHTML=own?`<i>${t?'+'+big(t):'—'}</i>${t?'collect':'earning'}`:`${big(p[2])}`;
       if(!own)nextUp=false});
     all.disabled=tot<1;sky()}
   function act(p){const i=PROPS.indexOf(p);
-    if(owned(p[0])){const t=till(p);if(t<1){SND.sfx('buzz');toast(`${TheName(p)} is still earning. Its till fills up over ${TILL_H} hours.`);return}collect(p);save();checkTier();SND.sfx('coin');floatAt(rows[i].b,'+'+fmt(t));paint();return}
+    if(owned(p[0])){const t=till(p);if(t<1){SND.sfx('buzz');toast(`${TheName(p)} is still earning. Its till fills up over ${TILL_H} hours.`);return}collect(p);save();checkTier();SND.sfx('coin');floatAt(rows[i].b,'+'+big(t));paint();return}
     if(i>0&&!owned(PROPS[i-1][0])){SND.sfx('buzz');toast(`First you need ${theName(PROPS[i-1])}.`);return}
     if(ST.chips<p[2]){SND.sfx('buzz');toast(`${TheName(p)} costs ${fmt(p[2])} chips.`);return}
-    choose(`<h3>Buy ${theName(p)}?</h3><p>${p[4]}</p><p>It costs <b>${fmt(p[2])}</b> chips and earns <b>${fmt(p[3])}</b> an hour, even while Chip City is closed. Its till holds up to ${TILL_H} hours of takings, so drop by to collect.</p>`,['Not now','Buy it'],1,0).then(c=>{
+    choose(`<h3>Buy ${theName(p)}?</h3><p>${p[4]}</p><p>It costs <b>${fmt(p[2])}</b> chips and earns <b>${rateTxt(p[3])}</b>, even while Chip City is closed. Its till holds up to ${TILL_H} hours of takings, so drop by to collect.</p>`,['Not now','Buy it'],1,0).then(c=>{
       if(c!==1||owned(p[0])||!spend(p[2]))return;ST.props[p[0]]=Date.now();save();SND.sfx('big');paint();floatAt(rows[i].b,'SOLD!');
-      if(p[0]==='casino')setTimeout(()=>info(`<h3>You own Chip City!</h3><p>Every building downtown is yours, right up to the Chip City Casino.</p><p>The house always wins, and now you're the house. Big Sal sends a fruit basket. It's mostly teeth.</p>`),500);
+      if(p[0]==='planet')setTimeout(()=>info(`<h3>You own Planet Chip!</h3><p>Every building there is, from the hot dog cart to a whole planet. A trillion chips a second.</p><p>Big Sal sends another fruit basket. This one is the size of a moon.</p>`),500);
+      else if(p[0]==='casino')setTimeout(()=>info(`<h3>You own Chip City!</h3><p>Every building downtown is yours, right up to the Chip City Casino. Twenty more lie past the city limits.</p><p>The house always wins, and now you're the house. Big Sal sends a fruit basket. It's mostly teeth.</p>`),500);
       else toast(`${TheName(p)} is yours!`)})}
   function collect(p){const t=till(p);if(t<1)return 0;ST.props[p[0]]=Date.now();ST.propEarned=(ST.propEarned||0)+t;pay(t);return t}
-  function collectAll(){let n=0;for(const p of PROPS)if(owned(p[0]))n+=collect(p);if(!n){SND.sfx('buzz');return}save();checkTier();SND.sfx('coin');floatAt(topE,'+'+fmt(n));paint()}
+  function collectAll(){let n=0;for(const p of PROPS)if(owned(p[0]))n+=collect(p);if(!n){SND.sfx('buzz');return}save();checkTier();SND.sfx('coin');floatAt(topE,'+'+big(n));paint()}
   paint();const tick=setInterval(()=>{if(!root.isConnected){clearInterval(tick);return}paint()},1000);
   return{id:'downtown',el:root,title:'Downtown',first:()=>{const r=rows.find(r=>owned(r.p[0])&&till(r.p)>0)||rows.find(r=>!owned(r.p[0]))||rows[0];return tillAll()?all:r.b},
     back:()=>go(lobby),start:collectAll,leave:()=>{clearInterval(tick);save()}}}
@@ -1413,9 +1631,9 @@ function stats(){const root=el('div','screen lobby');const sc=el('div','scroll')
   const t=TIERS[tierIdx()],sign=n=>n>0?`<span class="pos">+${big(n)}</span>`:n<0?`<span class="neg">−${big(-n)}</span>`:'0';
   const where=saveWhere();
   box.innerHTML=`<h2>Your casino card</h2><table>
-    <tr><td>Owed to Big Sal</td><td>${ST.debt?fmt(ST.debt):'<span class="pos">Paid off!</span>'}</td></tr><tr><td>Paid to Big Sal</td><td>${fmt(ST.paid)}</td></tr>
+    <tr><td>Loan shark</td><td>${SK().name} (${(ST.sk||0)+1} of ${SHARKS.length})</td></tr><tr><td>Still owed</td><td>${ST.debt?fmt(ST.debt):'<span class="pos">Paid off!</span>'}</td></tr><tr><td>Paid to sharks</td><td>${fmt(ST.paidAll||ST.paid)}</td></tr>
     <tr><td>Chips now</td><td>${fmt(ST.chips)}</td></tr><tr><td>Most chips ever</td><td>${fmt(ST.peak)}</td></tr>
-    <tr><td>VIP</td><td><span class="tier" style="--tc:${t[2]}">${t[1]}</span></td></tr>
+    <tr><td>VIP</td><td><span class="tier" style="--tc:${t[2]}">${t[1]}</span></td></tr><tr><td>Win bonuses</td><td>${fmt(ST.winBonus||0)}</td></tr>
     <tr><td>Biggest win</td><td>${ST.biggest.amt?fmt(ST.biggest.amt)+' · '+GAMES[ST.biggest.game]:'—'}</td></tr>
     <tr><td>Total bet</td><td>${fmt(ST.wagered)}</td></tr><tr><td>Earned at work</td><td>${fmt(ST.work.earned)}</td></tr><tr><td>Chips polished</td><td>${fmt(ST.work.clicks)}</td></tr><tr><td>Store goods bought</td><td>${fmt(Object.values(ST.bought||{}).reduce((a,b)=>a+b,0))}</td></tr><tr><td>Buildings owned</td><td>${ownedN()} of ${PROPS.length}</td></tr><tr><td>Earned downtown</td><td>${fmt(ST.propEarned||0)}</td></tr></table>
     <h2>Saving</h2><p class="savewhere ${where}">${where==='fail'?'Your Claude account turned the last save down ('+(zcStatus()&&zcStatus().err)+'). Copy a save code to be safe; the game keeps trying.':where==='saving'||where==='connecting'?'Saving to your Claude account…':where==='cloud'?'Saved to your Claude account after every round, so your casino follows you to any device.':where==='device'?'Saved on this device after every round, in four separate places, so closing the app keeps your casino.':where==='maybe'?'Saved on this phone after every round, but an iPhone can throw away what a file opened from the Files app saves. Copy a save code to be safe, or play the ZigaPlay inside Claude, where saves go to your account.':'This browser can\'t keep saves. Copy a save code before you leave.'}</p>
