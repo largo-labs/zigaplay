@@ -26,7 +26,7 @@ SKIN = (239, 194, 155)
 HAIR = (222, 178, 86)
 IRIS = (61, 111, 181)
 LID = (42, 24, 16)
-BROW = (150, 108, 44)
+BROW = (160, 115, 48)
 
 
 def hexc(h):
@@ -76,8 +76,10 @@ def head(shut):
             az = (x / W - 0.5) * 360.0
             a = abs(az)
             k = 1.0 - 0.22 * min(1.0, max(0.0, (a - 35) / 85.0))
-            if lat < -38:
-                k *= 1.0 - 0.28 * min(1.0, (-38 - lat) / 25.0)
+            # under the jaw: below the chin at the front, higher toward the sides
+            lo = -64 + 22 * min(1.0, a / 70.0)
+            if lat < lo:
+                k *= 1.0 - 0.26 * min(1.0, (lo - lat) / 18.0)
             if 12 < lat < 40 and a < 30:
                 k *= 1.0 + 0.05 * (1 - a / 30.0)
             cheek = math.exp(-(((a - 26) / 9.0) ** 2 + ((lat + 12) / 8.0) ** 2))
@@ -120,8 +122,8 @@ def head(shut):
         iris = Image.new('RGBA', big.size, (0, 0, 0, 0))
         di = ImageDraw.Draw(iris)
         ix = cx - s * 1.3
-        x0, y0 = P(ix - 6.0, cy + 6.0)
-        x1, y1 = P(ix + 6.0, cy - 6.0)
+        x0, y0 = P(ix - 6.2, cy + 6.2)
+        x1, y1 = P(ix + 6.2, cy - 6.2)
         di.ellipse((x0, y0, x1, y1), fill=IRIS + (255,))
         di.chord((x0, y0, x1, y1), 180, 360, fill=mul(IRIS, 0.55) + (255,))
         x0, y0 = P(ix - 2.8, cy + 2.9)
@@ -130,23 +132,28 @@ def head(shut):
         x0, y0 = P(ix - 4.1, cy + 3.9)
         x1, y1 = P(ix - 1.9, cy + 1.7)
         di.ellipse((x0, y0, x1, y1), fill=(255, 255, 255, 235))
+        x0, y0 = P(ix + 1.8, cy - 1.9)
+        x1, y1 = P(ix + 3.0, cy - 3.1)
+        di.ellipse((x0, y0, x1, y1), fill=(255, 255, 255, 170))
         # the upper lid's shadow over the top of the iris: a steady, serious look
         x0, y0 = P(cx - 9.4, cy + 6.5)
         x1, y1 = P(cx + 9.4, cy + 2.6)
-        di.rectangle((x0, y0, x1, y1), fill=(70, 40, 28, 120))
+        di.rectangle((x0, y0, x1, y1), fill=(70, 40, 28, 85))
         big.paste(iris, (0, 0), Image.composite(iris, Image.new('RGBA', big.size, (0, 0, 0, 0)), mask))
         d = ImageDraw.Draw(big, 'RGBA')
         top = [P(cx - 9.4, cy - 0.7), P(cx - 8, cy + 2.8), P(cx - 3.4, cy + 4.6), P(cx + 2.4, cy + 4.8), P(cx + 7.4, cy + 3.6), P(cx + 9.4, cy + 0.2)]
         d.line(top, fill=LID + (255,), width=int(2.6 * SS), joint='curve')
         bot = [P(cx - 8, cy - 3.4), P(cx - 3.4, cy - 5.5), P(cx + 2.2, cy - 5.7), P(cx + 7.4, cy - 4.0)]
         d.line(bot, fill=(90, 50, 35, 150), width=int(0.9 * SS), joint='curve')
-    # brows: heavy, set low, lower at the inside: a determined look
+    # brows: a kid's, not heavy, thinning toward the outside, set low and angled in toward the nose: a determined look
     for s in (-1, 1):
-        d.polygon([P(s * 8.5, 15.0), P(s * 28.5, 20.8), P(s * 28.5, 18.1), P(s * 8.5, 12.0)], fill=BROW + (255,))
+        d.polygon([P(s * 8.5, 15.0), P(s * 18, 18.3), P(s * 28, 20.2), P(s * 28.8, 19.0), P(s * 18, 16.2), P(s * 8.5, 12.5)], fill=BROW + (255,))
     # a firm mouth, the corners turned a touch down, and the shadow under the lower lip
-    d.line([P(-9, -28.2), P(-4, -27.5), P(4, -27.5), P(9, -28.2)], fill=(118, 58, 44, 255), width=int(2.6 * SS), joint='curve')
-    ell(0, -31.5, 7.5, 2, fill=(120, 60, 40, 60))
-    ell(0, -47, 9, 4, fill=(110, 55, 38, 40))
+    d.line([P(-8, -28.0), P(-3.6, -27.5), P(3.6, -27.5), P(8, -28.0)], fill=(118, 58, 44, 255), width=int(2.3 * SS), joint='curve')
+    ell(0, -31.2, 6.8, 1.9, fill=(120, 60, 40, 55))
+    # the soft dip between the lower lip and the chin, and a little light on the chin
+    ell(0, -36.5, 7, 2.2, fill=(120, 60, 40, 38))
+    ell(0, -48, 6, 4, fill=(255, 236, 214, 30))
     img = big.resize((W, H), Image.LANCZOS)
     return img
 

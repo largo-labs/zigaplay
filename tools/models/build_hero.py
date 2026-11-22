@@ -289,9 +289,36 @@ class Part:
 HEAD_R = 0.118
 
 
+def _sm(a, b, v):
+    """0 at a, 1 at b, smooth between"""
+    t = min(1.0, max(0.0, (v - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def _plane(a, b, c):
+    """the plane through three points, its normal facing away from the middle of the head: (normal, distance)"""
+    a, b, c = Vector(a), Vector(b), Vector(c)
+    n = (b - a).cross(c - a).normalized()
+    if n.dot(a) < 0:
+        n = -n
+    return n, n.dot(a)
+
+
+# the jaw is carved by planes. The underside: from the bottom of the chin back up to where the neck goes in. Each side:
+# through the angle of the jaw under the ear, the side of the chin and the cheek, so the lower face closes in to the chin
+JAW_ANGLE = (0.097, -0.082, -0.01)
+CHIN_SIDE = (0.024, -0.128, 0.084)
+CHEEK = (0.11, -0.05, 0.04)
+JAW_PLANES = [_plane((0.0, -0.13, 0.082), (1.0, -0.13, 0.082), (0.0, -0.11, -0.01)), _plane(JAW_ANGLE, CHIN_SIDE, CHEEK),
+              _plane((-JAW_ANGLE[0],) + JAW_ANGLE[1:], (-CHIN_SIDE[0],) + CHIN_SIDE[1:], (-CHEEK[0],) + CHEEK[1:])]
+JAW_SOFT = 0.009     # how round the jaw's edges are: a kid's jaw is soft
+
+
 def head_shape(p, grow=0.0):
-    """the head: a little narrow, taller than wide, the back of the skull round, the face flatter, the jaw narrowing to a
-    firm chin, full cheeks, a brow, and a small nose that stands out"""
+    """a kid's head: a little narrow, taller than wide, the back of the skull round, the face flatter, full round cheeks,
+    a soft brow and a nose that stands out; below, a soft jaw that closes in from the cheeks to a small rounded chin, which
+    comes forward so that in profile it stands a little in front of the eyes, and the underside of the jaw running back
+    into the neck"""
     d = p.normalized()
     x, y, z = d.x * HEAD_R, d.y * HEAD_R, d.z * HEAD_R
     x *= 0.95
@@ -300,22 +327,40 @@ def head_shape(p, grow=0.0):
         z *= 1.05
     if y < 0:
         t = min(1.0, -y / 0.125)
-        x *= 1 - 0.20 * t ** 1.25
+        # the back of the head rounds in toward the neck; the front stays full for the jaw to be cut from
+        x *= 1 - (0.2 - 0.14 * _sm(-0.2, 0.3, d.z)) * t ** 1.25
         if z > 0:
             z *= 1 - 0.08 * t * t
-    if z > 0.04 and -0.07 < y < 0.0:
-        k = 1 - abs(y + 0.035) / 0.035
-        x *= 1 + 0.035 * k
+        # the face runs on down a little at the front, to the chin
+        y -= 0.012 * _sm(0.45, 0.92, -d.y) * _sm(0.05, 0.6, d.z)
+    if z > 0.04 and -0.076 < y < 0.0:
+        k = 1 - abs(y + 0.038) / 0.038
+        x *= 1 + 0.05 * k
     if z > 0.075:
         z = 0.075 + (z - 0.075) * 0.7
+    # the mouth sits a little forward, so the face between the nose and the chin isn't hollow
+    if -0.1 < y < -0.02 and z > 0:
+        z += 0.006 * math.exp(-((y + 0.062) / 0.018) ** 2) * math.exp(-(x / 0.04) ** 2) * _sm(0.02, 0.06, z)
+    # the chin comes forward, so in profile it stands out a little in front of the eyes
+    if y < -0.06 and z > 0:
+        z += 0.036 * math.exp(-((y + 0.104) / 0.022) ** 2) * math.exp(-(x / 0.046) ** 2) * _sm(0.02, 0.06, z)
+    # carve the jaw: along the line from the middle of the head, take the nearest of the head and the planes, softly
+    pb = Vector((x, y, z))
+    rb = pb.length
+    u = pb / rb
+    rs = [rb] + [c / n.dot(u) for n, c in JAW_PLANES if n.dot(u) > 1e-4]
+    r0 = min(rs)
+    r = r0 - JAW_SOFT * math.log(sum(math.exp(-(ri - r0) / JAW_SOFT) for ri in rs))
+    x, y, z = u.x * r, u.y * r, u.z * r
     if z > 0.05 and abs(x) < 0.085 and abs(y - 0.045) < 0.016:
-        z += 0.006 * (1 - abs(y - 0.045) / 0.016)
-    dn = math.hypot(x / 0.023, (y + 0.021) / 0.034)
+        z += 0.004 * (1 - abs(y - 0.045) / 0.016)
+    dn = math.hypot(x / 0.022, (y + 0.024) / 0.03)
     if z > 0 and dn < 1:
-        z += 0.028 * (1 - dn * dn)
-    dc = math.hypot(x / 0.05, (y + 0.104) / 0.028)
-    if z > 0 and dc < 1:
-        z += 0.004 * (1 - dc * dc)
+        z += 0.027 * (1 - dn * dn)
+    # a soft dip between the lower lip and the chin
+    dl = math.hypot(x / 0.03, (y + 0.08) / 0.011)
+    if z > 0 and dl < 1:
+        z -= 0.0015 * (1 - dl * dl)
     if grow:
         n = Vector((x, y, z)).normalized()
         x, y, z = x + n.x * grow, y + n.y * grow, z + n.z * grow
@@ -325,7 +370,7 @@ def head_shape(p, grow=0.0):
 def head_part():
     P = Part('head', tex='head', smooth_angle=80)
     bm = P.bm
-    r = bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=16, radius=1.0)
+    r = bmesh.ops.create_uvsphere(bm, u_segments=28, v_segments=20, radius=1.0)
     for v in r['verts']:
         v.co = Vector((v.co.x, v.co.z, -v.co.y))
     # the texture wraps round by direction, before the head is shaped: the face at u = .5
