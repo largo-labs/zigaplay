@@ -189,6 +189,7 @@ tools/drownedmoon/          Strike at Night's source (src/*.js), its build scrip
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 tools/kit-games/            Drift Critters, Pipsqueak, Fourfall, Squarewave, Moonstack and Hollow Wood: their shared kit, sources, build script and label maker
+tools/models/               Hollow Wood's hero, built in Blender (build_hero.py, run with blender -b --python), his painted textures (textures.py) and the packer (pack.py) that writes tools/kit-games/src/hollowmere.data.js
 tools/strike/               Hammer Fall: its source (src/*.js and the page shell) and build script
 tools/grim/                 Grim Ascent: its source (src/*.js and the page shell) and build script
 tools/squares/              Gray Squares: its page shell, script and build script

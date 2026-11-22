@@ -24,6 +24,12 @@ def read(name):
         return f.read()
 
 
+def data(gid):
+    """a game's packed models and textures (src/<id>.data.js), if it has any: see tools/models"""
+    p = os.path.join(HERE, 'src', gid + '.data.js')
+    return read(gid + '.data.js') + '\n' if os.path.exists(p) else ''
+
+
 def build(gid, title):
     html = f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
@@ -36,7 +42,7 @@ def build(gid, title):
 (()=>{{
 'use strict';
 {read('kit.js')}
-{read(gid + '.js')}
+{data(gid)}{read(gid + '.js')}
 }})();
 </script>
 </body></html>

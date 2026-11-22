@@ -1,5 +1,5 @@
 /* ZigaPlay offline: keeps the console and every game on this device, so it opens with no connection. */
-const CACHE='zigaplay-535c18b53bde';
+const CACHE='zigaplay-d8e2f256a72e';
 const FILES=["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('zigaplay-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

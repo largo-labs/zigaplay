@@ -1554,7 +1554,7 @@ function boxHeadGeo(o){o=o||{};const key=JSON.stringify(o);if(HEADG[key])return 
   const n1=(D+1)*(H+1),n2=(W+1)*(D+1),n3=(W+1)*(H+1),R=[[0,n1,'px'],[n1,2*n1,'nx'],[2*n1,2*n1+n2,'py'],[2*n1+n2,2*n1+2*n2,'ny'],[2*n1+2*n2,2*n1+2*n2+n3,'pz'],[2*n1+2*n2+n3,2*n1+2*n2+2*n3,'nz']];
   const CELL={px:[.5,0,.25,1],nx:[.5,0,.25,1],py:[.75,.5,.25,.5],ny:[.5,0,.25,.18],pz:[0,0,.5,1],nz:[.75,0,.25,.5]};
   for(const[a,b,f]of R){const[c0,c1,cw,ch]=CELL[f];for(let i=a;i<b;i++){let u=uv.getX(i);const v=uv.getY(i);if(f==='nx')u=1-u;uv.setXY(i,c0+u*cw,c1+v*ch)}}
-  const rd=o.round==null?.3:o.round,jaw=o.jaw==null?.3:o.jaw,nose=o.nose==null?.08:o.nose,sn=o.snout||0,bw=o.brow==null?.03:o.brow,chk=o.cheek==null?1:o.cheek;
+  const rd=o.round==null?.3:o.round,jaw=o.jaw==null?.16:o.jaw,nose=o.nose==null?.08:o.nose,sn=o.snout||0,bw=o.brow==null?.03:o.brow,chk=o.cheek==null?1:o.cheek;
   for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const l=Math.hypot(x,y,z)||1,k=z<0?Math.min(.8,rd*1.7):rd;
     x=x*(1-k)+x/l*.56*k;y=y*(1-k)+y/l*.56*k;z=z*(1-k)+z/l*.56*k;
     if(y<0){const t=Math.min(1,-y*2);x*=1-jaw*t*t;if(z>0)z*=1-.1*t*t}
@@ -1571,34 +1571,36 @@ function boxHeadGeo(o){o=o||{};const key=JSON.stringify(o);if(HEADG[key])return 
 /* one texture per expression: o.face paints the front cell (0..128 both ways), o.sides the rest of the canvas */
 function headAtlas(o){return(o.ex||['n','b']).map(ex=>{const c=mkCanvas(256,128),x=c.getContext('2d');x.lineCap=x.lineJoin='round';x.fillStyle=o.skin;x.fillRect(0,0,256,128);
   if(o.sides)o.sides(x,ex);x.save();x.beginPath();x.rect(0,0,128,128);x.clip();o.face(x,ex);x.restore();const t=new TH.CanvasTexture(c);t.anisotropy=4;return t})}
-/* a face the way that era drew them: big almond eyes with a coloured iris and two lights in it, strong lids, thick brows,
-   a nose the head's shape mostly makes, a small mouth, and complexion (the face's own shading, warm cheeks, shadow under the
-   brow and along the jaw). o: skin, iris, brow, lipLine, hair (a fringe), eye 'big'|'narrow'|'tired', mouth 'smile'|'flat'|'frown'|'smirk', freckles */
+/* a face the way that era drew them, for a boy or a man: big round eyes with a coloured iris and a light in it, a plain lid
+   line (no lashes), heavy straight brows set low, a nose the head's shape mostly makes, a firm mouth, and complexion (the
+   face's own shading, shadow under the brow, along the jaw and under the lip). o: skin, iris, brow, lipLine, hair (a fringe),
+   eye 'big'|'narrow'|'tired', mouth 'smile'|'flat'|'frown'|'smirk', freckles */
 function humanFace(o){return(x,ex)=>{
-  let g=x.createLinearGradient(0,0,128,0);g.addColorStop(0,'rgba(70,30,20,.3)');g.addColorStop(.25,'rgba(70,30,20,0)');g.addColorStop(.75,'rgba(70,30,20,0)');g.addColorStop(1,'rgba(70,30,20,.3)');x.fillStyle=g;x.fillRect(0,0,128,128);
-  g=x.createLinearGradient(0,98,0,128);g.addColorStop(0,'rgba(70,30,20,0)');g.addColorStop(1,'rgba(70,30,20,.32)');x.fillStyle=g;x.fillRect(0,98,128,30);
-  g=x.createRadialGradient(64,30,4,64,30,40);g.addColorStop(0,'rgba(255,245,230,.2)');g.addColorStop(1,'rgba(255,245,230,0)');x.fillStyle=g;x.fillRect(0,0,128,80);
-  for(const sd of[-1,1]){g=x.createRadialGradient(64+sd*34,80,2,64+sd*34,80,15);g.addColorStop(0,o.blush||'rgba(225,95,85,.34)');g.addColorStop(1,'rgba(225,95,85,0)');x.fillStyle=g;x.fillRect(64+sd*34-16,64,32,32);
-    g=x.createRadialGradient(64+sd*25,60,4,64+sd*25,58,17);g.addColorStop(0,'rgba(90,40,40,.18)');g.addColorStop(1,'rgba(90,40,40,0)');x.fillStyle=g;x.fillRect(64+sd*25-18,42,36,36)}
-  if(o.freckles){x.fillStyle='rgba(150,80,50,.55)';for(const[a,b]of[[-30,74],[-24,79],[-34,80],[-27,85],[30,74],[24,79],[34,80],[27,85]]){x.beginPath();x.arc(64+a,b,1.3,0,TAU);x.fill()}}
-  x.fillStyle='rgba(255,240,228,.3)';x.fillRect(62,52,4,26);g=x.createRadialGradient(64,88,1,64,88,9);g.addColorStop(0,'rgba(100,40,30,.35)');g.addColorStop(1,'rgba(100,40,30,0)');x.fillStyle=g;x.fillRect(54,80,20,14);
-  x.fillStyle='rgba(80,30,25,.55)';for(const sd of[-1,1]){x.beginPath();x.ellipse(64+sd*4,88,1.8,1.1,0,0,TAU);x.fill()}
-  const wide=ex==='s',hap=ex==='h',shut=ex==='b',sad=ex==='d',cross=ex==='x',ew=o.eye==='narrow'?11:13,eh=wide?12:o.eye==='narrow'?7:o.eye==='tired'?8:10,lid=o.lid||'#2a1810';
+  let g=x.createLinearGradient(0,0,128,0);g.addColorStop(0,'rgba(70,35,20,.32)');g.addColorStop(.25,'rgba(70,35,20,0)');g.addColorStop(.75,'rgba(70,35,20,0)');g.addColorStop(1,'rgba(70,35,20,.32)');x.fillStyle=g;x.fillRect(0,0,128,128);
+  g=x.createLinearGradient(0,100,0,128);g.addColorStop(0,'rgba(70,35,20,0)');g.addColorStop(1,'rgba(70,35,20,.34)');x.fillStyle=g;x.fillRect(0,100,128,28);
+  g=x.createRadialGradient(64,28,4,64,28,40);g.addColorStop(0,'rgba(255,245,230,.16)');g.addColorStop(1,'rgba(255,245,230,0)');x.fillStyle=g;x.fillRect(0,0,128,80);
+  for(const sd of[-1,1]){g=x.createRadialGradient(64+sd*25,56,4,64+sd*25,54,18);g.addColorStop(0,'rgba(80,40,30,.22)');g.addColorStop(1,'rgba(80,40,30,0)');x.fillStyle=g;x.fillRect(64+sd*25-19,36,38,38);
+    g=x.createRadialGradient(64+sd*36,84,2,64+sd*36,84,14);g.addColorStop(0,'rgba(80,40,30,.1)');g.addColorStop(1,'rgba(80,40,30,0)');x.fillStyle=g;x.fillRect(64+sd*36-15,70,30,30)}
+  if(o.freckles){x.fillStyle='rgba(150,80,50,.5)';for(const[a,b]of[[-30,74],[-24,79],[-34,80],[-27,85],[30,74],[24,79],[34,80],[27,85]]){x.beginPath();x.arc(64+a,b,1.3,0,TAU);x.fill()}}
+  x.fillStyle='rgba(255,240,228,.24)';x.fillRect(62,52,4,26);g=x.createRadialGradient(64,88,1,64,88,10);g.addColorStop(0,'rgba(100,45,30,.4)');g.addColorStop(1,'rgba(100,45,30,0)');x.fillStyle=g;x.fillRect(53,80,22,15);
+  x.fillStyle='rgba(80,35,25,.6)';for(const sd of[-1,1]){x.beginPath();x.ellipse(64+sd*4.5,88,2,1.2,0,0,TAU);x.fill()}
+  const wide=ex==='s',hap=ex==='h',shut=ex==='b',sad=ex==='d',cross=ex==='x',ew=o.eye==='narrow'?11:12,eh=wide?10:o.eye==='narrow'?6:o.eye==='tired'?7:8.5,lid=o.lid||'#2a1810';
   for(const sd of[-1,1]){const cx=64+sd*25,cy=60;
-    if(shut||hap){x.strokeStyle=lid;x.lineWidth=3;x.beginPath();if(hap){x.moveTo(cx-ew,cy+3);x.quadraticCurveTo(cx,cy-9,cx+ew,cy+3)}else{x.moveTo(cx-ew,cy);x.quadraticCurveTo(cx,cy+5,cx+ew,cy)}x.stroke();continue}
-    x.save();x.beginPath();x.moveTo(cx-ew,cy+1);x.quadraticCurveTo(cx-ew*.2,cy-eh*1.25,cx+ew,cy-1);x.quadraticCurveTo(cx+ew*.1,cy+eh,cx-ew,cy+1);x.closePath();x.fillStyle='#fbf7ef';x.fill();x.clip();
-    const ir=Math.min(eh*.85,8.5);g=x.createLinearGradient(0,cy-ir,0,cy+ir);g.addColorStop(0,shade(o.iris,.55));g.addColorStop(1,shade(o.iris,1.25));x.fillStyle=g;x.beginPath();x.arc(cx-sd*1.5,cy,ir,0,TAU);x.fill();
-    x.fillStyle='#0b0806';x.beginPath();x.arc(cx-sd*1.5,cy,ir*.45,0,TAU);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(cx-sd*1.5-3,cy-3,2.2,0,TAU);x.fill();x.beginPath();x.arc(cx-sd*1.5+2.5,cy+3,1,0,TAU);x.fill();
-    x.fillStyle='rgba(60,30,20,.25)';x.fillRect(cx-ew,cy-eh*1.3,ew*2,eh*.55);x.restore();
-    x.strokeStyle=lid;x.lineWidth=3.2;x.beginPath();x.moveTo(cx-ew,cy+1);x.quadraticCurveTo(cx-ew*.2,cy-eh*1.25,cx+ew,cy-1);x.stroke();
-    x.lineWidth=2.4;const ox=sd>0?cx+ew:cx-ew;x.beginPath();x.moveTo(ox,sd>0?cy-1:cy+1);x.lineTo(ox+sd*4,cy-4);x.stroke();
-    x.lineWidth=1.2;x.strokeStyle='rgba(60,30,20,.55)';x.beginPath();x.moveTo(cx-ew+2,cy+2);x.quadraticCurveTo(cx,cy+eh*.95,cx+ew-2,cy+1);x.stroke()}
-  x.strokeStyle=o.brow||'#3a2414';x.lineWidth=o.browW||4;for(const sd of[-1,1]){const cx=64+sd*25,by=wide?40:44,inn=cross?5:sad?-5:0,out=wide?-3:sad?3:0;x.beginPath();x.moveTo(cx-sd*12,by+inn);x.quadraticCurveTo(cx,by-4,cx+sd*13,by+2+out);x.stroke()}
-  const my=104,mw=10;x.strokeStyle=o.lipLine||'#7a3a30';x.lineWidth=2.4;
-  if(ex==='t'||wide){x.fillStyle='#4a1414';x.beginPath();x.ellipse(64,my+1,wide?6:9,wide?7:5,0,0,TAU);x.fill();if(!wide){x.fillStyle='rgba(255,255,255,.85)';x.fillRect(57,my-3,14,2.5)}}
-  else{const m=hap?'smile':sad||cross?'frown':o.mouth||'flat';x.beginPath();if(m==='smile'){x.moveTo(64-mw,my-2);x.quadraticCurveTo(64,my+6,64+mw,my-2)}else if(m==='frown'){x.moveTo(64-mw,my+3);x.quadraticCurveTo(64,my-3,64+mw,my+3)}
-    else if(m==='smirk'){x.moveTo(64-mw,my);x.quadraticCurveTo(64,my+2,64+mw,my-4)}else{x.moveTo(64-mw,my);x.quadraticCurveTo(64,my+2,64+mw,my)}x.stroke()}
-  x.fillStyle='rgba(200,100,90,.32)';x.beginPath();x.ellipse(64,my+5,7,2,0,0,TAU);x.fill();
+    if(shut||hap){x.strokeStyle=lid;x.lineWidth=2.6;x.beginPath();if(hap){x.moveTo(cx-ew,cy+2);x.quadraticCurveTo(cx,cy-6,cx+ew,cy+2)}else{x.moveTo(cx-ew,cy);x.quadraticCurveTo(cx,cy+3,cx+ew,cy)}x.stroke();continue}
+    x.save();x.beginPath();x.moveTo(cx-ew,cy);x.quadraticCurveTo(cx,cy-eh*1.15,cx+ew,cy);x.quadraticCurveTo(cx,cy+eh*.95,cx-ew,cy);x.closePath();x.fillStyle='#f6f2ea';x.fill();x.clip();
+    const ir=Math.min(eh*.88,7.6);g=x.createLinearGradient(0,cy-ir,0,cy+ir);g.addColorStop(0,shade(o.iris,.55));g.addColorStop(1,shade(o.iris,1.2));x.fillStyle=g;x.beginPath();x.arc(cx-sd*1.2,cy,ir,0,TAU);x.fill();
+    x.fillStyle='#0b0806';x.beginPath();x.arc(cx-sd*1.2,cy,ir*.46,0,TAU);x.fill();x.fillStyle='rgba(255,255,255,.9)';x.beginPath();x.arc(cx-sd*1.2-2.6,cy-2.6,1.8,0,TAU);x.fill();
+    x.fillStyle='rgba(60,30,20,.3)';x.fillRect(cx-ew,cy-eh*1.2,ew*2,eh*.6);x.restore();
+    x.strokeStyle=lid;x.lineWidth=2.2;x.beginPath();x.moveTo(cx-ew,cy);x.quadraticCurveTo(cx,cy-eh*1.15,cx+ew,cy);x.stroke()}
+  /* brows: heavy, nearly straight, low over the eyes, lower at the inside */
+  x.fillStyle=o.brow||'#3a2414';for(const sd of[-1,1]){const cx=64+sd*25,by=wide?42:47,inn=cross?6:sad?-5:2,out=wide?-3:sad?4:0;
+    x.beginPath();x.moveTo(cx-sd*13,by+inn);x.lineTo(cx+sd*14,by-1+out);x.lineTo(cx+sd*13,by+3.5+out);x.lineTo(cx-sd*13,by+inn+5.5);x.closePath();x.fill()}
+  /* a firm mouth, and the shadow under the lower lip that makes a chin */
+  const my=104,mw=ex==='t'?8:9;x.strokeStyle=o.lipLine||'#6a3226';x.lineWidth=2.6;
+  if(ex==='t'||wide){x.fillStyle='#3a1210';x.beginPath();x.ellipse(64,my+1,wide?5.5:8,wide?6:4.5,0,0,TAU);x.fill()}
+  else{const m=hap?'smile':sad||cross?'frown':o.mouth||'flat';x.beginPath();if(m==='smile'){x.moveTo(64-mw,my-1);x.quadraticCurveTo(64,my+4,64+mw,my-1)}else if(m==='frown'){x.moveTo(64-mw,my+2);x.quadraticCurveTo(64,my-2,64+mw,my+2)}
+    else if(m==='smirk'){x.moveTo(64-mw,my);x.quadraticCurveTo(64,my+1,64+mw,my-3)}else{x.moveTo(64-mw,my);x.lineTo(64+mw,my)}x.stroke()}
+  g=x.createRadialGradient(64,111,1,64,111,9);g.addColorStop(0,'rgba(80,35,25,.22)');g.addColorStop(1,'rgba(80,35,25,0)');x.fillStyle=g;x.fillRect(54,105,20,12);
   if(o.hair){const hy=o.hairY||18;x.fillStyle=o.hair;x.fillRect(0,0,128,hy);for(let i=-4;i<132;i+=9){x.beginPath();x.moveTo(i,hy-2);x.lineTo(i+4.5,hy+8+((i*13)%7));x.lineTo(i+9,hy-2);x.fill()}}}}
 /* the sides, top and back of a head: skin with an ear, and hair (if any) over the top and down the back */
 function headSides(o){return x=>{x.fillStyle=o.skin;x.fillRect(128,0,128,128);const g=x.createLinearGradient(128,0,192,0);g.addColorStop(0,'rgba(70,30,20,.15)');g.addColorStop(1,'rgba(70,30,20,0)');x.fillStyle=g;x.fillRect(128,0,64,128);
@@ -1643,8 +1645,8 @@ function fishFace(o){return(x,ex)=>{x.fillStyle='rgba(255,255,255,.1)';for(let j
     x.fillStyle='#08080a';x.beginPath();x.arc(e0-sd*2,ey+1,4.6,0,TAU);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(e0-sd*2-3.5,ey-3,2.6,0,TAU);x.fill();x.beginPath();x.arc(e0-sd*2+3,ey+4,1.2,0,TAU);x.fill();
     if(ex==='h'){x.fillStyle=o.skin;x.fillRect(e0-R-3,ey+4,2*R+6,R)}
     if(ex==='d'||ex==='x'){x.strokeStyle='#14101a';x.lineWidth=3;const a=ex==='x'?-sd*5:sd*4;x.beginPath();x.moveTo(e0-14,ey-R-4+a);x.lineTo(e0+14,ey-R-4-a);x.stroke()}}
-  const open=ex==='t'?9:ex==='s'?11:ex==='h'?6:3,my=96;x.fillStyle=o.lip;x.beginPath();x.ellipse(64,my,26,open+6,0,0,TAU);x.fill();x.fillStyle='#2a0e14';x.beginPath();x.ellipse(64,my,19,open,0,0,TAU);x.fill();
-  x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=2;x.beginPath();x.ellipse(64,my-open-3,16,2,0,Math.PI,TAU);x.stroke()}}
+  const open=ex==='t'?9:ex==='s'?11:ex==='h'?6:3,my=96;x.fillStyle=shade(o.skin,.62);x.beginPath();x.ellipse(64,my,26,open+6,0,0,TAU);x.fill();x.fillStyle='#2a0e14';x.beginPath();x.ellipse(64,my,19,open,0,0,TAU);x.fill();
+  }}
 function fishSides(o){return x=>{x.fillStyle=o.skin;x.fillRect(128,0,128,128);x.fillStyle='rgba(255,255,255,.1)';for(let j=0;j<128;j+=7)for(let i=128+(j/7%2)*5;i<256;i+=10){x.beginPath();x.arc(i,j,4.5,0,Math.PI);x.fill()}
   x.fillStyle=o.belly;x.fillRect(128,92,64,36);x.strokeStyle=shade(o.skin,.45);x.lineWidth=2.4;for(let k=0;k<3;k++){x.beginPath();x.arc(148+k*8,66,16,-1.1,1.1);x.stroke()}
   x.fillStyle=shade(o.skin,.78);x.fillRect(192,0,64,128)}}
@@ -1941,13 +1943,30 @@ function restPose(h){for(const[o,rt,ps,sc]of h.base){o.rotation.copy(rt);o.posit
 /* ---------- the hero: a young traveller with real proportions (the head about a sixth of the height, long legs),
    a slate-blue hooded coat to mid-thigh, an orange scarf, a leather belt, tall boots and bracers, a sword at the hip
    and a round wooden shield. Same named parts as every other rig, so all the animation code works on it. ---------- */
+/* ---------- models made in Blender (tools/models), packed into MODELS: geometry from base64, textures from data URLs ---------- */
+const MTEX={},MGEO={};
+function mtex(model,k){const id=model+':'+k;if(MTEX[id])return MTEX[id];const img=new Image(),t=new TH.Texture(img);t.wrapS=TH.RepeatWrapping;t.anisotropy=4;img.onload=()=>{t.needsUpdate=true};img.src=MODELS[model].tex[k];return MTEX[id]=t}
+const unb64=s=>{const r=atob(s),a=new Uint8Array(r.length);for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a.buffer};
+function mgeo(model,part){const id=model+':'+part;if(MGEO[id])return MGEO[id];const P=MODELS[model].parts[part],g=new TH.BufferGeometry(),U=new Uint16Array(unb64(P.u)),uv=new Float32Array(U.length);
+  for(let i=0;i<U.length;i++)uv[i]=U[i]/65535*(P.uh&&!(i&1)?2:1);
+  g.setAttribute('position',new TH.BufferAttribute(new Float32Array(unb64(P.p)),3));g.setAttribute('normal',new TH.BufferAttribute(new Int8Array(unb64(P.n)),3,true));g.setAttribute('uv',new TH.BufferAttribute(uv,2));
+  g.setIndex(new TH.BufferAttribute(new Uint16Array(unb64(P.i)),1));g.computeBoundingSphere();return MGEO[id]=g}
+function mpart(model,part,par,side){const P=MODELS[model].parts[part],m=new TH.Mesh(mgeo(model,part),cmat('#ffffff',mtex(model,P.t),side?{side:TH.DoubleSide}:undefined));par.add(m);return m}
 function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffffff',coatT),coat2=cmat('#ffffff',coatT,{side:TH.DoubleSide}),lea=cmat('#ffffff',cloth('#5a3a24')),boot=cmat('#ffffff',cloth('#3a281a')),skin='#e0b08a';
   const glove=cmat('#ffffff',cloth('#4e3220')),h=rig({h:1,hip:.4,torsoM:coat,torsoR:.135,torsoL:.29,torsoD:.84,neck:.06,neckM:skinM(skin),armM:coat,armR:.04,armL:.31,handM:glove,gloveM:glove,handS:.064,legM:cmat('#ffffff',cloth('#5a4c3e')),bootM:boot,bootCuffM:cmat('#ffffff',cloth('#4a3424')),shoeM:boot,legR:.05,hipW:.07,shW:.155,shoeW:.11,shoeL:.17});
   const H=h.hipY;
+  /* the hero made in Blender (tools/models), when it is packed in: his parts hang from the same joints, so all the animation still works */
+  const BM=typeof MODELS!=='undefined'&&MODELS.hero;
+  if(BM){const strip=[];h.root.traverse(o=>{if(o.isMesh)strip.push(o)});strip.forEach(o=>o.parent.remove(o));
+    const mp=(p,par,side)=>mpart('hero',p,par,side);mp('torso',h.up);mp('neck',h.up);mp('hood',h.up);mp('scarf',h.up);mp('skirt',h.lo,true);mp('belt',h.lo);
+    h.tail=grp(h.up,.03,.275,-.085);mp('tail',h.tail);h.cape=grp(h.up,0,.26,-.11);
+    h.fx.headMesh=mp('head',h.head);h.fx.faces=[mtex('hero','head'),mtex('hero','shut')];mp('hair',h.head);mp('ears',h.head);
+    for(let i=0;i<2;i++){mp('uarm',h.arms[i]);mp('farm',h.elbows[i]);mp(i?'handR':'handL',h.hand[i]);mp('thigh',h.legs[i]);mp('shin',h.knees[i]);mp('foot',ankleOf(h.knees[i]))}}
+  else{
   /* coat skirt to mid-thigh, belt and buckle, a pouch on the right hip */
   pt(LP.skirt,coat2,0,H-.08,0,.165,.2,.145,h.lo);pt(LP.cyl8,lea,0,H+.015,0,.142,.04,.122,h.lo);pt(LP.box,skinM('#c8a040'),0,H+.015,.122,.04,.035,.012,h.lo);pt(LP.box,lea,-.135,H-.05,.04,.05,.07,.04,h.lo,0,.4);
   /* the head: a boy's, squarish, with a jaw and a nose; big eyes, his own complexion, brown hair with a fringe, the hood down */
-  const HG=boxHeadGeo({round:.3,jaw:.3,nose:.085}),hs={skin:'#eebf98',hair:'#4a2e1a'},face=headAtlas({skin:hs.skin,face:humanFace({skin:hs.skin,iris:'#4a78b0',brow:'#4a2e1a',hair:hs.hair,hairY:18}),sides:headSides(hs)});
+  const HG=boxHeadGeo({round:.28,jaw:.1,nose:.09,brow:.045}),hs={skin:'#eebf98',hair:'#4a2e1a'},face=headAtlas({skin:hs.skin,face:humanFace({skin:hs.skin,iris:'#4a78b0',brow:'#4a2e1a',hair:hs.hair,hairY:18}),sides:headSides(hs)});
   h.fx.headMesh=pt(HG,cmat('#ffffff',face[0]),0,0,0,.16,.185,.17,h.head);h.fx.faces=face;
   pt(HG,new TH.MeshLambertMaterial({map:hairShellTex(hs.hair),alphaTest:.5,side:TH.DoubleSide}),0,.005,-.005,.171,.197,.182,h.head);
   {const hm=skinM('#4a2e1a'),hm2=skinM('#5a3a22');for(let i=0;i<5;i++){const x0=(i-2)*.03;pt(LP.cone6,i%2?hm2:hm,x0,.098,-.01-Math.abs(x0)*.3,.022,.06,.018,h.head,-.5+i*.05,0,-x0*4)}
@@ -1960,6 +1979,7 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   pt(LP.tor,skinM('#d8742a'),0,.27,0,.088,.088,.1,h.up,Math.PI/2);h.tail=grp(h.up,.03,.275,-.085);pt(LP.box,cmat('#ffffff',cloth('#d8742a','stripe','#b85a1a')),0,-.12,0,.055,.24,.02,h.tail);
   /* a short travelling cloak from the shoulders */
   h.cape=grp(h.up,0,.26,-.11);pt(LP.box,hood,0,-.17,0,.26,.34,.02,h.cape);
+  }
   /* grandfather's sword: a diamond-section blade whose ridge catches the light, a brass guard with down-swept ends,
      a grip bound in dark leather and a brass pommel. In the hand when drawn, otherwise in a scabbard on the back */
   const brass=metalM('#e0b860',{r:.7}),grip=cmat('#ffffff',cloth('#4a2c18','stripe','#2a180c')),sw=grp(h.hand[1],0,.02,0);
@@ -1977,7 +1997,7 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   h.held=new TH.Sprite(new TH.SpriteMaterial({transparent:true,depthTest:false}));h.held.scale.set(.5,.5,1);h.held.position.y=1.3;h.held.visible=false;h.root.add(h.held);
   const ring=new TH.Mesh(new TH.RingGeometry(.55,1.05,10,1,-.95,1.9),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35,side:TH.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.55;ring.visible=false;h.root.add(ring);h.trail=ring;
   /* a kid's head: big next to the body, the way heroes of that era were drawn, on a neck that shows */
-  h.head.scale.setScalar(1.42);h.head.position.y+=.075;
+  h.head.scale.setScalar(BM?1:1.42);h.head.position.y+=.075;
   h.cid='hero';h.base=snapPose(h);return h}
 
 /* ---------- the things in the dark: built the same way, with no faces to speak of ---------- */
