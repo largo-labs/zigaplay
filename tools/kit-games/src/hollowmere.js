@@ -282,7 +282,7 @@ const DUN={
       C:{t:'item',e:['knight','spinner'],cond:'clear',loot:'bombs',hidden:1},D:{t:'blocks',v:1,cond:'plate',loot:'piece',hidden:1},E:{t:'island',loot:'map',e:['bat']},
       G:{t:'plain',e:['wisp','wisp','ghoul'],loot:'shards20',dark:1},F:{t:'eye',n:1,cond:'eye',loot:'shards50',hidden:1,e:['spitter','spitter']},H:{t:'spikes',e:['knight','husk']},
       I:{t:'torches',n:2,cond:'torches',loot:'big',hidden:1,dark:1,e:['ghoul']},K:{t:'boss',boss:'golem',flame:3}}},
-  sp:{name:'The Heart',theme:'sp',music:'spire',grid:['.F.','EDC','.B.','.A.','.S.'],entry:'S',
+  sp:{name:'The Heart Core',theme:'sp',music:'spire',grid:['.F.','EDC','.B.','.A.','.S.'],entry:'S',
     doors:[['S','A','o'],['A','B','S'],['B','D','S'],['D','E','B'],['D','C','L'],['D','F','K']],
     rooms:{S:{t:'entry',e:[],note:'It does not hate you. It does not know you are here.'},A:{t:'pillars',e:['ghoul','ghoul','knight'],cond:'clear'},B:{t:'torches',n:4,cond:'torches',e:['shade','shade']},
       D:{t:'lava',e:['spinner','shade','shade','ghoul']},E:{t:'island',loot:'key',e:['shade','shade']},C:{t:'eye',n:2,cond:'eye',loot:'big',hidden:1,e:['knight','ghoul']},F:{t:'boss',boss:'hush',flame:-1}}},
@@ -310,14 +310,14 @@ const ITEMS={
 const USE_ITEMS=['sling','hook','lantern','bombs'];
 
 /* ---------- quests: who gives them, what they ask, what you get ---------- */
-const QUESTS=[{id:'main',title:'Out of the Tree',from:''},{id:'wick',title:'The Horse Thief',from:'Tobin'},{id:'edda',title:'Keepsakes',from:'Edda'},
+const QUESTS=[{id:'main',title:"The Demon's Cores",from:''},{id:'wick',title:'The Horse Thief',from:'Tobin'},{id:'edda',title:'Keepsakes',from:'Edda'},
   {id:'corvo',title:'Goblins',from:'Corvo'},{id:'ilse',title:'Tackle',from:'Ilse'},{id:'hermit',title:'The Old Lamps',from:'The hermit'}];
 const ROOTS=['the Root Cellar','the Swallowed Chapel','the Rotting Rings','the Taproot'];
 const qs=id=>(S.v.q||(S.v.q={}))[id]||0,qc=id=>(S.v.qc||(S.v.qc={}))[id]||0;
 function questText(id){const v=S.v,st=qs(id),f=v.flames.filter(Boolean).length;
   switch(id){
     case 'main':if(v.done)return'Done. Everyone it kept is outside.';if(!v.flags.metMaren)return'Someone called Maren wants to see you. Her workshop is the house on the west side of the camp.';if(!v.items.sword)return'Your sword sank in the mere. Maren thinks it rolled down the Gullet, west of the camp.';
-      if(f<4){const n=v.flames.findIndex(x=>!x);return'Cut the tree\'s four heartroots ('+f+' of 4). Maren says the next runs through '+ROOTS[n]+'.'}return'The roots are dead. Climb the Heart Stair and kill the Heart.';
+      if(f<4){const n=v.flames.findIndex(x=>!x);return'Destroy the demon\'s four cores ('+f+' of 4). Each is guarded. Maren says the next is in '+ROOTS[n]+'.'}return'The four cores are broken. Climb the Heart Stair, beat what guards the main core, and destroy it.';
     case 'wick':return st===1?'A boy came down the throat just before you and ran off into the roots. Tobin thinks he went toward the Root Cellar.':st===2?'You found Wick. He went back to the camp. Talk to him there.':'Done.';
     case 'edda':return st===1?'Find her husband\'s ring, pipe and knife. The tree dropped them around the hollow ('+qc('edda')+' of 3).':st===2?'You have all three. Take them to Edda in the camp.':'Done.';
     case 'corvo':return st===1?'Kill ten of the goblins that drag people off the path ('+Math.min(10,qc('corvo'))+' of 10).':st===2?'Ten. Go and tell Corvo.':'Done.';
@@ -330,13 +330,13 @@ function questSet(id,st){const v=S.v;v.q=v.q||{};if((v.q[id]||0)===st)return;con
 function talkLines(id){const v=S.v,f=v.flames.filter(Boolean).length,has=k=>!!v.items[k];
   switch(id){
     case 'maren':
-      if(v.done)return['{happy}Daylight. I\'d forgotten what it does to your eyes.'];
-      if(!has('sword'))return v.flags.metMaren?['The Gullet is west of the camp. Things that sink end up there. Go and get your sword.']:(v.flags.metMaren=1,['You came down the throat an hour ago. We fished you out of the mere.','I\'m Maren. Most of us got here the way you did: something small and friendly walked us off the path, and the tree did the rest.','Forty-one of us down here now. The tree keeps what it swallows. It just hasn\'t decided what to do with you yet.','You had a sword when you came down. It didn\'t come out of the mere with you. Things that sink roll down into the Gullet, west of here.','Get it back. Then we\'ll talk about how you get out.']);
-      if(f===0)return v.flags.toldD1?['The Root Cellar. West, through the Rootways. Cut the fungus on the way.']:(v.flags.toldD1=1,['Good. Now listen.','The tree feeds through four heartroots. While they live, it can keep us down here as long as it likes.','Cut all four and the Heart starves. Kill the Heart and the tree has to let go of everyone in it.','The nearest root runs under the Root Cellar, through the Rootways west of here. The fungus on the way will need cutting.']);
-      if(!v.flames[1])return['One root. The whole floor shook when it went.','The bridge over the sap run has been up since the sap rose. There\'s a mark on the far bank that drops it, if you can hit it from this side.','The next root runs through a chapel the tree swallowed. Half of it is under the mere now.'];
-      if(!v.flames[2])return['Two. The gap past the Heart Stair can be crossed now, with that line of yours.','The third root is in the Rotting Rings, past the fungus. Take something to see by.'];
-      if(!v.flames[3])return['Three. That lantern will burn through the thorns at the edge of the Deep Roots.','The last one is the Taproot. Everything in the tree drinks from it.'];
-      return['All four. Listen to it. It isn\'t beating so much as limping.','The Heart is at the top of the stair. Finish it.'];
+      if(v.done)return['{happy}Daylight on the water again. I\'d forgotten what it does to your scales.'];
+      if(!has('sword'))return v.flags.metMaren?['The Gullet is west of the camp. Things that sink end up there. Go and get your sword, knight.']:(v.flags.metMaren=1,['You came down the throat an hour ago. We fished you out of the mere. A dry-skin, in the King\'s colours.','I\'m Maren. I spoke for the Water Kingdom, when there was water. The forests drank our lakes, and then this thing drank us.','Forty-one of us down here now, scales and all. It keeps what it swallows. It just hasn\'t decided what to do with you yet.','You had a sword when you came down. It didn\'t come out of the mere with you. Things that sink roll down into the Gullet, west of here.','Get it back. Then I\'ll tell you how we kill it.']);
+      if(f===0)return v.flags.toldD1?['The first core is under the Root Cellar. West, through the Rootways. Cut the fungus on the way.']:(v.flags.toldD1=1,['Good. Now listen, knight.','This demon has four cores. Each one is guarded by something it grew to keep us away from it.','Break all four and the way opens to the main core, the one that keeps it alive. The worst of them guards that one.','Destroy the main core and the tree has to let go of everyone in it.','The first core is under the Root Cellar, through the Rootways west of here. The fungus on the way will need cutting.']);
+      if(!v.flames[1])return['One core. The whole floor shook when it broke.','The bridge over the sap run has been up since the sap rose. There\'s a mark on the far bank that drops it, if you can hit it from this side.','The next core is in a chapel the tree swallowed. Half of it is under the mere now.'];
+      if(!v.flames[2])return['Two cores. The gap past the Heart Stair can be crossed now, with that line of yours.','The third core is in the Rotting Rings, past the fungus. Take something to see by.'];
+      if(!v.flames[3])return['Three. That lantern will burn through the thorns at the edge of the Deep Roots.','The last core is in the Taproot. Everything in the tree drinks from it.'];
+      return['All four cores. Listen to it. It isn\'t beating so much as limping.','The way to the main core is open, at the top of the Heart Stair. Whatever guards it will be the worst thing in here. Finish it.'];
     case 'tobin':
       if(v.done)return['{excited}I saw the sky. It\'s bigger than I remembered.'];
       if(qs('wick')===0){questSet('wick',1);return['A boy came down the throat right before you. Older than me. He was crying.','He ran off into the roots, toward the cellar. I didn\'t follow him. I\'m not stupid.']}
@@ -383,7 +383,7 @@ function talkLines(id){const v=S.v,f=v.flames.filter(Boolean).length,has=k=>!!v.
     case 'scholar':return['Third day. The sap rises when the bell rings. I\'ve stopped ringing it.','It rings anyway.','If you find my notes, burn them. They\'re wrong.'];
     case 'keeper':return['Light keeps them off. Mostly.','I came down here forty years ago looking for my brother. I found the Rings instead.','Don\'t let it keep you.']}
   return['...']}
-const INTRO=['Dark, and warm, and it smells of sap.','Hands pull you out of something thick and sticky and lay you down on boards.','"Another one," someone says. "Let him sleep. Maren will want to see him when he\'s up."'];
+const INTRO=['Dark, and warm, and it smells of sap.','Cold, webbed hands pull you out of something thick and sticky and lay you down on boards.','"A dry-skin," someone says, wetly. "A knight, by the look of him. Let him sleep. Maren will want him when he wakes."'];
 const OUTRO=['The tree goes grey from the inside out.','Its mouth falls open, and the people it kept walk out into the woods, one at a time, blinking.','Your horse is waiting by the path. Wick holds out the reins and doesn\'t say anything. Neither do you.'];
 /* ---------- Part 3: building a room from its description ---------- */
 const hashN=(...a)=>{let h=2166136261;for(const v of a){h^=v&0xffff;h=Math.imul(h,16777619)}return h>>>0};
@@ -750,7 +750,7 @@ function collect(p){const v=S.v;p.dead=true;switch(p.it){case 'heart':v.hp=Math.
     case 'seeds1':v.ammo.seeds=Math.min(v.cap.seeds,v.ammo.seeds+5);SFX.pick();break;case 'bombs1':v.ammo.bombs=Math.min(v.cap.bombs,v.ammo.bombs+3);SFX.pick();break;
     case 'piece':v.got[p.id]=1;give('piece');break;case 'keep':v.got[p.id]=1;KEEPID=p.id;give('keep');break;case 'container':v.got[p.id]=1;give('container');break;
     case 'flame':{const fi=room.spec.flame;v.flames[fi]=1;S.save();P.hold=1.6;P.holdIt='flame';SFX.get();const n=v.flames.filter(Boolean).length;
-      setTimeout(()=>say(['You cut through the heartroot of '+ROOTS[fi]+'. It bleeds sap, then goes grey. Far above you, the whole tree flinches.',n<4?(4-n)+(4-n===1?' root still feeds':' roots still feed')+' the Heart.':'All four. The Heart has nothing left to drink.'],{done:()=>{const ex=EXITS[room.map];warp('ow',ex[0],ex[1],cen(ex[2]),cen(ex[3])+4)}}),700);break}}
+      setTimeout(()=>say(['You break the core of '+ROOTS[fi]+'. It cracks, bleeds sap and goes dark. Far above you, the whole tree flinches.',n<4?(4-n)+(4-n===1?' core left.':' cores left.'):'All four cores. The way to the main core is open.'],{done:()=>{const ex=EXITS[room.map];warp('ow',ex[0],ex[1],cen(ex[2]),cen(ex[3])+4)}}),700);break}}
   hudText()}
 function stepThings(dt){for(const e of E){if(e.dead)continue;switch(e.k){
   case 'npc':stepNpc(e,dt);break;
@@ -1854,7 +1854,46 @@ CHAR.imp={name:'Wick',build(o){const rag=cmat('#ffffff',cloth('#2e3424','patch',
   h.head.position.y+=.04;return h}};
 CHAR.imp.voice=Object.assign({},CHAR.wick.voice,{f0:350,jit:.03,breath:.32,vib:5.5,vd:.03,oq:.55});
 const NPCLOOK={wick:{}};
-function mkNpc(id,o){const C=CHAR[id]||CHAR._;const h=C.build?C.build(o||{}):rig({torsoM:skinM('#888'),armM:skinM('#888'),handM:skinM('#888'),legM:skinM('#666'),shoeM:skinM('#333')});h.cid=id;if(C.dress)C.dress(h,o||{});if(C.pose)C.pose(h);h.base=snapPose(h);return h}
+/* ---------- the Water Kingdom's people, swallowed with their forests: fish folk and lizard folk ----------
+   Each keeps the clothes, build and manner they had; the head and hands are theirs. Faces are painted smooth, with the
+   same seven expressions everyone has (plain, blink, talking, happy, startled, sad, cross) */
+function fishPaint(o){return(x,cx,ey,ex)=>{x.fillStyle='rgba(255,255,255,.09)';for(let j=0;j<128;j+=6)for(let i=(j/6%2)*5;i<256;i+=10){x.beginPath();x.arc(i,j,4,0,Math.PI);x.fill()}
+  x.fillStyle=o.belly;x.beginPath();x.ellipse(cx,ey+34,36,24,0,0,TAU);x.fill();
+  x.strokeStyle='rgba(30,20,40,.45)';x.lineWidth=1.6;for(const sd of[-1,1])for(let k=0;k<3;k++){x.beginPath();x.arc(cx+sd*(48+k*5),ey+14,10,sd<0?-.6:Math.PI-.9,sd<0?.9:Math.PI+.6);x.stroke()}
+  for(const sd of[-1,1]){const e0=cx+sd*30;
+    if(ex==='b'){x.strokeStyle='#1a1418';x.lineWidth=2.4;x.beginPath();x.moveTo(e0-9,ey);x.quadraticCurveTo(e0,ey+5,e0+9,ey);x.stroke();continue}
+    const R=ex==='s'?11.5:10;x.fillStyle='#f4f0e0';x.beginPath();x.arc(e0,ey,R,0,TAU);x.fill();x.fillStyle=o.iris;x.beginPath();x.arc(e0-sd*1.5,ey+.5,6.5,0,TAU);x.fill();
+    x.fillStyle='#08080a';x.beginPath();x.arc(e0-sd*1.5,ey+.5,3.6,0,TAU);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(e0-sd*1.5-2,ey-2.5,1.8,0,TAU);x.fill();
+    x.strokeStyle='rgba(20,20,30,.6)';x.lineWidth=1.5;x.beginPath();x.arc(e0,ey,R+.5,0,TAU);x.stroke();
+    if(ex==='h'){x.fillStyle=o.skin;x.fillRect(e0-13,ey+3,26,10)}
+    if(ex==='d'||ex==='x'){x.strokeStyle='#1a1418';x.lineWidth=2.4;x.beginPath();const a=ex==='x'?-sd*4:sd*3;x.moveTo(e0-10,ey-12+a);x.lineTo(e0+10,ey-12-a);x.stroke()}}
+  const open=ex==='t'?7:ex==='s'?8:ex==='h'?5:3;x.fillStyle=o.lip;x.beginPath();x.ellipse(cx,ey+26,11,open+3,0,0,TAU);x.fill();x.fillStyle='#2a0e14';x.beginPath();x.ellipse(cx,ey+26,6.5,open,0,0,TAU);x.fill()}}
+function lizPaint(o){return(x,cx,ey,ex)=>{x.fillStyle='rgba(0,0,0,.12)';for(let j=0;j<128;j+=5)for(let i=(j/5%2)*4;i<256;i+=8)x.fillRect(i,j,5,3);
+  x.fillStyle=o.belly;x.fillRect(0,ey+24,256,40);
+  for(const sd of[-1,1]){const e0=cx+sd*24,e1=ey-6;x.fillStyle='rgba(0,0,0,.28)';x.beginPath();x.ellipse(e0,e1,11,8.5,0,0,TAU);x.fill();
+    if(ex==='b'){x.strokeStyle='#14100a';x.lineWidth=2.4;x.beginPath();x.moveTo(e0-8,e1);x.lineTo(e0+8,e1);x.stroke();continue}
+    x.fillStyle=o.eye;x.beginPath();x.ellipse(e0,e1,8,ex==='s'?7.6:6.4,0,0,TAU);x.fill();x.fillStyle='#0a0806';x.beginPath();x.ellipse(e0,e1,1.6,ex==='s'?4:5.6,0,0,TAU);x.fill();
+    x.fillStyle='rgba(255,255,230,.85)';x.beginPath();x.arc(e0-2.5,e1-2.5,1.3,0,TAU);x.fill();
+    x.strokeStyle='#14100a';x.lineWidth=2.2;const a=ex==='x'?-sd*3:ex==='d'?sd*2:0;x.beginPath();x.moveTo(e0-9,e1-8+a);x.lineTo(e0+9,e1-8-a);x.stroke()}
+  x.fillStyle='#1a140c';x.fillRect(cx-5,ey+12,2.5,2);x.fillRect(cx+2.5,ey+12,2.5,2);
+  const up=ex==='h'?6:ex==='d'?-4:1;x.strokeStyle='#2a140c';x.lineWidth=2.4;x.beginPath();x.moveTo(cx-36,ey+26-up);x.quadraticCurveTo(cx,ey+28+(ex==='t'?8:0),cx+36,ey+26-up);x.stroke();
+  if(ex==='t'||ex==='s'){x.fillStyle='#4a1414';x.beginPath();x.ellipse(cx,ey+30,12,ex==='s'?7:4,0,0,TAU);x.fill()}}}
+const FOLK={maren:['fish',{skin:'#5a8ab0',belly:'#c8dce8',fin:'#3a5a8a',iris:'#d8a030',lip:'#e88a7a'}],tobin:['fish',{skin:'#e8904a',belly:'#f8e0c0',fin:'#c85a2a',iris:'#3a2a1a',lip:'#e86a5a'}],
+  ilse:['fish',{skin:'#4aa89a',belly:'#d0ece0',fin:'#2a7a6a',iris:'#3a2a5a',lip:'#e88a8a'}],oda:['fish',{skin:'#9a7ac0',belly:'#e8dcf0',fin:'#6a4a9a',iris:'#2a2a2a',lip:'#e87aa0'}],
+  edda:['lizard',{skin:'#6a9a4a',belly:'#d8d8a0',eye:'#e8c040',crest:'#c85a2a'}],corvo:['lizard',{skin:'#7a5a3a',belly:'#d8c090',eye:'#e86a2a',crest:'#3a2a1a'}],
+  hermit:['lizard',{skin:'#8a9a8a',belly:'#e0e0c8',eye:'#d8d050',crest:'#5a6a5a'}],bram:['lizard',{skin:'#4a7a6a',belly:'#c8d8b0',eye:'#f0b030',crest:'#2a4a3a'}],
+  fen:['lizard',{skin:'#5a6a8a',belly:'#c8d0e0',eye:'#e8e040',crest:'#3a4a6a'}],twins:['fish',{skin:'#e8c050',skin2:'#3a5a9a',belly:'#f4ecd0',fin:'#c88a2a',iris:'#2a2a2a',lip:'#e88a7a'}]};
+function toFolk(h,kind,o){if(h.fx.heads){h.fx.heads.forEach(({hd},i)=>{for(const ch of hd.children)ch.visible=false;const q=Object.assign({},o,{skin:i?o.skin2:o.skin}),F=faceHD({skin:q.skin,ex:['n'],paint:fishPaint(q)}),fn=cmat(i?'#24406a':o.fin,null,{side:TH.DoubleSide});
+    pt(LP.headS,cmat('#ffffff',F[0]),0,0,.015,.1,.105,.135,hd);pt(LP.box,fn,0,.1,-.02,.009,.07,.13,hd,-.25);for(const sd of[-1,1])pt(LP.cone4,fn,sd*.1,-.01,-.02,.03,.07,.012,hd,0,0,sd*1.3)});return}
+  for(const ch of h.head.children)ch.visible=false;const sk=cmat(o.skin,null),fin=cmat(o.fin||o.crest,null,{side:TH.DoubleSide});
+  for(const hd of h.hand)hd.traverse(m=>{if(m.isMesh)m.material=sk});const g=grp(h.head,0,0,0);
+  if(kind==='fish'){const F=faceHD({skin:o.skin,ex:FACEX,paint:fishPaint(o)});h.fx.faces=F;h.fx.headMesh=pt(LP.headS,cmat('#ffffff',F[0]),0,.005,.015,.115,.12,.155,g);
+    pt(LP.box,fin,0,.115,-.02,.01,.08,.15,g,-.25);for(const sd of[-1,1])pt(LP.cone4,fin,sd*.115,-.01,-.02,.035,.08,.014,g,0,0,sd*1.3);pt(LP.cone4,fin,0,-.03,-.15,.025,.07,.05,g,-1.2)}
+  else{const F=faceHD({skin:o.skin,ex:FACEX,paint:lizPaint(o)});h.fx.faces=F;h.fx.headMesh=pt(LP.headS,cmat('#ffffff',F[0]),0,.01,.03,.105,.105,.14,g);
+    pt(LP.taper,sk,0,-.035,.15,.05,.08,.04,g,Math.PI/2);const cr=cmat(o.crest,null);for(let i=0;i<5;i++)pt(LP.cone4,cr,0,.1-i*.014,.04-i*.05,.014,.06,.024,g,-.4)}
+  h.fx.shut=false}
+function mkNpc(id,o){const C=CHAR[id]||CHAR._;const h=C.build?C.build(o||{}):rig({torsoM:skinM('#888'),armM:skinM('#888'),handM:skinM('#888'),legM:skinM('#666'),shoeM:skinM('#333')});h.cid=id;if(C.dress)C.dress(h,o||{});if(C.pose)C.pose(h);
+  const FK=FOLK[id];if(FK)toFolk(h,FK[0],FK[1]);h.base=snapPose(h);return h}
 function mkHuman(o){return mkNpc('wick',{bare:true})}
 /* remember a character's resting pose so animation can start from it every frame */
 function snapPose(h){const r=[];const take=o=>r.push([o,o.rotation.clone(),o.position.clone(),o.scale.clone()]);[h.body,h.up,h.head,...h.legs,...(h.knees||[]),...h.arms,...(h.elbows||[]),h.root,h.lo].forEach(take);return r}
@@ -2800,7 +2839,7 @@ function rideCam(t,H){const u=H.userData,hp=H.position,hz=hp.z,hx=hp.x,db=u.b.po
   else if(t<28){const rx=-fz,rz=fx;pos=[hx-fx*2.25+rx*.5,2.2+db*.85,hz-fz*2.25+rz*.5];look=[hx+fx*6,1.45,hz+fz*6];roll=u.b.rotation.z*.6}
   else{const q=cs(cp(t,28,34));pos=[cl(4.2,3.6,q),cl(1.65,1.45,q),cl(21.3,19.3,q)];look=[cl(hx,-8.3,.22),1.2,hz-.3]}
   return{pos:[pos[0]+Math.sin(t*.53)*.025+Math.sin(t*1.31)*.01,pos[1]+Math.sin(t*.71)*.018,pos[2]+Math.sin(t*.43)*.02],look,roll}}
-function rideAt(t,dt){const A=CINE.A,H=A.horse,h=A.hero;CINE.fade=1-cs(cp(t,0,3.2));
+function rideAt(t,dt){subTick(t-RIDE_T,dt);const A=CINE.A,H=A.horse,h=A.hero;CINE.fade=1-cs(cp(t,0,3.2));
   const hz=rideZ(t),hx=roadX(hz),hz2=rideZ(t+.05),hx2=roadX(hz2),spd=Math.hypot(hx2-hx,hz2-hz)/.05;
   H.position.set(hx,0,hz);if(spd>.05)H.rotation.y=Math.atan2(hx2-hx,hz2-hz);
   horseDrive(H,spd,dt,{look:-.35*hump(t,8.6,10.8)-.6*hump(t,13,16.1)+.4*hump(t,28.6,31.8),pitch:.14*hump(t,4.2,6)-.14*hump(t,12.8,16.4)-.42*blip(t,16,16.8)-.12*cp(t,31.4,34),
@@ -2834,12 +2873,13 @@ function kidFly(k,a,kick){k.body.rotation.x=kick?-.45:.5;k.legs.forEach((l,n)=>l
 function leavesOn(A,k,a,on){const L=A.leaves;L.visible=on;if(!on)return;L.position.copy(k.root.position);
   L.children.forEach(m=>{const u=m.userData,an=a*7.5+u.ph;m.position.set(Math.cos(an)*u.r,u.h+Math.sin(a*5+u.ph)*.06,Math.sin(an)*u.r);m.rotation.set(a*9+u.ph,a*6+u.ph*2,a*4)})}
 /* what is said in the opening: Wick's lines in his own voice, typed out at the bottom, and the tree's, in a voice like a cellar */
-const SUBS=[[.75,2.25,'imp',"Ooh... somebody's on my path.",'question'],[2.35,2.95,'imp','Peekaboo!','excited'],[3.1,4.05,'imp','Down you go!','happy'],
+const SUBS=[[-31.5,-26.3,'narr','The lakes of the Water Kingdom are drying up, and nobody knows why.'],[-25.6,-20.8,'narr','The King has sent one of his knights to find out.'],
+  [-14.6,-9.8,'narr','Out here the forests have drunk the water. Every pond is mud.'],[.75,2.25,'imp',"Ooh... somebody's on my path.",'question'],[2.35,2.95,'imp','Peekaboo!','excited'],[3.1,4.05,'imp','Down you go!','happy'],
   [5.25,6.85,'imp','What ARE you? Four legs. Long face. No wings...','question'],[7.0,7.95,'imp','Hey! It breathed on me!','excited'],[8.2,9.4,'imp','Knock knock. Anybody in there?','neutral'],
   [10.5,11.7,'imp','Is it for eating? For riding? ...For breaking?','question'],[11.75,12.42,'imp',"Oh! The sleepy one's awake.",'happy'],[12.45,13.7,'imp','Mine now! Catch me, catch me!','excited'],
   [14.0,15.7,'imp','Come on! The tree wants to meet you!','happy'],[24.0,25.5,'tree','Another one... for the dark.'],[26.3,27.9,'tree','Come... inside.']];
 function subTick(a,dt){const L=SUBS.find(q=>a>=q[0]&&a<q[1]);if(!L){if(!subEl.hidden){subEl.hidden=true;CINE.subL=null}return null}
-  if(CINE.subL!==L){CINE.subL=L;subEl.className=L[2];subEl.hidden=false;if(L[2]==='imp')voxLine('imp',L[3],L[4]||'neutral',false);else{voxEnd();treeSay(L[3])}}
+  if(CINE.subL!==L){CINE.subL=L;subEl.className=L[2];subEl.hidden=false;if(L[2]==='imp')voxLine('imp',L[3],L[4]||'neutral',false);else if(L[2]==='tree'){voxEnd();treeSay(L[3])}}
   const n=Math.min(L[3].length,Math.floor((a-L[0])*32));subEl.textContent=L[3].slice(0,n);if(L[2]==='imp')voxType(n,dt);return L}
 function treeSay(t){if(!voxOn())return;const n=Math.max(3,Math.round(t.length/7)),syl=[];for(let i=0;i<n;i++)syl.push({t:i*.36,d:.3,f0a:62-i*2,f0b:52-i*2,F:[380+Math.random()*120,760+Math.random()*200,1900],B:[90,140,220],h:.05,asp:.45,jit:.05,oq:.4,vib:3,vd:.04,tail:.08});
   SND.pcm(vsynth(syl,VSR),VSR,{vol:.5})}
@@ -3079,7 +3119,7 @@ function title(){state='title';SND.play(SONGS.village);room=buildRoom('ow',2,5);
     items:[0,1,2].map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>pickSlot(n)})).concat(SLOTS.some(sv=>sv.v.started)?[{t:'DELETE SAVES',fn:delMenu}]:[],[soundItem(),picItem(),shadowItem(),{t:'HOW TO PLAY',fn:how}]),
     foot:'STICK MOVE · B SWORD (B B LOCK ON) · A ACT/ROLL · X/Y ITEMS · SELECT FOCUS · START BAG'})}
 /* each file shows how far it has got: time played and roots cut, or that it is finished */
-function slotLabel(n){const v=SLOTS[n].v;if(!v.started)return'NEW';const f=(v.flames||[]).filter(Boolean).length;return(v.done?'DONE':f+'/4 ROOTS')+' · '+fmtTime(v.time||0)}
+function slotLabel(n){const v=SLOTS[n].v;if(!v.started)return'NEW';const f=(v.flames||[]).filter(Boolean).length;return(v.done?'DONE':f+'/4 CORES')+' · '+fmtTime(v.time||0)}
 function placeOf(v){const a=v.at;if(!a)return'The Camp';if(a.map==='ow'){const c=OW.cells[a.ry*6+a.rx];return c?c[1]:'The Camp'}return DUN[a.map]?DUN[a.map].name:'The Camp'}
 function pickSlot(n){useSlot(n);const v=S.v;if(!v.started){newGame();return}
   const ask=(h,p,yes)=>menu({html:`<h2>${h}</h2><p>${p}</p>`,items:[{t:'NO',fn:()=>pickSlot(n)},{t:'YES',fn:yes}],back:()=>pickSlot(n)});
