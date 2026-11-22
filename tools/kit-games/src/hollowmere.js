@@ -1953,7 +1953,7 @@ function mgeo(model,part){const id=model+':'+part;if(MGEO[id])return MGEO[id];co
   g.setIndex(new TH.BufferAttribute(new Uint16Array(unb64(P.i)),1));g.computeBoundingSphere();return MGEO[id]=g}
 function mpart(model,part,par,side){const P=MODELS[model].parts[part],m=new TH.Mesh(mgeo(model,part),cmat('#ffffff',mtex(model,P.t),side?{side:TH.DoubleSide}:undefined));par.add(m);return m}
 function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffffff',coatT),coat2=cmat('#ffffff',coatT,{side:TH.DoubleSide}),lea=cmat('#ffffff',cloth('#5a3a24')),boot=cmat('#ffffff',cloth('#3a281a')),skin='#e0b08a';
-  const glove=cmat('#ffffff',cloth('#4e3220')),h=rig({h:1,hip:.4,torsoM:coat,torsoR:.135,torsoL:.29,torsoD:.84,neck:.06,neckM:skinM(skin),armM:coat,armR:.04,armL:.31,handM:glove,gloveM:glove,handS:.064,legM:cmat('#ffffff',cloth('#5a4c3e')),bootM:boot,bootCuffM:cmat('#ffffff',cloth('#4a3424')),shoeM:boot,legR:.05,hipW:.07,shW:.155,shoeW:.11,shoeL:.17});
+  const glove=cmat('#ffffff',cloth('#4e3220')),h=rig({h:1,hip:.4,torsoM:coat,torsoR:.135,torsoL:.29,torsoD:.84,neck:.06,neckM:skinM(skin),armM:coat,armR:.04,armL:.31,handM:glove,gloveM:glove,handS:.064,legM:cmat('#ffffff',cloth('#5a4c3e')),bootM:boot,bootCuffM:cmat('#ffffff',cloth('#4a3424')),shoeM:boot,legR:.05,hipW:.07,shW:.17,shoeW:.11,shoeL:.17});
   const H=h.hipY;
   /* the hero made in Blender (tools/models), when it is packed in: his parts hang from the same joints, so all the animation still works */
   const BM=typeof MODELS!=='undefined'&&MODELS.hero;

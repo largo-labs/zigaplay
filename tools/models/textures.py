@@ -7,7 +7,7 @@
                       top. Big eyes with a coloured iris, a plain dark upper lid, heavy brows set low and angled in, a
                       firm mouth, and complexion: the face lit in the middle and darker round the sides and under the jaw.
   hero_head_shut.png  the same with the eyes shut (blinking)
-  hero_body.png       256 x 256 atlas of swatches: coat, scarf, leather, boot, trousers, skin, hair, glove, brass, hood, sole
+  hero_body.png       256 x 256 atlas of swatches: coat (the green tunic), scarf, leather, boot, trousers, skin, hair, glove, brass, hood, sole
                       (the regions are REG in build_hero.py)
 
 Everything is drawn four times larger and scaled down, so edges are smooth.
@@ -153,10 +153,10 @@ def body():
                 n = R.randint(-noise, noise)
                 img.putpixel((x + i, y + j), tuple(max(0, min(255, c + n)) for c in col))
         return x, y, w, h
-    x, y, w, h = fill('coat', hexc('#3f4d6a'), 5)
+    x, y, w, h = fill('coat', hexc('#3f7a3c'), 5)
     for i in range(0, w, 32):
-        d.line((x + i + 15, y, x + i + 15, y + h), fill=hexc('#34405a'))
-    d.rectangle((x, y + h - 6, x + w, y + h), fill=hexc('#36435e'))
+        d.line((x + i + 15, y, x + i + 15, y + h), fill=hexc('#336631'))
+    d.rectangle((x, y + h - 6, x + w, y + h), fill=hexc('#356b33'))
     x, y, w, h = fill('scarf', hexc('#d8742a'), 6)
     for j in range(0, h, 16):
         d.rectangle((x, y + j + 10, x + w, y + j + 13), fill=hexc('#b65a1c'))
@@ -179,7 +179,7 @@ def body():
     for j in range(h):
         k = 0.75 + 0.45 * math.sin(j / h * math.pi)
         d.line((x, y + j, x + w, y + j), fill=mul(hexc('#d8b060'), k))
-    fill('hood', hexc('#344058'), 5)
+    fill('hood', hexc('#2e5a2d'), 5)
     fill('sole', hexc('#1e1612'), 3)
     return img
 

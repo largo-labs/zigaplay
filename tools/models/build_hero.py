@@ -265,9 +265,10 @@ def ears_part():
 
 # ------------------------------------------------------------------------------------------------ the body
 def torso_part():
+    """the tunic's body: a boy's chest, wider across the shoulders, closing in toward the neck"""
     P = Part('torso', subsurf=1)
-    P.lathe([(-0.02, 0.125, 0.1, 0), (0.06, 0.128, 0.102, 0), (0.14, 0.131, 0.106, 0.006), (0.21, 0.139, 0.111, 0.01),
-             (0.255, 0.141, 0.106, 0.004), (0.285, 0.115, 0.09, 0), (0.305, 0.055, 0.045, 0)], 14, 'coat')
+    P.lathe([(-0.02, 0.126, 0.1, 0), (0.06, 0.128, 0.102, 0), (0.14, 0.13, 0.104, 0.004), (0.2, 0.14, 0.108, 0.008), (0.24, 0.15, 0.104, 0.006),
+             (0.265, 0.152, 0.096, 0.003), (0.285, 0.132, 0.082, 0), (0.3, 0.09, 0.062, 0), (0.312, 0.05, 0.045, 0)], 16, 'coat')
     return P.finish()
 
 
@@ -315,16 +316,24 @@ def belt_part():
 
 
 def upper_arm_part():
+    """from the shoulder joint down: the tunic's short sleeve over a rounded shoulder, ending in a darker hem a third of
+    the way down; below it the bare upper arm, swelling a little at the biceps, down to the elbow"""
     P = Part('uarm', subsurf=1)
-    P.blob((0, 0.0, 0), (0.052, 0.05, 0.05), 'coat', seg=10, ring=7)
-    P.lathe([(-0.15, 0.04, 0.038, 0), (-0.1, 0.044, 0.042, 0), (-0.03, 0.05, 0.047, 0), (0.0, 0.05, 0.048, 0)], 10, 'coat')
+    P.lathe([(-0.075, 0.047, 0.046, 0), (-0.06, 0.05, 0.049, 0), (-0.02, 0.054, 0.052, 0), (0.01, 0.052, 0.05, -0.002), (0.03, 0.038, 0.038, -0.004),
+             (0.042, 0.015, 0.015, -0.004)], 12, 'coat')
+    P.lathe([(-0.083, 0.047, 0.046, 0), (-0.068, 0.0505, 0.0495, 0)], 12, 'hood', cap_top=False, cap_bottom=False)
+    P.lathe([(-0.152, 0.031, 0.03, 0.002), (-0.13, 0.033, 0.032, 0.003), (-0.095, 0.036, 0.036, 0.006), (-0.06, 0.036, 0.035, 0.003), (-0.04, 0.034, 0.034, 0)], 10, 'skin')
     return P.finish()
 
 
 def forearm_part():
+    """from the elbow down: a rounded elbow with its point behind, the lower arm swelling below the elbow and
+    narrowing to the wrist, and a leather cuff where the glove starts"""
     P = Part('farm', subsurf=1)
-    P.lathe([(-0.07, 0.04, 0.038, 0), (0.0, 0.042, 0.04, 0), (0.012, 0.04, 0.038, 0)], 10, 'coat')
-    P.lathe([(-0.168, 0.034, 0.032, 0), (-0.15, 0.037, 0.035, 0), (-0.09, 0.043, 0.041, 0), (-0.055, 0.046, 0.044, 0)], 10, 'glove')
+    P.blob((0, 0.0, -0.002), (0.034, 0.034, 0.034), 'skin', seg=10, ring=7)
+    P.blob((0, -0.004, -0.024), (0.016, 0.016, 0.014), 'skin', seg=6, ring=5)
+    P.lathe([(-0.158, 0.026, 0.024, 0.002), (-0.12, 0.029, 0.027, 0.002), (-0.06, 0.035, 0.032, 0.004), (-0.025, 0.037, 0.034, 0.003), (0.0, 0.033, 0.032, 0)], 10, 'skin')
+    P.lathe([(-0.178, 0.031, 0.029, 0.002), (-0.165, 0.032, 0.03, 0.002), (-0.14, 0.03, 0.028, 0.002)], 10, 'glove')
     return P.finish()
 
 
