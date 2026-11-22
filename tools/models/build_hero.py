@@ -1,6 +1,6 @@
 """Builds the hero of The Tale of Wick: Hollow Wood in Blender, as separate low-poly parts in the style of a 64-bit
-console adventure: a big round head with a jaw and a small nose, chunky locks of hair, a coat with a flared skirt,
-a scarf, gloves and boots. Every part is modelled in the local space of the joint it hangs from in the game's rig
+console adventure: a big round head with a jaw and a small nose, chunky locks of hair, a green tunic with a flared skirt,
+white pants and brown boots. Every part is modelled in the local space of the joint it hangs from in the game's rig
 (the waist, the hips, a shoulder, an elbow, a hand, a hip joint, a knee, an ankle, the head), so the game's own
 animation moves it.
 
@@ -16,7 +16,7 @@ import base64, json, math, struct, sys
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 OUT = sys.argv[sys.argv.index('--') + 1]
 TAU = math.pi * 2
@@ -269,6 +269,7 @@ def torso_part():
     P = Part('torso', subsurf=1)
     P.lathe([(-0.02, 0.126, 0.1, 0), (0.06, 0.128, 0.102, 0), (0.14, 0.13, 0.104, 0.004), (0.2, 0.14, 0.108, 0.008), (0.24, 0.15, 0.104, 0.006),
              (0.265, 0.152, 0.096, 0.003), (0.285, 0.132, 0.082, 0), (0.3, 0.09, 0.062, 0), (0.312, 0.05, 0.045, 0)], 16, 'coat')
+    P.lathe([(0.292, 0.104, 0.071, 0), (0.304, 0.078, 0.058, 0)], 16, 'hood', cap_top=False, cap_bottom=False)
     return P.finish()
 
 
@@ -300,9 +301,9 @@ def tail_part():
 
 
 def skirt_part():
-    """the coat's skirt, to mid-thigh, flaring out a little (hangs from the hips)"""
+    """the tunic's skirt, to the middle of the thigh, flaring out a little (hangs from the hips)"""
     P = Part('skirt', subsurf=1)
-    P.lathe([(0.2, 0.18, 0.156, -0.01), (0.25, 0.175, 0.15, -0.006), (0.33, 0.16, 0.135, 0), (0.41, 0.145, 0.12, 0), (0.45, 0.133, 0.11, 0)],
+    P.lathe([(0.27, 0.17, 0.148, -0.008), (0.31, 0.166, 0.142, -0.004), (0.36, 0.156, 0.132, 0), (0.41, 0.145, 0.12, 0), (0.45, 0.133, 0.11, 0)],
             16, 'coat', cap_top=False, cap_bottom=False)
     return P.finish()
 
@@ -311,40 +312,42 @@ def belt_part():
     P = Part('belt')
     P.lathe([(0.392, 0.152, 0.128, 0), (0.43, 0.15, 0.126, 0)], 16, 'leather', cap_top=False, cap_bottom=False)
     P.blob((0, 0.411, 0.128), (0.024, 0.02, 0.008), 'brass', seg=6, ring=4)
-    P.blob((-0.13, 0.37, 0.04), (0.03, 0.035, 0.025), 'leather', seg=6, ring=5)
     return P.finish()
 
 
 def upper_arm_part():
-    """from the shoulder joint down: the tunic's short sleeve over a rounded shoulder, ending in a darker hem a third of
-    the way down; below it the bare upper arm, swelling a little at the biceps, down to the elbow"""
+    """from the shoulder joint down: the tunic's short sleeve over a rounded shoulder with a darker hem, then the bare
+    upper arm. It runs on a little past the elbow and rounds off inside the forearm, so the arm bends there in one piece"""
     P = Part('uarm', subsurf=1)
     P.lathe([(-0.075, 0.047, 0.046, 0), (-0.06, 0.05, 0.049, 0), (-0.02, 0.054, 0.052, 0), (0.01, 0.052, 0.05, -0.002), (0.03, 0.038, 0.038, -0.004),
              (0.042, 0.015, 0.015, -0.004)], 12, 'coat')
     P.lathe([(-0.083, 0.047, 0.046, 0), (-0.068, 0.0505, 0.0495, 0)], 12, 'hood', cap_top=False, cap_bottom=False)
-    P.lathe([(-0.152, 0.031, 0.03, 0.002), (-0.13, 0.033, 0.032, 0.003), (-0.095, 0.036, 0.036, 0.006), (-0.06, 0.036, 0.035, 0.003), (-0.04, 0.034, 0.034, 0)], 10, 'skin')
+    P.lathe([(-0.178, 0.004, 0.004, 0.002), (-0.172, 0.02, 0.019, 0.002), (-0.162, 0.029, 0.028, 0.002), (-0.15, 0.031, 0.03, 0.002), (-0.13, 0.033, 0.032, 0.003),
+             (-0.095, 0.036, 0.036, 0.006), (-0.06, 0.036, 0.035, 0.003), (-0.04, 0.034, 0.034, 0)], 10, 'skin', cap_bottom=False)
     return P.finish()
 
 
 def forearm_part():
-    """from the elbow down: a rounded elbow with its point behind, the lower arm swelling below the elbow and
-    narrowing to the wrist, and a leather cuff where the glove starts"""
+    """from the elbow down: the lower arm, the same thickness as the upper arm where they meet, a little fuller below the
+    elbow and narrowing to the wrist. Its top rounds off inside the upper arm"""
     P = Part('farm', subsurf=1)
-    P.blob((0, 0.0, -0.002), (0.034, 0.034, 0.034), 'skin', seg=10, ring=7)
-    P.blob((0, -0.004, -0.024), (0.016, 0.016, 0.014), 'skin', seg=6, ring=5)
-    P.lathe([(-0.158, 0.026, 0.024, 0.002), (-0.12, 0.029, 0.027, 0.002), (-0.06, 0.035, 0.032, 0.004), (-0.025, 0.037, 0.034, 0.003), (0.0, 0.033, 0.032, 0)], 10, 'skin')
-    P.lathe([(-0.178, 0.031, 0.029, 0.002), (-0.165, 0.032, 0.03, 0.002), (-0.14, 0.03, 0.028, 0.002)], 10, 'glove')
+    P.lathe([(-0.166, 0.024, 0.022, 0.002), (-0.155, 0.026, 0.024, 0.002), (-0.12, 0.029, 0.027, 0.002), (-0.06, 0.034, 0.031, 0.003), (-0.025, 0.033, 0.031, 0.002),
+             (0.0, 0.031, 0.03, 0.002), (0.012, 0.028, 0.027, 0.002), (0.02, 0.018, 0.017, 0.002), (0.025, 0.004, 0.004, 0.002)], 10, 'skin', cap_top=False)
     return P.finish()
 
 
 def hand_part(sd):
-    """a gloved hand: a palm, the fingers together and curled a little forward, and a thumb on the inside.
-    sd = -1 for the left arm (arms[0]), +1 for the right; the thumb is on the side toward the body"""
+    """a bare hand: a palm facing the body, four fingers (the middle one longest) curling a little toward the palm, and
+    a thumb at the front. sd = -1 for the left arm (arms[0]), +1 for the right. The wrist is at y +.033 (the hand joint
+    sits a little below the end of the forearm)"""
     P = Part('hand' + ('L' if sd < 0 else 'R'), smooth_angle=70)
-    P.blob((0, 0.02, 0.004), (0.033, 0.04, 0.021), 'glove', seg=10, ring=7)
-    P.blob((0, -0.024, 0.012), (0.031, 0.028, 0.019), 'glove', seg=10, ring=7,
-           deform=lambda p: (p.x, p.y, p.z + max(0.0, -p.y) * 0.25))
-    P.blob((-sd * 0.028, 0.004, 0.018), (0.011, 0.024, 0.011), 'glove', seg=6, ring=5)
+    inward = -sd  # the side the palm faces
+    P.blob((inward * 0.002, 0.008, 0.002), (0.013, 0.03, 0.027), 'skin', seg=10, ring=7)
+    for z, ln in ((0.019, 0.022), (0.0065, 0.025), (-0.0065, 0.023), (-0.018, 0.019)):
+        curl = Matrix.Rotation(inward * 0.32, 3, 'Z')
+        P.blob((inward * 0.004, -0.02 - ln * 0.9, z), (0.0075, ln, 0.0068), 'skin', seg=6, ring=5, rot=curl)
+    thumb = Matrix.Rotation(-0.7, 3, 'X') @ Matrix.Rotation(inward * 0.25, 3, 'Z')
+    P.blob((inward * 0.006, 0.0, 0.03), (0.0085, 0.02, 0.0085), 'skin', seg=6, ring=5, rot=thumb)
     return P.finish()
 
 
@@ -355,10 +358,11 @@ def thigh_part():
 
 
 def shin_part():
-    """a boot shaft with its top turned down into a cuff (hangs from the knee)"""
+    """from the knee: the white pants over the knee, then a brown boot with its top turned down into a cuff"""
     P = Part('shin', subsurf=1)
-    P.lathe([(-0.158, 0.044, 0.043, 0.004), (-0.15, 0.045, 0.044, 0.004), (-0.1, 0.047, 0.046, 0.003), (-0.045, 0.05, 0.049, 0),
-             (-0.04, 0.059, 0.057, 0), (-0.005, 0.061, 0.059, 0), (0.012, 0.05, 0.05, 0)], 12, 'boot')
+    P.lathe([(-0.075, 0.046, 0.045, 0.002), (-0.03, 0.05, 0.049, 0.001), (0.0, 0.052, 0.051, 0), (0.02, 0.05, 0.05, 0)], 10, 'trousers')
+    P.lathe([(-0.158, 0.044, 0.043, 0.004), (-0.15, 0.045, 0.044, 0.004), (-0.11, 0.047, 0.046, 0.003), (-0.085, 0.049, 0.048, 0.002),
+             (-0.08, 0.058, 0.056, 0.001), (-0.05, 0.059, 0.057, 0), (-0.045, 0.05, 0.049, 0)], 12, 'boot')
     return P.finish()
 
 
@@ -413,7 +417,7 @@ def export(ob):
 
 def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    parts = [head_part(), hair_part(), ears_part(), torso_part(), neck_part(), hood_part(), scarf_part(), tail_part(), skirt_part(),
+    parts = [head_part(), hair_part(), ears_part(), torso_part(), neck_part(), skirt_part(),
              belt_part(), upper_arm_part(), forearm_part(), hand_part(-1), hand_part(1), thigh_part(), shin_part(), foot_part()]
     out, tris = {}, 0
     for ob in parts:

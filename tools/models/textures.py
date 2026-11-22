@@ -164,11 +164,11 @@ def body():
     for i in range(2, w, 6):
         d.point((x + i, y + 4), fill=hexc('#c8a070'))
         d.point((x + i, y + h - 5), fill=hexc('#c8a070'))
-    x, y, w, h = fill('boot', hexc('#3c2a1b'), 6)
-    d.rectangle((x, y, x + w, y + 18), fill=hexc('#4c3624'))
+    x, y, w, h = fill('boot', hexc('#6e4628'), 6)
+    d.rectangle((x, y, x + w, y + 18), fill=hexc('#7d5332'))
     for j in (28, 38, 46):
-        d.line((x, y + j, x + w, y + j + 2), fill=hexc('#2c1e12'))
-    fill('trousers', hexc('#5a4c3e'), 8)
+        d.line((x, y + j, x + w, y + j + 2), fill=hexc('#4e3018'))
+    fill('trousers', hexc('#ebe7de'), 4)
     fill('skin', SKIN, 2)
     x, y, w, h = fill('hair', HAIR, 4)
     for i in range(0, w, 3):
