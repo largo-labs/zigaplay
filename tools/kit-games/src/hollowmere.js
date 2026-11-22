@@ -930,7 +930,9 @@ let PIC='hd';try{const v=localStorage.getItem('hollowmere-pic');PIC=v==='retro'|
 stage.classList.toggle('sharp',PIC==='pixel');RES_BASE=PIC==='retro'?320:300;
 /* shadows: a sun that casts soft shadows from everything solid (trees, walls, people, the things you fight). Kept per device */
 let SHADOWS=true;try{SHADOWS=localStorage.getItem('hollowmere-shadows')!=='off'}catch(e){}
-const SUND=new TH.Vector3(-5,9,4).normalize(),_cfw=new TH.Vector3();
+const SUND=new TH.Vector3(-6,6.5,4).normalize(),_cfw=new TH.Vector3();
+/* the words spoken in the scenes */
+const subEl=document.createElement('div');subEl.id='sub';subEl.hidden=true;stage.appendChild(subEl);
 const col3=(h,m)=>{const n=parseInt(h.slice(1),16),k=(m==null?1:m)/255;return[(n>>16)*k,(n>>8&255)*k,(n&255)*k]};
 const mulc=(c,m)=>[c[0]*m,c[1]*m,c[2]*m];
 const hrand=(a,b,c)=>(hashN(a+999,b+999,c|0)%10007)/10007;
@@ -1212,7 +1214,7 @@ function mkBossModel(b){const g=new TH.Group(),u={};g.userData=u;
 
 /* ---------- the scene, sky and lights ---------- */
 const G3={r:null,cache:new Map(),live:new Map(),camPos:new TH.Vector3(),camLook:new TH.Vector3(),camDist:4.4,snap:true,yawV:0};
-const SHG=new TH.CircleGeometry(1,10);SHG.rotateX(-Math.PI/2);const SHM=new TH.MeshBasicMaterial({color:0,transparent:true,opacity:SHADOWS?.16:.3,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
+const SHG=new TH.CircleGeometry(1,10);SHG.rotateX(-Math.PI/2);const SHM=new TH.MeshBasicMaterial({color:0,transparent:true,opacity:SHADOWS?.1:.3,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
 const shadow=(par,s)=>{const m=new TH.Mesh(SHG,SHM);m.scale.setScalar(s);m.position.y=.03;par.add(m);return m};
 function mkStars(par,y,s){const g=grp(par,0,y,0);for(let n=0;n<3;n++)pc('octa',bmat('#ffd23f'),Math.cos(n*2.1)*.3*s,0,Math.sin(n*2.1)*.3*s,.06,.06,.06,g);g.visible=false;return g}
 /* the last pass: the frame is drawn into a texture, then onto the screen through a shader that does what the old video
@@ -1270,15 +1272,15 @@ function lockTick(dt){const lk=lockT&&!lockT.dead&&E.includes(lockT)&&state==='p
   G3.lockGem.position.set(gx,gy+(big?2.9:1.42)+Math.sin(T*6)*.06,gz);G3.lockGem.rotation.y=T*3;G3.lockGem.material.opacity=k}
 /* which meshes take part in shadows: everything solid. Glows, effects, water and the soft blobs under people don't */
 function shadowAll(o){o.traverse(m=>{if(!m.isMesh||m.geometry===SHG)return;const mt=m.material;if(!mt||Array.isArray(mt)||mt.isMeshBasicMaterial||mt.isShaderMaterial||(mt.transparent&&!mt.depthWrite))return;m.castShadow=m.receiveShadow=true});return o}
-function sunShadow(L,size,box){L.castShadow=true;L.shadow.mapSize.set(size,size);const c=L.shadow.camera;c.left=c.bottom=-box;c.right=c.top=box;c.near=1;c.far=70;c.updateProjectionMatrix();L.shadow.bias=-.0004;L.shadow.normalBias=.03}
+function sunShadow(L,size,box){L.castShadow=true;L.shadow.mapSize.set(size,size);const c=L.shadow.camera;c.left=c.bottom=-box;c.right=c.top=box;c.near=1;c.far=70;c.updateProjectionMatrix();L.shadow.bias=-.0004;L.shadow.normalBias=.022}
 /* the sun's shadows cover a square around what the camera is looking at; moved in whole shadow pixels so edges don't crawl */
 function aimSun(L,x,y,z,box,size){const st=box*2/size;x=Math.round(x/st)*st;z=Math.round(z/st)*st;L.target.position.set(x,y,z);L.position.set(x+SUND.x*30,y+SUND.y*30,z+SUND.z*30);L.target.updateMatrixWorld()}
-function aimSun3D(){if(!SHADOWS||!room)return;const[px,pz]=gpos(P.x,P.y),fx=G3.camLook.x-G3.camPos.x,fz=G3.camLook.z-G3.camPos.z,fl=Math.hypot(fx,fz)||1;aimSun(G3.sun,px+fx/fl*4,groundY(P.x,P.y),pz+fz/fl*4,13,2048)}
-function setShadows(v){SHADOWS=v;try{localStorage.setItem('hollowmere-shadows',v?'on':'off')}catch(e){}if(G3.r)G3.r.shadowMap.enabled=v;SHM.opacity=v?.16:.3;
+function aimSun3D(){if(!SHADOWS||!room)return;const[px,pz]=gpos(P.x,P.y),fx=G3.camLook.x-G3.camPos.x,fz=G3.camLook.z-G3.camPos.z,fl=Math.hypot(fx,fz)||1;aimSun(G3.sun,px+fx/fl*3,groundY(P.x,P.y),pz+fz/fl*3,10,2048)}
+function setShadows(v){SHADOWS=v;try{localStorage.setItem('hollowmere-shadows',v?'on':'off')}catch(e){}if(G3.r)G3.r.shadowMap.enabled=v;SHM.opacity=v?.1:.3;
   for(const sc of[G3.scene,CINE.sc])if(sc)sc.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)})}
 function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:true,powerPreference:'default'})}catch(e){G3.fail=1;return}
   r.setPixelRatio(1);G3.r=r;postInit();glSize();r.shadowMap.enabled=SHADOWS;r.shadowMap.type=TH.PCFSoftShadowMap;const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
-  G3.hemi=new TH.HemisphereLight(0xffffff,0x5a5040,.75);sc.add(G3.hemi);G3.sun=new TH.DirectionalLight(0xfff0d8,.7);G3.sun.position.set(-4,10,3);sc.add(G3.sun);sunShadow(G3.sun,2048,13);sc.add(G3.sun.target);
+  G3.hemi=new TH.HemisphereLight(0xffffff,0x5a5040,.75);sc.add(G3.hemi);G3.sun=new TH.DirectionalLight(0xfff0d8,.7);G3.sun.position.set(-4,10,3);sc.add(G3.sun);sunShadow(G3.sun,2048,10);sc.add(G3.sun.target);
   G3.pl=[];for(let n=0;n<6;n++){const l=new TH.PointLight(0xffa050,0,6,1.4);sc.add(l);G3.pl.push(l)}
   sc.fog=new TH.Fog(0x9ac8e8,12,32);
   const sg=new TH.SphereGeometry(80,14,8);sg.setAttribute('color',new TH.Float32BufferAttribute(new Float32Array(sg.attributes.position.count*3),3));
@@ -1560,6 +1562,52 @@ function faceHead(h,par,key,skin,o,sx,sy,sz){o=o||{};const c=12,y=11,dk=shade(sk
   const faces=FACEX.map(ex=>pxt('fc'+key+ex,48,24,(p,oval,sym,w,hh)=>{p(skin,0,0,w,hh);p(shade(skin,.86),0,16,w,8);draw(p,ex)}));
   const m=pt(LP.headS,cmat('#ffffff',faces[0]),0,0,0,sx,sy*.92,sz,par);m.userData.faces=faces;if(!o.noBlink){h.fx.headMesh=m;h.fx.faces=faces}return m}
 
+/* ---------- painted faces, the smooth kind: big eyes with irises and light in them, brows, a nose, lips and cheeks,
+   drawn with curves on a 256 x 128 canvas and wrapped round the sculpted head (the face sits a quarter of the way across) ---------- */
+function faceHD(o){return(o.ex||['n','b']).map(ex=>{const c=mkCanvas(256,128),x=c.getContext('2d'),cx=64,ey=60;x.lineCap='round';x.fillStyle=o.skin;x.fillRect(0,0,256,128);
+  if(!o.flat){let g=x.createRadialGradient(cx,62,8,cx,70,80);g.addColorStop(0,'rgba(255,244,230,.2)');g.addColorStop(1,'rgba(60,30,20,.3)');x.fillStyle=g;x.fillRect(0,0,256,128);
+    for(const sd of[-1,1]){g=x.createRadialGradient(cx+sd*25,80,1,cx+sd*25,80,12);g.addColorStop(0,o.blush||'rgba(230,110,100,.32)');g.addColorStop(1,'rgba(230,110,100,0)');x.fillStyle=g;x.fillRect(cx+sd*25-13,67,26,26)}
+    if(o.hair){const hy=o.hairY||22;x.fillStyle=o.hair;x.fillRect(0,0,256,hy);for(let i=0;i<256;i+=6){x.beginPath();x.moveTo(i,hy-1);x.lineTo(i+3,hy+4+(i*7)%6);x.lineTo(i+6,hy-1);x.fill()}}}
+  o.paint(x,cx,ey,ex);const t=new TH.CanvasTexture(c);t.wrapS=TH.RepeatWrapping;return t})}
+/* a pair of eyes: white, an iris with a darker top, a pupil, a catch-light, a lid line on top */
+function eyePair(x,cx,ey,o,ex){for(const sd of[-1,1]){const e0=cx+sd*18;
+  if(ex==='b'){x.strokeStyle=o.lid;x.lineWidth=2.4;x.beginPath();x.moveTo(e0-8,ey+1);x.quadraticCurveTo(e0,ey+5,e0+8,ey+1);x.stroke();continue}
+  x.fillStyle=o.white;x.beginPath();x.ellipse(e0,ey,8.5,6.8,0,0,TAU);x.fill();
+  x.fillStyle=o.iris;x.beginPath();x.arc(e0-sd*.5,ey+.5,5.2,0,TAU);x.fill();x.fillStyle='rgba(0,0,0,.3)';x.beginPath();x.arc(e0-sd*.5,ey+.5,5.2,Math.PI*1.05,Math.PI*1.95);x.fill();
+  x.fillStyle='#0a0806';x.beginPath();x.arc(e0-sd*.5,ey+.5,2.4,0,TAU);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(e0-2,ey-2,1.6,0,TAU);x.fill();
+  x.strokeStyle=o.lid;x.lineWidth=2.6;x.beginPath();x.ellipse(e0,ey,8.8,7,0,Math.PI*1.03,Math.PI*1.97);x.stroke();
+  x.lineWidth=1;x.strokeStyle='rgba(60,30,20,.45)';x.beginPath();x.ellipse(e0,ey,8.6,6.9,0,Math.PI*.15,Math.PI*.85);x.stroke()}}
+/* the hero: a boy of about twelve, blue-grey eyes, brown hair, a small mouth that is nearly smiling */
+function heroPaint(x,cx,ey,ex){eyePair(x,cx,ey,{white:'#f8f4ec',iris:'#5a7aa0',lid:'#2e1e14'},ex);
+  x.strokeStyle='#4a2e1a';x.lineWidth=3;for(const sd of[-1,1]){x.beginPath();x.moveTo(cx+sd*10,ey-11);x.quadraticCurveTo(cx+sd*18,ey-15,cx+sd*26,ey-11);x.stroke()}
+  x.fillStyle='rgba(255,240,228,.3)';x.fillRect(cx-1,ey+3,2,11);x.fillStyle='rgba(140,70,50,.26)';x.beginPath();x.ellipse(cx,ey+17,5,2.6,0,0,TAU);x.fill();
+  x.fillStyle='rgba(90,40,30,.5)';for(const sd of[-1,1]){x.beginPath();x.arc(cx+sd*2.4,ey+17.6,1,0,TAU);x.fill()}
+  x.strokeStyle='#8a4434';x.lineWidth=2;x.beginPath();x.moveTo(cx-8,ey+29);x.quadraticCurveTo(cx,ey+32.5,cx+8,ey+29);x.stroke();
+  x.fillStyle='rgba(200,110,100,.32)';x.beginPath();x.ellipse(cx,ey+32.6,5,1.6,0,0,TAU);x.fill()}
+/* the twisted Wick: sunken bruised sockets, ember eyes with slit pupils, cracks in grey skin, freckles still, and a grin
+   that goes too far, full of small pointed teeth. ex: n grin, b eyes shut, t talking, h laughing, s startled */
+function impPaint(x,cx,ey,ex){
+  for(const sd of[-1,1]){const g=x.createRadialGradient(cx+sd*18,ey+1,2,cx+sd*18,ey+1,15);g.addColorStop(0,'rgba(20,10,24,.75)');g.addColorStop(1,'rgba(20,10,24,0)');x.fillStyle=g;x.fillRect(cx+sd*18-16,ey-15,32,32)}
+  x.strokeStyle='rgba(50,40,30,.55)';x.lineWidth=1;for(const[a,b,c2,d]of[[cx-30,30,cx-22,44],[cx+28,34,cx+34,48],[cx-6,24,cx-2,34],[cx+12,86,cx+20,98]]){x.beginPath();x.moveTo(a,b);x.lineTo((a+c2)/2+2,(b+d)/2);x.lineTo(c2,d);x.stroke()}
+  x.fillStyle='rgba(110,70,40,.6)';for(const[a,b]of[[-24,74],[-20,78],[-27,79],[22,74],[26,78],[19,79]]){x.beginPath();x.arc(cx+a,b,1.2,0,TAU);x.fill()}
+  const wide=ex==='s',laugh=ex==='h';
+  for(const sd of[-1,1]){const e0=cx+sd*18;
+    if(ex==='b'||laugh){x.strokeStyle='#120a08';x.lineWidth=2.6;x.beginPath();if(laugh){x.moveTo(e0-8,ey+2);x.quadraticCurveTo(e0,ey-6,e0+8,ey+2)}else{x.moveTo(e0-8,ey);x.quadraticCurveTo(e0,ey+4,e0+8,ey)}x.stroke();continue}
+    x.fillStyle='#14100c';x.beginPath();x.ellipse(e0,ey,9,wide?8.5:7,0,0,TAU);x.fill();
+    x.fillStyle='#ffb02a';x.beginPath();x.arc(e0,ey,wide?5:5.6,0,TAU);x.fill();x.fillStyle='#ff6a10';x.beginPath();x.arc(e0,ey+1.5,3.4,0,TAU);x.fill();
+    x.fillStyle='#000';x.beginPath();x.ellipse(e0,ey,1.1,wide?2.2:4.6,0,0,TAU);x.fill();x.fillStyle='rgba(255,255,230,.9)';x.beginPath();x.arc(e0-2,ey-2.5,1.2,0,TAU);x.fill()}
+  x.strokeStyle='#2a1208';x.lineWidth=2.4;for(const sd of[-1,1]){x.beginPath();x.moveTo(cx+sd*8,ey-(wide?14:9));x.lineTo(cx+sd*26,ey-(wide?18:15));x.stroke()}
+  x.fillStyle='rgba(40,30,20,.7)';x.fillRect(cx-3,ey+16,1.6,2.4);x.fillRect(cx+1.4,ey+16,1.6,2.4);
+  const my=ey+28;x.fillStyle='#2a0606';x.beginPath();
+  if(wide){x.ellipse(cx,my+2,5,6,0,0,TAU);x.fill();return}
+  const open=ex==='t'?7:laugh?9:4,yt=u=>my-6+(3+open*.35)*(1-u*u),yb=u=>my-6+(3+open*1.1)*(1-u*u);
+  x.moveTo(cx-24,my-6);x.quadraticCurveTo(cx,my+open*2.2,cx+24,my-6);x.quadraticCurveTo(cx,my+open*.7,cx-24,my-6);x.fill();
+  x.fillStyle='#efe6d2';for(let u=-.82;u<=.83;u+=.164){const tx=cx+u*24;x.beginPath();x.moveTo(tx-2.1,yt(u));x.lineTo(tx+2.1,yt(u));x.lineTo(tx,yt(u)+3.4);x.fill();
+    if(open>4){x.beginPath();x.moveTo(tx-2,yb(u));x.lineTo(tx+2,yb(u));x.lineTo(tx,yb(u)-3);x.fill()}}
+  x.strokeStyle='#2a0606';x.lineWidth=1.6;for(const sd of[-1,1]){x.beginPath();x.moveTo(cx+sd*24,my-6);x.quadraticCurveTo(cx+sd*28,my-9,cx+sd*29,my-13);x.stroke()}}
+/* where his eyes glow: the same face, black except the embers */
+function impGlow(x,cx,ey,ex){if(ex==='b'||ex==='h')return;for(const sd of[-1,1]){const e0=cx+sd*18,g=x.createRadialGradient(e0,ey,1,e0,ey,9);g.addColorStop(0,'#ffc050');g.addColorStop(.6,'rgba(255,120,20,.8)');g.addColorStop(1,'rgba(255,90,10,0)');
+  x.fillStyle=g;x.beginPath();x.arc(e0,ey,9,0,TAU);x.fill();x.fillStyle='#000';x.beginPath();x.ellipse(e0,ey,1.1,ex==='s'?2.2:4.6,0,0,TAU);x.fill()}}
 /* ---------- the rig ---------- */
 /* sculpted body parts, made once at unit size and scaled per character: a torso with hips, waist and chest; limbs that
    swell at the bicep, thigh, forearm and calf and narrow at the joints; round joints; a flared cuff for gloves and boots */
@@ -1794,6 +1842,17 @@ Object.assign(CHAR.twins,{voice:{f0:455,sc:1.34,vow:'ieA',cons:'hbd ',rate:10,le
     pt(LP.tor,skinM('#4a6a3a'),0,.08,0,.11,.11,.15,b.hd,Math.PI/2);for(let i=0;i<7;i++){const an=i/7*TAU;pt(LP.cone4,skinM(i%2?'#5a7a42':'#3e5a30'),Math.cos(an)*.11,.1,Math.sin(an)*.11,.02,.05,.012,b.hd,0,-an,.6)}
     for(const[x,y,c]of[[.03,.6,'#c8a040'],[-.02,.5,'#8a3a3a'],[.025,.4,'#3a6a8a']])pt(LP.ball,skinM(c),x,y,.17,.018,.018,.01,h.lo)}});
 /* ---------- building, and the old names the rest of the game uses ---------- */
+/* the thing in the woods (the opening): Wick as the tree has made him. Still a small boy who thinks everything is a game,
+   but grey as ash, with twig horns, ember eyes that glow in the dark, a grin too wide and too full of teeth, and rags */
+CHAR.imp={name:'Wick',build(o){const rag=cmat('#ffffff',cloth('#2e3424','patch','#22281a')),skin='#b9c2a0',
+    h=rig({prop:'kid',h:.82,hip:.38,torsoM:rag,torsoR:.1,torsoL:.27,armM:skinM('#9ea88c'),armR:.028,armL:.27,handM:skinM('#8e987c'),handS:.07,legM:skinM('#949e84'),shoeM:skinM('#2a2420'),legR:.035});
+  pt(LP.cone6,rag,0,.1,-.03,.17,.25,.15,h.up,Math.PI);for(let i=0;i<6;i++){const a=(i/6-.5)*2.4;pt(LP.box,rag,Math.sin(a)*.15,-.06-(i%3)*.03,Math.cos(a)*.13-.03,.03,.14+(i%2)*.06,.008,h.up,0,a,0)}
+  const F=faceHD({skin,hair:'#5a2412',hairY:20,ex:['n','b','t','h','s'],paint:impPaint}),G=faceHD({skin:'#000',flat:true,ex:['n','b','t','h','s'],paint:impGlow});
+  h.fx.imp=F.map((t,i)=>new TH.MeshLambertMaterial({map:t,emissive:0xffffff,emissiveMap:G[i]}));h.fx.headMesh=pt(LP.headS,h.fx.imp[0],0,0,0,.13,.14*.92,.13,h.head);
+  for(let n=0;n<9;n++){const a=n/9*TAU;pt(LP.cone4,skinM(n%2?'#6a2a14':'#8a3a1a'),Math.cos(a)*.085,.115,Math.sin(a)*.085-.02,.045,.16,.045,h.head,Math.sin(a)*.95,0,-Math.cos(a)*.95)}
+  for(const sd of[-1,1]){const hr=grp(h.head,sd*.07,.1,.06);hr.rotation.set(-.15,0,-sd*.6);pt(LP.cone6,skinM('#5a3e2a'),0,.075,0,.026,.15,.026,hr);const tip=grp(hr,0,.14,0);tip.rotation.set(.45,0,sd*.55);pt(LP.cone6,skinM('#4a3222'),0,.055,0,.016,.11,.016,tip)}
+  h.head.position.y+=.04;return h}};
+CHAR.imp.voice=Object.assign({},CHAR.wick.voice,{f0:350,jit:.03,breath:.32,vib:5.5,vd:.03,oq:.55});
 const NPCLOOK={wick:{}};
 function mkNpc(id,o){const C=CHAR[id]||CHAR._;const h=C.build?C.build(o||{}):rig({torsoM:skinM('#888'),armM:skinM('#888'),handM:skinM('#888'),legM:skinM('#666'),shoeM:skinM('#333')});h.cid=id;if(C.dress)C.dress(h,o||{});if(C.pose)C.pose(h);h.base=snapPose(h);return h}
 function mkHuman(o){return mkNpc('wick',{bare:true})}
@@ -1805,23 +1864,25 @@ function restPose(h){for(const[o,rt,ps,sc]of h.base){o.rotation.copy(rt);o.posit
    a slate-blue hooded coat to mid-thigh, an orange scarf, a leather belt, tall boots and bracers, a sword at the hip
    and a round wooden shield. Same named parts as every other rig, so all the animation code works on it. ---------- */
 function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffffff',coatT),coat2=cmat('#ffffff',coatT,{side:TH.DoubleSide}),lea=cmat('#ffffff',cloth('#5a3a24')),boot=cmat('#ffffff',cloth('#3a281a')),skin='#e0b08a';
-  const glove=cmat('#ffffff',cloth('#4e3220')),h=rig({h:1,hip:.52,torsoM:coat,torsoR:.122,torsoL:.37,torsoD:.72,neck:.075,neckM:skinM(skin),armM:coat,armR:.032,armL:.4,handM:glove,gloveM:glove,handS:.052,legM:cmat('#ffffff',cloth('#5a4c3e')),bootM:boot,bootCuffM:cmat('#ffffff',cloth('#4a3424')),shoeM:boot,legR:.04,hipW:.062,shW:.15,shoeW:.092,shoeL:.16});
+  const glove=cmat('#ffffff',cloth('#4e3220')),h=rig({h:1,hip:.4,torsoM:coat,torsoR:.135,torsoL:.29,torsoD:.84,neck:.06,neckM:skinM(skin),armM:coat,armR:.04,armL:.31,handM:glove,gloveM:glove,handS:.064,legM:cmat('#ffffff',cloth('#5a4c3e')),bootM:boot,bootCuffM:cmat('#ffffff',cloth('#4a3424')),shoeM:boot,legR:.05,hipW:.07,shW:.155,shoeW:.11,shoeL:.17});
   const H=h.hipY;
   /* coat skirt to mid-thigh, belt and buckle, a pouch on the right hip */
-  pt(LP.skirt,coat2,0,H-.095,0,.15,.23,.128,h.lo);pt(LP.cyl8,lea,0,H+.015,0,.128,.04,.108,h.lo);pt(LP.box,skinM('#c8a040'),0,H+.015,.108,.04,.035,.012,h.lo);pt(LP.box,lea,-.12,H-.05,.04,.05,.07,.04,h.lo,0,.4);
-  /* the head: smaller and a little long, dark hair showing under the hood, plain human ears */
-  const face=faceSkin('hero2',skin,(p,sh)=>{const c=12;p('#3a2a1e',0,0,48,7);for(let i=0;i<48;i+=3)p('#2e2218',i,7,2,1+(i%2));p('#3a2a1e',c-5,7,3,2);p('#3a2a1e',c+3,7,2,1);
-    if(sh){p('#2a1a10',c-5,12,3,1);p('#2a1a10',c+2,12,3,1)}else{p('#f0ece4',c-5,11,3,2);p('#f0ece4',c+2,11,3,2);p('#3a4a5a',c-4,11,2,2);p('#3a4a5a',c+2,11,2,2);p('#0a0a0a',c-4,12,1,1);p('#0a0a0a',c+3,12,1,1)}
-    p('#3a2416',c-6,9,4,1);p('#3a2416',c+2,9,4,1);p(shade(skin,.8),c,13,1,3);p(shade(skin,.72),c-1,16,1,1);p('#9a5a44',c-2,18,4,1);p(shade(skin,.88),c-4,20,8,1)});
+  pt(LP.skirt,coat2,0,H-.08,0,.165,.2,.145,h.lo);pt(LP.cyl8,lea,0,H+.015,0,.142,.04,.122,h.lo);pt(LP.box,skinM('#c8a040'),0,H+.015,.122,.04,.035,.012,h.lo);pt(LP.box,lea,-.135,H-.05,.04,.05,.07,.04,h.lo,0,.4);
+  /* the head: a boy's face, painted smooth, with the hood down and his own hair showing */
+  const face=faceHD({skin:'#eebf98',hair:'#4a2e1a',hairY:21,paint:heroPaint});
   h.fx.headMesh=pt(LP.headS,cmat('#ffffff',face[0]),0,0,0,.08,.09,.088,h.head);h.fx.faces=face;
+  {const hm=skinM('#4a2e1a'),hm2=skinM('#5a3a22'),cap=new TH.SphereGeometry(1,16,10,0,TAU,0,Math.PI*.56);pt(cap,hm,0,.014,-.006,.087,.097,.095,h.head,-.42);
+    for(let i=0;i<6;i++){const x0=(i-2.5)*.019;pt(LP.cone6,i%2?hm2:hm,x0,.066-Math.abs(x0)*.3,.072-Math.abs(x0)*.25,.017,.045,.012,h.head,Math.PI-.35,0,x0*3)}
+    for(const sd of[-1,1]){pt(LP.cone6,hm,sd*.078,.03,.02,.014,.05,.012,h.head,Math.PI,0,sd*.2);pt(LP.cone6,hm2,sd*.05,.05,-.07,.02,.06,.016,h.head,Math.PI+.6,0,sd*.3)}
+    pt(LP.cone6,hm,0,.06,-.085,.024,.065,.018,h.head,Math.PI+.75,0,0)}
   for(const sd of[-1,1])pt(LP.ball,skinM(shade(skin,.92)),sd*.079,-.004,-.004,.016,.026,.018,h.head);
   /* the hood: rounded, framing the face, falling into a short drape on the shoulders */
-  const hood=cmat('#ffffff',cloth('#34405a'),{side:TH.DoubleSide}),hg=new TH.SphereGeometry(1,12,8,Math.PI/2+1.05,TAU-2.1,0,Math.PI*.72);pt(hg,hood,0,.012,-.008,.098,.112,.106,h.head,-.1);
-  pt(LP.bell,hood,0,.335,-.012,.19,.12,.165,h.up);
+  const hood=cmat('#ffffff',cloth('#34405a'),{side:TH.DoubleSide});
+  pt(LP.bell,hood,0,.255,-.03,.2,.13,.18,h.up);
   /* scarf round the neck with a tail that blows about */
-  pt(LP.tor,skinM('#d8742a'),0,.36,0,.085,.085,.11,h.up,Math.PI/2);h.tail=grp(h.up,.03,.35,-.08);pt(LP.box,cmat('#ffffff',cloth('#d8742a','stripe','#b85a1a')),0,-.12,0,.055,.24,.02,h.tail);
+  pt(LP.tor,skinM('#d8742a'),0,.27,0,.088,.088,.1,h.up,Math.PI/2);h.tail=grp(h.up,.03,.275,-.085);pt(LP.box,cmat('#ffffff',cloth('#d8742a','stripe','#b85a1a')),0,-.12,0,.055,.24,.02,h.tail);
   /* a short travelling cloak from the shoulders */
-  h.cape=grp(h.up,0,.33,-.1);pt(LP.box,hood,0,-.2,0,.25,.4,.02,h.cape);
+  h.cape=grp(h.up,0,.26,-.11);pt(LP.box,hood,0,-.17,0,.26,.34,.02,h.cape);
   /* grandfather's sword: a diamond-section blade whose ridge catches the light, a brass guard with down-swept ends,
      a grip bound in dark leather and a brass pommel. In the hand when drawn, otherwise in a scabbard on the back */
   const brass=metalM('#e0b860',{r:.7}),grip=cmat('#ffffff',cloth('#4a2c18','stripe','#2a180c')),sw=grp(h.hand[1],0,.02,0);
@@ -1836,10 +1897,10 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   const shd=grp(h.arms[0],-.05,-.2,0);shd.rotation.y=-Math.PI/2;pt(LP.cyl8,cmat('#ffffff',shieldTex()),0,0,0,.17,.035,.17,shd,Math.PI/2);
   pt(LP.tor,metalM('#b8bcc8',{r:.8}),0,0,0,.17,.17,.12,shd);pt(LP.ball,metalM('#d0d4de'),0,0,.03,.045,.045,.03,shd);h.shield=shd;
   h.hook=grp(h.hand[1],0,.02,0);pt(LP.box,skinM('#8a8a96'),0,-.06,0,.07,.18,.07,h.hook);pt(LP.cone4,skinM('#c8ccd8'),0,-.18,0,.05,.08,.05,h.hook,Math.PI);
-  h.held=new TH.Sprite(new TH.SpriteMaterial({transparent:true,depthTest:false}));h.held.scale.set(.5,.5,1);h.held.position.y=1.45;h.held.visible=false;h.root.add(h.held);
+  h.held=new TH.Sprite(new TH.SpriteMaterial({transparent:true,depthTest:false}));h.held.scale.set(.5,.5,1);h.held.position.y=1.3;h.held.visible=false;h.root.add(h.held);
   const ring=new TH.Mesh(new TH.RingGeometry(.55,1.05,10,1,-.95,1.9),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35,side:TH.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.55;ring.visible=false;h.root.add(ring);h.trail=ring;
-  /* a bigger head, the way heroes of that era were drawn */
-  h.head.scale.setScalar(1.18);
+  /* a kid's head: big next to the body, the way heroes of that era were drawn, on a neck that shows */
+  h.head.scale.setScalar(1.42);h.head.position.y+=.075;
   h.cid='hero';h.base=snapPose(h);return h}
 
 /* ---------- the things in the dark: built the same way, with no faces to speak of ---------- */
@@ -2686,14 +2747,14 @@ function cineBuild(){if(CINE.sc)return;const sc=new TH.Scene();CINE.sc=sc;CINE.c
   A.maw=mkMaw();A.maw.position.set(0,0,-16);sc.add(A.maw);
   A.horse=mkHorse();sc.add(A.horse);
   A.hero=mkHero();shadow(A.hero.root,.3);sc.add(A.hero.root);
-  A.kid=mkHuman(NPCLOOK.wick);shadow(A.kid.root,.25);sc.add(A.kid.root);
+  A.kid=mkNpc('imp',{});shadow(A.kid.root,.25);sc.add(A.kid.root);
   A.roots=[0,1,2,3].map(()=>mkRoot(sc));A.seeds=[mkSeedling(),mkSeedling()];A.seeds.forEach(s=>{shadow(s,.16);sc.add(s)});
   /* the whirl of leaves Wick flies on, and the shimmer where the horse goes through the tree */
   A.leaves=new TH.Group();A.leaves.visible=false;sc.add(A.leaves);{const lg=new TH.PlaneGeometry(.075,.045),cols=['#6a8a3a','#8aa04a','#a8783a','#5a7a2e'];
     for(let i=0;i<16;i++){const lm=new TH.Mesh(lg,cmat(cols[i%4],null,{side:TH.DoubleSide}));lm.userData={ph:i*1.7,r:.26+(i%5)*.06,h:.1+(i%7)*.13};A.leaves.add(lm)}}
   A.ripple=[0,1].map(()=>{const r=new TH.Mesh(new TH.RingGeometry(.55,.75,28),new TH.MeshBasicMaterial({color:0xc8ffe0,transparent:true,opacity:0,depthTest:false,depthWrite:false,blending:TH.AdditiveBlending,side:TH.DoubleSide,fog:false}));
     r.position.set(0,1.0,-12.3);r.renderOrder=5;r.visible=false;sc.add(r);return r});
-  A.folk=['maren','tobin','edda','corvo','ilse','hermit'].map(id=>{const h=mkNpc(id);shadow(h.root,.28);sc.add(h.root);return h});sunShadow(CINE.sun,2048,16);sc.add(CINE.sun.target);shadowAll(sc)}
+  A.folk=['maren','tobin','edda','corvo','ilse','hermit'].map(id=>{const h=mkNpc(id);shadow(h.root,.28);sc.add(h.root);return h});sunShadow(CINE.sun,2048,12);sc.add(CINE.sun.target);shadowAll(sc)}
 function cineSky(top,hor){const g=CINE.sky.geometry,p=g.attributes.position.array,c=g.attributes.color.array;for(let i=0;i<p.length/3;i++){const k=Math.pow(clamp(p[i*3+1]/90,0,1),.5),cc=lerpC(hor,top,k);c[i*3]=cc[0];c[i*3+1]=cc[1];c[i*3+2]=cc[2]}g.attributes.color.needsUpdate=true}
 function cineStart(kind,done){if(!G3.r)glInit();cineBuild();if(M)closeMenu();dlgEl.hidden=true;const intro=kind==='intro';
   Object.assign(CINE,{kind,t:0,done,len:intro?INTRO_LEN:13.2,fade:1,gal:0,galN:0,wph:0,flashAt:-99,lens:[],lastCam:null,lid:0,vig:0,white:0});CINE.cues.clear();state='cine';SND.stop();
@@ -2702,7 +2763,7 @@ function cineStart(kind,done){if(!G3.r)glInit();cineBuild();if(M)closeMenu();dlg
   if(end){cineSky(col3('#5a7ab8'),col3('#f0c494'));fog.color.setHex(0xe8cfa8);fog.near=16;fog.far=58;CINE.hemi.color.setHex(0xffe0c0);CINE.hemi.groundColor.setHex(0x4a5a2a);CINE.hemi.intensity=SHADOWS?.68:.85;CINE.sun.color.setHex(0xffb070);CINE.sun.intensity=SHADOWS?1.15:.9;ambStop()}
   else{cineSky(col3('#363f44'),col3('#58645e'));fog.color.setHex(0x58645e);fog.near=3.5;fog.far=34;CINE.hemi.color.setHex(0xa8b4bc);CINE.hemi.groundColor.setHex(0x283022);CINE.hemi.intensity=SHADOWS?.7:.82;CINE.sun.color.setHex(0xb8c8d8);CINE.sun.intensity=SHADOWS?.6:.4;ambStart()}
   CINE.base={hemi:CINE.hemi.intensity,fog:fog.color.clone(),lit:new TH.Color(0xc8d4dc)}}
-function cineEnd(){const d=CINE.done;CINE.done=null;state='black';fade=1;SND.stop();ambStop();if(d)d()}
+function cineEnd(){subEl.hidden=true;CINE.subL=null;const d=CINE.done;CINE.done=null;state='black';fade=1;SND.stop();ambStop();if(d)d()}
 function cineSkip(){if(CINE.t>.6)cineEnd()}
 const cue=(name,t,at,fn)=>{if(t>=at&&!CINE.cues.has(name)){CINE.cues.add(name);fn()}};
 function cineTick(dt){CINE.t+=dt;const t=CINE.t,intro=CINE.kind==='intro';if(intro)introAt(t,dt);else endAt(t,dt);
@@ -2714,7 +2775,7 @@ function cineTick(dt){CINE.t+=dt;const t=CINE.t,intro=CINE.kind==='intro';if(int
   for(const p of CINE.flap)p.m.rotation.x=(Math.sin(t*p.f+p.ph)*.12+Math.sin(t*p.f*2.7)*.05)*p.amp;
   if(CINE.water)CINE.water.offset.x-=dt*.22;if(CINE.t>=CINE.len)cineEnd()}
 function cineRender(){const c=CINE.cam;c.aspect=W3/H3;c.updateProjectionMatrix();CINE.sky.position.copy(c.position);FADE.value=.6;
-  if(SHADOWS){const f=_cfw.set(0,0,-1).applyQuaternion(c.quaternion);aimSun(CINE.sun,c.position.x+f.x*6,0,c.position.z+f.z*6,16,2048)}present(CINE.sc,c)}
+  if(SHADOWS){const f=_cfw.set(0,0,-1).applyQuaternion(c.quaternion);aimSun(CINE.sun,c.position.x+f.x*5,0,c.position.z+f.z*5,12,2048)}present(CINE.sc,c)}
 function drawCineHUD(){const c=ctx,W=W3,H=H3;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);if(CINE.lens.length)drawLens(c);
   if(CINE.vig>0){const g=c.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.8);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${CINE.vig})`);c.fillStyle=g;c.fillRect(0,0,W,H)}
   if(CINE.lid>0){const lh=Math.round(H/2*clamp(CINE.lid,0,1));c.fillStyle='#000';c.fillRect(0,0,W,lh);c.fillRect(0,H-lh,W,lh)}
@@ -2765,15 +2826,25 @@ const WK={dart:[[.55,-4.6,2.7,4.6],[1.35,4.8,2.2,3.4]],swoop:[[2.3,.6,.25,17.8],
   rebound:[[2.92,.1,1.05,12.55],[3.2,.4,1.9,13.2],[3.45,.6,2.0,13.5],[4.2,1.2,1.2,11.0],[4.75,.95,0,10.35]],
   look:[[4.9,.95,0,10.35],[5.6,.75,0,9.85],[6.3,.38,0,9.5]],around:[[7.35,.8,0,8.95],[8.1,.66,0,10.42]],side:[[9.95,.66,0,10.42],[10.6,.66,0,11.35]]};
 /* a painted face by number (for Wick: 0 plain, 3 happy, 4 surprised; for you: 0 open, 1 eyes shut) */
-const paintFace=(h,i)=>{const f=h.fx;if(f&&f.headMesh&&f.faces&&f.faces[i]&&f.headMesh.material.map!==f.faces[i])f.headMesh.material=cmat('#ffffff',f.faces[i])};
+const paintFace=(h,i)=>{const f=h.fx;if(f&&f.imp){const m=f.imp[i]||f.imp[0];if(f.headMesh.material!==m)f.headMesh.material=m;return}if(f&&f.headMesh&&f.faces&&f.faces[i]&&f.headMesh.material.map!==f.faces[i])f.headMesh.material=cmat('#ffffff',f.faces[i])};
 /* Wick in the air: leaning into it with his arms back, or leaning back with one leg out for the kick */
 function kidFly(k,a,kick){k.body.rotation.x=kick?-.45:.5;k.legs.forEach((l,n)=>l.rotation.x=kick?(n?-1.55:-.5):.45+Math.sin(a*9+n*3)*.12);if(k.knees)k.knees.forEach((n,i)=>n.rotation.x=kick?(i?.05:1.4):.5);
   k.arms.forEach((ar,n)=>ar.rotation.set(kick?.4:.9,0,(n?1:-1)*(kick?.9:.35)))}
 /* the whirl of leaves that carries him */
 function leavesOn(A,k,a,on){const L=A.leaves;L.visible=on;if(!on)return;L.position.copy(k.root.position);
   L.children.forEach(m=>{const u=m.userData,an=a*7.5+u.ph;m.position.set(Math.cos(an)*u.r,u.h+Math.sin(a*5+u.ph)*.06,Math.sin(an)*u.r);m.rotation.set(a*9+u.ph,a*6+u.ph*2,a*4)})}
+/* what is said in the opening: Wick's lines in his own voice, typed out at the bottom, and the tree's, in a voice like a cellar */
+const SUBS=[[.75,2.25,'imp',"Ooh... somebody's on my path.",'question'],[2.35,2.95,'imp','Peekaboo!','excited'],[3.1,4.05,'imp','Down you go!','happy'],
+  [5.25,6.85,'imp','What ARE you? Four legs. Long face. No wings...','question'],[7.0,7.95,'imp','Hey! It breathed on me!','excited'],[8.2,9.4,'imp','Knock knock. Anybody in there?','neutral'],
+  [10.5,11.7,'imp','Is it for eating? For riding? ...For breaking?','question'],[11.75,12.42,'imp',"Oh! The sleepy one's awake.",'happy'],[12.45,13.7,'imp','Mine now! Catch me, catch me!','excited'],
+  [14.0,15.7,'imp','Come on! The tree wants to meet you!','happy'],[24.0,25.5,'tree','Another one... for the dark.'],[26.3,27.9,'tree','Come... inside.']];
+function subTick(a,dt){const L=SUBS.find(q=>a>=q[0]&&a<q[1]);if(!L){if(!subEl.hidden){subEl.hidden=true;CINE.subL=null}return null}
+  if(CINE.subL!==L){CINE.subL=L;subEl.className=L[2];subEl.hidden=false;if(L[2]==='imp')voxLine('imp',L[3],L[4]||'neutral',false);else{voxEnd();treeSay(L[3])}}
+  const n=Math.min(L[3].length,Math.floor((a-L[0])*32));subEl.textContent=L[3].slice(0,n);if(L[2]==='imp')voxType(n,dt);return L}
+function treeSay(t){if(!voxOn())return;const n=Math.max(3,Math.round(t.length/7)),syl=[];for(let i=0;i<n;i++)syl.push({t:i*.36,d:.3,f0a:62-i*2,f0b:52-i*2,F:[380+Math.random()*120,760+Math.random()*200,1900],B:[90,140,220],h:.05,asp:.45,jit:.05,oq:.4,vib:3,vd:.04,tail:.08});
+  SND.pcm(vsynth(syl,VSR),VSR,{vol:.5})}
 function introAt(tn,dtn){if(tn<RIDE_T)return rideAt(tn,dtn);return ambushAt(tn-RIDE_T,dtn,tn)}
-function ambushAt(a,dt,tn){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw,R=A.roots,u=a-21;
+function ambushAt(a,dt,tn){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw,R=A.roots,u=a-21,SL=subTick(a,dt);
   /* black after the kick; then your eyes open and close a few times before they stay open */
   CINE.fade=a<3.65?0:a<4.1?cp(a,3.65,4.1):a<4.9?1:a<5.5?1-cp(a,4.9,5.5):u>8.6?cp(u,8.6,9.4):0;CINE.white=Math.max(0,(CINE.white||0)-dt*2.4);
   CINE.vig=a>4.9&&a<7.6?.85:0;CINE.lid=a>4.9&&a<7.6?clamp(1-cs(cp(a,4.95,5.45))*.55-cs(cp(a,6.0,6.5))*.35-cs(cp(a,7.0,7.4))*.1+.4*hump(a,5.55,5.95,.15)+.25*hump(a,6.6,6.9,.12),0,1):0;
@@ -2807,6 +2878,7 @@ function ambushAt(a,dt,tn){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw,R=A
   h.root.visible=hv;
   /* Wick */
   humanReset(k);let kv=true,fly=false;paintFace(k,(a>3.0&&a<3.45)||(a>11.7&&a<12.4)||(a>12.95&&a<16.5)?3:(a>6.95&&a<7.6)||(a>9.05&&a<9.5)?4:a>4.9&&a<11.7?0:3);
+  if(SL&&SL[2]==='imp'&&Math.floor((a-SL[0])*32)<SL[3].length&&Math.floor(a*9)%2)paintFace(k,2);
   if(a<.55)kv=false;
   else if(a<1.35){const p0=kf(WK.dart,a),p1=kf(WK.dart,a+.05);place(k,p0,lookAng(p0,p1));kidFly(k,a,false);fly=true}
   else if(a<2.3)kv=false;

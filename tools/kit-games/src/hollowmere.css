@@ -43,3 +43,7 @@ body{--bg:#07060c;--panel:#1a1430;--line:#4a3e6a;--hot:#ffd23f;--hotink:#241a04;
 .q b{font-size:calc(var(--s)*6.5px);color:#fff;letter-spacing:.04em}.q i{font-style:normal;font-size:calc(var(--s)*5px);color:#a89ec8;margin-left:calc(var(--s)*3px)}
 .q p{margin:calc(var(--s)*1.5px) 0 0;font-size:calc(var(--s)*5.6px);line-height:1.35;color:#d8d0f0}
 .ql .none{font-size:calc(var(--s)*5.6px);color:#a89ec8;text-align:center}
+/* words spoken in the scenes, typed out at the bottom over the black band */
+#sub{position:absolute;left:6%;right:6%;bottom:calc(var(--s)*3px);z-index:2;text-align:center;font-size:calc(var(--s)*7.5px);line-height:1.3;color:#f4f1ff;pointer-events:none;
+  text-shadow:0 calc(var(--s)*1px) 0 #000,0 0 calc(var(--s)*3px) #000,0 0 calc(var(--s)*6px) #000}
+#sub[hidden]{display:none}#sub.imp{color:#e6f08c}#sub.tree{color:#ff8a6a;letter-spacing:.1em;font-size:calc(var(--s)*8px)}
