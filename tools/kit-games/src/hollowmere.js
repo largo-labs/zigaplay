@@ -928,6 +928,9 @@ const TH=window.THREE;
    with crisp square pixels. Kept per device. */
 let PIC='hd';try{const v=localStorage.getItem('hollowmere-pic');PIC=v==='retro'||v==='pixel'?v:v==='sharp'?'pixel':'hd'}catch(e){}
 stage.classList.toggle('sharp',PIC==='pixel');RES_BASE=PIC==='retro'?320:300;
+/* shadows: a sun that casts soft shadows from everything solid (trees, walls, people, the things you fight). Kept per device */
+let SHADOWS=true;try{SHADOWS=localStorage.getItem('hollowmere-shadows')!=='off'}catch(e){}
+const SUND=new TH.Vector3(-5,9,4).normalize(),_cfw=new TH.Vector3();
 const col3=(h,m)=>{const n=parseInt(h.slice(1),16),k=(m==null?1:m)/255;return[(n>>16)*k,(n>>8&255)*k,(n&255)*k]};
 const mulc=(c,m)=>[c[0]*m,c[1]*m,c[2]*m];
 const hrand=(a,b,c)=>(hashN(a+999,b+999,c|0)%10007)/10007;
@@ -1209,7 +1212,7 @@ function mkBossModel(b){const g=new TH.Group(),u={};g.userData=u;
 
 /* ---------- the scene, sky and lights ---------- */
 const G3={r:null,cache:new Map(),live:new Map(),camPos:new TH.Vector3(),camLook:new TH.Vector3(),camDist:4.4,snap:true,yawV:0};
-const SHG=new TH.CircleGeometry(1,10);SHG.rotateX(-Math.PI/2);const SHM=new TH.MeshBasicMaterial({color:0,transparent:true,opacity:.3,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
+const SHG=new TH.CircleGeometry(1,10);SHG.rotateX(-Math.PI/2);const SHM=new TH.MeshBasicMaterial({color:0,transparent:true,opacity:SHADOWS?.16:.3,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
 const shadow=(par,s)=>{const m=new TH.Mesh(SHG,SHM);m.scale.setScalar(s);m.position.y=.03;par.add(m);return m};
 function mkStars(par,y,s){const g=grp(par,0,y,0);for(let n=0;n<3;n++)pc('octa',bmat('#ffd23f'),Math.cos(n*2.1)*.3*s,0,Math.sin(n*2.1)*.3*s,.06,.06,.06,g);g.visible=false;return g}
 /* the last pass: the frame is drawn into a texture, then onto the screen through a shader that does what the old video
@@ -1265,9 +1268,17 @@ function lockTick(dt){const lk=lockT&&!lockT.dead&&E.includes(lockT)&&state==='p
   G3.lock.position.set(gx,gy+(big?1.4:.62),gz);G3.lock.quaternion.copy(G3.cam.quaternion);const rad=(big?1.2:.52)*(2-k)+Math.sin(T*6)*.015,sp=T*1.1;
   G3.lockP.forEach((p,i)=>{const a=sp+i*Math.PI/2;p.position.set(Math.cos(a)*rad,Math.sin(a)*rad,0);p.rotation.z=a-Math.PI/2;for(const m of p.children)m.material.opacity=k});
   G3.lockGem.position.set(gx,gy+(big?2.9:1.42)+Math.sin(T*6)*.06,gz);G3.lockGem.rotation.y=T*3;G3.lockGem.material.opacity=k}
+/* which meshes take part in shadows: everything solid. Glows, effects, water and the soft blobs under people don't */
+function shadowAll(o){o.traverse(m=>{if(!m.isMesh||m.geometry===SHG)return;const mt=m.material;if(!mt||Array.isArray(mt)||mt.isMeshBasicMaterial||mt.isShaderMaterial||(mt.transparent&&!mt.depthWrite))return;m.castShadow=m.receiveShadow=true});return o}
+function sunShadow(L,size,box){L.castShadow=true;L.shadow.mapSize.set(size,size);const c=L.shadow.camera;c.left=c.bottom=-box;c.right=c.top=box;c.near=1;c.far=70;c.updateProjectionMatrix();L.shadow.bias=-.0004;L.shadow.normalBias=.03}
+/* the sun's shadows cover a square around what the camera is looking at; moved in whole shadow pixels so edges don't crawl */
+function aimSun(L,x,y,z,box,size){const st=box*2/size;x=Math.round(x/st)*st;z=Math.round(z/st)*st;L.target.position.set(x,y,z);L.position.set(x+SUND.x*30,y+SUND.y*30,z+SUND.z*30);L.target.updateMatrixWorld()}
+function aimSun3D(){if(!SHADOWS||!room)return;const[px,pz]=gpos(P.x,P.y),fx=G3.camLook.x-G3.camPos.x,fz=G3.camLook.z-G3.camPos.z,fl=Math.hypot(fx,fz)||1;aimSun(G3.sun,px+fx/fl*4,groundY(P.x,P.y),pz+fz/fl*4,13,2048)}
+function setShadows(v){SHADOWS=v;try{localStorage.setItem('hollowmere-shadows',v?'on':'off')}catch(e){}if(G3.r)G3.r.shadowMap.enabled=v;SHM.opacity=v?.16:.3;
+  for(const sc of[G3.scene,CINE.sc])if(sc)sc.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)})}
 function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:true,powerPreference:'default'})}catch(e){G3.fail=1;return}
-  r.setPixelRatio(1);G3.r=r;postInit();glSize();const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
-  G3.hemi=new TH.HemisphereLight(0xffffff,0x5a5040,.75);sc.add(G3.hemi);G3.sun=new TH.DirectionalLight(0xfff0d8,.7);G3.sun.position.set(-4,10,3);sc.add(G3.sun);
+  r.setPixelRatio(1);G3.r=r;postInit();glSize();r.shadowMap.enabled=SHADOWS;r.shadowMap.type=TH.PCFSoftShadowMap;const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
+  G3.hemi=new TH.HemisphereLight(0xffffff,0x5a5040,.75);sc.add(G3.hemi);G3.sun=new TH.DirectionalLight(0xfff0d8,.7);G3.sun.position.set(-4,10,3);sc.add(G3.sun);sunShadow(G3.sun,2048,13);sc.add(G3.sun.target);
   G3.pl=[];for(let n=0;n<6;n++){const l=new TH.PointLight(0xffa050,0,6,1.4);sc.add(l);G3.pl.push(l)}
   sc.fog=new TH.Fog(0x9ac8e8,12,32);
   const sg=new TH.SphereGeometry(80,14,8);sg.setAttribute('color',new TH.Float32BufferAttribute(new Float32Array(sg.attributes.position.count*3),3));
@@ -1276,7 +1287,7 @@ function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:tr
   const stg=new TH.BufferGeometry();stg.setAttribute('position',new TH.Float32BufferAttribute(sp,3));G3.stars=new TH.Points(stg,new TH.PointsMaterial({color:0xffffff,size:1.4,sizeAttenuation:false,fog:false,transparent:true,depthWrite:false}));sc.add(G3.stars);
   G3.moon=new TH.Mesh(new TH.CircleGeometry(4,12),new TH.MeshBasicMaterial({color:0xeae6d0,fog:false,transparent:true,depthWrite:false}));sc.add(G3.moon);
   G3.world=new TH.Group();sc.add(G3.world);G3.ents=new TH.Group();sc.add(G3.ents);
-  G3.hero=mkHero();sc.add(G3.hero.root);shadow(G3.hero.root,.3);G3.trailR=mkTrail(sc);
+  G3.hero=mkHero();sc.add(G3.hero.root);shadow(G3.hero.root,.3);shadowAll(G3.hero.root);G3.trailR=mkTrail(sc);
   mkLock(sc);
   G3.chain=new TH.Mesh(GEO.box,mat('#6a6a72'));G3.chain.visible=false;sc.add(G3.chain);
   /* spores drifting in the air around you */
@@ -1295,10 +1306,10 @@ function lightScene(){const sc=G3.scene,out=room&&room.outdoors;
   if(out){const f=S.v.flames.filter(Boolean).length;if(skyKey!=='tree'){setSky(col3('#0a0503'),col3('#2e1e12'));skyKey='tree'}
     sc.background=null;G3.sky.visible=true;sc.fog.color.setHex(0x2e1e12);sc.fog.near=7+f*2.5;sc.fog.far=24+f*5;
     /* the tree breathes: the light swells and falls very slowly */
-    const br=1+Math.sin(T*.8)*.05;G3.hemi.intensity=.8*br;G3.hemi.color.setHex(0xffe2b8);G3.hemi.groundColor.setHex(0x3a2818);G3.sun.intensity=.5;G3.sun.color.setHex(0xffc890);
+    const br=1+Math.sin(T*.8)*.05;G3.hemi.intensity=(SHADOWS?.6:.8)*br;G3.hemi.color.setHex(0xffe2b8);G3.hemi.groundColor.setHex(0x3a2818);G3.sun.intensity=SHADOWS?.95:.5;G3.sun.color.setHex(0xffc890);
     G3.stars.visible=true;G3.stars.material.color.setHex(0xffc870);G3.stars.material.opacity=.75;G3.moon.visible=false;G3.night=0;G3.motes.visible=true}
   else{G3.sky.visible=false;G3.stars.visible=false;G3.moon.visible=false;G3.motes.visible=false;G3.hemi.groundColor.setHex(0x5a5040);const dark=room&&room.dark,T2=THEMES[room?room.theme:'cave']||THEMES.cave,bg=dark?[0,0,0]:mulc(col3(T2.w||'#000000'),.25);sc.background=new TH.Color(toHex(bg));sc.fog.color.setHex(toHex(bg));
-    sc.fog.near=dark?4:10;sc.fog.far=dark?13:26;G3.hemi.intensity=dark?.07:(room&&room.theme==='house'?1:.82);G3.hemi.color.setHex(0xffffff);G3.sun.intensity=dark?0:.3;G3.night=dark?1:0}}
+    sc.fog.near=dark?4:10;sc.fog.far=dark?13:26;G3.hemi.intensity=dark?.07:(room&&room.theme==='house'?(SHADOWS?.8:1):(SHADOWS?.64:.82));G3.hemi.color.setHex(0xffffff);G3.sun.intensity=dark?0:(SHADOWS?.6:.3);G3.night=dark?1:0}}
 /* up to six point lights: your lantern in the dark, torches, fire, glowing things */
 function placeLights(list){const out=[];if(room&&(room.dark||(room.outdoors&&G3.night>.45&&S.v.items.lantern))&&state!=='title'){const[gx,gz]=gpos(P.x,P.y);out.push([gx,groundY(P.x,P.y)+1.1,gz,0xffd8a0,room.dark?(S.v.items.lantern?1.6:1.1):.8,S.v.items.lantern?7:4])}
   const[px,pz]=gpos(P.x,P.y);list.sort((a,b)=>Math.hypot(a[0]-px,a[2]-pz)-Math.hypot(b[0]-px,b[2]-pz));for(const l of list){if(out.length>=6)break;out.push(l)}
@@ -1314,7 +1325,7 @@ function syncWorld(){if(!room)return;const want=new Map();
   for(const[k,c]of G3.cache){if(!want.has(k)){G3.world.remove(c.group);c.group.traverse(o=>{if(o.geometry&&!SHARED().has(o.geometry))o.geometry.dispose()});G3.cache.delete(k)}}
   for(const[k,live]of want){let c=G3.cache.get(k);const[mp,xy]=k.split(':'),[x,y]=xy.split(',').map(Number);const r=live||(c&&c.room)||buildRoom(mp,x,y);if(live&&!r.hc)r.hc=heights(r);const sig=rsig(r);
     if(c&&c.sig===sig){c.room=r;continue}if(c){G3.world.remove(c.group);c.group.traverse(o=>{if(o.geometry&&!SHARED().has(o.geometry))o.geometry.dispose()})}
-    const m=buildRoomMesh(r);G3.world.add(m.group);G3.cache.set(k,{group:m.group,anim:m.anim,lights:m.lights,sig,room:r})}}
+    const m=buildRoomMesh(r);shadowAll(m.group);G3.world.add(m.group);G3.cache.set(k,{group:m.group,anim:m.anim,lights:m.lights,sig,room:r})}}
 
 /* ---------- things in the room: made when they appear, posed every frame, dropped when they go ---------- */
 const ICONTEX={};
@@ -1409,6 +1420,7 @@ function poseHero(dt){const h=G3.hero,[gx,gz]=gpos(P.x,P.y);let y=groundY(P.x,P.
   if(P.fall>0){const k=1-P.fall/.5;h.root.position.y=y-k*2.2;h.root.scale.setScalar(1-k*.5)}
   h.tail.rotation.x=.35+Math.sin(T*8)*(moving?.25:.05);h.cape.rotation.x=moving?.3+Math.sin(T*9)*.05:.06;
   if(P.inv>0&&P.fall<=0&&Math.floor(T*14)%2&&state==='play')h.root.visible=false;else h.root.visible=true;
+  for(const ch of h.root.children)if(ch.geometry===SHG)ch.visible=!(P.jump>0)&&P.fall<=0;
   /* the hero blinks too */
   G3.blink=(G3.blink==null?3:G3.blink)-dt;const shut=G3.blink<0;if(G3.blink<-.13)G3.blink=2.5+Math.random()*3.5;if(h.fx&&h.fx.headMesh){const f=h.fx.faces[shut?1:0];if(h.fx.headMesh.material.map!==f)h.fx.headMesh.material=cmat('#ffffff',f)}}
 
@@ -1453,13 +1465,13 @@ function render3D(){if(!G3.r){if(!G3.fail)glInit();if(!G3.r)return}const now=per
   const lights=[];for(const c of G3.cache.values()){for(const f of c.anim){if(f.userData.kind==='heart'){const sp=1.15-S.v.flames.filter(Boolean).length*.16,b=(T*sp)%1;f.scale.setScalar(1+.08*Math.exp(-Math.pow(b-.1,2)/.003)+.05*Math.exp(-Math.pow(b-.32,2)/.003));continue}
     f.scale.y=f.scale.x*(1+Math.sin(T*18+f.position.x)*.12);f.rotation.y=T*2}lights.push(...c.lights)}
   /* things that glow bring their own light */
-  const seen=new Set();for(const e of E){if(e.dead)continue;let g=G3.live.get(e);if(!g){g=mkEnt(e);if(!g)continue;G3.ents.add(g);G3.live.set(e,g)}poseEnt(e,g,dt);seen.add(e);const[gx,gz]=gpos(e.x,e.y);
+  const seen=new Set();for(const e of E){if(e.dead)continue;let g=G3.live.get(e);if(!g){g=mkEnt(e);if(!g)continue;shadowAll(g);G3.ents.add(g);G3.live.set(e,g)}poseEnt(e,g,dt);seen.add(e);const[gx,gz]=gpos(e.x,e.y);
     if(e.k==='puff'||e.k==='blast')lights.push([gx,.8,gz,0xff8a3a,2.2,6]);else if(e.k==='pickup'&&e.it==='flame')lights.push([gx,.9,gz,0xffc060,1.8,6]);else if(e.type==='wisp')lights.push([gx,.9,gz,0x6ac8ff,1.2,4]);else if(e.k==='orb')lights.push([gx,.6,gz,0xb48cff,.9,3])}
   for(const[e,g]of G3.live)if(!seen.has(e)){G3.ents.remove(g);G3.live.delete(e)}
   placeLights(lights);poseHero(dt);
   const hk=E.find(e=>e.k==='hookhead');if(hk){const[gx,gz]=gpos(P.x,P.y),[hx,hz]=gpos(hk.x,hk.y),y0=groundY(P.x,P.y)+.6,a=new TH.Vector3(gx,y0,gz),b=new TH.Vector3(hx,y0-.05,hz),m=a.clone().add(b).multiplyScalar(.5),l=a.distanceTo(b);
     G3.chain.visible=l>.05;G3.chain.position.copy(m);G3.chain.scale.set(.03,.03,Math.max(.01,l));G3.chain.lookAt(b)}else G3.chain.visible=false;
-    camUpdate(dt);lockTick(dt);trailTick();sparkTick(dt);moveMotes(dt);if(G3.sky.visible)G3.sky.position.copy(G3.cam.position);if(G3.stars.visible)G3.stars.position.copy(G3.cam.position);
+    camUpdate(dt);aimSun3D();lockTick(dt);trailTick();sparkTick(dt);moveMotes(dt);if(G3.sky.visible)G3.sky.position.copy(G3.cam.position);if(G3.stars.visible)G3.stars.position.copy(G3.cam.position);
   TEX.water.offset.set(T*.04,T*.025);TEX.lava.offset.set(T*.03,-T*.02);TEX.pool.offset.set(-T*.02,T*.03);
   present(G3.scene,G3.cam)}
 /* ---------- Part 6h: the people of the hollow ----------
@@ -2681,14 +2693,14 @@ function cineBuild(){if(CINE.sc)return;const sc=new TH.Scene();CINE.sc=sc;CINE.c
     for(let i=0;i<16;i++){const lm=new TH.Mesh(lg,cmat(cols[i%4],null,{side:TH.DoubleSide}));lm.userData={ph:i*1.7,r:.26+(i%5)*.06,h:.1+(i%7)*.13};A.leaves.add(lm)}}
   A.ripple=[0,1].map(()=>{const r=new TH.Mesh(new TH.RingGeometry(.55,.75,28),new TH.MeshBasicMaterial({color:0xc8ffe0,transparent:true,opacity:0,depthTest:false,depthWrite:false,blending:TH.AdditiveBlending,side:TH.DoubleSide,fog:false}));
     r.position.set(0,1.0,-12.3);r.renderOrder=5;r.visible=false;sc.add(r);return r});
-  A.folk=['maren','tobin','edda','corvo','ilse','hermit'].map(id=>{const h=mkNpc(id);shadow(h.root,.28);sc.add(h.root);return h})}
+  A.folk=['maren','tobin','edda','corvo','ilse','hermit'].map(id=>{const h=mkNpc(id);shadow(h.root,.28);sc.add(h.root);return h});sunShadow(CINE.sun,2048,16);sc.add(CINE.sun.target);shadowAll(sc)}
 function cineSky(top,hor){const g=CINE.sky.geometry,p=g.attributes.position.array,c=g.attributes.color.array;for(let i=0;i<p.length/3;i++){const k=Math.pow(clamp(p[i*3+1]/90,0,1),.5),cc=lerpC(hor,top,k);c[i*3]=cc[0];c[i*3+1]=cc[1];c[i*3+2]=cc[2]}g.attributes.color.needsUpdate=true}
 function cineStart(kind,done){if(!G3.r)glInit();cineBuild();if(M)closeMenu();dlgEl.hidden=true;const intro=kind==='intro';
   Object.assign(CINE,{kind,t:0,done,len:intro?INTRO_LEN:13.2,fade:1,gal:0,galN:0,wph:0,flashAt:-99,lens:[],lastCam:null,lid:0,vig:0,white:0});CINE.cues.clear();state='cine';SND.stop();
   const A=CINE.A,end=!intro,u=A.maw.userData,fog=CINE.sc.fog,W=CINE.rain;u.can.visible=!end;A.horse.visible=true;A.leaves.visible=false;A.ripple.forEach(r=>r.visible=false);A.maw.position.x=0;u.barkM.color.setHex(end?0x8a8682:0x6e5a48);u.lm.color.setHex(0x3a5c3a);A.folk.forEach(f=>f.root.visible=end);
   W.on=intro;[W.L,W.S,W.Rl].forEach(o=>o.visible=intro);CINE.shafts.forEach(s=>s.visible=end);
-  if(end){cineSky(col3('#5a7ab8'),col3('#f0c494'));fog.color.setHex(0xe8cfa8);fog.near=16;fog.far=58;CINE.hemi.color.setHex(0xffe0c0);CINE.hemi.groundColor.setHex(0x4a5a2a);CINE.hemi.intensity=.85;CINE.sun.color.setHex(0xffb070);CINE.sun.intensity=.9;ambStop()}
-  else{cineSky(col3('#363f44'),col3('#58645e'));fog.color.setHex(0x58645e);fog.near=3.5;fog.far=34;CINE.hemi.color.setHex(0xa8b4bc);CINE.hemi.groundColor.setHex(0x283022);CINE.hemi.intensity=.82;CINE.sun.color.setHex(0xb8c8d8);CINE.sun.intensity=.4;ambStart()}
+  if(end){cineSky(col3('#5a7ab8'),col3('#f0c494'));fog.color.setHex(0xe8cfa8);fog.near=16;fog.far=58;CINE.hemi.color.setHex(0xffe0c0);CINE.hemi.groundColor.setHex(0x4a5a2a);CINE.hemi.intensity=SHADOWS?.68:.85;CINE.sun.color.setHex(0xffb070);CINE.sun.intensity=SHADOWS?1.15:.9;ambStop()}
+  else{cineSky(col3('#363f44'),col3('#58645e'));fog.color.setHex(0x58645e);fog.near=3.5;fog.far=34;CINE.hemi.color.setHex(0xa8b4bc);CINE.hemi.groundColor.setHex(0x283022);CINE.hemi.intensity=SHADOWS?.7:.82;CINE.sun.color.setHex(0xb8c8d8);CINE.sun.intensity=SHADOWS?.6:.4;ambStart()}
   CINE.base={hemi:CINE.hemi.intensity,fog:fog.color.clone(),lit:new TH.Color(0xc8d4dc)}}
 function cineEnd(){const d=CINE.done;CINE.done=null;state='black';fade=1;SND.stop();ambStop();if(d)d()}
 function cineSkip(){if(CINE.t>.6)cineEnd()}
@@ -2701,7 +2713,8 @@ function cineTick(dt){CINE.t+=dt;const t=CINE.t,intro=CINE.kind==='intro';if(int
   for(const L of CINE.lamps){const k=.84+.1*Math.sin(t*13+L.ph)+.06*Math.sin(t*31+L.ph*3);L.l.intensity=L.i*k;if(L.halo)L.halo.material.opacity=.42*k}
   for(const p of CINE.flap)p.m.rotation.x=(Math.sin(t*p.f+p.ph)*.12+Math.sin(t*p.f*2.7)*.05)*p.amp;
   if(CINE.water)CINE.water.offset.x-=dt*.22;if(CINE.t>=CINE.len)cineEnd()}
-function cineRender(){const c=CINE.cam;c.aspect=W3/H3;c.updateProjectionMatrix();CINE.sky.position.copy(c.position);FADE.value=.6;present(CINE.sc,c)}
+function cineRender(){const c=CINE.cam;c.aspect=W3/H3;c.updateProjectionMatrix();CINE.sky.position.copy(c.position);FADE.value=.6;
+  if(SHADOWS){const f=_cfw.set(0,0,-1).applyQuaternion(c.quaternion);aimSun(CINE.sun,c.position.x+f.x*6,0,c.position.z+f.z*6,16,2048)}present(CINE.sc,c)}
 function drawCineHUD(){const c=ctx,W=W3,H=H3;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);if(CINE.lens.length)drawLens(c);
   if(CINE.vig>0){const g=c.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.8);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${CINE.vig})`);c.fillStyle=g;c.fillRect(0,0,W,H)}
   if(CINE.lid>0){const lh=Math.round(H/2*clamp(CINE.lid,0,1));c.fillStyle='#000';c.fillRect(0,0,W,lh);c.fillRect(0,H-lh,W,lh)}
@@ -2817,6 +2830,7 @@ function ambushAt(a,dt,tn){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw,R=A
   else if(a<18.3)rideOn(k,H,{lean:.45,ph:CINE.gal,look:a>14.0&&a<14.9?1.25:0});
   else kv=false;
   k.root.visible=kv;leavesOn(A,k,a,kv&&fly);
+  for(const who of[h,k])for(const ch of who.root.children)if(ch.geometry===SHG)ch.visible=who.root.position.y<.08;
   /* the shimmer where the horse goes through the bark */
   A.ripple.forEach((r,i)=>{const q=cp(a,17.2+i*.28,18.2+i*.28);r.visible=q>0&&q<1;if(!r.visible)return;r.scale.setScalar(.3+2.4*q);r.material.opacity=.85*(1-q)});
   /* the tree: asleep, then its eyes open, it shudders, and its mouth opens for you */
@@ -2986,10 +3000,11 @@ function hudText(){if(!PANEL||!room)return;const v=S.v,f=v.flames.filter(Boolean
 
 /* ---------- title, start, ending ---------- */
 const soundItem=()=>({t:'SOUND',v:()=>SOUND_NAMES[S.v.sound],adj:d=>{S.v.sound=(S.v.sound+d+3)%3;SND.mode=S.v.sound;S.save()}});
+const shadowItem=()=>({t:'SHADOWS',v:()=>SHADOWS?'ON':'OFF',adj:()=>setShadows(!SHADOWS)});
 const picItem=()=>({t:'PICTURE',v:()=>({hd:'HD',retro:'RETRO',pixel:'PIXEL'})[PIC],adj:d=>{const L=['hd','retro','pixel'];setPic(L[(L.indexOf(PIC)+(d<0?-1:1)+3)%3])}});
 function title(){state='title';SND.play(SONGS.village);room=buildRoom('ow',2,5);E=[];P.x=cen(5);P.y=cen(6)+4;P.ang=Math.PI/2;P.inv=0;P.fall=0;P.hold=0;dlgEl.hidden=true;bagEl.hidden=true;mapEl.hidden=true;
   menu({cls:'title',html:'<h1 class="logo"><small>THE TALE OF</small>WICK</h1><p class="subt">HOLLOW WOOD</p><p>Stay on the path.</p>',i:SLOT,
-    items:[0,1,2].map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>pickSlot(n)})).concat(SLOTS.some(sv=>sv.v.started)?[{t:'DELETE SAVES',fn:delMenu}]:[],[soundItem(),picItem(),{t:'HOW TO PLAY',fn:how}]),
+    items:[0,1,2].map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>pickSlot(n)})).concat(SLOTS.some(sv=>sv.v.started)?[{t:'DELETE SAVES',fn:delMenu}]:[],[soundItem(),picItem(),shadowItem(),{t:'HOW TO PLAY',fn:how}]),
     foot:'STICK MOVE · B SWORD (B B LOCK ON) · A ACT/ROLL · X/Y ITEMS · SELECT FOCUS · START BAG'})}
 /* each file shows how far it has got: time played and roots cut, or that it is finished */
 function slotLabel(n){const v=SLOTS[n].v;if(!v.started)return'NEW';const f=(v.flames||[]).filter(Boolean).length;return(v.done?'DONE':f+'/4 ROOTS')+' · '+fmtTime(v.time||0)}
