@@ -65,6 +65,8 @@ body{--bg:#07060c;--panel:#1a1430;--line:#4a3e6a;--hot:#ffd23f;--hotink:#241a04;
 .keys b{color:#ffd23f}
 #gl,#cv{position:absolute;inset:0;display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 #cv{z-index:1;pointer-events:none}
+/* SOFT picture: the 3D view is blown up smoothly, like a television; SHARP keeps square pixels */
+#gl{image-rendering:auto}#stage.sharp #gl{image-rendering:pixelated;image-rendering:crisp-edges}
 #banner,#dlg,#bag,#mapv{z-index:2}
 #dlg{background:rgba(6,4,14,.82);border:none;border-radius:calc(var(--s)*4px);box-shadow:none;left:calc(var(--s)*10px);right:calc(var(--s)*10px);bottom:calc(var(--s)*8px)}
 #ov.title{background:linear-gradient(180deg,rgba(6,4,14,.15),rgba(6,4,14,.1) 40%,rgba(6,4,14,.75))}
@@ -771,7 +773,7 @@ function frontTile(){const[fx,fy]=facing();return[tc(P.x+fx*11),tc(P.y+fy*11)]}
 function frontTiles(){const a=frontTile(),[vx,vy]=fvec(),b=[tc(P.x+vx*11),tc(P.y+vy*11)];return a[0]===b[0]&&a[1]===b[1]?[a]:[b,a]}
 
 /* ---------- entering rooms ---------- */
-function enterRoom(map,rx,ry,px,py,how){room=buildRoom(map,rx,ry);room.crys=0;room.torchT={};room.eyesHit=0;E=[];P.entry=[px,py];P.x=px;P.y=py;P.st='walk';P.swing=0;P.spin=0;P.roll=0;P.fall=0;
+function enterRoom(map,rx,ry,px,py,how){room=buildRoom(map,rx,ry);room.crys=0;room.torchT={};room.eyesHit=0;E=[];P.entry=[px,py];P.x=px;P.y=py;P.st='walk';P.swing=0;P.spin=0;P.roll=0;P.jump=0;P.fall=0;
   for(const s of room.ents)spawn(s);for(const b of room.blocks||[])E.push(mkBlock(b[0],b[1]));
   if(room.spec&&room.spec.boss&&!S.v.solved[room.key])spawnBoss(room.spec.boss);
   if(room.spec&&room.spec.boss&&S.v.solved[room.key]){if(!S.v.got[room.key+':container'])E.push(mkPickup('container',96,90,0,room.key+':container'));
@@ -805,6 +807,9 @@ function stepTile(){const i=tc(P.x),j=tc(P.y),c=tileAt(i,j),w=room.warps[i+','+j
 /* ---------- you ---------- */
 const AXIS=()=>{let ax=stickX||0,ay=stickY||0;if(Math.hypot(ax,ay)<.22){ax=(held.right?1:0)-(held.left?1:0);ay=(held.down?1:0)-(held.up?1:0)}const l=Math.hypot(ax,ay);return l>1?[ax/l,ay/l]:[ax,ay]};
 function setDir(ax,ay){if(Math.abs(ax)>Math.abs(ay)+.05)P.dir=ax>0?'right':'left';else if(Math.abs(ay)>.05)P.dir=ay>0?'down':'up'}
+/* HITSTOP: after a solid hit the game holds still for a few hundredths of a second, so the blow lands */
+let HITSTOP=0;
+function hitFX(x,y,big){HITSTOP=Math.max(HITSTOP,big?.075:.05);spark3D(x,y,big)}
 function stepPlayer(dt){P.inv=Math.max(0,P.inv-dt);P.rollCd=Math.max(0,P.rollCd-dt);P.slow=Math.max(0,P.slow-dt);
   if(P.fall>0){P.fall-=dt;if(P.fall<=0){P.x=P.entry[0];P.y=P.entry[1];hurt(2,null,true);P.inv=1.2}return}
   if(P.hold>0){P.hold-=dt;return}
@@ -814,6 +819,7 @@ function stepPlayer(dt){P.inv=Math.max(0,P.inv-dt);P.rollCd=Math.max(0,P.rollCd-
   const[ax,ay]=AXIS(),cf=[Math.cos(camYaw),Math.sin(camYaw)],cr=[-Math.sin(camYaw),Math.cos(camYaw)],mx=cf[0]*(-ay)+cr[0]*ax,my=cf[1]*(-ay)+cr[1]*ax;moveV=[mx,my];
   if(lockT&&(lockT.dead||!E.includes(lockT)||Math.hypot(lockT.x-P.x,lockT.y-P.y)>170))lockT=null;
   if(P.roll>0){P.roll-=dt;moveBox(P,P.rvx*dt,0,'p');moveBox(P,0,P.rvy*dt,'p');if(P.roll<=0)P.st='walk'}
+  else if(P.jump>0){P.jump-=dt;if(P.jump>.06){moveBox(P,P.jvx*dt,0,'p');moveBox(P,0,P.jvy*dt,'p')}if(P.jump<=.1&&!P.jhit){P.jhit=true;leapHit()}if(P.jump<=0){P.jump=0;P.st='walk'}}
   else if(P.swing>0||P.spin>0){if(P.swing>0){P.swing-=dt;swordHits(false)}if(P.spin>0){P.spin-=dt;swordHits(true)}}
   else{const charging=held.b&&P.charge>.15,sp=(charging?42:74)*(P.slow>0?.5:1);if(lockT)P.ang=Math.atan2(lockT.y-P.y,lockT.x-P.x);
     if(Math.hypot(mx,my)>.05){if(!charging&&!lockT)P.ang+=angD(Math.atan2(my,mx),P.ang)*Math.min(1,dt*16);moveBox(P,mx*sp*dt,0,'p');moveBox(P,0,my*sp*dt,'p');P.anim+=dt*(sp/74)*Math.min(1,Math.hypot(mx,my))}
@@ -822,12 +828,12 @@ function stepPlayer(dt){P.inv=Math.max(0,P.inv-dt);P.rollCd=Math.max(0,P.rollCd-
   if(held.b&&P.swing<=0&&P.spin<=0&&S.v.sword&&P.charge>=0)P.charge+=dt;
   /* the ground under you */
   const c=tileAt(tc(P.x),tc(P.y));
-  if((c==='p'||c==='L')&&P.st!=='hook'){P.fall=.5;P.roll=0;P.st='walk';SFX.fall();return}
+  if((c==='p'||c==='L')&&P.st!=='hook'&&!(P.jump>.1)){P.fall=.5;P.roll=0;P.jump=0;P.st='walk';SFX.fall();heroSay('fall');return}
   if(c==='x'&&P.inv<=0)hurt(1,null);
   if(!stepTile())edgeCheck()}
 function swordHits(spin){const[fx,fy]=fvec(),dmg=S.v.sword>=2?2:1;
   const box=spin?{x:P.x,y:P.y-2,hw:21,hh:20}:{x:P.x+fx*12,y:P.y-2+fy*12,hw:10,hh:10};if(!P.swingHit)P.swingHit=new Set();
-  for(const e of E){if(e.dead||P.swingHit.has(e))continue;if((e.k==='foe'||e.k==='boss'||e.k==='part')&&overlap(box,e,1)){P.swingHit.add(e);hitThing(e,spin?'spin':'sword',spin?dmg*2:dmg,P.x,P.y)}}
+  for(const e of E){if(e.dead||P.swingHit.has(e))continue;if((e.k==='foe'||e.k==='boss'||e.k==='part')&&overlap(box,e,1)){P.swingHit.add(e);hitThing(e,spin?'spin':'sword',spin?dmg*2:dmg,P.x,P.y);hitFX((P.x+e.x)/2,(P.y+e.y)/2,spin)}}
   const i0=tc(box.x-box.hw),i1=tc(box.x+box.hw),j0=tc(box.y-box.hh),j1=tc(box.y+box.hh);
   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(i<0||j<0||i>=RW||j>=RH)continue;const c=room.t[j][i];const k='s'+i+','+j;if(P.swingHit.has(k))continue;
     if(c==='b'){P.swingHit.add(k);setTile(room,i,j,'.');SFX.cut();leaf(cen(i),cen(j));maybeDrop(cen(i),cen(j),.3)}
@@ -838,9 +844,9 @@ function pushCheck(ax,ay,dt){const l=Math.hypot(ax,ay);if(l<.3){pushT=0;return}c
   pushT+=dt;if(pushT<.35)return;pushT=0;
   const ti=b.ti+fx,tj=b.tj+fy,c=tileAt(ti,tj);if(ti<1||tj<1||ti>RW-2||tj>RH-2)return;if(!(PASS.has(c)||c==='p')||'SdD'.includes(c))return;if(E.some(e=>e.k==='block'&&e.ti===ti&&e.tj===tj))return;
   if(E.some(e=>(e.k==='foe'||e.k==='npc')&&Math.abs(e.x-cen(ti))<12&&Math.abs(e.y-cen(tj))<12))return;b.moving={fx,fy,t:0};b.ti=ti;b.tj=tj;SFX.push()}
-function hurt(n,from,quiet){if(P.inv>0||P.roll>0||state!=='play'&&!quiet)return;if(P.st==='hook'&&!quiet)return;S.v.hp=Math.max(0,S.v.hp-n);P.inv=1;SFX.hurt();shake=.15;
+function hurt(n,from,quiet){if(P.inv>0||P.roll>0||state!=='play'&&!quiet)return;if(P.st==='hook'&&!quiet)return;S.v.hp=Math.max(0,S.v.hp-n);P.inv=1;SFX.hurt();heroSay('hurt');shake=.15;
   if(from){const d=Math.hypot(P.x-from[0],P.y-from[1])||1;P.kx=(P.x-from[0])/d*150;P.ky=(P.y-from[1])/d*150;P.kt=.12}hudText();if(S.v.hp<=0)die()}
-function die(){state='dead';SND.stop();SFX.die();S.v.deaths++;S.save();
+function die(){state='dead';SND.stop();SFX.die();heroSay('fall');S.v.deaths++;S.save();
   menu({html:'<h2>YOU FALL</h2><p>The fog closes over you for a moment.</p>',items:[{t:'GET UP',fn:respawn},{t:'SAVE AND QUIT',fn:()=>{S.v.hp=Math.max(6,S.v.max>>1);S.save();title()}}]})}
 function respawn(){closeMenu();S.v.hp=Math.max(6,Math.ceil(S.v.max/2/2)*2);state='play';P.inv=1.5;
   if(room.map==='ow')enterRoom('ow',2,5,cen(5),cen(6),'warp');else{const D=DUN[room.map],pos=findRoom(D,D.entry);enterRoom(room.map,pos[0],pos[1],96,RH*TS-26,'warp')}}
@@ -849,13 +855,21 @@ function respawn(){closeMenu();S.v.hp=Math.max(6,Math.ceil(S.v.max/2/2)*2);state
 /* A does what the moment needs: talk, read, open, or roll. B is the sword */
 function aTarget(){const[vx,vy]=fvec();const near=E.find(e=>(e.k==='npc'||e.k==='ware')&&Math.abs(e.x-(P.x+vx*12))<13&&Math.abs(e.y-(P.y+vy*12))<(e.k==='npc'&&(CHAR[e.id]||{}).reach||14));if(near)return near;
   for(const[fi,fj]of frontTiles()){const c=tileAt(fi,fj);if(c==='n'&&room.signs[fi+','+fj])return{k:'sign',key:fi+','+fj};if(c==='C'&&room.chests[fi+','+fj])return{k:'chest',i:fi,j:fj}}return null}
-function aLabel(){if(state==='dialog')return'NEXT';if(state!=='play')return'';const t=aTarget();if(t)return t.k==='npc'?'TALK':t.k==='ware'?'BUY':t.k==='sign'?'READ':'OPEN';return Math.hypot(moveV[0],moveV[1])>.2?'ROLL':''}
-function pressA(){if(P.hold>0||P.roll>0||P.fall>0||P.st==='hook')return;const t=aTarget();
+function aLabel(){if(state==='dialog')return'NEXT';if(state!=='play')return'';const t=aTarget();if(t)return t.k==='npc'?'TALK':t.k==='ware'?'BUY':t.k==='sign'?'READ':'OPEN';if(canLeap())return'JUMP';return Math.hypot(moveV[0],moveV[1])>.2?'ROLL':''}
+function pressA(){if(P.hold>0||P.roll>0||P.fall>0||P.st==='hook'||P.jump>0)return;const t=aTarget();
   if(t){if(t.k==='npc'){t.talkT=3;t.ang=Math.atan2(P.y-t.y,P.x-t.x);t.awake=true;t.wakeT=6;t.walking=false}if(t.k==='npc')say(talkLines(t.id).map(x=>NPCS[t.id].name.toUpperCase()+'\n'+x));else if(t.k==='ware')buyWare(t);else if(t.k==='sign')say([room.signs[t.key]]);else openChest(t.i,t.j);return}
+  if(canLeap()){leap();return}
   roll()}
-function pressB(){if(P.hold>0||P.roll>0||P.fall>0||P.st==='hook'||!S.v.sword||P.swing>0||P.spin>0)return;P.swing=.22;P.swingHit=null;P.charge=0;SFX.swing()}
-function releaseB(){if(P.charge>=.7&&S.v.sword&&P.swing<=0&&state==='play'){P.spin=.32;P.swingHit=null;SFX.swing();SND.tone(520,.2,{vol:.05,type:'triangle',to:1040})}P.charge=0}
+function pressB(){if(P.hold>0||P.roll>0||P.fall>0||P.st==='hook'||!S.v.sword||P.swing>0||P.spin>0||P.jump>0)return;P.swing=.22;P.swingHit=null;P.charge=0;SFX.swing();if(Math.random()<.8)heroSay('swing')}
+function releaseB(){if(P.charge>=.7&&S.v.sword&&P.swing<=0&&state==='play'){P.spin=.32;P.swingHit=null;SFX.swing();heroSay('spin');SND.tone(520,.2,{vol:.05,type:'triangle',to:1040})}P.charge=0}
 const releaseA=()=>{};
+/* A while locked on, standing still or pressing toward your target: a leaping chop that lands for double damage */
+function canLeap(){if(!lockT||lockT.dead||!E.includes(lockT)||!S.v.sword||P.swing>0||P.spin>0||P.roll>0||P.jump>0)return false;const dx=lockT.x-P.x,dy=lockT.y-P.y,d=Math.hypot(dx,dy);if(d>96)return false;
+  const m=Math.hypot(moveV[0],moveV[1]);return m<.25||(moveV[0]*dx+moveV[1]*dy)/(m*(d||1))>.55}
+function leap(){const dx=lockT.x-P.x,dy=lockT.y-P.y,d=Math.hypot(dx,dy)||1,go=clamp(d-15,0,70);P.ang=Math.atan2(dy,dx);P.jump=.44;P.jvx=dx/d*go/.38;P.jvy=dy/d*go/.38;P.jhit=false;P.swingHit=null;P.charge=0;P.st='jump';SFX.roll();heroSay('jump')}
+function leapHit(){const[fx,fy]=fvec(),dmg=(S.v.sword>=2?2:1)*2,box={x:P.x+fx*11,y:P.y-2+fy*11,hw:14,hh:14};let hit=null;
+  for(const e of E){if(e.dead)continue;if((e.k==='foe'||e.k==='boss'||e.k==='part')&&overlap(box,e,1)){hitThing(e,'sword',dmg,P.x,P.y);hit=e}}
+  shake=Math.max(shake,.12);SND.noise(.12,{lp:500,vol:.08});SFX.swing();if(hit)hitFX((P.x+hit.x)/2,(P.y+hit.y)/2,true)}
 /* aim: the item swings to the nearest thing worth hitting within a narrow cone in front of you */
 function clearLine(x0,y0,x1,y1,ti,tj){const d=Math.hypot(x1-x0,y1-y0),n=Math.ceil(d/4);for(let k=1;k<n;k++){const x=x0+(x1-x0)*k/n,y=y0+(y1-y0)*k/n,i=tc(x),j=tc(y);if(i===ti&&j===tj)return true;if(projStop(i,j))return false}return true}
 function aimAt(kind){const range=kind==='hook'?104:200,ox=P.x,oy=P.y-2;if(lockT&&!lockT.dead)return Math.atan2(lockT.y-oy,lockT.x-ox);const cands=[];
@@ -879,7 +893,7 @@ function give(it,quiet){const v=S.v,I=Object.assign({},ITEMS[it]||{name:it});let
     case 'keep':{v.qc=v.qc||{};v.qc.edda=['keep1','keep2','keep3'].filter(k=>v.got[k]).length;I.name=['his ring','his pipe','his knife'][['keep1','keep2','keep3'].indexOf(KEEPID)]||'a keepsake';extra=' Edda\'s husband\'s, by the look of it. ('+v.qc.edda+' of 3)';if(qs('edda')===1&&v.qc.edda>=3)questSet('edda',2);break}
     case 'shards20':v.shards=Math.min(999,v.shards+20);break;case 'shards50':v.shards=Math.min(999,v.shards+50);break;
     case 'seeds':v.ammo.seeds=Math.min(v.cap.seeds,v.ammo.seeds+10);break;case 'bombs5':v.ammo.bombs=Math.min(v.cap.bombs,v.ammo.bombs+5);break}
-  hudText();S.save();if(quiet)return;P.hold=1.1;P.holdIt=I.icon||it;SFX.get();setTimeout(()=>say(['You got '+I.name+'.'+extra+(I.text?'\n'+I.text:'')]),500)}
+  hudText();S.save();if(quiet)return;P.hold=1.1;P.holdIt=I.icon||it;SFX.get();heroSay('get',.8);setTimeout(()=>say(['You got '+I.name+'.'+extra+(I.text?'\n'+I.text:'')]),500)}
 const WARES={piece:{name:'a piece of heart',icon:'piece'},seedbag:{name:'a bigger seed pouch',icon:'seeds',need:'sling'},bombbag:{name:'a bigger blastcap bag',icon:'bombs',need:'bombs'},tonic:{name:'a red tonic',icon:'heart'}};
 function buyWare(w){const W=WARES[w.it];if(W.need&&!S.v.items[W.need]){say(['CORVO\nThat\'s for people with a '+(W.need==='sling'?'sling':'bag of blastcaps')+'. Come back when you are one.']);return}
   if(S.v.shards<w.price){say(['CORVO\n{laugh}'+cap1(W.name)+'. '+w.price+' shards. You have '+S.v.shards+'. I can count, even if you can\'t.']);return}
@@ -1097,6 +1111,10 @@ function partHit(e,how,dmg){if(e.inv>0)return;if(e.kind==='arm'){e.hp-=1;e.inv=.
    The game still thinks in flat 16px tiles. This part lifts every room into low-poly 3D: soft 32px textures
    painted in code, vertex colours for baked light, fog, blob shadows, and a camera that follows behind you. */
 const TH=window.THREE;
+/* the picture: SOFT is a 64-bit console on a television (15-bit colour with an ordered dither, neighbouring pixels
+   blended, the whole frame blown up smoothly); SHARP keeps crisp square pixels. Kept per device. */
+let PIC='soft';try{if(localStorage.getItem('hollowmere-pic')==='sharp')PIC='sharp'}catch(e){}
+stage.classList.toggle('sharp',PIC!=='soft');RES_BASE=PIC==='soft'?320:300;
 const col3=(h,m)=>{const n=parseInt(h.slice(1),16),k=(m==null?1:m)/255;return[(n>>16)*k,(n>>8&255)*k,(n&255)*k]};
 const mulc=(c,m)=>[c[0]*m,c[1]*m,c[2]*m];
 const hrand=(a,b,c)=>(hashN(a+999,b+999,c|0)%10007)/10007;
@@ -1381,8 +1399,57 @@ const G3={r:null,cache:new Map(),live:new Map(),camPos:new TH.Vector3(),camLook:
 const SHG=new TH.CircleGeometry(1,10);SHG.rotateX(-Math.PI/2);const SHM=new TH.MeshBasicMaterial({color:0,transparent:true,opacity:.3,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
 const shadow=(par,s)=>{const m=new TH.Mesh(SHG,SHM);m.scale.setScalar(s);m.position.y=.03;par.add(m);return m};
 function mkStars(par,y,s){const g=grp(par,0,y,0);for(let n=0;n<3;n++)pc('octa',bmat('#ffd23f'),Math.cos(n*2.1)*.3*s,0,Math.sin(n*2.1)*.3*s,.06,.06,.06,g);g.visible=false;return g}
+/* the last pass: the frame is drawn into a texture, then onto the screen through a shader that does what the old video
+   chips did on the way to the television: colour cut down to 5 bits a channel with an ordered dither, and a soft blend
+   with the pixels either side */
+function postInit(){G3.rt=new TH.WebGLRenderTarget(Math.max(1,W3),Math.max(1,H3),{minFilter:TH.LinearFilter,magFilter:TH.LinearFilter});
+  G3.postM=new TH.ShaderMaterial({uniforms:{tex:{value:G3.rt.texture},res:{value:new TH.Vector2(W3,H3)}},depthTest:false,depthWrite:false,
+    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
+    fragmentShader:'uniform sampler2D tex;uniform vec2 res;varying vec2 vUv;\n'+
+      'float bay(vec2 p){vec2 q=mod(floor(p),4.);float a=mod(q.x,2.),b=mod(q.y,2.),c=floor(q.x/2.),d=floor(q.y/2.);return(4.*(2.*a+3.*b-4.*a*b)+(2.*c+3.*d-4.*c*d)+.5)/16.;}\n'+
+      'void main(){vec2 px=vec2(1./res.x,0.);vec3 c=texture2D(tex,vUv).rgb*.78+(texture2D(tex,vUv-px).rgb+texture2D(tex,vUv+px).rgb)*.11;\n'+
+      'c=floor(c*31.+bay(gl_FragCoord.xy))/31.;gl_FragColor=vec4(c,1.);}'});
+  G3.postS=new TH.Scene();const q=new TH.Mesh(new TH.PlaneGeometry(2,2),G3.postM);q.frustumCulled=false;G3.postS.add(q);G3.postC=new TH.OrthographicCamera(-1,1,1,-1,0,1)}
+function present(sc,cam){const r=G3.r;if(PIC!=='soft'||!G3.rt){r.render(sc,cam);return}
+  if(G3.rt.width!==W3||G3.rt.height!==H3){G3.rt.setSize(W3,H3);G3.postM.uniforms.res.value.set(W3,H3)}
+  r.setRenderTarget(G3.rt);r.render(sc,cam);r.setRenderTarget(null);r.render(G3.postS,G3.postC)}
+function setPic(p){PIC=p;try{localStorage.setItem('hollowmere-pic',p)}catch(e){}stage.classList.toggle('sharp',p!=='soft');
+  const f=p==='soft'?TH.LinearFilter:TH.NearestFilter;for(const t of Object.values(PXT)){t.magFilter=t.minFilter=f;t.needsUpdate=true}RES_BASE=p==='soft'?320:300;resize()}
+/* ---------- the sword's trail: a ribbon from the blade's root to its point over the last few frames, bright and fading ---------- */
+function mkTrail(sc){const N=10,pos=new Float32Array(N*6),al=new Float32Array(N*2),idx=[];for(let i=0;i<N-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
+  const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pos,3));g.setAttribute('alpha',new TH.BufferAttribute(al,1));g.setIndex(idx);
+  const m=new TH.ShaderMaterial({transparent:true,depthWrite:false,side:TH.DoubleSide,blending:TH.AdditiveBlending,uniforms:{col:{value:new TH.Color(0xd8ecff)}},
+    vertexShader:'attribute float alpha;varying float vA;void main(){vA=alpha;gl_Position=projectionMatrix*viewMatrix*vec4(position,1.);}',
+    fragmentShader:'uniform vec3 col;varying float vA;void main(){gl_FragColor=vec4(col*vA,vA);}'});
+  const me=new TH.Mesh(g,m);me.frustumCulled=false;me.visible=false;sc.add(me);return{me,N,pts:[],pos,al,col:m.uniforms.col.value}}
+const _ta=new TH.Vector3(),_tb=new TH.Vector3();
+function trailTick(){const R=G3.trailR,h=G3.hero;if(!R||HITSTOP>0)return;const on=state==='play'&&(P.swing>0||P.spin>0||P.jump>0)&&h.sword.visible;
+  if(on){h.root.updateMatrixWorld(true);h.baseM.getWorldPosition(_ta);h.tipM.getWorldPosition(_tb);R.pts.unshift([_ta.x,_ta.y,_ta.z,_tb.x,_tb.y,_tb.z]);R.col.setHex(P.spin>0?0xffe2a0:S.v.sword>=2?0xffd8a0:0xd8ecff)}
+  else if(R.pts.length)R.pts.pop();
+  if(R.pts.length>R.N)R.pts.length=R.N;R.me.visible=R.pts.length>1;if(!R.me.visible)return;
+  const n=R.pts.length;for(let i=0;i<R.N;i++){const q=R.pts[Math.min(i,n-1)],k=i<n?Math.pow(1-i/(n-1),1.4):0;R.pos.set(q,i*6);R.al[i*2]=k*.22;R.al[i*2+1]=k}
+  R.me.geometry.attributes.position.needsUpdate=true;R.me.geometry.attributes.alpha.needsUpdate=true}
+/* a hit: a star of light where the blade meets (the world stops for a moment too, see HITSTOP) */
+const STARG=(()=>{const g=new TH.BufferGeometry(),p=[0,0,0];for(let i=0;i<=8;i++){const a=i/8*TAU,r=i%2?.24:1;p.push(Math.cos(a)*r,Math.sin(a)*r,0)}const idx=[];for(let i=1;i<=8;i++)idx.push(0,i,i+1);
+  g.setAttribute('position',new TH.Float32BufferAttribute(p,3));g.setIndex(idx);return g})();
+const SPK=[];
+function spark3D(x,y,big){if(!G3.scene||!room)return;let s=SPK.find(o=>o.t<=0);if(!s){if(SPK.length>=6)s=SPK[0];else{const m=new TH.Mesh(STARG,new TH.MeshBasicMaterial({color:0xffffff,transparent:true,depthTest:false,depthWrite:false,blending:TH.AdditiveBlending,fog:false}));
+    m.renderOrder=20;m.frustumCulled=false;G3.scene.add(m);s={m,t:0};SPK.push(s)}}
+  const[gx,gz]=gpos(x,y);s.m.position.set(gx,groundY(x,y)+.7,gz);s.t=s.T=big?.2:.15;s.big=big;s.r=Math.random()*TAU;s.m.visible=true}
+function sparkTick(dt){for(const s of SPK){if(s.t<=0){s.m.visible=false;continue}s.t-=dt;const k=clamp(1-s.t/s.T,0,1);s.m.quaternion.copy(G3.cam.quaternion);s.m.rotateZ(s.r+k*.7);
+  s.m.scale.setScalar((s.big?.72:.48)*(.3+k*.9));s.m.material.opacity=1-k;s.m.material.color.setHex(k<.35?0xffffff:0xffd890)}}
+/* ---------- the lock-on mark: four amber pointers that close in round your target and turn slowly, and a gem bobbing over it ---------- */
+function mkLock(sc){const g=new TH.Group();g.visible=false;sc.add(g);G3.lock=g;const tg=new TH.BufferGeometry();tg.setAttribute('position',new TH.Float32BufferAttribute([0,0,0,-.1,.2,0,.1,.2,0],3));
+  const mk=c=>new TH.MeshBasicMaterial({color:c,transparent:true,depthTest:false,depthWrite:false,fog:false,side:TH.DoubleSide});
+  G3.lockP=[0,1,2,3].map(()=>{const p=new TH.Group(),o=new TH.Mesh(tg,mk(0x3a1a04));o.scale.set(1.5,1.35,1);o.position.y=-.03;o.renderOrder=21;const m=new TH.Mesh(tg,mk(0xffc23a));m.renderOrder=22;p.add(o,m);g.add(p);return p});
+  G3.lockGem=new TH.Mesh(new TH.OctahedronGeometry(.09,0),new TH.MeshBasicMaterial({color:0xffd86a,transparent:true,depthTest:false,depthWrite:false,fog:false}));G3.lockGem.scale.y=1.5;G3.lockGem.renderOrder=22;G3.lockGem.visible=false;sc.add(G3.lockGem)}
+function lockTick(dt){const lk=lockT&&!lockT.dead&&E.includes(lockT)&&state==='play'?lockT:null;G3.lock.visible=G3.lockGem.visible=!!lk;if(!lk){G3.lockFor=null;return}
+  if(G3.lockFor!==lk){G3.lockFor=lk;G3.lockK=0}G3.lockK=Math.min(1,G3.lockK+dt*5);const[gx,gz]=gpos(lk.x,lk.y),gy=groundY(lk.x,lk.y),big=lk.k==='boss',k=cs(G3.lockK);
+  G3.lock.position.set(gx,gy+(big?1.4:.62),gz);G3.lock.quaternion.copy(G3.cam.quaternion);const rad=(big?1.2:.52)*(2-k)+Math.sin(T*6)*.015,sp=T*1.1;
+  G3.lockP.forEach((p,i)=>{const a=sp+i*Math.PI/2;p.position.set(Math.cos(a)*rad,Math.sin(a)*rad,0);p.rotation.z=a-Math.PI/2;for(const m of p.children)m.material.opacity=k});
+  G3.lockGem.position.set(gx,gy+(big?2.9:1.42)+Math.sin(T*6)*.06,gz);G3.lockGem.rotation.y=T*3;G3.lockGem.material.opacity=k}
 function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:false,powerPreference:'default'})}catch(e){G3.fail=1;return}
-  r.setPixelRatio(1);G3.r=r;const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
+  r.setPixelRatio(1);G3.r=r;postInit();const sc=new TH.Scene();G3.scene=sc;G3.cam=new TH.PerspectiveCamera(60,1,.08,95);
   G3.hemi=new TH.HemisphereLight(0xffffff,0x5a5040,.75);sc.add(G3.hemi);G3.sun=new TH.DirectionalLight(0xfff0d8,.7);G3.sun.position.set(-4,10,3);sc.add(G3.sun);
   G3.pl=[];for(let n=0;n<6;n++){const l=new TH.PointLight(0xffa050,0,6,1.4);sc.add(l);G3.pl.push(l)}
   sc.fog=new TH.Fog(0x9ac8e8,12,32);
@@ -1392,8 +1459,8 @@ function glInit(){let r;try{r=new TH.WebGLRenderer({canvas:$('#gl'),antialias:fa
   const stg=new TH.BufferGeometry();stg.setAttribute('position',new TH.Float32BufferAttribute(sp,3));G3.stars=new TH.Points(stg,new TH.PointsMaterial({color:0xffffff,size:1.4,sizeAttenuation:false,fog:false,transparent:true,depthWrite:false}));sc.add(G3.stars);
   G3.moon=new TH.Mesh(new TH.CircleGeometry(4,12),new TH.MeshBasicMaterial({color:0xeae6d0,fog:false,transparent:true,depthWrite:false}));sc.add(G3.moon);
   G3.world=new TH.Group();sc.add(G3.world);G3.ents=new TH.Group();sc.add(G3.ents);
-  G3.hero=mkHero();sc.add(G3.hero.root);shadow(G3.hero.root,.3);G3.hero.blade.material=new TH.MeshLambertMaterial({color:0xdfe6f2});
-  G3.lock=pc('cone4',bmat('#ffd23f'),0,0,0,.14,.26,.14,sc,Math.PI);G3.lock.visible=false;
+  G3.hero=mkHero();sc.add(G3.hero.root);shadow(G3.hero.root,.3);G3.trailR=mkTrail(sc);
+  mkLock(sc);
   G3.chain=new TH.Mesh(GEO.box,mat('#6a6a72'));G3.chain.visible=false;sc.add(G3.chain);
   /* spores drifting in the air around you */
   const mp=[];for(let n=0;n<180;n++)mp.push((Math.random()-.5)*18,Math.random()*7,(Math.random()-.5)*18);const mg=new TH.BufferGeometry();mg.setAttribute('position',new TH.Float32BufferAttribute(mp,3));
@@ -1509,14 +1576,17 @@ function poseBoss(b,g,dt){const u=g.userData,m=u.m,mu=m.userData,fl=b.inv>0&&Mat
 function poseHero(dt){const h=G3.hero,[gx,gz]=gpos(P.x,P.y);let y=groundY(P.x,P.y);h.root.visible=state!=='title'||true;
   h.root.position.set(gx,y,gz);h.root.rotation.y=Math.PI/2-P.ang;h.root.scale.setScalar(1);h.body.rotation.set(0,0,0);h.body.position.y=.42+Math.sin(T*2)*.006;
   for(const l of h.legs)l.rotation.set(0,0,0);for(const a of h.arms)a.rotation.set(0,0,0);if(h.knees)h.knees.forEach(k=>k.rotation.x=.04);
-  const mv=state==='play'?Math.hypot(moveV[0],moveV[1]):0,moving=mv>.2&&P.swing<=0&&P.roll<=0&&P.spin<=0;if(moving)walkPose(h,P.anim*7,Math.min(1,mv));
-  const hasS=!!S.v.sword,charging=held.b&&P.charge>.15&&hasS&&P.swing<=0&&P.spin<=0,sw=P.swing>0||P.spin>0||charging;
+  const mv=state==='play'?Math.hypot(moveV[0],moveV[1]):0,moving=mv>.2&&P.swing<=0&&P.roll<=0&&P.spin<=0&&!(P.jump>0);if(moving)walkPose(h,P.anim*7,Math.min(1,mv));
+  const hasS=!!S.v.sword,charging=held.b&&P.charge>.15&&hasS&&P.swing<=0&&P.spin<=0,sw=P.swing>0||P.spin>0||P.jump>0||charging;
   h.sword.visible=hasS&&sw;h.back.visible=hasS&&!sw;h.shield.visible=!!S.v.flags.shield;h.hook.visible=P.st==='hook';h.trail.visible=false;h.held.visible=false;
-  h.blade.scale.y=S.v.sword>=2?.6:.52;h.blade.material.color.setHex(charging&&P.charge>=.7&&Math.floor(T*12)%2?0xffffff:S.v.sword>=2?0xfff2a8:0xdfe6f2);
-  if(P.swing>0){const k=1-P.swing/.22;h.arms[1].rotation.set(-1.45,1.3-k*2.7,0);h.trail.visible=true;h.trail.rotation.z=1.3-k*2.7-Math.PI/2;h.trail.material.opacity=.4*(1-k)}
-  if(P.spin>0){const k=1-P.spin/.32;h.root.rotation.y+=k*TAU;h.arms[1].rotation.set(-1.5,-1.4,0);h.trail.visible=true;h.trail.rotation.z=k*9;h.trail.material.opacity=.4}
+  h.bladeG.scale.y=S.v.sword>=2?1.14:1;{const fl=charging&&P.charge>=.7&&Math.floor(T*12)%2;h.bladeMat.color.setHex(fl?0xffffff:S.v.sword>=2?0xfff0c4:0xf2f6fc);h.bladeMat.emissive.setHex(fl?0x6a6a6a:S.v.sword>=2?0x3a1404:0)}
+  if(P.swing>0){const k=1-P.swing/.22;h.arms[1].rotation.set(-1.45,1.3-k*2.7,0)}
+  if(P.spin>0){const k=1-P.spin/.32;h.root.rotation.y+=k*TAU;h.arms[1].rotation.set(-1.5,-1.4,0)}
   if(charging){h.arms[1].rotation.set(-.5,-1.1,0)}
   if(P.roll>0){const k=1-P.roll/.24;h.body.rotation.x=k*TAU;h.legs.forEach(l=>l.rotation.x=-1.2);h.arms.forEach(a=>a.rotation.x=-1.4);if(h.knees)h.knees.forEach(n=>n.rotation.x=1.6)}
+  /* the leap: up with the sword held high over the head, down with it as you land */
+  if(P.jump>0){const k=1-P.jump/.44,air=Math.sin(Math.min(1,k/.86)*Math.PI);h.root.position.y=y+air*.62;h.body.rotation.x=k<.6?-.15:cl(-.15,.5,cs(cp(k,.6,.86)));
+    h.legs.forEach(l=>l.rotation.x=-.9*air);if(h.knees)h.knees.forEach(n=>n.rotation.x=1.5*air+.04);h.arms[1].rotation.set(k<.6?-2.9:cl(-2.9,-.5,cs(cp(k,.6,.86))),0,0);h.arms[0].rotation.set(-.9,0,.3)}
   if(P.st==='hook')h.arms[1].rotation.set(-1.5,0,0);
   if(P.hold>0&&P.holdIt){h.arms[0].rotation.x=-2.9;h.arms[1].rotation.x=-2.9;const t=iconTex(P.holdIt);if(t){h.held.material.map=t;h.held.material.needsUpdate=true;h.held.visible=true}}
   if(P.fall>0){const k=1-P.fall/.5;h.root.position.y=y-k*2.2;h.root.scale.setScalar(1-k*.5)}
@@ -1572,10 +1642,9 @@ function render3D(){if(!G3.r){if(!G3.fail)glInit();if(!G3.r)return}const now=per
   placeLights(lights);poseHero(dt);
   const hk=E.find(e=>e.k==='hookhead');if(hk){const[gx,gz]=gpos(P.x,P.y),[hx,hz]=gpos(hk.x,hk.y),y0=groundY(P.x,P.y)+.6,a=new TH.Vector3(gx,y0,gz),b=new TH.Vector3(hx,y0-.05,hz),m=a.clone().add(b).multiplyScalar(.5),l=a.distanceTo(b);
     G3.chain.visible=l>.05;G3.chain.position.copy(m);G3.chain.scale.set(.03,.03,Math.max(.01,l));G3.chain.lookAt(b)}else G3.chain.visible=false;
-  const lk=lockT&&!lockT.dead&&E.includes(lockT)?lockT:null;G3.lock.visible=!!lk&&state==='play';if(lk){const[gx,gz]=gpos(lk.x,lk.y);G3.lock.position.set(gx,groundY(lk.x,lk.y)+(lk.k==='boss'?2.8:1.6)+Math.sin(T*6)*.08,gz);G3.lock.rotation.y=T*3}
-  camUpdate(dt);moveMotes(dt);if(G3.sky.visible)G3.sky.position.copy(G3.cam.position);if(G3.stars.visible)G3.stars.position.copy(G3.cam.position);
+    camUpdate(dt);lockTick(dt);trailTick();sparkTick(dt);moveMotes(dt);if(G3.sky.visible)G3.sky.position.copy(G3.cam.position);if(G3.stars.visible)G3.stars.position.copy(G3.cam.position);
   TEX.water.offset.set(T*.04,T*.025);TEX.lava.offset.set(T*.03,-T*.02);TEX.pool.offset.set(-T*.02,T*.03);
-  G3.r.render(G3.scene,G3.cam)}
+  present(G3.scene,G3.cam)}
 /* ---------- Part 6h: the people of the hollow ----------
    Everyone down here was swallowed by the tree; they are tired, hungry and a little strange from it.
    Every character is built on one low-poly rig (hips, a waist that can hunch, shoulders, a head, a body that can roll),
@@ -1603,7 +1672,7 @@ const PXT={};
 function pxt(key,w,h,draw){if(PXT[key])return PXT[key];const c=mkCanvas(w,h),x=c.getContext('2d');const p=(col,a,b,ww,hh)=>{x.fillStyle=col;x.fillRect(a,b,ww||1,hh||1)};
   const oval=(cx,cy,rx,ry,col)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++){const dx=(i+.5-cx)/rx,dy=(j+.5-cy)/ry;if(dx*dx+dy*dy<=1)p(col,i,j)}};
   const sym=(col,a,b)=>{p(col,a,b);p(col,w-1-a,b)};draw(p,oval,sym,w,h,x);
-  const t=new TH.CanvasTexture(c);t.magFilter=t.minFilter=TH.NearestFilter;t.generateMipmaps=false;t.wrapS=t.wrapT=TH.RepeatWrapping;PXT[key]=t;return t}
+  const t=new TH.CanvasTexture(c);t.magFilter=t.minFilter=PIC==='soft'?TH.LinearFilter:TH.NearestFilter;t.generateMipmaps=false;t.wrapS=t.wrapT=TH.RepeatWrapping;PXT[key]=t;return t}
 const shade=(hx,m)=>{const n=parseInt(hx.slice(1),16),f=v=>clamp(Math.round(v*m),0,255).toString(16).padStart(2,'0');return'#'+f(n>>16)+f((n>>8)&255)+f(n&255)};
 /* cloth: a base colour with a dither of darker and lighter threads, and maybe stripes, a patch or checks */
 function cloth(base,pat,c2){return pxt('cl'+base+(pat||'')+(c2||''),8,8,p=>{const R=rngOf(hashN(parseInt(base.slice(1),16)%9973,(pat||'').length,7));p(base,0,0,8,8);const d=shade(base,.78),l=shade(base,1.18);
@@ -1613,6 +1682,23 @@ function cloth(base,pat,c2){return pxt('cl'+base+(pat||'')+(c2||''),8,8,p=>{cons
 const CM=new Map();
 function cmat(color,tex,o){const k=color+'|'+(tex?tex.uuid:'')+'|'+(o?JSON.stringify(o):'');let m=CM.get(k);if(!m){m=new TH.MeshLambertMaterial(Object.assign({color,map:tex||null},o||{}));CM.set(k,m)}return m}
 const glowM=c=>cmat(c,null,{emissive:c,emissiveIntensity:1});
+/* metal: the old reflection-map trick. Shiny things show a painted world (sky, a bright horizon, dark ground) that slides
+   across them as they turn, multiplied into their lit colour so they still darken in the shade */
+const ENVT=(()=>{const c=mkCanvas(64,32),x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,32);
+  [[0,'#6a7894'],[.34,'#c8d4e8'],[.47,'#ffffff'],[.52,'#fff4dc'],[.58,'#6e6254'],[1,'#3a3430']].forEach(([o,cc])=>g.addColorStop(o,cc));x.fillStyle=g;x.fillRect(0,0,64,32);
+  x.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<4;i++)x.fillRect(i*16+5,7,5,7);x.fillStyle='rgba(40,34,30,.5)';for(let i=0;i<6;i++)x.fillRect(i*11+2,19,6,13);
+  const t=new TH.CanvasTexture(c);t.mapping=TH.EquirectangularReflectionMapping;return t})();
+const MM=new Map();
+function metalM(c,o){o=o||{};const k=c+'|'+(o.r||.85)+'|'+(o.map?o.map.uuid:'');let m=MM.get(k);
+  if(!m){m=new TH.MeshPhongMaterial({color:c,map:o.map||null,specular:0x8a8a8a,shininess:46,envMap:ENVT,combine:TH.MultiplyOperation,reflectivity:o.r||.85});MM.set(k,m)}return m}
+const metalTex=(tex,r)=>metalM('#ffffff',{map:tex,r:r||.6});
+/* a sword blade and its point, diamond in section, so the ridge down the middle catches the light */
+const BLADEG=flatG(new TH.CylinderGeometry(1,1,1,4,1)),TIPG=flatG(new TH.ConeGeometry(1,1,4));
+/* the shield's face: oak boards with nail heads, and the lamp-keeper's flame painted in a gold ring */
+function shieldTex(){return pxt('shieldface',32,32,(p,oval)=>{p('#6a4a2c',0,0,32,32);for(let x=0;x<32;x+=6){p('#7a5634',x,0,5,32);p('#553a22',x+5,0,1,32)}
+  oval(16,16,11,11,'#e0b860');oval(16,16,9.6,9.6,'#2e3a56');
+  [0,1,1,2,2,3,3,4,4,5,5,4,3,2].forEach((w,j)=>{if(w)p('#e8742a',16-w,8+j,w*2,1)});[0,1,1,2,2,1,1].forEach((w,j)=>{if(w)p('#ffd23f',16-w,14+j,w*2,1)});
+  for(const[a,b]of[[5,5],[26,5],[5,26],[26,26],[16,2],[16,29],[2,16],[29,16]])p('#2a2a30',a,b,1,1)})}
 function pt(geo,m,x,y,z,sx,sy,sz,par,rx,ry,rz){const me=new TH.Mesh(geo,m);me.position.set(x,y,z);me.scale.set(sx,sy==null?sx:sy,sz==null?sx:sz);if(rx||ry||rz)me.rotation.set(rx||0,ry||0,rz||0);par.add(me);return me}
 /* a bare face painted round a low-poly head (the face sits at the front); one open, one with the eyes shut for blinking */
 function faceSkin(key,skin,draw){return[0,1].map(sh=>pxt('face'+key+sh,48,24,(p,oval,sym,w,h)=>{p(skin,0,0,w,h);p(shade(skin,.86),0,16,w,8);draw(p,sh)}))}
@@ -1654,7 +1740,7 @@ const BODY=(()=>{const lathe=(pts,seg)=>new TH.LatheGeometry(pts.map(([r,y])=>ne
     lower:lathe([[0,.04],[.82,.03],[.9,-.04],[1,-.22],[.86,-.6],[.66,-.94],[.56,-1],[0,-1.02]],10),
     joint:new TH.SphereGeometry(1,8,6),cuff:new TH.CylinderGeometry(1,.8,1,10,1,true)}})();
 /* o.prop: 'adult' gives grown-up proportions (head about a sixth of the height, long legs and arms), 'kid' a little less so */
-const PROP={adult:[1.38,1.22,.66],kid:[1.16,1.12,.8],sitter:[1,1.05,.7]};
+const PROP={adult:[1.38,1.22,.76],kid:[1.16,1.12,.9],sitter:[1,1.05,.8]};
 /* the rig: hips, thighs, knees, shins and feet; a shaped torso; shoulders, upper arms, elbows, forearms and hands with a thumb.
    Joints are groups, so walking bends the knees and arms rest slightly bent. Clothing options: o.bootM (boot shafts), o.gloveM (cuffs) */
 function rig(o){const PR=PROP[o.prop]||[1,1,1],pl=o.noLegs?1:PR[0],pa=PR[1],ph=o.headS||PR[2],sl=o.prop?.86:1;
@@ -1670,7 +1756,7 @@ function rig(o){const PR=PROP[o.prop]||[1,1,1],pl=o.noLegs?1:PR[0],pa=PR[1],ph=o
   if(o.torsoM)pt(BODY.torso,o.torsoM,0,0,0,tr,tl,tr*(o.torsoD||.8),up);
   const nk=(o.neck||.11)*(ph<1?.62:1);if(o.torsoM&&o.prop)pt(LP.cyl6,o.neckM||o.handM,0,tl+nk*.35,0,.03,nk*.9,.028,up);
   const head=grp(up,0,tl+nk,0);head.scale.setScalar(ph);
-  for(const sd of[-1,1]){const sh=grp(up,sd*(o.shW||.17),tl-.03,0);sh.rotation.order='YXZ';const al=(o.armL||.27)*pa,ua=al*.48,fa=al*.52,hs=o.handS||.06;
+  for(const sd of[-1,1]){const sh=grp(up,sd*(o.shW||.17),tl-.03,0);sh.rotation.order='YXZ';const al=(o.armL||.27)*pa,ua=al*.48,fa=al*.52,hs=(o.handS||.06)*1.12;
     if(!o.noArms){pt(BODY.upper,o.armM,0,0,0,ar*1.15,ua,ar*1.05,sh)}
     const el=grp(sh,0,-ua,0);el.rotation.x=-.18;
     if(!o.noArms){pt(BODY.lower,o.foreM||o.armM,0,0,0,ar*1.05,fa,ar*.95,el);if(o.gloveM)pt(BODY.cuff,o.gloveM,0,-fa*.8,0,ar*1.45,fa*.34,ar*1.45,el)}
@@ -1907,15 +1993,24 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   pt(LP.tor,skinM('#d8742a'),0,.36,0,.085,.085,.11,h.up,Math.PI/2);h.tail=grp(h.up,.03,.35,-.08);pt(LP.box,cmat('#ffffff',cloth('#d8742a','stripe','#b85a1a')),0,-.12,0,.055,.24,.02,h.tail);
   /* a short travelling cloak from the shoulders */
   h.cape=grp(h.up,0,.33,-.1);pt(LP.box,hood,0,-.2,0,.25,.4,.02,h.cape);
-  /* the sword: in the hand when drawn, otherwise in a scabbard on the left hip */
-  const sw=grp(h.hand[1],0,.02,0);pt(LP.box,skinM('#5a3a22'),0,-.02,0,.032,.1,.032,sw);pt(LP.box,skinM('#9a9aa2'),0,-.08,0,.15,.025,.04,sw);pt(LP.ball,skinM('#9a9aa2'),0,.04,0,.025,.025,.025,sw);
-  h.blade=pt(LP.box,new TH.MeshLambertMaterial({color:0xdfe6f2}),0,-.36,0,.03,.54,.06,sw);h.sword=sw;
-  h.back=grp(h.up,.14,-.01,-.06);h.back.rotation.set(-2.3,0,-.12);pt(LP.box,lea,0,.24,0,.04,.48,.06,h.back);pt(LP.box,skinM('#5a3a22'),0,-.05,0,.03,.1,.03,h.back);pt(LP.box,skinM('#9a9aa2'),0,.01,0,.14,.022,.04,h.back);
-  /* a round wooden shield with an iron rim and boss, on the left arm */
-  const shd=grp(h.arms[0],-.05,-.2,0);shd.rotation.y=-Math.PI/2;pt(LP.cyl8,cmat('#ffffff',cloth('#7a5a3a','seam','#6a4a30')),0,0,0,.17,.035,.17,shd,Math.PI/2);pt(LP.tor,skinM('#6a6a72'),0,0,0,.17,.17,.12,shd);pt(LP.ball,skinM('#8a8a92'),0,0,.03,.045,.045,.03,shd);h.shield=shd;
+  /* grandfather's sword: a diamond-section blade whose ridge catches the light, a brass guard with down-swept ends,
+     a grip bound in dark leather and a brass pommel. In the hand when drawn, otherwise in a scabbard on the back */
+  const brass=metalM('#e0b860',{r:.7}),grip=cmat('#ffffff',cloth('#4a2c18','stripe','#2a180c')),sw=grp(h.hand[1],0,.02,0);
+  pt(LP.cyl6,grip,0,-.015,0,.017,.1,.017,sw);pt(LP.ball,brass,0,.045,0,.026,.024,.026,sw);
+  pt(LP.box,brass,0,-.075,0,.15,.022,.034,sw);for(const sd of[-1,1])pt(LP.box,brass,sd*.084,-.088,0,.026,.042,.03,sw,0,0,sd*.5);pt(LP.ball,brass,0,-.075,0,.03,.026,.03,sw);
+  const bm=new TH.MeshPhongMaterial({color:0xf2f6fc,specular:0xb0b0b0,shininess:60,envMap:ENVT,combine:TH.MultiplyOperation,reflectivity:.9});h.bladeMat=bm;
+  const bg=grp(sw,0,-.09,0);h.bladeG=bg;h.blade=pt(BLADEG,bm,0,-.22,0,.024,.44,.0075,bg);pt(TIPG,bm,0,-.475,0,.024,.07,.0075,bg,Math.PI);
+  h.tipM=grp(bg,0,-.5,0);h.baseM=grp(bg,0,-.02,0);h.sword=sw;
+  h.back=grp(h.up,.14,-.01,-.06);h.back.rotation.set(-2.3,0,-.12);pt(LP.box,lea,0,.25,0,.05,.5,.022,h.back);pt(LP.box,brass,0,.5,0,.056,.03,.028,h.back);
+  pt(LP.cyl6,grip,0,-.06,0,.016,.1,.016,h.back);pt(LP.box,brass,0,.005,0,.14,.022,.034,h.back);pt(LP.ball,brass,0,-.12,0,.024,.022,.024,h.back);
+  /* a round shield of oak boards with an iron rim and boss, painted with the lamp-keeper's flame, on the left arm */
+  const shd=grp(h.arms[0],-.05,-.2,0);shd.rotation.y=-Math.PI/2;pt(LP.cyl8,cmat('#ffffff',shieldTex()),0,0,0,.17,.035,.17,shd,Math.PI/2);
+  pt(LP.tor,metalM('#b8bcc8',{r:.8}),0,0,0,.17,.17,.12,shd);pt(LP.ball,metalM('#d0d4de'),0,0,.03,.045,.045,.03,shd);h.shield=shd;
   h.hook=grp(h.hand[1],0,.02,0);pt(LP.box,skinM('#8a8a96'),0,-.06,0,.07,.18,.07,h.hook);pt(LP.cone4,skinM('#c8ccd8'),0,-.18,0,.05,.08,.05,h.hook,Math.PI);
   h.held=new TH.Sprite(new TH.SpriteMaterial({transparent:true,depthTest:false}));h.held.scale.set(.5,.5,1);h.held.position.y=1.45;h.held.visible=false;h.root.add(h.held);
   const ring=new TH.Mesh(new TH.RingGeometry(.55,1.05,10,1,-.95,1.9),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35,side:TH.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.55;ring.visible=false;h.root.add(ring);h.trail=ring;
+  /* a bigger head, the way heroes of that era were drawn */
+  h.head.scale.setScalar(1.18);
   h.cid='hero';h.base=snapPose(h);return h}
 
 /* ---------- the things in the dark: built the same way, with no faces to speak of ---------- */
@@ -1937,13 +2032,13 @@ function mkCreature(t){const g=new TH.Group(),u={};g.userData=u;let h;
     pt(LP.tor,bone,0,h.hipY+.01,0,.075,.055,.35,h.lo,Math.PI/2);pt(LP.skirt,cmat('#ffffff',cloth('#4a4234','patch','#3a3428'),{side:TH.DoubleSide}),0,h.hipY-.06,0,.1,.13,.09,h.lo);
     h.fx.jaw=skullOn(h.head,bone,hole,ember);const sw=grp(h.hand[1],0,0,0);pt(LP.box,skinM('#7a5a3a'),0,-.03,0,.02,.07,.02,sw);pt(LP.box,skinM('#8a6a4a'),0,-.22,0,.03,.3,.05,sw);pt(LP.box,skinM('#5a3a22'),0,-.07,0,.08,.015,.02,sw)}
   else if(t==='knight'){/* a skeleton knight: dented armour on old bones, a helm it never takes off, sword and shield */
-    const ar=cmat('#ffffff',pxt('armour2',8,8,p=>{p('#7a7a86',0,0,8,8);p('#9a9aa6',0,0,8,1);p('#5a5a66',0,4,8,1);p('#5a5a66',3,0,1,8);p('#6a4a3a',5,6);p('#6a4a3a',1,2)}));
+    const ar=metalTex(pxt('armour2',8,8,p=>{p('#7a7a86',0,0,8,8);p('#9a9aa6',0,0,8,1);p('#5a5a66',0,4,8,1);p('#5a5a66',3,0,1,8);p('#6a4a3a',5,6);p('#6a4a3a',1,2)}),.55);
     h=rig({h:1.18,torsoM:ar,torsoR:.14,torsoL:.33,armM:bone,armR:.02,armL:.29,handM:bone,handS:.06,legM:bone,legR:.022,shoeM:skinM('#5a5a66'),shoeW:.09,shoeL:.15,neck:.12});
     for(const sd of[-1,1]){pt(LP.ball,ar,sd*.17,.32,0,.075,.055,.08,h.up);pt(LP.cyl6,ar,0,-.06,0,.035,.08,.035,h.knees[sd<0?0:1])}
     pt(LP.skirt,ar,0,h.hipY-.05,0,.15,.12,.13,h.lo);skullOn(h.head,bone,hole,null);
     pt(LP.cyl6,ar,0,.1,0,.135,.13,.135,h.head);pt(LP.cone6,ar,0,.2,0,.135,.08,.135,h.head);pt(LP.box,ar,0,.03,.125,.018,.1,.018,h.head);pt(LP.box,skinM('#6a2a2a'),0,.26,-.02,.025,.12,.18,h.head);
     h.fx.slit=pt(LP.box,glowM('#ff6a3a'),0,.018,.1,.11,.016,.01,h.head);
-    const sh=grp(h.arms[0],-.05,-.18,.05);pt(LP.box,ar,0,0,0,.05,.36,.28,sh);pt(LP.box,skinM('#a88a40'),.03,0,0,.02,.1,.1,sh);const sw=grp(h.hand[1],0,0,0);pt(LP.box,skinM('#b8bcc8'),0,-.24,0,.035,.44,.07,sw);pt(LP.box,skinM('#5a3a22'),0,-.02,0,.1,.02,.03,sw)}
+    const sh=grp(h.arms[0],-.05,-.18,.05);pt(LP.box,ar,0,0,0,.05,.36,.28,sh);pt(LP.box,metalM('#e0b860',{r:.7}),.03,0,0,.02,.1,.1,sh);const sw=grp(h.hand[1],0,0,0);pt(LP.box,metalM('#e8ecf4'),0,-.24,0,.035,.44,.07,sw);pt(LP.box,skinM('#5a3a22'),0,-.02,0,.1,.02,.03,sw)}
   else if(t==='slime'){/* a goblin: small, crouched, all ears and nose and long fingers, a stolen knife */
     const gs=skinM('#6f7d4a'),gd=skinM('#4e5a32'),rag=cmat('#ffffff',cloth('#5a4a34','patch','#4a3a28'),{side:TH.DoubleSide});
     h=rig({h:.74,hunch:.55,torsoM:gs,torsoR:.12,torsoL:.25,torsoD:.95,armM:gs,armR:.03,armL:.38,handM:gs,handS:.08,legM:gs,legR:.038,hip:.3,shoeM:gd,shoeW:.11,shoeL:.21,neck:.07});
@@ -2137,7 +2232,24 @@ const KIDV={
   yelp:()=>[{t:0,d:.2,f0a:560,f0b:780,F:[950,1750,3300],h:.008,asp:.15,hb:.9}],
   whimper:()=>[{t:0,d:.34,f0a:520,f0b:390,F:[700,1350,3000],h:.05,asp:.35,amp:.7,hb:.9}],
   no:()=>[0,1,2].map(i=>({t:i*.3,d:.17,f0a:660-i*30,f0b:560-i*30,F:[620,1050,3000],n0:.04,h:0,asp:.12})),
-  scream:()=>[{t:0,d:.8,f0a:720,f0b:520,F:[900,1650,3250],h:.02,asp:.18,vib:6,hb:.9}]};
+  scream:()=>[{t:0,d:.8,f0a:720,f0b:520,F:[900,1650,3250],h:.02,asp:.18,vib:6,hb:.9}],
+  huh:()=>[{t:0,d:.24,f0a:430,f0b:610,F:[620,1550,3050],h:.05,asp:.3,hb:.9}]};
+/* the hero never says a word, but he does make noise: a young man's grunts and shouts, on the same engine.
+   A few versions of each are made the first times they are needed and then picked from at random */
+const HEROV={
+  swing:()=>{const f=215+Math.random()*35,v=Math.random()<.5?[740,1180,2550]:[600,1650,2550];return[{t:0,d:.09+Math.random()*.04,f0a:f*1.1,f0b:f*.84,F:v,B:[120,160,250],h:.03,asp:.32,hb:.85,oq:.5,tail:.03}]},
+  spin:()=>[{t:0,d:.07,f0a:240,f0b:270,F:[380,2100,2700],h:.03,asp:.35,hb:.9,amp:.6,tail:.01},{t:.07,d:.38,f0a:285,f0b:205,F:[760,1250,2600],h:0,asp:.2,oq:.48,vib:6,vd:.025}],
+  jump:()=>[{t:0,d:.06,f0a:250,f0b:280,F:[380,2100,2700],h:.03,asp:.35,amp:.6,tail:.01},{t:.06,d:.24,f0a:300,f0b:235,F:[740,1220,2600],h:0,asp:.22,oq:.48}],
+  roll:()=>[{t:0,d:.07,f0a:235,f0b:215,F:[470,1080,2500],h:.045,asp:.42,hb:1,amp:.85,tail:.02}],
+  hurt:()=>[{t:0,d:.17,f0a:290,f0b:185,F:[560,1150,2550],h:.012,asp:.3,oq:.45,jit:.035,tail:.04}],
+  fall:()=>[{t:0,d:.6,f0a:320,f0b:170,F:[700,1220,2600],h:.02,asp:.25,vib:5,vd:.03}],
+  get:()=>[{t:0,d:.15,f0a:245,f0b:320,F:[740,1300,2600],h:.04,asp:.3,amp:.9}],
+  groan:()=>[{t:0,d:.36,f0a:190,f0b:160,F:[520,950,2450],h:.06,asp:.45,oq:.45,jit:.03}],
+  huh:()=>[{t:0,d:.2,f0a:205,f0b:290,F:[580,1450,2550],h:.05,asp:.35}],
+  shout:()=>[{t:0,d:.22,f0a:300,f0b:235,F:[560,1850,2600],h:.07,asp:.3,oq:.5}]};
+const HVP={};
+function heroSay(k,vol){if(!voxOn()||!HEROV[k])return;const p=HVP[k]||(HVP[k]=[]);let a;if(p.length<3){a=vsynth(HEROV[k](),VSR);p.push(a)}else a=p[(Math.random()*p.length)|0];
+  SND.pcm(a,VSR,{vol:(vol==null?1:vol)*.17*vloud(a),rate:.96+Math.random()*.08})}
 
 /* ---------- everyone's voice (Part 6v, continued) ----------
    Nobody speaks words. Each character has a small vocal identity, set in its CHAR entry as `voice`:
@@ -2295,14 +2407,10 @@ const RIDE=(()=>{const len=34,dt=.05,v=t=>t<13.4?1.2+Math.sin(t*.5)*.04:t<14.6?1
   const zs=[0];let z=0;for(let i=1;i<=len/dt;i++){z+=v((i-.5)*dt)*dt;zs.push(z)}return{len,dt,z:zs.map(s=>14+z-s)}})();
 const rideZ=t=>{const f=clamp(t,0,RIDE.len)/RIDE.dt,i=Math.min(f|0,RIDE.z.length-2);return cl(RIDE.z[i],RIDE.z[i+1],f-i)};
 const STOPZ=rideZ(15),SHZ=STOPZ-.9,SHX=roadX(SHZ)+1.75;
-/* after the ride, the old opening plays on, a little slower: its clock is o = oldT(t) */
-/* the second act runs on the old scene clock: slowed while you get off the horse (DIS), then at .88 */
-const RIDE_T=34,ACT0=RIDE_T+(6.6-5)/.6,DIS=[6.6,7.75],DIS_R=.42,ACT1=ACT0+(DIS[1]-DIS[0])/DIS_R,
-  oldT=t=>t<ACT0?5+(t-RIDE_T)*.6:t<ACT1?DIS[0]+(t-ACT0)*DIS_R:DIS[1]+(t-ACT1)*.88,oldRate=t=>t<ACT0?.6:t<ACT1?DIS_R:.88;
-/* from the moment the tree wakes, the scene runs on its own longer timeline (treeAt) */
-const TREE0=ACT1+(17.4-DIS[1])/.88,TREE_LEN=15.6,INTRO_LEN=TREE0+TREE_LEN;
-/* the seedlings' hiding tree off to your right, where they peek from, and where they lead you */
-const SEEDT=[3.6,0,11.0],SEEDHD=[4.4,0,8.8],SEEDP=[{hide:[4.62,0,10.32],peek:[4.55,0,11.6],away:[6.5,0,8.3],peeks:[[5.3,5.95],[6.45,7.05]]},{hide:[4.42,0,10.1],peek:[3.15,0,9.95],away:[7.1,0,7.4],peeks:[[5.75,6.35],[6.9,7.45]]}];
+/* after the ride: the ambush, the theft, the chase and the tree, all on one clock (ambushAt, a = seconds since the ride ended) */
+const RIDE_T=34,AMB_LEN=30.4,TREE0=RIDE_T+21,INTRO_LEN=RIDE_T+AMB_LEN;
+/* the tree off to the right of the road where the seedlings live */
+const SEEDT=[3.6,0,11.0];
 /* puddles along the road: [x, z, rx, rz] */
 const PUD=[];(()=>{const R=rngOf(777),add=(x,z,rx,rz)=>PUD.push([x,z,rx,rz]);
   for(let z=-9;z<58;z+=2.2+R()*2.6){if(Math.abs(z-CREEK)<2.6||Math.abs(z-37.7)<1.2||Math.abs(z-30.6)<2)continue;add(roadX(z)+(R()-.5)*1.5,z,.26+R()*.4,.2+R()*.26)}
@@ -2748,14 +2856,19 @@ function cineBuild(){if(CINE.sc)return;const sc=new TH.Scene();CINE.sc=sc;CINE.c
   sc.add(woodsSet());CINE.rain=mkRain(sc);const A=CINE.A;
   A.maw=mkMaw();A.maw.position.set(0,0,-16);sc.add(A.maw);
   A.horse=mkHorse();sc.add(A.horse);
-  A.hero=mkHero();shadow(A.hero.root,.3);A.hero.blade.material=new TH.MeshLambertMaterial({color:0xdfe6f2});sc.add(A.hero.root);
+  A.hero=mkHero();shadow(A.hero.root,.3);sc.add(A.hero.root);
   A.kid=mkHuman(NPCLOOK.wick);shadow(A.kid.root,.25);sc.add(A.kid.root);
   A.roots=[0,1,2,3].map(()=>mkRoot(sc));A.seeds=[mkSeedling(),mkSeedling()];A.seeds.forEach(s=>{shadow(s,.16);sc.add(s)});
+  /* the whirl of leaves Wick flies on, and the shimmer where the horse goes through the tree */
+  A.leaves=new TH.Group();A.leaves.visible=false;sc.add(A.leaves);{const lg=new TH.PlaneGeometry(.075,.045),cols=['#6a8a3a','#8aa04a','#a8783a','#5a7a2e'];
+    for(let i=0;i<16;i++){const lm=new TH.Mesh(lg,cmat(cols[i%4],null,{side:TH.DoubleSide}));lm.userData={ph:i*1.7,r:.26+(i%5)*.06,h:.1+(i%7)*.13};A.leaves.add(lm)}}
+  A.ripple=[0,1].map(()=>{const r=new TH.Mesh(new TH.RingGeometry(.55,.75,28),new TH.MeshBasicMaterial({color:0xc8ffe0,transparent:true,opacity:0,depthTest:false,depthWrite:false,blending:TH.AdditiveBlending,side:TH.DoubleSide,fog:false}));
+    r.position.set(0,1.0,-12.3);r.renderOrder=5;r.visible=false;sc.add(r);return r});
   A.folk=['maren','tobin','edda','corvo','ilse','hermit'].map(id=>{const h=mkNpc(id);shadow(h.root,.28);sc.add(h.root);return h})}
 function cineSky(top,hor){const g=CINE.sky.geometry,p=g.attributes.position.array,c=g.attributes.color.array;for(let i=0;i<p.length/3;i++){const k=Math.pow(clamp(p[i*3+1]/90,0,1),.5),cc=lerpC(hor,top,k);c[i*3]=cc[0];c[i*3+1]=cc[1];c[i*3+2]=cc[2]}g.attributes.color.needsUpdate=true}
 function cineStart(kind,done){if(!G3.r)glInit();cineBuild();if(M)closeMenu();dlgEl.hidden=true;const intro=kind==='intro';
-  Object.assign(CINE,{kind,t:0,done,len:intro?INTRO_LEN:13.2,fade:1,gal:0,galN:0,wph:0,flashAt:-99,lens:[],lastCam:null});CINE.cues.clear();state='cine';SND.stop();
-  const A=CINE.A,end=!intro,u=A.maw.userData,fog=CINE.sc.fog,W=CINE.rain;u.can.visible=!end;u.barkM.color.setHex(end?0x8a8682:0x6e5a48);u.lm.color.setHex(0x3a5c3a);A.folk.forEach(f=>f.root.visible=end);
+  Object.assign(CINE,{kind,t:0,done,len:intro?INTRO_LEN:13.2,fade:1,gal:0,galN:0,wph:0,flashAt:-99,lens:[],lastCam:null,lid:0,vig:0,white:0});CINE.cues.clear();state='cine';SND.stop();
+  const A=CINE.A,end=!intro,u=A.maw.userData,fog=CINE.sc.fog,W=CINE.rain;u.can.visible=!end;A.horse.visible=true;A.leaves.visible=false;A.ripple.forEach(r=>r.visible=false);A.maw.position.x=0;u.barkM.color.setHex(end?0x8a8682:0x6e5a48);u.lm.color.setHex(0x3a5c3a);A.folk.forEach(f=>f.root.visible=end);
   W.on=intro;[W.L,W.S,W.Rl].forEach(o=>o.visible=intro);CINE.shafts.forEach(s=>s.visible=end);
   if(end){cineSky(col3('#5a7ab8'),col3('#f0c494'));fog.color.setHex(0xe8cfa8);fog.near=16;fog.far=58;CINE.hemi.color.setHex(0xffe0c0);CINE.hemi.groundColor.setHex(0x4a5a2a);CINE.hemi.intensity=.85;CINE.sun.color.setHex(0xffb070);CINE.sun.intensity=.9;ambStop()}
   else{cineSky(col3('#363f44'),col3('#58645e'));fog.color.setHex(0x58645e);fog.near=3.5;fog.far=34;CINE.hemi.color.setHex(0xa8b4bc);CINE.hemi.groundColor.setHex(0x283022);CINE.hemi.intensity=.82;CINE.sun.color.setHex(0xb8c8d8);CINE.sun.intensity=.4;ambStart()}
@@ -2766,13 +2879,16 @@ const cue=(name,t,at,fn)=>{if(t>=at&&!CINE.cues.has(name)){CINE.cues.add(name);f
 function cineTick(dt){CINE.t+=dt;const t=CINE.t,intro=CINE.kind==='intro';if(intro)introAt(t,dt);else endAt(t,dt);
   /* a hard cut wipes the lens */
   const cp0=CINE.cam.position;if(CINE.lastCam&&cp0.distanceTo(CINE.lastCam)>1.2)CINE.lens.length=0;CINE.lastCam=cp0.clone();
-  if(intro){rainTick(dt);lensTick(dt);AMB.vol=cs(cp(t,0,3.5))*(t>=TREE0?1-cp(t-TREE0,13.9,14.9):1);ambTick(dt,t)}
+  if(intro){rainTick(dt);lensTick(dt);AMB.vol=cs(cp(t,0,3.5))*(1-cp(t,INTRO_LEN-1.4,INTRO_LEN-.3));ambTick(dt,t)}
   const f=flashLv();CINE.hemi.intensity=CINE.base.hemi*(1+f*1.8);CINE.sky.material.color.setScalar(1+f*1.3);CINE.sc.fog.color.copy(CINE.base.fog).lerp(CINE.base.lit,f*.45);
   for(const L of CINE.lamps){const k=.84+.1*Math.sin(t*13+L.ph)+.06*Math.sin(t*31+L.ph*3);L.l.intensity=L.i*k;if(L.halo)L.halo.material.opacity=.42*k}
   for(const p of CINE.flap)p.m.rotation.x=(Math.sin(t*p.f+p.ph)*.12+Math.sin(t*p.f*2.7)*.05)*p.amp;
   if(CINE.water)CINE.water.offset.x-=dt*.22;if(CINE.t>=CINE.len)cineEnd()}
-function cineRender(){const c=CINE.cam;c.aspect=W3/H3;c.updateProjectionMatrix();CINE.sky.position.copy(c.position);FADE.value=.6;G3.r.render(CINE.sc,c)}
-function drawCineHUD(){const c=ctx,W=W3,H=H3;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);if(CINE.lens.length)drawLens(c);const bh=Math.round(H*.1);c.fillStyle='#000';c.fillRect(0,0,W,bh);c.fillRect(0,H-bh,W,bh);
+function cineRender(){const c=CINE.cam;c.aspect=W3/H3;c.updateProjectionMatrix();CINE.sky.position.copy(c.position);FADE.value=.6;present(CINE.sc,c)}
+function drawCineHUD(){const c=ctx,W=W3,H=H3;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);if(CINE.lens.length)drawLens(c);
+  if(CINE.vig>0){const g=c.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.8);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${CINE.vig})`);c.fillStyle=g;c.fillRect(0,0,W,H)}
+  if(CINE.lid>0){const lh=Math.round(H/2*clamp(CINE.lid,0,1));c.fillStyle='#000';c.fillRect(0,0,W,lh);c.fillRect(0,H-lh,W,lh)}
+  if(CINE.white>0){c.fillStyle=`rgba(255,255,255,${clamp(CINE.white,0,1)})`;c.fillRect(0,0,W,H)}const bh=Math.round(H*.1);c.fillStyle='#000';c.fillRect(0,0,W,bh);c.fillRect(0,H-bh,W,bh);
   if(CINE.t>1&&CINE.t<CINE.len-1)carve(c,'START SKIPS',W-48,H-bh+Math.round(bh/2)-2,'rgba(255,255,255,.45)');if(CINE.fade>0){c.fillStyle=`rgba(0,0,0,${clamp(CINE.fade,0,1)})`;c.fillRect(0,0,W,H)}}
 /* posing people in the scenes */
 function humanReset(h){if(h.base){restPose(h);h.root.visible=true;return}h.root.visible=true;h.root.scale.setScalar(1);h.body.rotation.set(0,0,0);h.body.position.y=.42;h.head.rotation.set(0,0,0);for(const l of h.legs)l.rotation.set(0,0,0);for(const a of h.arms)a.rotation.set(0,0,0)}
@@ -2805,107 +2921,132 @@ function rideAt(t,dt){const A=CINE.A,H=A.horse,h=A.hero;CINE.fade=1-cs(cp(t,0,3.
   [4.2,9.6,19.3,20.4,24.9,30.4].forEach((at,i)=>cue('lens'+i,t,at,lensDrop));
   const C=rideCam(t,H),c=CINE.cam;c.position.set(C.pos[0],C.pos[1],C.pos[2]);c.up.set(0,1,0);c.lookAt(C.look[0],C.look[1],C.look[2]);if(C.roll)c.rotateZ(C.roll)}
 
-/* ---------- getting off the horse ----------
-   Hands go to the saddle, the left leg swings back over the rump while he turns to face the horse standing in the right
-   stirrup, then he lets himself down its side holding on to the saddle, lands with bent knees, lets go and steps away.
-   Points are in the horse's own frame (x to its left, y up from the ground, z forward); DS is the side he gets off on. */
-const DS=-1,DSTAND=[.9,0,11.6];
-const DCURVE=new TH.CatmullRomCurve3([[.3,1.13,.06],[.14,1.58,-.4],[DS*.16,1.6,-.44],[DS*.32,1.18,-.12]].map(p=>new TH.Vector3(p[0],p[1],p[2])));
-/* hands: [on the saddle before the swing, after it, at the bottom of the slide]. arms[0] carries the shield: it grips the withers and lets go
-   once he is round; the free hand takes the pommel, then the saddle's edge, and holds him all the way down */
-const DHAND=[[[DS*.05,1.44,.28],[DS*.14,1.41,.15],[DS*.2,1.25,.14]],[[.03,1.43,.17],[DS*.13,1.42,-.01],[DS*.2,1.22,-.01]]];
-const _dv=new TH.Vector3(),_dt=new TH.Vector3(),_dp=new TH.Vector3();
-const hlw=(H,p,v)=>H.localToWorld((v||new TH.Vector3()).set(p[0],p[1],p[2]));
-function dismountAt(h,H,q,t,stand,face){const u=H.userData,ry=H.rotation.y;H.updateMatrixWorld(true);
-  const sY=u.seat.getWorldPosition(_dv).y-H.position.y,hip=h.hipY||.52;
-  const p1=cs(cp(q,0,.12)),p2=cs(cp(q,.12,.45)),p3=cs(cp(q,.45,.78)),p5=cs(cp(q,.86,1)),crouch=Math.sin(Math.PI*cp(q,.75,.93));
-  /* where his feet are and which way he faces: on the seat, up in the right stirrup facing the horse, down its side, then away */
-  let rl=lerp3([0,sY+.05-hip,-.02],[DS*.4,1.12,0],p2);rl[1]+=Math.sin(p2*Math.PI)*.08;rl=lerp3(rl,[DS*.42,0,0],p3);
-  const rw=hlw(H,rl,_dp),y0=ry+p2*Math.PI/2,yaw=y0+angD(face,y0)*p5,root=[cl(rw.x,stand[0],p5),rw.y,cl(rw.z,stand[2],p5)];
-  place(h,root,yaw);
-  /* the body: leans over the saddle, straightens on the way down, dips as he lands */
-  if(q<.12)ridePose(h,0,.12);h.body.rotation.x=cl(cl(cl(.12,.38,p1),.46,p2),.1,p3)*(1-p5)+.22*crouch;h.body.position.y=.42-.1*crouch;h.head.rotation.x=.3*p1*(1-p5);
-  if(q>=.45&&q<.8){for(const l of h.legs)l.rotation.x=.08;h.knees.forEach(k=>k.rotation.x=.32)}
-  if(p5>0&&p5<1)walkPose(h,t*10,.55);
-  h.root.updateMatrixWorld(true);
-  const fx=Math.sin(yaw),fz=Math.cos(yaw),xx=Math.cos(yaw),xz=-Math.sin(yaw);
-  /* legs: the right foot stays in its stirrup while the left swings over; on the ground both feet stay planted through the landing */
-  const pole=i=>{const v=h.legs[i].getWorldPosition(_dt);v.x+=fx*.5;v.z+=fz*.5;v.y-=.1;return v};
-  if(q<.55){const w=1-cp(q,.45,.55);rideLegs(h,H,w,0);
-    if(q<.12)rideLegs(h,H,1,1);else{const c=DCURVE.getPoint(cp(q,.12,.45));legIK(h,1,hlw(H,[c.x,c.y,c.z]),pole(1),w)}}
-  const wl=cp(q,.7,.76)*(1-cp(q,.93,.98));
-  if(wl>0)for(let i=0;i<2;i++){const hp=h.legs[i].getWorldPosition(new TH.Vector3());legIK(h,i,new TH.Vector3(hp.x+fx*.03,.05,hp.z+fz*.03),pole(i),wl)}
-  /* hands: to the pommel and the withers, round to the saddle as he turns, sliding down its flap as he lowers, then let go */
-  for(let i=0;i<2;i++){const wa=p1*(1-cs(i?cp(q,.8,.9):cp(q,.48,.6)));if(wa<=0)continue;const D=DHAND[i],tgt=hlw(H,lerp3(lerp3(D[0],D[1],p2),D[2],p3)),sh=h.arms[i].getWorldPosition(new TH.Vector3()),o=i?1:-1;
-    armIK(h,i,tgt,new TH.Vector3(sh.x-fx*.35+xx*o*.3,sh.y-.35,sh.z-fz*.35+xz*o*.3),wa)}}
-
-/* ---------- the opening, part two: the seedlings, the theft, the tree (on its own clock, o) ---------- */
-const HK=[[5,0,0,14],[5.6,0,0,13],[6.1,0,0,12.35],[6.6,0,0,12],[10.3,0,0,12],[10.8,.1,0,11.3],[12,0,0,7],[13.95,0,0,-10.4],[14.6,0,0,-10.2],[15.2,-1.6,0,-9],[16.2,-8,0,-4],[17.6,-16,0,2],[30,-16,0,2]];
-function introAt(tn,dtn){if(tn<RIDE_T)return rideAt(tn,dtn);if(tn>=TREE0)return treeAt(tn-TREE0,dtn,tn);const t=oldT(tn),rate=oldRate(tn),dt=dtn*rate,A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw;
-  CINE.fade=t>21.55?cp(t,21.55,21.9):0;
-  /* the horse */
-  const hp=kf(HK,t),hq=kf(HK,t+.05),spd=Math.hypot(hq[0]-hp[0],hq[2]-hp[2])/.05;
-  H.position.set(hp[0],0,hp[2]);if(spd>.4)H.rotation.y=Math.atan2(hq[0]-hp[0],hq[2]-hp[2]);
-  const rear=Math.max(Math.sin(cp(t,10.1,10.7)*Math.PI)*.45,Math.sin(cp(t,13.95,14.75)*Math.PI)*.9);
-  horseDrive(H,spd*rate,dtn,{rear,paw:pawAt(t,[8.3,9.2]),ears:.4*hump(t,5.1,10,.3)-.1,pitch:.1*hump(t,5.3,7.6,.4),look:-.5*hump(t,5.1,9.9,.4)});
-  cue('paw1',t,8.77,()=>stompSnd(.9,false));cue('paw2',t,9.67,()=>stompSnd(.9,false));cue('land1',t,10.66,()=>{stompSnd(1,false);stompSnd(.8,false)});cue('land2',t,14.7,()=>{stompSnd(1,false);stompSnd(1,false)});
-  cue('whinny',t,10.15,()=>SND.tone(760,.5,{type:'sawtooth',vol:.04,to:420}));cue('whinny2',t,14,()=>{SND.tone(820,.6,{type:'sawtooth',vol:.05,to:380});SFX.boom();shake=.35});
+/* ---------- the opening, part two: the ambush ----------
+   Something flits through the trees ahead. Then Wick comes flying up from behind on a whirl of leaves and kicks you
+   clean off the horse. You come round on the ground to see him going over the horse as if he has never seen one:
+   poking its nose, knocking on its legs, peering at its hooves, scratching his head. He sees you getting up, jumps into
+   the saddle and is off. You run after him; he rides straight at the great tree, and through it, as if it were mist.
+   You stop, lost. Then it opens its eyes, and while you stare at it a root comes up out of the ground behind you,
+   takes you round the middle and puts you in its mouth. a = seconds since the ride ended; u = seconds since it woke. */
+const HK2=[[0,0,0,14],[2.9,0,0,11.9],[3.5,0,0,11.35],[4.3,0,0,11.15],[12.55,0,0,11.15],[13.35,0,0,10.1],[16.35,0,0,-5.6],[17.25,0,0,-10.6],[18.3,0,0,-16.4]];
+const LAND=[-1.05,0,9.75],HSTOP=[0,0,-8.9],ROOTO=[1.15,-.02,-6.25];
+/* where Wick is, stretch by stretch: [time, x, y, z] */
+const WK={dart:[[.55,-4.6,2.7,4.6],[1.35,4.8,2.2,3.4]],swoop:[[2.3,.6,.25,17.8],[2.7,.35,1.0,14.4],[2.92,.1,1.05,12.55]],
+  rebound:[[2.92,.1,1.05,12.55],[3.2,.4,1.9,13.2],[3.45,.6,2.0,13.5],[4.2,1.2,1.2,11.0],[4.75,.95,0,10.35]],
+  look:[[4.9,.95,0,10.35],[5.6,.75,0,9.85],[6.3,.38,0,9.5]],around:[[7.35,.8,0,8.95],[8.1,.66,0,10.42]],side:[[9.95,.66,0,10.42],[10.6,.66,0,11.35]]};
+/* a painted face by number (for Wick: 0 plain, 3 happy, 4 surprised; for you: 0 open, 1 eyes shut) */
+const paintFace=(h,i)=>{const f=h.fx;if(f&&f.headMesh&&f.faces&&f.faces[i]&&f.headMesh.material.map!==f.faces[i])f.headMesh.material=cmat('#ffffff',f.faces[i])};
+/* Wick in the air: leaning into it with his arms back, or leaning back with one leg out for the kick */
+function kidFly(k,a,kick){k.body.rotation.x=kick?-.45:.5;k.legs.forEach((l,n)=>l.rotation.x=kick?(n?-1.55:-.5):.45+Math.sin(a*9+n*3)*.12);if(k.knees)k.knees.forEach((n,i)=>n.rotation.x=kick?(i?.05:1.4):.5);
+  k.arms.forEach((ar,n)=>ar.rotation.set(kick?.4:.9,0,(n?1:-1)*(kick?.9:.35)))}
+/* the whirl of leaves that carries him */
+function leavesOn(A,k,a,on){const L=A.leaves;L.visible=on;if(!on)return;L.position.copy(k.root.position);
+  L.children.forEach(m=>{const u=m.userData,an=a*7.5+u.ph;m.position.set(Math.cos(an)*u.r,u.h+Math.sin(a*5+u.ph)*.06,Math.sin(an)*u.r);m.rotation.set(a*9+u.ph,a*6+u.ph*2,a*4)})}
+function introAt(tn,dtn){if(tn<RIDE_T)return rideAt(tn,dtn);return ambushAt(tn-RIDE_T,dtn,tn)}
+function ambushAt(a,dt,tn){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw,R=A.roots,u=a-21;
+  /* black after the kick; then your eyes open and close a few times before they stay open */
+  CINE.fade=a<3.65?0:a<4.1?cp(a,3.65,4.1):a<4.9?1:a<5.5?1-cp(a,4.9,5.5):u>8.6?cp(u,8.6,9.4):0;CINE.white=Math.max(0,(CINE.white||0)-dt*2.4);
+  CINE.vig=a>4.9&&a<7.6?.85:0;CINE.lid=a>4.9&&a<7.6?clamp(1-cs(cp(a,4.95,5.45))*.55-cs(cp(a,6.0,6.5))*.35-cs(cp(a,7.0,7.4))*.1+.4*hump(a,5.55,5.95,.15)+.25*hump(a,6.6,6.9,.12),0,1):0;
+  A.seeds.forEach(s=>s.visible=false);[1,2,3].forEach(i=>R[i].g.visible=false);
+  /* the horse: startled by the kick, stands to be looked at, bolts with Wick on it, and goes into the tree */
+  const hp=kf(HK2,a),hq=kf(HK2,a+.05),spd=Math.hypot(hq[0]-hp[0],hq[2]-hp[2])/.05;H.visible=a<18.3;H.position.set(hp[0],0,hp[2]);if(spd>.4)H.rotation.y=Math.atan2(hq[0]-hp[0],hq[2]-hp[2]);
+  horseDrive(H,spd,dt,{rear:.35*blip(a,2.95,3.7)+.45*blip(a,12.35,12.95),paw:pawAt(a,[9.0]),shake:Math.sin(a*26)*(.4*blip(a,6.92,7.5)+.2*blip(a,3,3.5)),
+    look:.45*hump(a,5.2,7.0,.3)-.35*hump(a,8.2,9.6,.3)+.3*hump(a,9.9,11.4,.3),ears:.4*hump(a,1,2.4)-.45*blip(a,6.9,7.8)-.1,pitch:.1*hump(a,5.5,6.9,.3)-.25*blip(a,6.9,7.4)});
   /* you */
-  humanReset(h);heroGear(h,t>16.35&&t<21.6);
-  const HD=SEEDHD;
-  if(t<6.6)rideOn(h,H,{t:tn,tilt:.1*cp(t,5.2,5.8),look:-.8*cs(cp(t,5.1,5.6))});
-  else if(t<DIS[1])dismountAt(h,H,cp(t,DIS[0],DIS[1]),tn,DSTAND,lookAng(DSTAND,SEEDT));
-  else if(t<7.9)place(h,DSTAND,lookAng(DSTAND,SEEDT));
-  else if(t<10){const K=[[7.9,.9,0,11.6],[10,HD[0],0,HD[2]]],a=kf(K,t),b=kf(K,t+.05);place(h,a,lookAng(a,b));walkPose(h,t*8,.7)}
-  else if(t<10.9){const turn=cs(cp(t,10.35,10.85));place(h,HD,cl(lookAng(HD,[6.8,0,7.4]),lookAng(HD,[-.4,0,12]),turn))}
-  else if(t<19.6){const K2=[[10.9,HD[0],0,HD[2]],[12.6,1.5,0,6.2],[15,.4,0,3.0],[17.4,0,0,.9]],a=kf(K2,t),b=kf(K2,t+.05);place(h,a,lookAng(a,b));walkPose(h,t*13,1);h.body.rotation.x=.15;
-    if(t>16.35){h.arms[0].rotation.set(-1.5,0,0);h.arms[1].rotation.set(-.5,-.3,0)}cue('draw',t,16.35,()=>SND.tone(1600,.12,{vol:.05,type:'square',to:2600}))}
-  else if(t<20.9){place(h,[0,0,-9.3],Math.PI);const sw=(t-19.6)%.5/.5;h.arms[1].rotation.set(-1.45,1.3-sw*2.7,0);h.trail.visible=sw<.6;h.trail.rotation.z=1.3-sw*2.7-Math.PI/2;h.trail.material.opacity=.4*(1-sw);cue('sw1',t,19.65,()=>{SFX.swing();SFX.clank()});cue('sw2',t,20.15,()=>{SFX.swing();SFX.clank()});
-    if(t>20.6){h.arms[1].rotation.set(-2.2,0,0);h.arms[0].rotation.set(-2.2,0,0);h.body.rotation.x=-.25}}
-  else if(t<21.6){const q=cs(cp(t,20.9,21.6));place(h,[0,cl(0,1.6,q),cl(-9.3,-12.9,q)],Math.PI+q*2);h.body.rotation.x=-q*1.5;h.root.scale.setScalar(1-q*.25);h.arms.forEach(a=>a.rotation.x=-2.6);h.legs.forEach((l,n)=>l.rotation.x=Math.sin(t*20+n)*.6)}
-  else h.root.visible=false;
+  humanReset(h);heroGear(h,u>=2.0&&u<7.2);paintFace(h,a>2.95&&a<10.45?1:0);let hv=true;const hpos=h.root.position;
+  if(a<2.92)rideOn(h,H,{t:tn,look:-.75*hump(a,.75,2.2,.25),tilt:.12*hump(a,.75,2.2,.25)});
+  else if(a<3.55){const q=cs(cp(a,2.92,3.55)),st=seatRoot(h,H);place(h,[cl(st[0],LAND[0],q),cl(st[1],0,q)+Math.sin(q*Math.PI)*.45,cl(st[2],LAND[2],q)],Math.PI);
+    h.body.rotation.x=cl(.2,1.52,q);h.body.position.y=cl(.42,.11,q);h.arms.forEach((ar,n)=>ar.rotation.set(-2.4+Math.sin(a*20+n)*.5,0,0));h.legs.forEach((l,n)=>l.rotation.x=Math.sin(a*18+n*2)*.6)}
+  else if(a<10.4){place(h,LAND,Math.PI);h.body.rotation.x=1.52;h.body.position.y=.11;h.arms[0].rotation.set(-2.6,0,.3);h.arms[1].rotation.set(-1.0,0,-.25);h.head.rotation.y=-.5+.12*blip(a,5.5,6.1)}
+  else if(a<10.95){const q=cs(cp(a,10.4,10.95));place(h,LAND,Math.PI);h.body.rotation.x=cl(1.52,0,q);h.body.position.y=cl(.11,.18,q);h.legs.forEach((l,n)=>l.rotation.set(cl(0,-1.45,q),0,(n?-.25:.25)*q));h.arms.forEach(ar=>ar.rotation.x=cl(-1.8,-.4,q))}
+  else if(a<11.65){place(h,LAND,Math.PI);h.body.position.y=.18;h.legs.forEach((l,n)=>l.rotation.set(-1.45,0,n?-.25:.25));h.arms[0].rotation.x=-.4;
+    if(a<11.35){h.arms[1].rotation.set(-2.6,0,-.4+Math.sin(a*14)*.25);h.head.rotation.z=Math.sin(a*6)*.12}else{h.arms[1].rotation.x=-.4;h.head.rotation.y=-1.15*cs(cp(a,11.35,11.6))}}
+  else if(a<12.9){const q=cs(cp(a,11.65,12.3)),yaw=Math.PI+angD(lookAng(LAND,[.66,0,11.35]),Math.PI)*q;place(h,LAND,yaw);h.body.position.y=cl(.18,.42,q);h.legs.forEach((l,n)=>l.rotation.set(cl(-1.45,0,q),0,(n?-.25:.25)*(1-q)));
+    h.head.rotation.y=-1.15*(1-q);if(a>12.35){h.arms[1].rotation.set(-1.45,0,-.1);h.body.rotation.x=.12}}
+  else if(a<18.7){const K=[[12.9,LAND[0],0,LAND[2]],[13.3,-.9,0,9.1],[16.6,-.25,0,-3.6],[18.0,-.05,0,-7.7],[18.7,0,0,-8.9]],p0=kf(K,a),p1=kf(K,a+.05),v=Math.hypot(p1[0]-p0[0],p1[2]-p0[2])/.05,amt=clamp(v/3.8,.25,1);
+    place(h,p0,v>.2?lookAng(p0,p1):Math.PI);walkPose(h,tn*(8+5*amt),amt);h.body.rotation.x=.16*amt}
+  else if(u<0){place(h,HSTOP,Math.PI);h.body.position.y=.42+Math.sin(a*7)*.012*(1-cp(a,18.7,19.4));
+    if(a>19.2&&a<20.1)h.head.rotation.y=.8*Math.sin((a-19.2)/.9*TAU);else if(a>=20.1){h.arms[1].rotation.set(-2.7,0,-.5+Math.sin(a*16)*.2);h.head.rotation.z=.15;h.arms[0].rotation.set(-.3,0,.25)}}
+  else if(u<4.6){const back=cs(cp(u,1.2,1.8));place(h,[0,0,cl(HSTOP[2],-8.5,back)],Math.PI);h.head.rotation.x=-.35*cs(cp(u,.4,1.2));if(back>0&&back<1)walkPose(h,-tn*9,.6);
+    if(u>1.2&&u<2.0)h.arms.forEach(ar=>ar.rotation.x=-1.0);
+    if(u>=2.0){h.arms[1].rotation.set(-1.2,0,-.15);h.arms[0].rotation.set(-1.0,0,.2);h.body.position.y=.4+Math.sin(u*9)*.008}}
+  else if(u<4.95){place(h,[0,0,-8.5],Math.PI);h.body.rotation.z=Math.sin(u*30)*.15;h.arms.forEach((ar,n)=>ar.rotation.set(-1.8+Math.sin(u*24+n)*.6,0,0))}
+  else if(u<7.2){const K=[[4.95,0,0,-8.5],[5.55,.15,1.0,-7.95],[6.25,0,2.65,-9.3],[6.85,0,2.25,-11.6],[7.2,0,1.55,-12.95]],p0=kf(K,u);place(h,p0,Math.PI+cs(cp(u,4.95,7.2))*1.4);
+    h.body.rotation.x=-.8;h.root.scale.setScalar(1-.25*cp(u,6.85,7.2));h.arms.forEach((ar,n)=>ar.rotation.set(-2.6+Math.sin(u*16+n)*.45,0,0));h.legs.forEach((l,n)=>l.rotation.x=Math.sin(u*18+n*2)*.6)}
+  else hv=false;
+  h.root.visible=hv;
   /* Wick */
-  humanReset(k);
-  if(t<9)k.root.visible=false;
-  else if(t<9.45){const q=cp(t,9,9.3);place(k,[cl(2.8,2.4,q),0,cl(15.25,14.9,q)],lookAng([2.4,0,14.9],[0,0,12]));k.body.rotation.z=.25}
-  else if(t<10.05){const a=kf([[9.45,2.4,0,14.9],[10.05,.75,0,12.1]],t);place(k,a,lookAng(a,[.75,0,12.1]));walkPose(k,t*14,1);k.body.rotation.x=.25}
-  else if(t<10.4){const q=cp(t,10.05,10.4),st=seatRoot(k,H);place(k,[cl(.75,st[0],q),cl(0,st[1],q)+Math.sin(q*Math.PI)*.4,cl(12.1,st[2],q)],H.rotation.y)}
-  else if(t<13.95)rideOn(k,H,{lean:.45,ph:CINE.gal});
-  else if(t<14.5){const q=cp(t,13.95,14.5);place(k,[0,cl(1.3,1.8,q)+Math.sin(q*Math.PI)*.6,cl(-10.4,-12.5,q)],Math.PI);k.body.rotation.x=q*2.4;k.arms.forEach(a=>a.rotation.x=-2.5)}
-  else if(t<14.85){const q=cp(t,14.5,14.85);place(k,[cl(0,.25,q),cl(1.8,0,q*q),cl(-12.5,-11.6,q)],0);k.body.rotation.x=cl(2.4,0,q)}
-  else if(t<18.2){place(k,[.25,0,-11.6],0);k.legs.forEach((l,n)=>l.rotation.set(-1.45,0,n?-.25:.25));k.body.position.y=.18;
-    const rub=t>15.1&&t<17.5;if(rub){k.arms[1].rotation.set(-2.6,0,-.4+Math.sin(t*14)*.25);k.head.rotation.z=Math.sin(t*6)*.12}else{k.arms.forEach(a=>a.rotation.x=-.4)}if(t>17.5)k.head.rotation.x=-.5;cue('ow',t,15.15,()=>SND.tone(520,.18,{type:'triangle',vol:.04,to:380}))}
-  else if(t<18.95){const q=cs(cp(t,18.2,18.9));place(k,[cl(.25,0,q),cl(0,1.7,q),cl(-11.6,-13.1,q)],q*3);k.root.scale.setScalar(1-q*.35);k.arms.forEach(a=>a.rotation.x=-2.6);k.body.rotation.x=-q}
-  else k.root.visible=false;
-  cue('kid0',t,9.15,()=>kidGiggle(.45));cue('kid1',t,10.42,()=>kidGiggle(1));cue('kid2',t,11.35,()=>kidGiggle(1));cue('kid3',t,12.4,()=>kidGiggle(.85));cue('kid4',t,13.3,()=>kidGiggle(.7));
-  /* the seedlings */
-  cue('gg0',t,5.02,()=>giggle(0));
-  A.seeds.forEach((s,n)=>{const Q=SEEDP[n];Q.peeks.forEach(([a],i)=>cue('gg'+n+'_'+i,t,a+.05,()=>giggle(n)));cue('ggo'+n,t,7.8+n*.12,()=>giggle(n));cue('ggr'+n,t,8.75+n*.45,()=>giggle(n));cue('ggs'+n,t,9.55+n*.3,()=>giggle(n));
-    if(t<5.1||t>10.95){s.visible=false;return}s.visible=true;let p=Q.hide.slice(),lean=0,face=lookAng(Q.hide,[0,0,12.6]);
-    if(t<7.75){let pk=0;for(const[a,b]of Q.peeks)pk=Math.max(pk,cs(cp(t,a,a+.25))*(1-cs(cp(t,b-.25,b))));p=lerp3(Q.hide,Q.peek,pk);lean=pk*(n?-.4:.4);p[1]=Math.abs(Math.sin(t*9+n))*.05*pk}
-    else if(t<8.05){p=Q.peek.slice();p[1]=Math.abs(Math.sin(t*10+n))*.22;face=lookAng(p,[.9,0,11.6])}
-    else if(t<10.4){const q=cp(t,8.05,10.1);p=lerp3(Q.peek,Q.away,q);p[1]=Math.abs(Math.sin(t*8+n*1.3))*.28;const hr=h.root.position;face=(t>8.7&&t<9.05)||(t>9.5&&t<9.8)||q>=1?lookAng(p,[hr.x,0,hr.z]):lookAng(Q.peek,Q.away)}
-    else{p=Q.away.slice();p[1]=-cp(t,10.45,10.9)*.45}
-    s.position.set(p[0],p[1],p[2]);s.rotation.y=face;s.rotation.z=lean;s.scale.setScalar(1.4)});
-  /* the tree wakes up, with lightning */
-  const open=Math.max(cs(cp(t,17.85,18.25))*(1-cs(cp(t,18.85,19.2))),cs(cp(t,20.3,20.75))*(1-cs(cp(t,21.45,21.75))));mawPose(m,open,t<17.4?0:cs(cp(t,17.4,17.8)));
-  cue('drone',t,17.4,()=>SND.tone(55,2.5,{type:'sawtooth',vol:.06}));cue('bolt',t,17.42,()=>thunder(1,true,.3));cue('creak',t,17.85,()=>SND.noise(.5,{lp:300,vol:.08}));cue('chomp',t,19.15,()=>{SFX.boom();shake=.3});cue('creak2',t,20.3,()=>SND.noise(.5,{lp:300,vol:.08}));cue('chomp2',t,21.7,()=>{SFX.boom();shake=.45});
-  cue('lensA',t,11.2,lensDrop);cue('lensB',t,18.7,lensDrop);
+  humanReset(k);let kv=true,fly=false;paintFace(k,(a>3.0&&a<3.45)||(a>11.7&&a<12.4)||(a>12.95&&a<16.5)?3:(a>6.95&&a<7.6)||(a>9.05&&a<9.5)?4:a>4.9&&a<11.7?0:3);
+  if(a<.55)kv=false;
+  else if(a<1.35){const p0=kf(WK.dart,a),p1=kf(WK.dart,a+.05);place(k,p0,lookAng(p0,p1));kidFly(k,a,false);fly=true}
+  else if(a<2.3)kv=false;
+  else if(a<2.92){place(k,kf(WK.swoop,a),Math.PI);kidFly(k,a,a>2.6);fly=true}
+  else if(a<4.75){const p0=kf(WK.rebound,a),p1=kf(WK.rebound,a+.05);place(k,p0,a<3.45?Math.PI:lookAng(p0,p1));kidFly(k,a,false);if(a<3.3)k.body.rotation.x=cl(-.45,-.45-TAU,cs(cp(a,2.92,3.3)));fly=true}
+  else if(a<4.9){const sp=WK.rebound[4].slice(1);place(k,sp,lookAng(sp,[0,0,10.15]));k.body.position.y=.42-.12*blip(a,4.75,4.9);fly=a<4.8}
+  else if(a<6.4){const p0=kf(WK.look,a),p1=kf(WK.look,a+.05);place(k,p0,lookAng(p0,[0,0,10.15]));if(Math.hypot(p1[0]-p0[0],p1[2]-p0[2])>.004)walkPose(k,tn*9,.6);
+    k.head.rotation.x=-.5;k.head.rotation.z=.28*Math.sin(a*2.4)}
+  else if(a<6.95){const sp=WK.look[2].slice(1),q=cs(cp(a,6.45,6.85));place(k,sp,lookAng(sp,[0,0,10.15]));k.arms[1].rotation.set(cl(-.4,-2.0,q),0,0);k.body.rotation.x=.15*q;k.head.rotation.x=-.45}
+  else if(a<7.35){const q=cs(cp(a,6.95,7.35)),s0=WK.look[2].slice(1);place(k,[cl(s0[0],.8,q),Math.sin(q*Math.PI)*.3,cl(s0[2],8.95,q)],lookAng(s0,[0,0,10.15]));k.arms.forEach(ar=>ar.rotation.x=-2.6);k.body.rotation.x=-.3}
+  else if(a<8.1){const p0=kf(WK.around,a),p1=kf(WK.around,a+.05);place(k,p0,lookAng(p0,p1));walkPose(k,tn*10,.7);k.head.rotation.x=-.25}
+  else if(a<9.05){const sp=WK.around[1].slice(1);place(k,sp,lookAng(sp,[.15,0,10.55]));k.body.position.y=.3;k.legs.forEach(l=>l.rotation.x=-1.1);if(k.knees)k.knees.forEach(n=>n.rotation.x=1.9);k.body.rotation.x=.55;k.head.rotation.x=.2;
+    const kn=Math.max(blip(a,8.5,8.65),blip(a,8.75,8.9));k.arms[1].rotation.set(-1.25-kn*.5,0,0);k.arms[0].rotation.x=-.4}
+  else if(a<9.95){const sp=WK.around[1].slice(1),q=cs(cp(a,9.5,9.95));place(k,sp,lookAng(sp,[.15,0,10.55]));
+    if(a<9.5){k.body.position.y=.18;k.legs.forEach((l,n)=>l.rotation.set(-1.45,0,n?-.25:.25));k.arms.forEach(ar=>ar.rotation.x=.6);k.head.rotation.x=-.3}
+    else{k.body.position.y=cl(.18,.42,q);k.legs.forEach((l,n)=>l.rotation.set(cl(-1.45,0,q),0,(n?-.25:.25)*(1-q)))}}
+  else if(a<10.6){const p0=kf(WK.side,a),p1=kf(WK.side,a+.05);place(k,p0,lookAng(p0,p1));walkPose(k,tn*8,.5);k.arms[1].rotation.set(-1.5+Math.sin(a*12)*.15,0,0)}
+  else if(a<11.65){const sp=WK.side[1].slice(1);place(k,sp,lookAng(sp,[0,1.2,11.3]));k.head.rotation.x=-.6;k.head.rotation.z=.2*Math.sin(a*3);if(a>10.95)k.arms[1].rotation.set(-2.7,0,-.4+Math.sin(a*14)*.2)}
+  else if(a<12.0){const sp=WK.side[1].slice(1);place(k,sp,lookAng(sp,LAND));k.head.rotation.x=-.1}
+  else if(a<12.35){const q=cp(a,12.0,12.35),sp=WK.side[1].slice(1),st=seatRoot(k,H);place(k,[cl(sp[0],st[0],q),cl(0,st[1],q)+Math.sin(q*Math.PI)*.45,cl(sp[2],st[2],q)],H.rotation.y)}
+  else if(a<18.3)rideOn(k,H,{lean:.45,ph:CINE.gal,look:a>14.0&&a<14.9?1.25:0});
+  else kv=false;
+  k.root.visible=kv;leavesOn(A,k,a,kv&&fly);
+  /* the shimmer where the horse goes through the bark */
+  A.ripple.forEach((r,i)=>{const q=cp(a,17.2+i*.28,18.2+i*.28);r.visible=q>0&&q<1;if(!r.visible)return;r.scale.setScalar(.3+2.4*q);r.material.opacity=.85*(1-q)});
+  /* the tree: asleep, then its eyes open, it shudders, and its mouth opens for you */
+  const open=u<0?0:cs(cp(u,5.3,5.9))*(1-cs(cp(u,7.15,7.4)));mawPose(m,open,u<0?0:cs(cp(u,.6,2.4)));
+  m.position.x=u<0?0:Math.sin(u*37)*.025*(hump(u,0,2.8,.3)+blip(u,4.5,5.2)+hump(u,5.3,7.3,.3));
+  /* the root: up out of the ground behind you, creeping to your heels, then round your middle; it carries you up and over into the mouth */
+  if(u>=2.7&&u<4.6)rootPose(R[0],ROOTO,{g:cs(cp(u,2.7,4.4))*.85,E:[hpos.x+.06,.05,hpos.z+.12],arc:.06,wig:.1,t:u,r0:.075,r1:.03});
+  else if(u>=4.6&&u<7.5)rootPose(R[0],ROOTO,{g:u<7.2?cl(.85,1,cs(cp(u,4.6,4.85))):1-cp(u,7.2,7.5),wrap:{c:[hpos.x,0,hpos.z],r:.1,y0:hpos.y+.35,y1:hpos.y+.75,turns:1.6},arc:.3,wig:.06,t:u,r0:.085,r1:.035});
+  else R[0].g.visible=false;
+  /* sound */
+  const at=(name,t0,fn)=>cue(name,a,t0,fn);
+  at('flit',.7,()=>{kidGiggle(.35);SND.noise(.3,{hp:1200,vol:.03})});at('whoosh',2.42,()=>SND.noise(.42,{hp:700,vol:.07}));
+  at('kick',2.92,()=>{stompSnd(1,false);SND.noise(.18,{lp:700,vol:.12});SND.tone(110,.22,{type:'sine',vol:.12,to:45});heroSay('hurt');CINE.white=.6;shake=.4});
+  at('whinny',3.0,()=>SND.tone(760,.5,{type:'sawtooth',vol:.04,to:420}));at('cackle',3.08,()=>kidGiggle(1));at('land',3.55,()=>{stompSnd(.9,false);SND.noise(.2,{lp:400,vol:.1})});
+  at('ring',3.7,()=>{SND.tone(2300,1.5,{type:'sine',vol:.02});SND.tone(2312,1.5,{type:'sine',vol:.014})});at('dark',4.4,()=>kidGiggle(.3));at('kidland',4.76,()=>stompSnd(.3,false));
+  at('huh1',5.3,()=>kidSay('huh',.8));at('poke',6.88,()=>SND.tone(520,.04,{type:'triangle',vol:.03}));at('hsnort',6.94,()=>{snort(1);stompSnd(.6,false)});at('yelp',7.0,()=>kidSay('yelp',.6));
+  at('knock1',8.55,()=>SND.tone(180,.06,{type:'square',vol:.04,to:120}));at('knock2',8.8,()=>SND.tone(170,.06,{type:'square',vol:.04,to:115}));at('hpaw',9.05,()=>stompSnd(.9,false));at('bump',9.12,()=>stompSnd(.4,false));
+  at('groan',10.45,()=>heroSay('groan',.8));at('huh2',10.8,()=>kidSay('huh'));at('notice',11.75,()=>kidGiggle(1));at('mount',12.35,()=>{stompSnd(.5,false);SND.tone(820,.6,{type:'sawtooth',vol:.05,to:380})});at('hey',12.45,()=>heroSay('shout'));
+  at('g1',13.1,()=>kidGiggle(.8));at('g2',14.45,()=>kidGiggle(.7));at('g3',15.9,()=>kidGiggle(.55));
+  at('ripple',17.22,()=>{SND.tone(260,.9,{type:'sine',vol:.06,to:1300});SND.noise(.7,{hp:2600,vol:.035})});at('ripple2',17.5,()=>SND.tone(520,.7,{type:'triangle',vol:.03,to:1600}));
+  at('lost',19.3,()=>heroSay('huh'));
+  at('drone',21,()=>SND.tone(55,4,{type:'sawtooth',vol:.06}));at('bolt',21.02,()=>thunder(1,true,.3));at('tgroan',21.6,()=>SND.tone(48,2.4,{type:'sawtooth',vol:.05,to:38}));at('cr1',22,()=>creak(1));
+  at('gasp',22.25,()=>heroSay('huh',.7));at('rumble',23,()=>thunder(.55,false,0));at('draw',23,()=>SND.tone(1600,.12,{vol:.05,type:'square',to:2600}));at('cr2',23.3,()=>creak(.9));
+  at('rus1',23.8,()=>SND.noise(.6,{lp:500,vol:.03}));at('cr3',24.2,()=>creak(.5));at('rus2',24.6,()=>SND.noise(.5,{lp:450,vol:.03}));
+  at('grab',25.62,()=>{SND.noise(.35,{lp:500,vol:.1});heroSay('hurt');shake=.15});at('scream',26.0,()=>heroSay('fall'));
+  at('mouth',26.3,()=>{SND.noise(.5,{lp:300,vol:.08});SND.noise(.5,{lp:260,vol:.07,at:.45});SND.tone(42,2,{type:'sawtooth',vol:.04,to:36})});
+  at('chomp',28.25,()=>{SFX.boom();shake=.45});at('after',28.9,()=>creak(.7));
+  [1.5,8.6,14.2,24.0].forEach((t0,i)=>at('lensA'+i,t0,lensDrop));
   /* the camera */
-  const c=CINE.cam,hz=hp[2];let pos,look;const hpos=h.root.position;
-  if(t<5.75){const q=cs(cp(t,5,5.75));pos=[-1.25,2.15,cl(14.9,14.6,q)];look=[cl(2.0,3.6,q),cl(.95,.7,q),cl(11.8,11.1,q)]}
-  else if(t<DIS[0]){const q=cs(cp(t,5.75,7.45));pos=[cl(1.05,1.3,q),.72,cl(13.55,13.25,q)];look=[3.45,.34,11.2]}
-  else if(t<DIS[1]){const q=cs(cp(t,DIS[0],DIS[1]));pos=[cl(3.3,2.95,q),cl(1.55,1.3,q),cl(10.75,11.0,q)];look=[cl(.15,.45,q),cl(1.2,.85,q),cl(12.05,11.95,q)]}
-  else if(t<9){const q=cs(cp(t,DIS[1],9)),hr=h.root.position;pos=[7.4,1.3,10.7];look=[cl(4.0,(hr.x+6.5)/2,q),cl(.5,.5,q),cl(10.9,(hr.z+8.3)/2,q)]}
-  else if(t<10.9){pos=[5.9,1.4,7.6];look=[-.6,.95,12.4]}
-  else if(t<12.8){pos=[hpos.x-1.1,1.6,hpos.z+2.7];look=[0,1,hz]}   /* behind you as you give chase (kept clear of the trunk on the right) */
-  else if(t<14){pos=[-3.6,.85,-5.2];look=[0,1.15,hz]}
-  else if(t<16){pos=[5,1.6,-6.2];look=[.5,1.1,-10.6]}
-  else if(t<17.4){pos=[1.45,.95,-9.6];look=[.25,.55,-11.6]}
-  else if(t<19.5){pos=[-2.6,1,-7.6];look=[0,2.4,-13]}
-  else if(t<20.95){pos=[hpos.x+1.3,1.15,hpos.z+3.3];look=[0,1.5,-12]}
-  else{const q=cs(cp(t,20.95,21.9));pos=[0,1.75,cl(-8.6,-12.2,q)];look=[0,1.75,-14]}
-  c.position.set(pos[0]+Math.sin(tn*.53)*.015,pos[1]+Math.sin(tn*.71)*.012,pos[2]);if(shake>0){c.position.x+=(Math.random()-.5)*.2;c.position.y+=(Math.random()-.5)*.15;shake-=dtn}c.up.set(0,1,0);c.lookAt(look[0],look[1],look[2])}
+  const c=CINE.cam;let pos,look,roll=0;
+  if(a<2.3){pos=[hp[0]+1.15,1.95,hp[2]+3.0];look=[hp[0]-.25,1.45,hp[2]-6]}                 /* behind you on the horse */
+  else if(a<3.05){pos=[-3.7,1.15,12.9];look=[0,1.35,12.2]}                                  /* from the side: here he comes */
+  else if(a<4.1){pos=[-2.6,.55,8.2];look=[-.9,.35,9.9]}                                    /* you hit the ground */
+  else if(a<7.6){pos=[-1.32,.3+Math.sin(a*.9)*.02,9.0];look=[.3,.95,10.25];roll=.32-.06*cs(cp(a,4.9,7.6))}   /* through your eyes, lying there */
+  else if(a<10.5){pos=[2.25,.75,9.3];look=[.4,.55,10.6]}                                    /* Wick and the hooves */
+  else if(a<11.65){pos=[-2.5,.75,8.6];look=[-1.0,.5,9.9]}                                  /* you sit up */
+  else if(a<12.9){pos=[-1.75,1.45,9.1];look=[.5,1.25,11.4]}                                 /* over your shoulder as he jumps on */
+  else if(a<16.4){pos=[hpos.x-1.0,1.55,hpos.z+2.6];look=[0,1.1,hp[2]]}                      /* the chase */
+  else if(a<18.75){pos=[5.4,1.45,-6.2];look=[0,1.25,-11.6]}                                 /* into the tree */
+  else if(u<0){pos=[.85,1.32,-10.25];look=[0,1.28,-8.9]}                                       /* your face: where did he go? */
+  else if(u<2.6){pos=[-1.3,.95,-6.7];look=[.1,cl(1.9,2.9,cs(cp(u,0,2.4))),-13]}              /* it opens its eyes */
+  else if(u<4.6){pos=[1.5,.35,-5.4];look=[0,.3,-7.9]}                                       /* down at the ground behind you */
+  else if(u<5.5){pos=[3.0,1.25,-7.6];look=[0,1.0,-8.8]}                                     /* caught */
+  else if(u<7.45){pos=[4.8,1.9,-6.4];look=[0,1.8,-10.8]}                                    /* up and over, into the mouth */
+  else{const q=cs(cp(u,7.45,9.4));pos=[-1.0,1.15,cl(-6.2,-7.4,q)];look=[0,2.1,-13]}           /* the tree, shut again */
+  c.position.set(pos[0]+Math.sin(tn*.53)*.015,pos[1]+Math.sin(tn*.71)*.012,pos[2]);if(shake>0){c.position.x+=(Math.random()-.5)*.2;c.position.y+=(Math.random()-.5)*.15;shake-=dt}
+  c.up.set(0,1,0);c.lookAt(look[0],look[1],look[2]);if(roll)c.rotateZ(roll)}
 
 /* ---------- roots: a chain of bark segments laid along a curve that can grow, wriggle and coil round someone ---------- */
 function mkRoot(sc){const g=new TH.Group(),m=new TH.MeshLambertMaterial({map:TEX.bark2,color:0x6e5846}),geo=new TH.CylinderGeometry(1,1,1,6,1,true),segs=[];for(let i=0;i<14;i++){const s=new TH.Mesh(geo,m);s.matrixAutoUpdate=false;g.add(s);segs.push(s)}g.visible=false;sc.add(g);return{g,segs}}
@@ -2916,69 +3057,6 @@ function rootPose(T,S,o){const N=T.segs.length,g=clamp(o.g,0,1),t=o.t||0;T.g.vis
     if(W&&u>.6){const w=(u-.6)/.4,a=a0+w*W.turns*TAU;p=[W.c[0]+Math.cos(a)*W.r,cl(W.y0,W.y1,w),W.c[2]+Math.sin(a)*W.r]}
     else{const q=W?u/.6:u;p=lerp3(S,E,q);p[1]+=Math.sin(q*Math.PI)*(o.arc==null?.35:o.arc);const wg=(o.wig==null?.12:o.wig)*Math.sin(q*9+t*7+(o.ph||0))*(1-q);p[0]+=wg;p[2]+=wg*.6}pts.push(p)}
   for(let i=0;i<N;i++){const sg=T.segs[i];sg.matrix.copy(M4d(pts[i],pts[i+1],cl(o.r0||.07,o.r1||.022,i/N),0));sg.matrixWorldNeedsUpdate=true}}
-
-/* ---------- the opening, part three: the tree wakes (u = seconds since its eyes start to open) ---------- */
-function treeAt(u,dt,tn){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw,R=A.roots,mu=m.userData;CINE.fade=u>14.1?cp(u,14.1,14.6):0;
-  H.position.set(-16,0,2);horseDrive(H,0,dt,{});A.seeds.forEach(s=>s.visible=false);
-  /* the tree: its eyes open slowly, it shudders, its mouth creaks open for Wick and again for you */
-  const open=Math.max(cs(cp(u,4.6,6.6))*(1-cs(cp(u,7.45,7.8))),cs(cp(u,11.8,13.0))*(1-cs(cp(u,13.55,13.85))));mawPose(m,open,cs(cp(u,.6,2.4)));
-  m.position.x=Math.sin(u*37)*.025*(hump(u,0,2.8,.3)+blip(u,7.6,8.2)+blip(u,9.4,11.7)*.6+hump(u,11.5,13.9,.3));
-  /* Wick */
-  humanReset(k);const kp=k.root.position;let kv=true,kRoot=null;
-  if(u<2.4){place(k,[.25,0,-11.6],u<1.9?0:cl(0,Math.PI,cs(cp(u,1.9,2.4))));k.legs.forEach((l,n)=>l.rotation.set(-1.45,0,n?-.25:.25));k.body.position.y=.18;k.arms.forEach(a=>a.rotation.x=-.4);
-    const q=cs(cp(u,.3,1.6))*(1-cs(cp(u,1.9,2.2)));k.head.rotation.set(-.45*q,1.2*q,0);k.up.rotation.y=.4*q;if(u>1.6&&u<1.9)k.head.rotation.z=Math.sin(u*40)*.04}
-  else if(u<3.6){const q=cs(cp(u,2.4,3.6));place(k,[.25,0,cl(-11.6,-10.4,q)],Math.PI);k.legs.forEach((l,n)=>l.rotation.set(-1.2+Math.sin(u*14+n*3)*.35,0,n?-.3:.3));k.body.position.y=.17;k.up.rotation.x=-.45;k.arms.forEach((a,n)=>a.rotation.set(.7+Math.sin(u*14+n*3)*.25,0,n?-.3:.3));k.head.rotation.x=-.25}
-  else if(u<4.0){const q=cs(cp(u,3.6,4.0));place(k,[.25,0,-10.4],cl(Math.PI,TAU,q));k.body.position.y=cl(.17,.42,q);k.legs.forEach(l=>l.rotation.x=cl(-1.2,0,q));k.up.rotation.x=cl(-.45,.3,q)}
-  else if(u<4.45){const a=kf([[4,.25,0,-10.4],[4.45,.3,0,-9.6]],u);place(k,a,0);walkPose(k,tn*15,1);k.up.rotation.x=.35}
-  else if(u<4.8){const q=cs(cp(u,4.45,4.8));place(k,[.3,0,cl(-9.6,-9.4,q)],0);k.body.rotation.x=cl(0,1.3,q);k.body.position.y=cl(.42,.16,q);k.arms.forEach(a=>a.rotation.x=cl(0,-2.6,q))}
-  else if(u<7.0){const q=cs(cp(u,4.8,7.0));place(k,[cl(.3,.12,q),0,cl(-9.4,-12.0,q)],0);k.body.rotation.x=1.3;k.body.position.y=.16;k.arms.forEach((a,n)=>a.rotation.set(-2.7+Math.sin(u*9+n*2)*.35,0,n?-.25:.25));k.legs.forEach((l,n)=>l.rotation.x=Math.sin(u*11+n*2.5)*.4);k.head.rotation.x=-.6}
-  else if(u<7.65){const q=cs(cp(u,7.0,7.65)),up=cs(cp(u,7.0,7.38)),inn=cs(cp(u,7.3,7.65));place(k,[cl(.12,0,q),cl(.12,1.75,up),cl(-12.0,-13.1,inn)],q*3);k.body.rotation.x=cl(1.3,-.6,q);k.root.scale.setScalar(1-q*.35);k.arms.forEach((a,n)=>a.rotation.set(-2.4+Math.sin(u*20+n)*.5,0,0));k.legs.forEach((l,n)=>l.rotation.x=Math.sin(u*18+n*2)*.6)}
-  else kv=false;
-  k.root.visible=kv;
-  /* the root that trips him and drags him back, then the one from the mouth that lifts him in */
-  const ank=[kp.x,.07,kp.z+(u>4.45?-.32:-.05)];
-  rootPose(R[0],[.15,-.02,-12.55],{g:u<3.9?0:u<4.42?cp(u,3.9,4.42):u<7.0?1:1-cp(u,7.0,7.45),wrap:{c:ank,r:.05,y0:.05,y1:.13,turns:1.4},arc:.25,wig:.1,t:u,r0:.075,r1:.03});
-  /* you */
-  humanReset(h);heroGear(h,u<13.75);let hv=true;const hp=h.root.position;
-  if(u<7.4){const a=kf([[0,0,0,.9],[7.4,0,0,-8.9]],u),b=kf([[0,0,0,.9],[7.4,0,0,-8.9]],u+.05);place(h,a,lookAng(a,b));walkPose(h,tn*13,1);h.body.rotation.x=.15;h.arms[0].rotation.set(-1.5,0,0);h.arms[1].rotation.set(-.5,-.3,0)}
-  else if(u<8.8){place(h,[0,0,-8.9],Math.PI);h.arms[1].rotation.set(-1.1,0,-.15);h.arms[0].rotation.set(-1.0,0,.2);h.body.position.y=.42+Math.sin(u*9)*.012;h.head.rotation.x=-.35*cs(cp(u,7.4,8.4))}
-  else if(u<9.3){const a=kf([[8.8,0,0,-8.9],[9.3,0,0,-9.45]],u);place(h,a,Math.PI);walkPose(h,tn*10,.8);h.arms[1].rotation.set(-1.2,0,0)}
-  else if(u<11.6){place(h,[0,0,-9.45],Math.PI);const sw=clamp((u-9.35)%.7/.5,0,1),on=u<11.45;h.arms[1].rotation.set(-1.45,on?1.3-sw*2.7:-.6,0);h.trail.visible=on&&sw<.6;h.trail.rotation.z=1.3-sw*2.7-Math.PI/2;h.trail.material.opacity=.4*(1-sw);h.body.rotation.y=on?(.4-sw*.8)*.5:0;
-    if(u>11.2){h.body.rotation.x=-.2;h.arms[0].rotation.set(-1.4,0,0)}}
-  else if(u<12.5){place(h,[0,0,-9.45],Math.PI+Math.sin(u*9)*.2);h.body.rotation.z=Math.sin(u*11)*.12;h.arms[1].rotation.set(-.6+Math.sin(u*10)*.9,0,0);h.arms[0].rotation.set(-1.8+Math.sin(u*8)*.4,0,.3);h.legs.forEach((l,n)=>l.rotation.x=Math.sin(u*12+n*3)*.15)}
-  else if(u<13.75){const q=cs(cp(u,12.5,13.75));place(h,[0,cl(0,1.65,q),cl(-9.45,-12.9,q)],Math.PI+q*1.5);h.body.rotation.x=-q*1.3;h.root.scale.setScalar(1-q*.25);h.arms.forEach((a,n)=>a.rotation.set(-2.6+Math.sin(u*16+n)*.4,0,0));h.legs.forEach((l,n)=>l.rotation.x=Math.sin(u*18+n*2)*.6)}
-  else hv=false;
-  h.root.visible=hv;
-  /* roots out of the ground round your legs, and the one from the mouth round your waist (Wick's first) */
-  const hold=u<11.6?0:u<12.1?cp(u,11.6,12.1):u<12.9?1:1-cp(u,12.9,13.3);
-  rootPose(R[2],[hp.x-.7,-.02,hp.z+.35],{g:hold,wrap:{c:[hp.x,0,hp.z],r:.085,y0:.08,y1:.42,turns:1.6},arc:.2,t:u,ph:0,r0:.07,r1:.03});
-  rootPose(R[3],[hp.x+.65,-.02,hp.z-.3],{g:hold,wrap:{c:[hp.x,0,hp.z],r:.09,y0:.12,y1:.5,turns:1.3},arc:.25,t:u,ph:2.5,r0:.07,r1:.03});
-  const mouth=[0,1.62,-12.75];
-  if(u>=6.8&&u<7.7)rootPose(R[1],mouth,{g:cp(u,6.8,7.05),wrap:{c:[kp.x,0,kp.z],r:.08,y0:kp.y+.32,y1:kp.y+.48,turns:1.1},arc:.15,wig:.08,t:u,r0:.09,r1:.035});
-  else if(u>=12.2&&u<13.8)rootPose(R[1],mouth,{g:cp(u,12.2,12.5),wrap:{c:[hp.x,0,hp.z],r:.1,y0:hp.y+.5,y1:hp.y+.7,turns:1.1},arc:.2,wig:.08,t:u,r0:.1,r1:.04});
-  else R[1].g.visible=false;
-  /* sound */
-  cue('drone',tn,TREE0,()=>SND.tone(55,4,{type:'sawtooth',vol:.06}));cue('bolt',tn,TREE0+.02,()=>thunder(1,true,.3));
-  const at=(name,t0,fn)=>cue(name,u,t0,fn);
-  at('groan',.6,()=>SND.tone(48,2.4,{type:'sawtooth',vol:.05,to:38}));at('cr1',1.0,()=>creak(1));at('whim',1.05,()=>kidSay('whimper',.9));at('rumble',2.0,()=>thunder(.55,false,0));at('cr2',2.3,()=>creak(.9));
-  at('burst',3.92,()=>{SND.noise(.35,{lp:500,vol:.09});stompSnd(1,false)});at('yelp',4.42,()=>kidSay('yelp'));at('thud',4.75,()=>stompSnd(.8,false));
-  at('mouth1',4.6,()=>{SND.noise(.5,{lp:300,vol:.08});SND.noise(.5,{lp:260,vol:.07,at:.45});SND.tone(42,2,{type:'sawtooth',vol:.04,to:36})});at('no1',5.2,()=>kidSay('no'));at('no2',6.25,()=>kidSay('no',.9));
-  at('scream',6.95,()=>kidSay('scream'));at('chomp',7.72,()=>{SFX.boom();shake=.3});
-  for(const[i,t0]of[[0,9.45],[1,10.15],[2,10.85]])at('sw'+i,t0,()=>{SFX.swing();SFX.clank();shake=.06});
-  at('burst2',11.6,()=>{SND.noise(.4,{lp:500,vol:.1});stompSnd(1,false)});at('mouth2',11.8,()=>{SND.noise(.5,{lp:300,vol:.08});SND.noise(.5,{lp:260,vol:.07,at:.45})});at('chomp2',13.82,()=>{SFX.boom();shake=.45});
-  at('lensT1',2.6,lensDrop);at('lensT2',9.0,lensDrop);
-  /* the camera */
-  const c=CINE.cam;let pos,look;
-  if(u<1.9){const q=cs(cp(u,0,1.9));pos=[cl(-1.6,-1.3,q),cl(1.1,1.0,q),cl(-7.0,-7.6,q)];look=[.1,cl(1.9,2.9,q),-13]}
-  else if(u<3.9){pos=[.3,2.4,-12.2];look=[.25,.25,kp.z+.2]}
-  else if(u<4.9){pos=[4.3,1.05,-9.3];look=[0,.45,-10.6]}
-  else if(u<6.0){pos=[hp.x+.9,1.15,hp.z-3.0];look=[hp.x,1.0,hp.z]}
-  else if(u<7.95){pos=[3.2,1.35,-8.6];look=[0,1.0,-12.2]}
-  else if(u<9.3){pos=[.85,1.3,-6.8];look=[0,1.6,-13]}
-  else if(u<11.6){pos=[2.9,1.2,-8.3];look=[0,1.25,-10.8]}
-  else if(u<12.5){pos=[-1.6,.5,-7.6];look=[0,.8,-9.6]}
-  else{const q=cs(cp(u,12.5,14.4));pos=[0,cl(1.55,1.75,q),cl(-8.4,-12.35,q)];look=[0,1.75,-14]}
-  c.position.set(pos[0]+Math.sin(tn*.53)*.015,pos[1]+Math.sin(tn*.71)*.012,pos[2]);if(shake>0){c.position.x+=(Math.random()-.5)*.2;c.position.y+=(Math.random()-.5)*.15;shake-=dt}c.up.set(0,1,0);c.lookAt(look[0],look[1],look[2])}
 
 /* ---------- the ending ---------- */
 function endAt(t,dt){const A=CINE.A,H=A.horse,h=A.hero,k=A.kid,m=A.maw;
@@ -3091,9 +3169,10 @@ function hudText(){if(!PANEL||!room)return;const v=S.v,f=v.flames.filter(Boolean
 
 /* ---------- title, start, ending ---------- */
 const soundItem=()=>({t:'SOUND',v:()=>SOUND_NAMES[S.v.sound],adj:d=>{S.v.sound=(S.v.sound+d+3)%3;SND.mode=S.v.sound;S.save()}});
+const picItem=()=>({t:'PICTURE',v:()=>PIC==='soft'?'SOFT':'SHARP',adj:()=>setPic(PIC==='soft'?'sharp':'soft')});
 function title(){state='title';SND.play(SONGS.village);room=buildRoom('ow',2,5);E=[];P.x=cen(5);P.y=cen(6)+4;P.ang=Math.PI/2;P.inv=0;P.fall=0;P.hold=0;dlgEl.hidden=true;bagEl.hidden=true;mapEl.hidden=true;
   menu({cls:'title',html:'<h1 class="logo"><small>THE TALE OF</small>WICK</h1><p class="subt">HOLLOW WOOD</p><p>Stay on the path.</p>',i:SLOT,
-    items:[0,1,2].map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>pickSlot(n)})).concat(SLOTS.some(sv=>sv.v.started)?[{t:'DELETE SAVES',fn:delMenu}]:[],[soundItem(),{t:'HOW TO PLAY',fn:how}]),
+    items:[0,1,2].map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>pickSlot(n)})).concat(SLOTS.some(sv=>sv.v.started)?[{t:'DELETE SAVES',fn:delMenu}]:[],[soundItem(),picItem(),{t:'HOW TO PLAY',fn:how}]),
     foot:'STICK MOVE · B SWORD (B B LOCK ON) · A ACT/ROLL · X/Y ITEMS · SELECT FOCUS · START BAG'})}
 /* each file shows how far it has got: time played and roots cut, or that it is finished */
 function slotLabel(n){const v=SLOTS[n].v;if(!v.started)return'NEW';const f=(v.flames||[]).filter(Boolean).length;return(v.done?'DONE':f+'/4 ROOTS')+' · '+fmtTime(v.time||0)}
@@ -3107,7 +3186,7 @@ function delMenu(){const used=[0,1,2].filter(n=>SLOTS[n].v.started);if(!used.len
   const ask=(h,yes)=>menu({html:`<h2>${h}</h2><p>This can't be undone.</p>`,items:[{t:'NO',fn:delMenu},{t:'YES, DELETE',fn:yes}],back:delMenu});
   menu({html:'<h2>DELETE SAVES</h2><p>Pick a file to delete.</p>',items:used.map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>ask('DELETE FILE '+(n+1)+'?',()=>{eraseSlot(n);delMenu()})}))
     .concat(used.length>1?[{t:'DELETE ALL',fn:()=>ask('DELETE ALL '+used.length+' FILES?',()=>{used.forEach(eraseSlot);title()})}]:[],[{t:'BACK',fn:title}]),back:title})}
-function how(){menu({html:'<h2>HOW TO PLAY</h2><p class="keys">Walk with the <b>stick</b>; the camera follows behind you.<br><b>B</b> swings the sword: hold it and let go for a spin. Tap it <b>twice</b> quickly to lock on to the nearest enemy.<br><b>A</b> talks, reads and opens chests, and rolls when you\'re running (you can\'t be hurt mid-roll).<br><b>X</b> and <b>Y</b> use the items you set in the bag (<b>START</b>). They aim at whatever is in front of you.<br><b>SELECT</b> locks on too, lets go of a lock, or swings the camera behind you.<br>In the bag, <b>SELECT</b> turns to your quests, then the map.<br>Face a shot and your shield stops it.</p>',items:[{t:'BACK',fn:title}],back:title})}
+function how(){menu({html:'<h2>HOW TO PLAY</h2><p class="keys">Walk with the <b>stick</b>; the camera follows behind you.<br><b>B</b> swings the sword: hold it and let go for a spin. Tap it <b>twice</b> quickly to lock on to the nearest enemy.<br><b>A</b> talks, reads and opens chests, and rolls when you\'re running (you can\'t be hurt mid-roll).<br><b>X</b> and <b>Y</b> use the items you set in the bag (<b>START</b>). They aim at whatever is in front of you.<br><b>SELECT</b> locks on too, lets go of a lock, or swings the camera behind you.<br>While locked on, <b>A</b> leaps at your target with a chop that hits twice as hard.<br>In the bag, <b>SELECT</b> turns to your quests, then the map.<br>Face a shot and your shield stops it.</p>',items:[{t:'BACK',fn:title}],back:title})}
 function newGame(){const snd=S.v.sound;for(const k of Object.keys(S.v))delete S.v[k];Object.assign(S.v,FRESH());S.v.sound=snd;S.v.started=1;S.save();closeMenu();room=null;E=[];
   cineStart('intro',()=>{say(INTRO,{done:()=>{enterRoom('ow',2,5,cen(5),cen(6),'start');fade=1;state='fadein';setTimeout(()=>banner('NEW QUEST · OUT OF THE TREE'),1400)}})})}
 function cont(){closeMenu();S.v.q=S.v.q||{main:1};S.v.qc=S.v.qc||{};const a=S.v.at;try{if(a&&(a.map==='ow'||DUN[a.map]))enterRoom(a.map,a.rx,a.ry,a.x,a.y,'start');else enterRoom('ow',2,5,cen(5),cen(6),'start')}catch(e){enterRoom('ow',2,5,cen(5),cen(6),'start')}state='play'}
@@ -3115,7 +3194,7 @@ function ending(){S.v.done=1;S.v.hp=S.v.max;S.save();cineStart('end',()=>{say(OU
     items:[{t:'KEEP PLAYING',fn:()=>{closeMenu();fade=1;enterRoom('ow',2,5,cen(5),cen(6),'warp');state='fadein'}},{t:'TITLE',fn:title}]})}})})}
 
 /* ---------- buttons ---------- */
-function roll(){if(P.rollCd>0||P.roll>0||P.hold>0||P.fall>0||P.st==='hook'||P.swing>0||P.spin>0)return;let[ax,ay]=moveV;if(Math.hypot(ax,ay)<.2)[ax,ay]=fvec();else if(!lockT)P.ang=Math.atan2(ay,ax);const l=Math.hypot(ax,ay)||1;P.rvx=ax/l*175;P.rvy=ay/l*175;P.roll=.24;P.rollCd=.5;P.st='roll';SFX.roll()}
+function roll(){if(P.rollCd>0||P.roll>0||P.hold>0||P.fall>0||P.st==='hook'||P.swing>0||P.spin>0||P.jump>0)return;let[ax,ay]=moveV;if(Math.hypot(ax,ay)<.2)[ax,ay]=fvec();else if(!lockT)P.ang=Math.atan2(ay,ax);const l=Math.hypot(ax,ay)||1;P.rvx=ax/l*175;P.rvy=ay/l*175;P.roll=.24;P.rollCd=.5;P.st='roll';SFX.roll();heroSay('roll',.75)}
 onBtn=(b,d)=>{if(d)SND.unlock();if(M){if(d)menuInput(b);return}
   if(state==='cine'){if(d&&b==='start')cineSkip();return}
   if(state==='dialog'){if(d&&(b==='a'||b==='b'))dlgNext(b);return}
@@ -3146,12 +3225,12 @@ function tick(dt){T+=dt;voxTick(dt);
   else if(state==='dialog')dlgTick(dt);
   else if(state==='cine')cineTick(dt);
   if(shake>0)shake-=dt;panT-=dt;if(panT<=0){panT=.5;hudText()}}
-function frame(now){const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;if(!PAUSED){tick(dt);draw()}requestAnimationFrame(frame)}
+function frame(now){const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;if(!PAUSED){if(HITSTOP>0)HITSTOP-=dt;else tick(dt);draw()}requestAnimationFrame(frame)}
 addEventListener('resize',()=>{resize();draw()});
 addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'){S.save();openBag()}});
 hookConsole('hollowmere','The Tale of Wick: Hollow Wood',S);
 resize();title();requestAnimationFrame(frame);S.init(()=>{SND.mode=S.v.sound;if(state==='title')title()});
-window.__hm={get lockT(){return lockT},bestFoe,animCreature,S,G3,SND,AMB,mawPose,VOX,lineMood,voiceOf,vsynth,sylFor,VSND,FSND,voxOn,vloud,voxSay,voxEnd,setBase(v){RES_BASE=v;resize()},mkHero,mkNpc,mkFoeModel,CHAR,animNpc,stepNpc,THREE:TH,SLOTS,useSlot,eraseSlot,pickSlot,get SLOT(){return SLOT},CINE,cineStart,cineSkip,questText,get bagPage(){return bagPage},get camYaw(){return camYaw},set camYaw(v){camYaw=v},get lockT(){return lockT},set lockT(v){lockT=v},focus,pressB,releaseB,aimAt,landFor,render3D,set paused(v){PAUSED=v},get itemCd(){return itemCd},set itemCd(v){itemCd=v},doorCheck,openChest,frontTile,get DLG(){return DLG},collect,mkPickup,get room(){return room},get E(){return E},P,get state(){return state},set state(v){state=v},enterRoom,buildRoom,give,warp,DUN,OW,owEdge,TPL,useItem,pressA,releaseA,roll,stepThings,stepPlayer,checkCond,explode,say,dlgNext,newGame,cont,title,spawnBoss,hitThing,bossHit,
+window.__hm={get lockT(){return lockT},bestFoe,animCreature,S,G3,SND,AMB,mawPose,VOX,lineMood,voiceOf,vsynth,sylFor,VSND,FSND,voxOn,vloud,voxSay,voxEnd,setBase(v){RES_BASE=v;resize()},mkHero,mkNpc,mkFoeModel,CHAR,animNpc,stepNpc,THREE:TH,SLOTS,useSlot,eraseSlot,pickSlot,get SLOT(){return SLOT},CINE,cineStart,cineSkip,questText,get bagPage(){return bagPage},get camYaw(){return camYaw},set camYaw(v){camYaw=v},get lockT(){return lockT},set lockT(v){lockT=v},focus,pressB,releaseB,aimAt,landFor,render3D,set paused(v){PAUSED=v},get itemCd(){return itemCd},set itemCd(v){itemCd=v},doorCheck,openChest,frontTile,get DLG(){return DLG},collect,mkPickup,get room(){return room},get E(){return E},P,get state(){return state},enterRoom,give,get HITSTOP(){return HITSTOP},set state(v){state=v},enterRoom,buildRoom,give,warp,DUN,OW,owEdge,TPL,useItem,pressA,releaseA,roll,stepThings,stepPlayer,checkCond,explode,say,dlgNext,newGame,cont,title,spawnBoss,hitThing,bossHit,
   step(dt){tick(dt)},draw,btnSet,tileAt,blocked,findRoom,cen,toggleCrystal,burnAt};
 
 })();
