@@ -306,23 +306,23 @@ def _plane(a, b, c):
 
 # the jaw is carved by planes. The underside: from the bottom of the chin back up to where the neck goes in. Each side:
 # through the angle of the jaw under the ear, the side of the chin and the cheek, so the lower face closes in to the chin
-JAW_ANGLE = (0.097, -0.082, -0.01)
-CHIN_SIDE = (0.024, -0.128, 0.084)
-CHEEK = (0.11, -0.05, 0.04)
-JAW_PLANES = [_plane((0.0, -0.13, 0.082), (1.0, -0.13, 0.082), (0.0, -0.11, -0.01)), _plane(JAW_ANGLE, CHIN_SIDE, CHEEK),
+JAW_ANGLE = (0.1, -0.078, -0.01)
+CHIN_SIDE = (0.024, -0.12, 0.084)
+CHEEK = (0.113, -0.046, 0.04)
+JAW_PLANES = [_plane((0.0, -0.123, 0.082), (1.0, -0.123, 0.082), (0.0, -0.106, -0.01)), _plane(JAW_ANGLE, CHIN_SIDE, CHEEK),
               _plane((-JAW_ANGLE[0],) + JAW_ANGLE[1:], (-CHIN_SIDE[0],) + CHIN_SIDE[1:], (-CHEEK[0],) + CHEEK[1:])]
 JAW_SOFT = 0.009     # how round the jaw's edges are: a kid's jaw is soft
 
 
 def head_shape(p, grow=0.0):
     """a kid's head: a little narrow, taller than wide, the back of the skull round, the face flatter, full round cheeks,
-    a soft brow and a nose that stands out; below, a soft jaw that closes in from the cheeks to a small rounded chin, which
+    a soft brow and a small nose; below, a soft jaw that closes in from the cheeks to a small rounded chin, which
     comes forward so that in profile it stands a little in front of the eyes, and the underside of the jaw running back
     into the neck"""
     d = p.normalized()
     x, y, z = d.x * HEAD_R, d.y * HEAD_R, d.z * HEAD_R
-    x *= 0.95
-    y *= 1.07
+    x *= 0.975
+    y *= 1.05
     if z < 0:
         z *= 1.05
     if y < 0:
@@ -332,7 +332,7 @@ def head_shape(p, grow=0.0):
         if z > 0:
             z *= 1 - 0.08 * t * t
         # the face runs on down a little at the front, to the chin
-        y -= 0.012 * _sm(0.45, 0.92, -d.y) * _sm(0.05, 0.6, d.z)
+        y -= 0.004 * _sm(0.45, 0.92, -d.y) * _sm(0.05, 0.6, d.z)
     if z > 0.04 and -0.076 < y < 0.0:
         k = 1 - abs(y + 0.038) / 0.038
         x *= 1 + 0.05 * k
@@ -343,7 +343,7 @@ def head_shape(p, grow=0.0):
         z += 0.006 * math.exp(-((y + 0.062) / 0.018) ** 2) * math.exp(-(x / 0.04) ** 2) * _sm(0.02, 0.06, z)
     # the chin comes forward, so in profile it stands out a little in front of the eyes
     if y < -0.06 and z > 0:
-        z += 0.036 * math.exp(-((y + 0.104) / 0.022) ** 2) * math.exp(-(x / 0.046) ** 2) * _sm(0.02, 0.06, z)
+        z += 0.036 * math.exp(-((y + 0.098) / 0.021) ** 2) * math.exp(-(x / 0.046) ** 2) * _sm(0.02, 0.06, z)
     # carve the jaw: along the line from the middle of the head, take the nearest of the head and the planes, softly
     pb = Vector((x, y, z))
     rb = pb.length
@@ -354,9 +354,10 @@ def head_shape(p, grow=0.0):
     x, y, z = u.x * r, u.y * r, u.z * r
     if z > 0.05 and abs(x) < 0.085 and abs(y - 0.045) < 0.016:
         z += 0.004 * (1 - abs(y - 0.045) / 0.016)
-    dn = math.hypot(x / 0.022, (y + 0.024) / 0.03)
+    # a small nose
+    dn = math.hypot(x / 0.019, (y + 0.031) / 0.02)
     if z > 0 and dn < 1:
-        z += 0.027 * (1 - dn * dn)
+        z += 0.016 * (1 - dn * dn) ** 2
     # a soft dip between the lower lip and the chin
     dl = math.hypot(x / 0.03, (y + 0.08) / 0.011)
     if z > 0 and dl < 1:
@@ -370,7 +371,7 @@ def head_shape(p, grow=0.0):
 def head_part():
     P = Part('head', tex='head', smooth_angle=80)
     bm = P.bm
-    r = bmesh.ops.create_uvsphere(bm, u_segments=28, v_segments=20, radius=1.0)
+    r = bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=22, radius=1.0)
     for v in r['verts']:
         v.co = Vector((v.co.x, v.co.z, -v.co.y))
     # the texture wraps round by direction, before the head is shaped: the face at u = .5
@@ -380,7 +381,7 @@ def head_part():
     return P.finish()
 
 
-HAIRLINE = [(0.0, 0.66), (0.3, 0.5), (0.6, 0.42), (0.9, 0.36), (1.3, 0.25), (1.57, 0.2), (1.85, 0.06), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
+HAIRLINE = [(0.0, 0.56), (0.2, 0.56), (0.38, 0.56), (0.62, 0.46), (0.9, 0.36), (1.3, 0.25), (1.57, 0.2), (1.85, 0.06), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
 
 
 def hairline(th):
@@ -433,9 +434,9 @@ def hair_part():
             g = 0.004 + 0.005 * min(1.0, j / 2)
             # the middle part: a crease down the front of the crown, the hair a little fuller each side of it
             if abs(th) < 1e-6 and lat < 1.5:
-                g -= 0.006 * min(1.0, (1.5 - lat) / 0.25)
+                g -= 0.01 * min(1.0, (1.5 - lat) / 0.25)
             elif abs(abs(th) - TAU / NA) < 1e-6 and lat < 1.5:
-                g += 0.002
+                g += 0.004
             row.append((bm.verts.new(head_shape(dirv(th, lat), grow=g)), i / NA, 0.06 + 0.9 * f))
         rows.append(row)
     crown = bm.verts.new(head_shape(Vector((0, 1, 0)), grow=0.009))
@@ -465,11 +466,12 @@ def hair_part():
             out.append(Vector(head_shape(Vector(k[:3]).normalized(), grow=k[3])))
         return out
     for sd in (-1, 1):
-        # the bangs, two layers: the front one from the part over the top corner of the forehead, the one behind it
-        # longer, its point at the temple beside the end of the brow. The forehead shows between them in a V
-        P.lock(path([(sd * 0.03, 0.98, 0.004), (sd * 0.1, 0.8, 0.015), (sd * 0.19, 0.56, 0.019), (sd * 0.25, 0.34, 0.016)]), 0.017, 0.012, 'hair', swell=0.4)
-        P.lock(path([(sd * 0.04, 1.12, 0.004), (sd * 0.24, 0.92, 0.014), (sd * 0.44, 0.6, 0.017), (sd * 0.56, 0.3, 0.015)]), 0.02, 0.012, 'hair', swell=0.4)
-        P.lock(path([(sd * 0.05, 1.2, 0.004), (sd * 0.42, 0.98, 0.012), (sd * 0.68, 0.62, 0.015), (sd * 0.8, 0.26, 0.013)]), 0.02, 0.011, 'hair', swell=0.35)
+        # the middle part's bangs: a lock each side curls in from the part to meet the other in a point over the middle of
+        # the forehead; above, the top is swept from the part out to each side; and a big lock each side sweeps from the
+        # part out and down past the temple. The forehead shows in an arch over each brow, between them
+        P.lock(path([(sd * 0.06, 1.0, 0.007), (sd * 0.14, 0.82, 0.02), (sd * 0.11, 0.6, 0.022), (sd * 0.02, 0.38, 0.016)]), 0.024, 0.013, 'hair', swell=0.35)
+        P.lock(path([(sd * 0.05, 1.28, 0.006), (sd * 0.38, 1.06, 0.02), (sd * 0.55, 0.78, 0.018)]), 0.028, 0.013, 'hair', swell=0.3)
+        P.lock(path([(sd * 0.05, 1.14, 0.006), (sd * 0.4, 0.98, 0.02), (sd * 0.66, 0.7, 0.021), (sd * 0.8, 0.42, 0.019), (sd * 0.85, 0.12, 0.015)]), 0.027, 0.013, 'hair', swell=0.35)
         # a longer lock down each side of the face, past the eyes
         P.lock(path([(sd * 0.06, 1.28, 0.004), (sd * 0.55, 1.0, 0.012), (sd * 0.84, 0.58, 0.014), (sd * 0.97, 0.18, 0.013), (sd * 1.0, -0.1, 0.011)]),
                0.022, 0.011, 'hair')
@@ -510,8 +512,8 @@ def hair_part():
 def ears_part():
     P = Part('ears', smooth_angle=70)
     for sd in (-1, 1):
-        P.blob((sd * 0.104, -0.008, -0.004), (0.014, 0.03, 0.022), 'skin', seg=8, ring=6)
-        P.blob((sd * 0.112, -0.006, -0.002), (0.006, 0.018, 0.012), 'skin', seg=6, ring=5)
+        P.blob((sd * 0.107, -0.008, -0.004), (0.014, 0.03, 0.022), 'skin', seg=8, ring=6)
+        P.blob((sd * 0.115, -0.006, -0.002), (0.006, 0.018, 0.012), 'skin', seg=6, ring=5)
     return P.finish()
 
 
