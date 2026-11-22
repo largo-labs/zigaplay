@@ -2000,7 +2000,7 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   h.held=new TH.Sprite(new TH.SpriteMaterial({transparent:true,depthTest:false}));h.held.scale.set(.5,.5,1);h.held.position.y=1.3;h.held.visible=false;h.root.add(h.held);
   const ring=new TH.Mesh(new TH.RingGeometry(.55,1.05,10,1,-.95,1.9),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35,side:TH.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.55;ring.visible=false;h.root.add(ring);h.trail=ring;
   /* a kid's head: big next to the body, the way heroes of that era were drawn, on a neck that shows */
-  h.head.scale.setScalar(BM?1:1.42);h.head.position.y+=.075;
+  h.head.scale.setScalar(BM?1:1.42);h.head.position.y+=BM?.125:.075;
   h.cid='hero';h.base=snapPose(h);return h}
 
 /* ---------- the things in the dark: built the same way, with no faces to speak of ---------- */

@@ -51,6 +51,20 @@ def lat_y(lat):
     return (90.0 - lat) / 180.0 * H
 
 
+# the hairline (build_hero.py HAIRLINE): latitude in radians by azimuth from the middle of the face
+HAIRLINE = [(0.0, 0.66), (0.3, 0.5), (0.6, 0.42), (0.9, 0.36), (1.3, 0.25), (1.57, 0.2), (1.85, 0.06), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
+
+
+def hairline_deg(az):
+    a = math.radians(abs(az))
+    for (a0, l0), (a1, l1) in zip(HAIRLINE, HAIRLINE[1:]):
+        if a <= a1:
+            f = (a - a0) / (a1 - a0)
+            f = f * f * (3 - 2 * f)
+            return math.degrees(l0 + (l1 - l0) * f)
+    return math.degrees(HAIRLINE[-1][1])
+
+
 def head(shut):
     img = Image.new('RGB', (W, H), SKIN)
     px = img.load()
@@ -80,12 +94,11 @@ def head(shut):
         x1, y1 = P(az + raz, lat - rlat)
         d.ellipse((x0, y0, x1, y1), fill=fill, outline=outline, width=width * SS)
 
-    # hair at the hairline and over the back, so no skin shows under the cap
+    # hair painted a little below the edge of the cap, a shade darker, so no skin shows under it and the hairline is soft
     for x in range(0, W * SS, SS):
         az = (x / (W * SS) - 0.5) * 360.0
-        hl = 30 - (abs(az) / 180.0) * 70
-        y = lat_y(hl) * SS
-        d.line((x, 0, x, y), fill=HAIR + (255,), width=SS)
+        y = lat_y(hairline_deg(az) - 2.0 - 1.5 * min(1.0, abs(az) / 90.0)) * SS
+        d.line((x, 0, x, y), fill=mul(HAIR, 0.86) + (255,), width=SS)
     # the nose: a soft shadow along one side and under it, and two small nostrils
     d.polygon([P(3, 2), P(7, -15), P(2.5, -19.5), P(0.5, -4)], fill=(120, 60, 40, 50))
     ell(0, -19.5, 7.5, 3, fill=(110, 50, 35, 75))
@@ -173,13 +186,34 @@ def body():
         d.line((x, y + j, x + w, y + j + 2), fill=hexc('#4e3018'))
     fill('trousers', hexc('#ebe7de'), 4)
     fill('skin', SKIN, 2)
-    x, y, w, h = fill('hair', HAIR, 4)
-    for i in range(0, w, 3):
-        d.line((x + i, y, x + i + R.randint(-2, 2), y + h), fill=mul(HAIR, 1.12) if i % 2 else mul(HAIR, 0.8))
-    x, y, w, h = fill('hair2', HAIR, 4)
-    for i in range(0, w, 3):
-        d.line((x + i, y, x + i + R.randint(-2, 2), y + h), fill=mul(HAIR, 1.12) if i % 2 else mul(HAIR, 0.8))
-    d.line((x + w // 2, y, x + w // 2, y + h), fill=mul(HAIR, 0.55), width=2)
+    # the locks: u runs across a lock, v along it (its root at the top of the swatch). Broad soft strands, lighter down the
+    # middle of the lock and darker at its edges and toward the root, so each lock reads on its own
+    x, y, w, h = REG['hair']
+    for j in range(h):
+        v = 1 - (j + 0.5) / h
+        for i in range(w):
+            u = (i + 0.5) / w
+            k = 0.78 + 0.27 * math.sin(math.pi * u) ** 0.7
+            k *= 1 + 0.045 * math.sin(u * 29 + 1.3) + 0.03 * math.sin(u * 61 + 0.4)
+            for uc in (0.31, 0.5, 0.69):
+                k *= 1 - 0.1 * math.exp(-((u - uc) / 0.03) ** 2)
+            k *= 0.88 + 0.16 * (1 - v) ** 0.8
+            img.putpixel((x + i, y + j), mul(HAIR, k))
+    # the cap: u runs round the head (the middle of the face at the middle), v up to the crown. Smooth, darker toward the
+    # hairline, and the part: a dark line down the middle, the hair catching the light each side of it
+    x, y, w, h = REG['hair2']
+    for j in range(h):
+        v = 1 - (j + 0.5) / h
+        for i in range(w):
+            u = (i + 0.5) / w
+            k = 0.95 + 0.03 * math.sin(u * 151) + 0.02 * math.sin(u * 83 + 2)
+            k *= 0.86 + 0.14 * min(1.0, v / 0.3)
+            du = abs(u - 0.5) * w
+            if du < 1.1:
+                k *= 0.56
+            elif du < 3.2:
+                k *= 1.07
+            img.putpixel((x + i, y + j), mul(HAIR, k))
     x, y, w, h = fill('glove', hexc('#4e3220'), 6)
     d.rectangle((x, y, x + w, y + 8), fill=hexc('#5e3e28'))
     x, y, w, h = REG['brass']
