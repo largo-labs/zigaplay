@@ -8,8 +8,39 @@ body{--bg:#0c1024;--panel:#1c2348;--line:#4a5590;--hot:#ffd23f;--hotink:#1a1230;
 #hMsg.go{animation:pop .35s ease-out}
 @keyframes pop{0%{transform:scale(1.7);opacity:0}100%{transform:none;opacity:1}}
 #ov.title{background:rgba(10,12,34,.35);justify-content:flex-end;padding-bottom:calc(var(--s)*8px)}
-#ov.pick{background:linear-gradient(rgba(10,12,34,0) 30%,rgba(10,12,34,.82) 46%);justify-content:flex-end;padding-bottom:calc(var(--s)*6px)}
-#ov.pick h2{text-shadow:0 calc(var(--s)*1px) 0 #1a1230}
+/* choosing a critter: the stand and its name plate, and the grid of faces (under it, or beside it on a wide screen) */
+#ov.sel,#ov.pick{background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 calc(var(--s)*7px),rgba(255,255,255,0) 0 calc(var(--s)*14px)),linear-gradient(180deg,rgba(22,28,74,.96),rgba(10,12,34,.97));gap:calc(var(--s)*3px)}
+#ov.sel h2,#ov.pick h2{color:#ffd23f;transform:skewX(-8deg);text-shadow:0 calc(var(--s)*1.5px) 0 #c8301a,0 calc(var(--s)*2.5px) 0 #1a1230}
+.selmain{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--s)*4px)}
+#ov.side .selmain{flex-direction:row;gap:calc(var(--s)*8px)}
+.selshow{display:flex;flex-direction:column;align-items:center;background:radial-gradient(closest-side,color-mix(in srgb,var(--k,#e8443a) 55%,transparent),transparent 78%)}
+#selCv{display:block;width:calc(var(--s)*var(--pv,112)*1px);height:calc(var(--s)*var(--pv,112)*.893px);image-rendering:pixelated;image-rendering:crisp-edges}
+.selname{margin-top:calc(var(--s)*-5px);min-width:calc(var(--s)*64px);padding:calc(var(--s)*1.5px) calc(var(--s)*9px);transform:skewX(-10deg);background:var(--k,#e8443a);border:calc(var(--s)*1px) solid #fff;border-radius:calc(var(--s)*2px);
+  box-shadow:0 calc(var(--s)*2px) 0 #1a1230;font-size:calc(var(--s)*10px);line-height:1.1;letter-spacing:.1em;color:#fff;text-shadow:0 calc(var(--s)*1px) 0 rgba(10,10,30,.6)}
+.selname.ok{animation:selok .3s steps(2) 2}
+.selgrid{display:grid;grid-template-columns:repeat(4,auto);gap:calc(var(--s)*3px)}
+#ov.side .selgrid{grid-template-columns:repeat(2,auto)}
+.selt{position:relative;display:block;width:calc(var(--s)*var(--t,36)*1px);height:calc(var(--s)*var(--t,36)*1px);padding:0;overflow:hidden;cursor:pointer;-webkit-appearance:none;appearance:none;font:inherit;color:inherit;
+  border:calc(var(--s)*1.5px) solid #3a4480;border-radius:calc(var(--s)*4px);background:var(--k);background:linear-gradient(160deg,color-mix(in srgb,var(--k) 70%,#fff),var(--k) 55%,color-mix(in srgb,var(--k) 62%,#000));filter:saturate(.8) brightness(.82)}
+.selt:focus{outline:none}
+.selt canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.selt.hot{filter:none;border-color:#fff;box-shadow:0 0 0 calc(var(--s)*1.5px) var(--hot),0 calc(var(--s)*3px) 0 calc(var(--s)*1px) #1a1230;animation:selbob .5s ease-in-out infinite alternate;z-index:1}
+.selt.ok::after{content:"OK!";position:absolute;left:0;right:0;bottom:0;padding:calc(var(--s)*1px) 0;background:var(--hot);color:var(--hotink);font-size:calc(var(--s)*7px);font-weight:700;letter-spacing:.08em}
+@keyframes selbob{from{transform:translateY(0)}to{transform:translateY(calc(var(--s)*-2px))}}
+@keyframes selok{50%{background:#fff;color:#1a1230;text-shadow:none}}
+/* then the cup or the course: who is driving, and small maps of where */
+#ov.pick{justify-content:center}
+.who{display:flex;align-items:center;gap:calc(var(--s)*4px);padding:calc(var(--s)*1px) calc(var(--s)*7px) calc(var(--s)*1px) calc(var(--s)*1px);border-radius:calc(var(--s)*9px);background:rgba(10,12,34,.6);border:calc(var(--s)*1px) solid var(--line);letter-spacing:.08em}
+.who .chip{display:block;width:calc(var(--s)*15px);height:calc(var(--s)*15px);border-radius:50%;overflow:hidden;background:var(--k);border:calc(var(--s)*1px) solid #fff}
+.who .chip canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.cards{display:flex;gap:calc(var(--s)*4px);justify-content:center;align-items:flex-start}
+.card{display:flex;flex-direction:column;align-items:center;gap:calc(var(--s)*1.5px);width:calc(var(--s)*50px)}
+.card canvas{display:block;width:calc(var(--s)*44px);height:calc(var(--s)*44px);image-rendering:pixelated;image-rendering:crisp-edges;border:calc(var(--s)*1px) solid #fff;border-radius:calc(var(--s)*3px);box-shadow:0 calc(var(--s)*2px) 0 #1a1230}
+.card span{font-size:calc(var(--s)*5px);line-height:1.15;letter-spacing:.04em}
+.card span i{display:block;font-style:normal;color:#ffd23f;margin-top:calc(var(--s)*1px)}
+.cards.one .card{width:auto}.cards.one .card canvas{width:calc(var(--s)*58px);height:calc(var(--s)*58px)}.cards.one .card span{font-size:calc(var(--s)*6.5px)}
+#ov.sel .foot{max-width:none;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.selt.hot,.selname.ok{animation:none}}
 .logo{display:flex;flex-direction:column;line-height:.92;margin-bottom:auto!important;margin-top:calc(var(--s)*8px)!important;transform:skewX(-8deg);text-shadow:0 calc(var(--s)*2px) 0 #c8301a,0 calc(var(--s)*3px) 0 #1a1230}
 .logo b:first-child{color:#ffd23f}.logo b:last-child{color:#fff;font-size:.72em;letter-spacing:.08em}
 .menu button em{font-size:.92em;text-align:right}

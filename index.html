@@ -50,15 +50,20 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
   --groove1:#22263e;--groove2:#2a2f4c;--pill1:#55597a;--pill2:#3c4060;--pilledge:#1c1f34;--grille:#22263e;--bez1:#1c1f30;--bez2:#14161f;--bezink:#8f97c4}
 
 /* the two halves and the hinge between them */
-.lid{flex:58 1 0;min-height:0;display:flex;flex-direction:column;gap:4px}
+.lid{flex:56 1 0;min-height:0;display:flex;flex-direction:column;gap:4px}
 .hinge{flex:0 0 auto;position:relative;height:13px;margin:8px -12px 9px;background:linear-gradient(180deg,#000 0,#24242c 38%,#0f0f13 64%,#000 100%);
   box-shadow:0 1px 0 rgba(255,255,255,.3),0 -1px 0 rgba(255,255,255,.14),inset 0 3px 3px rgba(0,0,0,.9)}
 .hinge::before,.hinge::after{content:"";position:absolute;top:-3px;bottom:-3px;width:28px;border-radius:5px;background:linear-gradient(180deg,#30303a,#09090c 58%,#1d1d24);box-shadow:0 1px 0 rgba(255,255,255,.22)}
 .hinge::before{left:8%}.hinge::after{right:8%}
-.base{flex:42 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,34%) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;column-gap:8px;row-gap:3px;touch-action:none}
+/* the D-pad's column is as wide as a full-size D-pad, A and B stand one over the other in a narrow column, and the
+   second screen takes everything between them */
+.base{flex:44 1 0;min-height:0;margin-inline:-6px;display:grid;grid-template-columns:min(138px,38.6%) minmax(0,1fr) min(70px,19.6%);grid-template-rows:minmax(0,1fr) auto;column-gap:4px;row-gap:3px;touch-action:none}
+.console.ableft .base{grid-template-columns:min(70px,19.6%) minmax(0,1fr) min(138px,38.6%)}
+.console.face4 .base{grid-template-columns:min(120px,33.6%) minmax(0,1fr) min(120px,33.6%)}
 .side{grid-row:1;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
-.sideA{grid-column:1}.sideD{grid-column:3}
-.console.abright .sideA{grid-column:3}.console.abright .sideD{grid-column:1}
+/* the D-pad on the left and A and B on the right, unless the player swapped them on the controls screen */
+.sideD{grid-column:1}.sideA{grid-column:3}
+.console.ableft .sideD{grid-column:3}.console.ableft .sideA{grid-column:1}
 
 /* top edge of the lid: the power switch */
 .topedge{display:flex;align-items:center;justify-content:space-between;height:20px;padding-inline:2px;flex:0 0 auto}
@@ -77,7 +82,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .bezel .ledlbl{position:absolute;right:23px;top:5px;font-size:6px;font-weight:700;letter-spacing:.06em;color:var(--bezink)}
 .screen{flex:1;min-width:0;min-height:0;position:relative;overflow:hidden;border:3px solid #17161f;border-radius:4px;background:#05060a}
 .screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#0a1026}
-.bezel2{grid-column:2;grid-row:1;min-height:0;display:flex;background:linear-gradient(180deg,var(--bez1),var(--bez2));border-radius:9px;padding:7px 6px 9px;
+.bezel2{grid-column:2;grid-row:1;min-height:0;display:flex;background:linear-gradient(180deg,var(--bez1),var(--bez2));border-radius:9px;padding:6px 4px 8px;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.5)}
 .screen2{flex:1;min-width:0;position:relative;overflow:hidden;border:2px solid #17161f;border-radius:4px;background:#07090e;color:var(--s-ink);font-family:var(--ui);--acc:var(--ab1)}
 .blackout{position:absolute;inset:0;z-index:9;background:#05060a;pointer-events:none;opacity:0;transition:opacity .25s}
@@ -114,14 +119,22 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .btn-ab span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:20px;line-height:1;font-weight:800;color:rgba(255,255,255,.92);text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .btn-ab.on{transform:translateY(3px);box-shadow:0 1px 0 var(--abshadow)}
 .btn-ab::after{content:"";position:absolute;inset:-10px;border-radius:50%}
-/* START and CONTROLS under the D-pad; SELECT and the speaker under A and B */
+/* beside the second screen A stands over B, a step to the right, in an upright groove: that leaves the D-pad its full size */
+html:not(.wide) .console:not(.face4) .ab{width:70px;height:128px}
+html:not(.wide) .console:not(.face4) .ab::before{left:4px;right:4px;top:-3px;bottom:-3px;transform:rotate(10deg)}
+html:not(.wide) .console:not(.face4) .btn-ab.a{top:2px}
+html:not(.wide) .console:not(.face4) .btn-ab.b{top:68px}
+html:not(.wide) .console:not(.face4) .btn-ab.a::after{inset:-10px -10px -4px}
+html:not(.wide) .console:not(.face4) .btn-ab.b::after{inset:-4px -10px -10px}
+html:not(.wide) .sideA{gap:16px}
+/* SELECT and START under the D-pad; CONTROLS under A and B, with the speaker below it (beside it on a console on its side) */
 .pills{display:flex;align-items:center;justify-content:center;gap:4px;flex:0 0 auto;zoom:var(--sz,1)}
 .pill{position:relative;width:66px;height:40px;background:none;border:0;padding:25px 0 0;font-size:9.5px;font-weight:800;font-style:italic;letter-spacing:.1em;color:var(--print);line-height:1;touch-action:none;white-space:nowrap}
 .pill::before{content:"";position:absolute;left:12px;right:12px;top:7px;height:13px;border-radius:999px;transform:rotate(-24deg);
   background:linear-gradient(180deg,var(--pill1),var(--pill2));box-shadow:0 2px 0 var(--pilledge),inset 0 1px 0 rgba(255,255,255,.35)}
 .pill.on::before{top:9px;box-shadow:0 0 0 var(--pilledge),inset 0 1px 0 rgba(255,255,255,.25)}
 .pill.ctl{letter-spacing:.02em;font-size:9px}
-.pills2{zoom:var(--sa,1);gap:10px}
+.pills2{zoom:var(--sa,1);gap:6px 10px;flex-wrap:wrap;max-width:100%}
 .grille{display:flex;gap:4px;transform:rotate(-24deg);pointer-events:none}
 .grille i{display:block;width:5px;height:24px;border-radius:3px;background:var(--grille);box-shadow:inset 0 2px 2px rgba(0,0,0,.38),0 1px 0 rgba(255,255,255,.35)}
 
@@ -144,7 +157,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .console.stickmode .dpad{display:none}
 /* four face buttons in a diamond, for games that ask for them (face4:true): D on top, A right, B below, C left */
 .btn-ab.c,.btn-ab.d{display:none}
-.console.face4 .ab{width:156px;height:124px;zoom:var(--sz,1)}
+.console.face4 .ab{width:156px;height:124px;zoom:var(--s4,var(--sz,1))}
 .console.face4 .ab::before{display:none}
 .console.face4 .btn-ab{width:50px;height:50px}
 .console.face4 .btn-ab.c,.console.face4 .btn-ab.d{display:block}
@@ -272,6 +285,11 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
 .p2 p{margin:0;font:500 11.5px/1.32 var(--ui);color:#cfd6e4;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:9;text-wrap:pretty}
 .p2 small{font:600 10px/1.35 var(--ui);color:var(--s-dim)}
 .p2-help{margin-top:auto;display:flex;flex-direction:column;gap:5px;font:600 10.5px/1.25 var(--ui);color:var(--s-dim)}
+/* whether saves are reaching the player's account */
+#acct{margin-top:auto;display:flex;align-items:center;gap:5px;font-size:9.5px;line-height:1.2;white-space:nowrap}
+#acct::before{content:"";flex:0 0 auto;width:6px;height:6px;border-radius:50%;background:#8a93a8}
+#acct.ok::before{background:#46d37f}#acct.bad{color:#ffb4a8}#acct.bad::before{background:#ff6b57}
+#acct:not([hidden])+.p2-help{margin-top:0}
 .libact{align-self:stretch;font:800 9.5px/1 var(--ui);letter-spacing:.06em;padding:8px 6px;border:0;border-radius:8px;background:#fff;color:#0b0d13}
 .libact[hidden]{display:none}
 #p2Art{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px;image-rendering:pixelated;background:var(--s-card);flex:0 0 auto}
@@ -287,6 +305,62 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
 #p2-game.live #p2Art,#p2-game.live .p2-note{display:none}
 .p2-clock{margin-top:auto;display:flex;justify-content:space-between;font:400 14px/1 var(--num);color:var(--s-dim);flex:0 0 auto}
 @media (prefers-reduced-motion:reduce){.cart,.hero img{transition:none}#boot .logo{animation:none;opacity:1;transform:none}#loading .bar i{animation:none}}
+
+/* ---------- ZigaPlay 2.0: the stick takes the D-pad's place and the face buttons become A B X Y (X on top, Y on the left) ---------- */
+.btn-ab .l2{display:none}
+.console.v2 .btn-ab .l1{display:none}.console.v2 .btn-ab .l2{display:inline}
+.console.v2 .dpad{display:none!important}
+#verHold{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(6,6,16,.78);color:#fff;font:700 13px/1.3 var(--ui);text-align:center;padding:0 18px}
+#verHold[hidden],#verFlash[hidden]{display:none}
+#verHold .vring{position:relative;width:96px;height:96px}
+#verHold svg{width:100%;height:100%;transform:rotate(-90deg)}
+#verHold circle{fill:none;stroke-width:8}#verHold .bg{stroke:rgba(255,255,255,.18)}#verHold .fg{stroke:#ffd23f;stroke-linecap:round}
+#verHold .vring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;letter-spacing:.04em}
+#verFlash{position:absolute;inset:0;z-index:41;display:flex;align-items:center;justify-content:center;background:#fff;color:#14142a;pointer-events:none}
+#verFlash b{font:700 italic 26px/1 var(--pix,var(--ui));letter-spacing:.12em}
+#verFlash.go{animation:vflash 1.5s ease-out forwards}
+@keyframes vflash{0%{opacity:1;background:#fff}35%{opacity:1;background:#14142a;color:#ffd23f}100%{opacity:0;background:#14142a;color:#ffd23f}}
+
+/* ---------- ZigaPlay 2.0 hardware: black buttons with white letters, a black rubber stick, a finished body ----------
+   These win over every skin: the skin colours the shell, the controls stay black and white. */
+.console.v2,.console.v2[data-shell]{--ab1:#4a4a52;--ab2:#1d1d22;--ab3:#0b0b0d;--abedge:#000;--abshadow:#000;--pill1:#2c2c32;--pill2:#0e0e11;--pilledge:#000;
+  --kn1:#46464e;--kn2:#1c1c21;--kn3:#0c0c0e;--dp2:#050506;
+  background:radial-gradient(rgba(0,0,0,.05) .7px,transparent 1.1px) 0 0/3px 3px,linear-gradient(172deg,var(--b1) 0%,var(--b2) 55%,var(--b3) 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.55),inset 0 -3px 0 rgba(0,0,0,.18),inset 3px 0 0 rgba(255,255,255,.18),inset -3px 0 0 rgba(0,0,0,.1),0 10px 24px rgba(0,0,0,.45)}
+/* the face buttons: glossy black caps with the letters moulded in white */
+.console.v2 .btn-ab,.console.v2[data-shell] .btn-ab{border:1.5px solid #000;background:radial-gradient(circle at 34% 26%,#5a5a64 0,#26262c 22%,#121215 55%,#050506 100%);
+  box-shadow:0 4px 0 #000,0 6px 9px rgba(0,0,0,.45),inset 0 1.5px 0 rgba(255,255,255,.22),inset 0 -3px 5px rgba(0,0,0,.6)}
+.console.v2 .btn-ab span,.console.v2[data-shell] .btn-ab span{color:#f4f4f6;text-shadow:0 -1px 0 rgba(0,0,0,.9);font-weight:800;opacity:.95}
+.console.v2 .btn-ab.on,.console.v2[data-shell] .btn-ab.on{transform:translateY(3px);box-shadow:0 1px 0 #000,0 2px 4px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 4px rgba(0,0,0,.6)}
+.console.v2 .btn-ab::before{content:"";position:absolute;inset:-6px;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(0,0,0,.28) 60%,transparent 72%);pointer-events:none}
+/* a recessed well under the four buttons */
+.console.v2.face4 .ab::before{display:block;left:2px;right:2px;top:-2px;bottom:-2px;transform:none;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.14) 0 58%,rgba(0,0,0,.05) 70%,transparent 72%);box-shadow:none}
+/* small buttons: black rubber; their names printed on the shell */
+.console.v2 .pill::before,.console.v2[data-shell] .pill::before{background:linear-gradient(180deg,#34343a,#0c0c0f);box-shadow:0 2px 0 #000,inset 0 1px 0 rgba(255,255,255,.18)}
+.console.v2 .pill,.console.v2[data-shell] .pill{color:#1a1a1e}
+/* the stick: a black rubber cap with a ridged rim, in a deep black well */
+.console.v2 .stick{background:radial-gradient(circle at 50% 50%,#050506 0 46%,#121215 47% 60%,#1c1c21 61% 100%);
+  box-shadow:inset 0 4px 10px rgba(0,0,0,.8),inset 0 -2px 0 rgba(255,255,255,.1),0 2px 0 rgba(255,255,255,.35),0 -1px 0 rgba(0,0,0,.25)}
+.console.v2 .stick .notch{opacity:.35}.console.v2 .stick .notch.u{border-bottom-color:#e8e8ee}.console.v2 .stick .notch.d{border-top-color:#e8e8ee}.console.v2 .stick .notch.l{border-right-color:#e8e8ee}.console.v2 .stick .notch.r{border-left-color:#e8e8ee}
+.console.v2 .stick .knob{background:repeating-conic-gradient(#202025 0 6deg,#0e0e11 6deg 12deg);box-shadow:0 5px 0 #000,0 9px 14px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.14)}
+.console.v2 .stick .knob::after{inset:7px;background:radial-gradient(circle at 42% 36%,#3a3a42 0,#18181c 45%,#0a0a0c 100%);box-shadow:inset 0 3px 6px rgba(0,0,0,.75),inset 0 -1px 0 rgba(255,255,255,.12),0 0 0 1px #000}
+/* screws in the corners of both halves, and the speaker drilled through */
+.console.v2 .base{background:radial-gradient(circle at 9px 9px,#c8c8cc 0 2.2px,#7a7a80 2.4px 3.2px,rgba(0,0,0,.35) 3.4px 4px,transparent 4.3px) no-repeat,radial-gradient(circle at calc(100% - 9px) 9px,#c8c8cc 0 2.2px,#7a7a80 2.4px 3.2px,rgba(0,0,0,.35) 3.4px 4px,transparent 4.3px) no-repeat,
+  radial-gradient(circle at 9px calc(100% - 9px),#c8c8cc 0 2.2px,#7a7a80 2.4px 3.2px,rgba(0,0,0,.35) 3.4px 4px,transparent 4.3px) no-repeat,radial-gradient(circle at calc(100% - 9px) calc(100% - 9px),#c8c8cc 0 2.2px,#7a7a80 2.4px 3.2px,rgba(0,0,0,.35) 3.4px 4px,transparent 4.3px) no-repeat}
+.console.v2 .grille{transform:none;display:grid;grid-template-columns:repeat(5,4px);gap:4px}
+.console.v2 .grille i{width:4px;height:4px;border-radius:50%;background:#0c0c0e;box-shadow:inset 0 1px 1px #000,0 1px 0 rgba(255,255,255,.4)}
+.console.v2 .grille::after{content:"";grid-column:1/-1}
+.console.v2 .brand b{text-shadow:0 1px 0 rgba(255,255,255,.5),0 -1px 0 rgba(0,0,0,.12)}
+
+.console:not(.v2) .grille i:nth-child(n+5){display:none}
+.model i{font-style:inherit}.model .m2{display:none}.console.v2 .model .m1{display:none}.console.v2 .model .m2{display:inline}
+/* 2.0: the four buttons further apart; the stick is just the stick, no ring around it */
+.console.v2.face4 .ab{width:176px;height:142px}
+.console.v2.face4 .btn-ab.a{left:116px;top:46px}.console.v2.face4 .btn-ab.b{left:63px;top:91px}
+.console.v2.face4 .btn-ab.c{left:10px;top:46px}.console.v2.face4 .btn-ab.d{left:63px;top:1px}
+.console.v2 .stick{background:none;box-shadow:none}
+.console.v2 .stick .notch{display:none}
+.console.v2 .stick .knob{width:80px;height:80px;margin:-40px 0 0 -40px}
 /* ---------- skins ----------
    A skin is a set of the tokens above, sometimes an LCD tint and a printed edition name, and for the live and game
    skins a layer of moving decoration (.skinfx) that sits on the body behind every control. The decoration only
@@ -524,6 +598,32 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
   --dp1:#3a3480;--dp2:#241f58;--dpa:#8f86e0;--dpa2:#ffd15c;--dpsh:#0a0820;--kn1:#6a62c0;--kn2:#443c8a;--kn3:#2c2664}
 .console[data-shell=fourfall] .btn-ab span{color:#4a2e06;text-shadow:0 1px 0 rgba(255,255,255,.5)}
 .fx-fourfall b{width:var(--s);height:var(--s);border-radius:3px;background:var(--c);opacity:.34;box-shadow:inset 2px 2px 0 rgba(255,255,255,.35),inset -2px -2px 0 rgba(0,0,0,.25);animation:zsuit 8s ease-in-out infinite}
+/* Squarewave: night blue with a mint trace across it and little outlined squares drifting, yellow buttons */
+.console[data-shell=squarewave]{--b1:#1f4f80;--b2:#143a62;--b3:#0e2744;--edge:#061426;--print:#d8fff2;--print2:#7df9d2;
+  --ab1:#fff0a8;--ab2:#ffd23f;--ab3:#c08a14;--abedge:#4a3406;--abshadow:#2e2004;--groove1:#0b2038;--groove2:#123052;
+  --pill1:#7df9d2;--pill2:#2fae8c;--pilledge:#0b3a30;--grille:#0b2038;--bez1:#0c1e36;--bez2:#07121f;--bezink:#7df9d2;--st1:#ff6b5e;--st2:#7df9d2;
+  --dp1:#1c4a78;--dp2:#113256;--dpa:#7df9d2;--dpa2:#ffd23f;--dpsh:#061426;--kn1:#3a78b0;--kn2:#245a8c;--kn3:#163e64}
+.console[data-shell=squarewave] .btn-ab span{color:#4a3406;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.fx-squarewave b{width:var(--s);height:var(--s);border:2px solid var(--c);border-radius:2px;opacity:.3;animation:zsuit 8s ease-in-out infinite}
+.fx-squarewave .sqw{left:0;right:0;top:58%;height:22px;opacity:.2;background:
+  repeating-linear-gradient(90deg,#7df9d2 0 24px,transparent 24px 48px) 0 0/100% 2px no-repeat,
+  repeating-linear-gradient(90deg,transparent 0 24px,#7df9d2 24px 48px) 0 100%/100% 2px no-repeat,
+  repeating-linear-gradient(90deg,#7df9d2 0 2px,transparent 2px 24px) 0 0/100% 100% no-repeat}
+
+/* Moonstack: night purple with stars, a big pale moon, banana-yellow buttons */
+.console[data-shell=moonstack]{--b1:#3a2a6a;--b2:#24184a;--b3:#160f34;--edge:#0c0820;--print:#fff6d0;--print2:#ffd23f;
+  --ab1:#fff0a8;--ab2:#ffd23f;--ab3:#c08a14;--abedge:#4a3406;--abshadow:#2e2004;--groove1:#120c2c;--groove2:#1c1440;
+  --pill1:#fff6d0;--pill2:#c8b88a;--pilledge:#3a2e10;--grille:#120c2c;--bez1:#140e30;--bez2:#0a0620;--bezink:#ffd23f;--st1:#ffd23f;--st2:#fff6d0;
+  --dp1:#2e2260;--dp2:#1c1440;--dpa:#ffd23f;--dpa2:#fff6d0;--dpsh:#0c0820;--kn1:#5a4a9a;--kn2:#3a2a6a;--kn3:#24184a}
+.console[data-shell=moonstack] .btn-ab span{color:#4a3406;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.fx-moonstack b{width:2px;height:2px;background:#fff;border-radius:1px;animation:ztwk 3s ease-in-out infinite}
+.fx-moonstack .msm{right:8%;top:6%;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffbe8,#e8dca8 70%);opacity:.5}
+.console[data-shell=hollowmere]{--b1:#35584a;--b2:#2a4a3a;--b3:#1c3428;--edge:#10201a;--print:#f0e6d0;--print2:#e8742a;
+  --ab1:#f8b880;--ab2:#e8742a;--ab3:#a84a14;--abedge:#4a1e06;--abshadow:#2e1404;--groove1:#14281e;--groove2:#1c3428;
+  --pill1:#f0e6d0;--pill2:#c8b88a;--pilledge:#3a2e10;--grille:#14281e;--bez1:#16281e;--bez2:#0c1810;--bezink:#e8742a;--st1:#e8742a;--st2:#f0e6d0;
+  --dp1:#24402f;--dp2:#1c3428;--dpa:#e8742a;--dpa2:#f0e6d0;--dpsh:#10201a;--kn1:#4a6a5a;--kn2:#35584a;--kn3:#2a4a3a}
+.fx-hollowmere b{width:90px;height:26px;border-radius:50%;background:radial-gradient(closest-side,rgba(240,240,250,.22),rgba(240,240,250,0));animation:hmfog 14s linear infinite}
+@keyframes hmfog{from{transform:translateX(-30px)}to{transform:translateX(120px)}}
 </style>
 
 <div id="zp">
@@ -531,11 +631,13 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
     <div class="lid">
       <div class="topedge">
         <button class="power" id="power" aria-label="Power switch: turn the game off and go back to the shelf"><span class="sw" aria-hidden="true"></span>OFF·ON</button>
-        <span class="model" aria-hidden="true">ZP-02 FOLD</span>
+        <span class="model" aria-hidden="true"><i class="m1">ZP-02 FOLD</i><i class="m2">ZP-03 · 2.0</i></span>
       </div>
       <div class="bezel">
         <span class="stripes" aria-hidden="true"></span><span class="led" aria-hidden="true"></span><span class="ledlbl" aria-hidden="true">POWER</span>
         <div class="screen" id="screen">
+          <div id="verHold" hidden><div class="vring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="42"/><circle class="fg" cx="50" cy="50" r="42"/></svg><b>2.0</b></div><p></p></div>
+          <div id="verFlash" hidden><b>ZIGAPLAY 2.0</b></div>
           <div class="lcd" id="home" hidden>
             <div class="st-top"><b>ZIGAPLAY</b><span class="tr"><span id="count"></span><button class="editbtn" id="keysBtn" tabindex="-1" title="Controls (K)">CONTROLS</button><button class="editbtn" id="editBtn" tabindex="-1">EDIT</button></span></div>
             <div class="hero" id="hero"><img alt=""><img alt=""><div class="hero-t"><small id="heroTag"></small><h2 id="gTitle"></h2><p id="gBlurbH"></p></div></div>
@@ -568,31 +670,31 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
     </div>
     <div class="hinge" aria-hidden="true"></div>
     <div class="base" id="base">
-      <div class="side sideA">
-        <div class="ab">
-          <button class="btn-ab b" data-btn="b" tabindex="-1" aria-label="B"><span>B</span></button>
-          <button class="btn-ab a" data-btn="a" tabindex="-1" aria-label="A"><span>A</span></button>
-          <button class="btn-ab c" data-btn="c" tabindex="-1" aria-label="C"><span>C</span></button>
-          <button class="btn-ab d" data-btn="d" tabindex="-1" aria-label="D"><span>D</span></button>
-        </div>
-        <div class="pills pills2">
+      <div class="side sideD">
+        <div class="dpad" id="dpad" role="group" aria-label="D-pad"><i class="v"></i><i class="h"></i><i class="sh"></i><i class="hub"></i><i class="ar u"></i><i class="ar d"></i><i class="ar l"></i><i class="ar r"></i></div>
+        <div class="stick" id="stick" role="group" aria-label="Control stick"><i class="notch u"></i><i class="notch d"></i><i class="notch l"></i><i class="notch r"></i><i class="knob"></i></div>
+        <div class="pills">
           <button class="pill" data-btn="select" tabindex="-1">SELECT</button>
-          <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <button class="pill" data-btn="start" tabindex="-1">START</button>
         </div>
       </div>
       <div class="bezel2"><div class="screen2" id="screen2" aria-live="polite">
-        <div class="p2" id="p2-info"><p id="gBlurb"></p><small id="gNote"></small><button class="libact" id="libAct" tabindex="-1" hidden>PUT AWAY</button><div class="p2-help" id="homeHelp"></div></div>
+        <div class="p2" id="p2-info"><p id="gBlurb"></p><small id="gNote"></small><button class="libact" id="libAct" tabindex="-1" hidden>PUT AWAY</button><small id="acct" hidden></small><div class="p2-help" id="homeHelp"></div></div>
         <div class="p2" id="p2-lib" hidden><p id="libInfo"></p><div class="p2-help" id="libHelp"></div></div>
         <div class="p2" id="p2-menu" hidden><h3 id="p2MenuT"></h3><p id="p2MenuP"></p><div class="p2-help" id="p2MenuH"></div></div>
         <div class="p2" id="p2-game" hidden><img id="p2Art" alt=""><b id="p2Title"></b><small id="p2Cap" hidden></small><canvas id="p2Canvas" hidden></canvas><div class="p2-rows" id="p2Rows"></div><div class="p2-note" id="p2Note"></div><div class="p2-clock" id="p2Clock"></div></div>
         <div class="blackout"></div>
       </div></div>
-      <div class="side sideD">
-        <div class="dpad" id="dpad" role="group" aria-label="D-pad"><i class="v"></i><i class="h"></i><i class="sh"></i><i class="hub"></i><i class="ar u"></i><i class="ar d"></i><i class="ar l"></i><i class="ar r"></i></div>
-        <div class="stick" id="stick" role="group" aria-label="Control stick"><i class="notch u"></i><i class="notch d"></i><i class="notch l"></i><i class="notch r"></i><i class="knob"></i></div>
-        <div class="pills">
-          <button class="pill" data-btn="start" tabindex="-1">START</button>
+      <div class="side sideA">
+        <div class="ab">
+          <button class="btn-ab b" data-btn="b" tabindex="-1" aria-label="B"><span>B</span></button>
+          <button class="btn-ab a" data-btn="a" tabindex="-1" aria-label="A"><span>A</span></button>
+          <button class="btn-ab c" data-btn="c" tabindex="-1" aria-label="C"><span class="l1">C</span><span class="l2">Y</span></button>
+          <button class="btn-ab d" data-btn="d" tabindex="-1" aria-label="D"><span class="l1">D</span><span class="l2">X</span></button>
+        </div>
+        <div class="pills pills2">
           <button class="pill ctl" id="ctlBtn" tabindex="-1" aria-label="Controls: what the buttons do">CONTROLS</button>
+          <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
       </div>
       <div class="brand" aria-hidden="true"><b>ZIGAPLAY</b><small id="edition">POCKET CONSOLE</small></div>
@@ -702,7 +804,7 @@ const CARTS=[
    blurb:'Win back five stolen Embers in an active-time RPG. Dress up from 200+ pieces; forge 10 weapon kinds part by part.',
    note:'A choose · B back (hold to run) · START menu · SELECT pose'},
   {id:'driftcritters',title:'Drift Critters',file:'games/driftcritters/index.html',art:'games/driftcritters/cart.png',label:'#7a1410',ink:'#ffd23f',skin:'driftcritters',stick:true,
-   blurb:'Eight critters, six tracks, two cups. Drift round the bends for a kick of speed, crack open crates for tricks and take the trophy.',
+   blurb:'Eight critters, six road courses, two cups. Drift round the bends for a kick of speed, crack open crates for tricks and take the trophy.',
    note:'Stick or ◀ ▶ steer · A use your trick · B hop, hold to drift · ▼ brake · START pause'},
   {id:'pipsqueak',title:'Pipsqueak',file:'games/pipsqueak/index.html',art:'games/pipsqueak/cart.png',label:'#1c4a7a',ink:'#ffd23f',skin:'pipsqueak',
    blurb:'One small chick runs, jumps and stomps across four lands to catch the balloon home.',
@@ -710,6 +812,15 @@ const CARTS=[
   {id:'fourfall',title:'Fourfall',file:'games/fourfall/index.html',art:'games/fourfall/cart.png',label:'#1c184a',ink:'#ffd15c',skin:'fourfall',
    blurb:'Slide and turn the falling pieces, fill rows to clear them and keep the well from filling up. Marathon, or a sprint to 40 lines.',
    note:'◀ ▶ slide · ▲ drop · ▼ faster · A and B turn · SELECT hold · START pause'},
+  {id:'squarewave',title:'Squarewave',file:'games/squarewave/index.html',art:'games/squarewave/cart.png',label:'#12305a',ink:'#7df9d2',skin:'squarewave',
+   blurb:'A square that never stops running, and one button to make it jump. Three levels of spikes, rings, gliders and upside-down stretches, each learnt a beat at a time.',
+   note:'A, ▲ or tap the screen: jump · hold to keep jumping · START pause'},
+  {id:'moonstack',title:'Moonstack',file:'games/moonstack/index.html',art:'games/moonstack/cart.png',label:'#24184a',ink:'#ffd23f',skin:'moonstack',
+   blurb:'You are a monkey with a hammer and a dream: ten thousand floors, all the way up to the moon. Type what each floor has on it, tap the things in it, and join floors together.',
+   note:'A build or change a floor · B see all floors · ▲▼ move between floors · tap things to play · START leaves a game'},
+  {id:'hollowmere',title:'The Tale of Wick: Hollow Wood',file:'games/hollowmere/index.html',art:'games/hollowmere/cart.png',label:'#1e3a2c',ink:'#e8742a',skin:'hollowmere',ver:2,stick:true,
+   blurb:'Two seedlings walk you off the path, a boy rides off on your horse, and a tree swallows you both. Get out of the tree, help the people it has already eaten, and kill it from the inside. A 3D adventure, about two hours long.',
+   note:'Stick move · B sword, hold to spin, tap twice to lock on · A talk, open, roll · X Y items · SELECT lock on/off · START bag'},
   {id:'strike',title:'Hammer Fall',file:'games/strike/index.html',art:'games/strike/cart.png',label:'#140c1c',ink:'#ff8ad0',skin:'drownedmoon',
    blurb:'Night brawls with 50 fighters: gunners, sword fighters and brawlers. Knock your rival off the stage.',
    note:'A attack · B block, +▲ or ◀▶ special · ▲ jump · ▼ block · START pause'},
@@ -726,7 +837,7 @@ const CARTS=[
    blurb:'Jab, block on the beat, then land the four-punch combo. 49 Port Ember boxers, Training and a Tier List.',
    note:'→ jab · ← block · B then A×4 combo · START pause'},
 ];
-const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
+const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and it will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
 const SKINS=[
   {id:'auto',name:'Match the game',tag:'AUTO',sw:['#2e377e','#d26c2c']},
@@ -743,6 +854,9 @@ const SKINS=[
   {id:'partyrex',name:'Neon Rex',tag:'GAME',ed:'NEON REX EDITION',sw:['#151828','#ff2a8a']},
   {id:'grim',name:'Grim Ascent',tag:'GAME',ed:'GRIM ASCENT EDITION',sw:['#1c1428','#eee8d4']},
   {id:'grayskin',name:'Gray Squares',tag:'GAME',ed:'GRAY SQUARES EDITION',sw:['#b8b8b8','#909090']},
+  {id:'squarewave',name:'Squarewave',tag:'GAME',ed:'SQUAREWAVE EDITION',sw:['#143a62','#7df9d2']},
+  {id:'moonstack',name:'Moonstack',tag:'GAME',ed:'MOONSTACK EDITION',sw:['#24184a','#ffd23f']},
+  {id:'hollowmere',name:'The Tale of Wick',tag:'GAME',ed:'HOLLOW WOOD EDITION',sw:['#2a4a3a','#e8742a']},
   {id:'aurora',name:'Aurora',tag:'LIVE',group:'ANIMATED',sw:['#16324a','#33d6a0']},
   {id:'galaxy',name:'Galaxy',tag:'LIVE',sw:['#1b1038','#e0408f']},
   {id:'lava',name:'Lava',tag:'LIVE',sw:['#271c1a','#ff7a1a']},
@@ -763,6 +877,10 @@ function gearSvg(cls,n){let d='';const R=48,r=38,st=Math.PI*2/n;
   return `<svg class="gear ${cls}" viewBox="0 0 100 100"><path fill-rule="evenodd" d="${d}Z M50 33a17 17 0 1 0 .01 0Z M50 43a7 7 0 1 0 .01 0Z"/></svg>`}
 const WAVE='<svg viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M0 8 Q12.5 2 25 8 T50 8 T75 8 T100 8 T125 8 T150 8 T175 8 T200 8 V20 H0Z"/></svg>';
 const SKINFX={
+  hollowmere:()=>{const r=prng(11);let h='';for(let i=0;i<6;i++)h+=`<b style="left:${pct(r()*80-10)};top:${pct(10+r()*80)};animation-delay:${sec(-r()*14)}"></b>`;return h},
+  moonstack:()=>{const r=prng(3);let h='<i class="msm"></i>';for(let i=0;i<14;i++)h+=`<b style="left:${pct(r()*96)};top:${pct(r()*96)};animation-delay:${sec(-r()*3)}"></b>`;return h},
+  squarewave:()=>{const r=prng(5),C=['#7df9d2','#ffd23f','#ff6b5e','#7df9d2'];let h='<i class="sqw"></i>';
+    for(let i=0;i<9;i++)h+=`<b style="left:${pct(r()*92)};top:${pct(52+r()*44)};--s:${(9+r()*9).toFixed(0)}px;--c:${C[i%4]};--r:${(r()*30-15).toFixed(0)}deg;animation-delay:${sec(-r()*8)}"></b>`;return h},
   driftcritters:()=>'<i class="chk"></i>'+[58,70,83].map((t,i)=>`<i class="ln" style="top:${t}%;animation-delay:${-i*.9}s"></i>`).join(''),
   pipsqueak:()=>'<i class="hill"></i><b style="top:60%;animation-delay:-6s"></b><b style="top:76%;animation-delay:-21s"></b>',
   fourfall:()=>{const r=prng(9),C=['#ff6f6b','#63dba2','#ffd15c','#5cbcff','#ae8aff','#ff92c6'];let h='';
@@ -834,15 +952,20 @@ const SFX={tick:()=>beep([[1568,0,.04]],'square',.03),pick:()=>beep([[1047,0,.06
   click:()=>beep([[220,0,.05]],'triangle',.08),buzz:()=>beep([[130,0,.16]],'sawtooth',.03),eject:()=>beep([[523,0,.06],[392,.06,.1]],'triangle',.07)};
 
 /* ---------- console state ---------- */
-let state='off',sel=Math.min(store.get('sel',0),CARTS.length),cur=null,frame=null,restore={},hand=store.get('hand','left')==='right'?'right':'left';
+let state='off',sel=Math.min(store.get('sel',0),CARTS.length),cur=null,frame=null,restore={},hand=store.get('abside','right')==='left'?'left':'right';
 /* ---------- the home screen and the library ----------
    Every game is either on the home screen's shelf or put away in the library. Where a game starts comes from its CARTS
    entry (lib:true starts it in the library); after that it follows the player. EDIT (or START) on the home screen lets
    them send a game to the library, and EDIT in the library sends it back. The choice is kept on this phone and, inside
    Claude, in the player's account with the skin, so it comes back on their other devices too. */
 let libPlace=(()=>{const o=store.get('lib',null);return o&&typeof o==='object'&&!Array.isArray(o)?o:{}})(),libTouched=false,editing=false,libUI=null,launchFrom='home';
+/* when the shelf and the skin were last changed on this phone, and what this page has moved since it opened */
+let libAt=+store.get('libAt',0)||0,skinAt=+store.get('shellAt',0)||0;const libAt0=libAt,skinAt0=skinAt,libMine={};
+function libMoved(id,where){libPlace[id]=where;libMine[id]=where;libTouched=true;libAt=Date.now();store.set('lib',libPlace);store.set('libAt',libAt);saveConsoleDoc()}
 const inLib=c=>!!c&&!c.ghost&&!c.libtile&&(libPlace[c.id]?libPlace[c.id]==='lib':!!c.lib);
-const homeCarts=()=>CARTS.filter(c=>!inLib(c)),libCarts=()=>CARTS.filter(inLib);
+/* each game is made for one version of the console; the shelf and the library show that version's games */
+let VER=store.get('ver',1)===2?2:1;const verOk=c=>(c.ver||1)===VER;
+const homeCarts=()=>CARTS.filter(c=>verOk(c)&&!inLib(c)),libCarts=()=>CARTS.filter(c=>verOk(c)&&inLib(c));
 const names=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const LIBTILE={id:'#library',libtile:true,title:'Library',note:'',
   get blurb(){const l=libCarts();return l.length?`${l.length} game${l.length===1?'':'s'} put away: ${names(l.map(c=>c.title))}.`:'Games you put away go here. Press EDIT on the home screen, then choose a game.'}};
@@ -855,13 +978,21 @@ function autoSkin(){const c=cur||(state==='lib'&&libUI?libCarts()[libUI.i]:items
 function wearSkin(id){if(id==='auto')id=autoSkin();if(!SKIN[id]||id==='auto')id='classic';if(consoleEl.dataset.shell===id&&fxEl.dataset.on===id)return;
   consoleEl.dataset.shell=id;fxEl.dataset.on=id;fxEl.className='skinfx fx-'+id;fxEl.innerHTML=SKINFX[id]?SKINFX[id]():'';$('#edition').textContent=SKIN[id].ed||'POCKET CONSOLE'}
 function refreshSkin(){if(state!=='skins')wearSkin(skinChoice)}
-function chooseSkin(id){skinChoice=id;skinTouched=true;store.set('shell',id);wearSkin(id);saveConsoleDoc()}
-function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoice,lib:libPlace,at:Date.now()}),{shell:skinChoice})}catch(e){}}
-/* the skin is kept in the player's account too, so it comes back when the phone has wiped this page's storage */
-async function skinFromAccount(){try{const r=await zclLoad('_console');if(!r||!r.ok||!r.json||skinTouched)return;
-  const o=JSON.parse(r.json);if(o&&SKIN[o.shell]&&o.shell!==skinChoice){skinChoice=o.shell;store.set('shell',o.shell);refreshSkin()}
-  if(o&&o.lib&&typeof o.lib==='object'&&!libTouched&&JSON.stringify(o.lib)!==JSON.stringify(libPlace)){libPlace=o.lib;store.set('lib',libPlace);
-    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib()}}catch(e){}}
+function chooseSkin(id){skinChoice=id;skinTouched=true;skinAt=Date.now();store.set('shell',id);store.set('shellAt',skinAt);wearSkin(id);saveConsoleDoc()}
+function saveConsoleDoc(){try{zclSave('_console',JSON.stringify({shell:skinChoice,lib:libPlace,at:Date.now(),libAt,shellAt:skinAt}),{shell:skinChoice})}catch(e){}}
+/* the skin and the shelf are kept in the player's account too, so they come back when the phone has wiped this page's
+   storage. Whichever copy was changed last wins; anything moved since this page opened stays on top of it, and the
+   account is brought up to date when this phone holds the newer copy. */
+async function skinFromAccount(){try{let r=null;for(let a=0;a<5;a++){r=await zclLoad('_console');if(r&&r.ok)break;await sleep(8000)}
+  if(!r||!r.ok)return;let o=null;try{o=r.json?JSON.parse(r.json):null}catch(e){}
+  if(!o||typeof o!=='object'){if(libAt||skinAt||Object.keys(libPlace).length||skinChoice!=='classic')saveConsoleDoc();return}
+  let push=false;const oSkin=+o.shellAt||+o.at||0,oLib=+o.libAt||+o.at||0;
+  if(SKIN[o.shell]&&o.shell!==skinChoice){if(!skinTouched&&oSkin>=skinAt0){skinChoice=o.shell;skinAt=oSkin;store.set('shell',o.shell);store.set('shellAt',skinAt);refreshSkin()}else push=true}
+  const theirs=o.lib&&typeof o.lib==='object'&&!Array.isArray(o.lib)?o.lib:{},next=oLib>=libAt0?Object.assign({},theirs,libMine):libPlace;
+  if(JSON.stringify(next)!==JSON.stringify(theirs))push=true;
+  if(JSON.stringify(next)!==JSON.stringify(libPlace)){libPlace=next;if(!libTouched)libAt=oLib;store.set('lib',libPlace);store.set('libAt',libAt);
+    if(state==='home'&&!editing)renderShelf();else if(state==='lib'&&libUI&&!libUI.edit)renderLib()}
+  if(push)saveConsoleDoc()}catch(e){}}
 wearSkin(skinChoice);
 let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
 function show(id){for(const x of['home','lib','boot','loading','skins','keys'])$('#'+x).hidden=x!==id;panelFor(id)}
@@ -902,7 +1033,7 @@ const panelApi=Object.freeze({
 function controlsBtn(){if(state==='game'&&cur){P2.ctl=!P2.ctl;SFX.tick();if(!P2.ctl){panelShow('game');return}
     panelMenu(cur.title,'','');const h=$('#p2MenuH');for(const part of [...noteParts(cur),'POWER switch: back to the shelf']){const s=document.createElement('span');s.textContent=part;h.append(s)}}
   else if(state==='home')openKeys();else if(state==='keys')closeKeys();else SFX.buzz()}
-function swapHands(){hand=hand==='left'?'right':'left';store.set('hand',hand);applyLayout();markKeys();SFX.pick();toast('A AND B: '+hand.toUpperCase()+' SIDE')}
+function swapHands(){hand=hand==='left'?'right':'left';store.set('abside',hand);applyLayout();markKeys();SFX.pick();toast('A AND B: '+hand.toUpperCase()+' SIDE')}
 
 /* ---------- the library shelf ---------- */
 function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();sel=Math.max(0,Math.min(sel,all.length-1));
@@ -915,15 +1046,15 @@ function renderShelf(){const sh=$('#shelf');sh.innerHTML='';const all=items();se
     b.setAttribute('aria-label',c.title);
     b.addEventListener('click',()=>{sfxUnlock();if(state!=='home')return;if(i===sel)activate();else{sel=i;layoutShelf();SFX.tick()}});
     sh.append(b)});
-  $('#count').textContent=`${CARTS.length} GAME${CARTS.length===1?'':'S'}`;markEdit();requestAnimationFrame(layoutShelf)}
-function homeHelp(){const h=editing?'<span><i>A</i>Put away</span><span><i>START</i>Done</span>':'<span><i>A</i>Play</span><span><i>START</i>Edit shelf</span><span><i>SELECT</i>Skins</span>';$('#homeHelp').innerHTML=h;$('#homeHelpW').innerHTML=h}
+  {const nG=CARTS.filter(verOk).length;$('#count').textContent=`${nG} GAME${nG===1?'':'S'}`}markEdit();requestAnimationFrame(layoutShelf)}
+function homeHelp(){const h=editing?'<span><i>A</i>Put away</span><span><i>START</i>Done</span>':'<span><i>A</i>Play</span><span><i>START</i>Edit shelf</span><span><i>SELECT</i>Skins</span><span><i>A+B</i>Hold: '+(VER===2?'1.0':'2.0')+'</span>';$('#homeHelp').innerHTML=h;$('#homeHelpW').innerHTML=h}
 function markEdit(){$('#home').classList.toggle('editing',editing);$('#editBtn').textContent=editing?'DONE':'EDIT';homeHelp();
   const c=items()[sel],can=editing&&c&&!c.ghost&&!c.libtile;$('#libAct').hidden=!can}
 function setEditing(on){if(state!=='home')return;if(on===editing)return;editing=on;SFX[on?'pick':'eject']();markEdit();layoutShelf()}
 /* send a game from the home screen to the library: it drops off the shelf, and the shelf closes up */
 async function toLibrary(c){if(!c||c.ghost||c.libtile||inLib(c))return;state='moving';SFX.eject();
   const card=$$('#shelf .cart')[items().indexOf(c)];if(card){card.classList.add('tolib');card.style.transform+=' translateY(70px) scale(.35)';await sleep(320)}
-  libPlace[c.id]='lib';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='home';renderShelf();toast(c.title.toUpperCase()+' → LIBRARY')}
+  libMoved(c.id,'lib');state='home';renderShelf();toast(c.title.toUpperCase()+' → LIBRARY')}
 /* ---------- the library screen ---------- */
 function openLib(){if(state!=='home')return;if(editing){editing=false;markEdit()}
   const n=libCarts().length;libUI={i:Math.max(0,Math.min(store.get('libSel',0),n-1)),edit:false};state='lib';show('lib');renderLib();SFX.pick()}
@@ -943,7 +1074,7 @@ function markLib(){if(!libUI)return;const rows=$$('#libList .row'),cs=libCarts()
 function libActivate(){const c=libCarts()[libUI.i];if(!c){SFX.buzz();return}if(libUI.edit)toHome(c);else launch(c)}
 /* send a game from the library back to the home screen, at the end of the shelf */
 async function toHome(c){state='moving';SFX.pick();const r=$$('#libList .row')[libCarts().indexOf(c)];if(r){r.classList.add('out');await sleep(300)}
-  libPlace[c.id]='home';libTouched=true;store.set('lib',libPlace);saveConsoleDoc();state='lib';renderLib();toast(c.title.toUpperCase()+' → HOME')}
+  libMoved(c.id,'home');state='lib';renderLib();toast(c.title.toUpperCase()+' → HOME')}
 function setLibEdit(on){if(state!=='lib'||!libUI)return;libUI.edit=on;SFX[on?'pick':'eject']();renderLib()}
 $('#keysBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')openKeys()});
 $('#editBtn').addEventListener('click',e=>{e.stopPropagation();sfxUnlock();if(state==='home')setEditing(!editing)});
@@ -967,9 +1098,10 @@ function applyLayout(){const de=document.documentElement,vv=window.visualViewpor
   de.style.setProperty('--zw',cw+'px');de.style.setProperty('--zh',(turned?W:H)+'px');
   const cz=wide?Math.max(.5,Math.min(wideGame?.94:1,(chh-34)/200,wideGame?cw/820:1)):1;
   de.style.setProperty('--cz',cz.toFixed(3));
-  consoleEl.classList.toggle('stickmode',!!(cur&&cur.stick));consoleEl.classList.toggle('face4',!!(cur&&cur.face4));consoleEl.classList.toggle('widegame',wideGame);consoleEl.classList.toggle('abright',hand==='right');
-  if(!wide){const bs=$('#base'),bw=bs.clientWidth,bh=bs.clientHeight-$('.brand').offsetHeight-6,sw=(bw-16)*.33;
-    de.style.setProperty('--sz',Math.max(.5,Math.min(1,sw/142,bh/194)).toFixed(3));de.style.setProperty('--sa',Math.max(.55,Math.min(1,sw/116,bh/186)).toFixed(3))}
+  consoleEl.classList.toggle('stickmode',VER===2||!!(cur&&cur.stick));consoleEl.classList.toggle('face4',VER===2||!!(cur&&cur.face4));consoleEl.classList.toggle('v2',VER===2);consoleEl.classList.toggle('widegame',wideGame);consoleEl.classList.toggle('ableft',hand==='left');
+  if(!wide){const bs=$('#base'),bh=bs.clientHeight-$('.brand').offsetHeight-6,wd=$('.sideD').getBoundingClientRect().width,wa=$('.sideA').getBoundingClientRect().width;
+    de.style.setProperty('--sz',Math.max(.5,Math.min(1,wd/138,bh/194)).toFixed(3));de.style.setProperty('--sa',Math.max(.55,Math.min(1,wa/70,bh/222)).toFixed(3));
+    de.style.setProperty('--s4',Math.max(.45,Math.min(1,wa/(VER===2?178:157),bh/(VER===2?212:194))).toFixed(3))}else de.style.removeProperty('--s4');
   panelFit();
   if(!$('#home').hidden)requestAnimationFrame(layoutShelf)}
 addEventListener('resize',applyLayout);addEventListener('orientationchange',()=>setTimeout(applyLayout,250));if(window.visualViewport)visualViewport.addEventListener('resize',applyLayout);
@@ -986,7 +1118,7 @@ function moveSel(d){const n=items().length,ns=Math.max(0,Math.min(n-1,sel+d));if
 function activate(){const c=items()[sel];if(editing){if(c.libtile)openLib();else if(c.ghost)SFX.buzz();else toLibrary(c);return}if(c.libtile){openLib();return}if(c.ghost){SFX.pick();ask(GHOST.blurb+' Each game keeps its own saves on this console.',[['Got it',()=>{}]]);return}launch(c)}
 
 /* ---------- power: boot, games in and out ---------- */
-async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#blackout').classList.remove('on');
+async function boot(fast){state='boot';consoleEl.classList.remove('off');$('#blackout').classList.remove('on');$('#edition').textContent=VER===2?'2.0 · POCKET CONSOLE':'POCKET CONSOLE';$('#boot .logo small').textContent=VER===2?'2.0':'FOLD';
   if(!fast){show('boot');const lg=$('#boot .logo');lg.style.animation='none';void lg.offsetWidth;lg.style.animation='';
     let skip=false;const sk=()=>{skip=true};screenEl.addEventListener('pointerdown',sk,{once:true});
     for(let t=0;t<1500&&!skip;t+=50)await sleep(50);SFX.chime();for(let t=0;t<700&&!skip;t+=50)await sleep(50);screenEl.removeEventListener('pointerdown',sk)}
@@ -1099,8 +1231,19 @@ function askInput(b){const a=askState;if(!a)return;if(b==='up'||b==='left'){a.i=
 
 /* ---------- buttons ---------- */
 const held=new Set();let repT=0,comboT=0;
+/* on the shelf and in the library, A and B act when they are let go, so that holding both can switch the console */
+let aPend=null,bPend=null;const VH={on:false,t0:0,used:false,raf:0};
+function verHoldStart(){if(VH.on)return;VH.on=true;VH.used=true;VH.t0=performance.now();const o=$('#verHold');o.hidden=false;$('#verHold b').textContent=VER===2?'1.0':'2.0';$('#verHold p').textContent='Keep holding A + B to switch to ZigaPlay '+(VER===2?'1.0':'2.0');
+  const fg=$('#verHold .fg'),L=2*Math.PI*42;fg.style.strokeDasharray=L;const tick=()=>{if(!VH.on)return;const t=Math.min(1,(performance.now()-VH.t0)/3000);fg.style.strokeDashoffset=L*(1-t);
+    if(t>=1){verHoldStop();switchVer();return}VH.raf=requestAnimationFrame(tick)};tick();SFX.tick()}
+function verHoldStop(){VH.on=false;cancelAnimationFrame(VH.raf);$('#verHold').hidden=true}
+function switchVer(){VER=VER===2?1:2;store.set('ver',VER);editing=false;if(libUI){libUI=null}sel=0;$('#edition').textContent=VER===2?'2.0 · POCKET CONSOLE':'POCKET CONSOLE';
+  const f=$('#verFlash');f.hidden=false;$('#verFlash b').textContent=VER===2?'ZIGAPLAY 2.0':'ZIGAPLAY 1.0';f.classList.remove('go');void f.offsetWidth;f.classList.add('go');setTimeout(()=>{f.hidden=true},1600);
+  try{SFX.chime()}catch(e){}state='home';show('home');markEdit();renderShelf();applyLayout()}
 function pressBtn(b){sfxUnlock();motionAsk();try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}
   if(held.has(b))return;held.add(b);
+  if((b==='a'||b==='b')&&held.has('a')&&held.has('b')&&(state==='home'||state==='lib')){verHoldStart();return}
+  if((state==='home'||state==='lib')&&(b==='a'||b==='b')){if(b==='a')aPend=state;else bPend=state;if(!held.has('a')||!held.has('b'))VH.used=false;return}
   if(held.has('start')&&held.has('select')&&state==='game'){clearTimeout(comboT);comboT=setTimeout(()=>{if(held.has('start')&&held.has('select'))powerSwitch()},800)}
   switch(state){
     case 'game':toCart(b,true);break;
@@ -1127,7 +1270,10 @@ function pressBtn(b){sfxUnlock();motionAsk();try{navigator.vibrate&&navigator.vi
 let motionOK=false;function motionAsk(){if(motionOK||state!=='game'||!(cur&&cur.tilt))return;try{const D=window.DeviceOrientationEvent;
   if(D&&typeof D.requestPermission==='function')D.requestPermission().then(r=>{if(r==='granted')motionOK=true}).catch(()=>{});else motionOK=true}catch(e){}}
 for(const ev of['touchend','pointerup','click'])addEventListener(ev,motionAsk,{capture:true,passive:true});
-function releaseBtn(b){if(!held.has(b))return;held.delete(b);if(state==='game')toCart(b,false)}
+function releaseBtn(b){if(!held.has(b))return;held.delete(b);if(state==='game')toCart(b,false);
+  if(b==='a'||b==='b'){if(VH.on)verHoldStop();const w=b==='a'?aPend:bPend;if(b==='a')aPend=null;else bPend=null;
+    if(VH.used){if(!held.has('a')&&!held.has('b'))VH.used=false;return}
+    if(w&&w===state){if(state==='home'){if(b==='a')activate();else if(editing)setEditing(false)}else if(state==='lib')libInput(b)}}}
 function releaseAll(){for(const b of[...held])releaseBtn(b);setDpad(null);try{toCartStick(0,0)}catch(e){}stickDirs.clear();stickId=null;knob.classList.add('back');knob.style.transform='translate3d(0,0,0)';stick.querySelectorAll('.notch').forEach(n=>n.classList.remove('on'))}
 function toCart(b,down){const w=cartWin();if(!w)return;
   try{if(w.ZPCart&&typeof w.ZPCart.input==='function'){w.ZPCart.input(b,down);return}}catch(e){console.warn('ZigaPlay cartridge input failed',e);return}
@@ -1231,7 +1377,7 @@ function zclBoot(){if(ZCL.boot)return ZCL.boot;
         if(!got)throw{code:'slow'};if(!got[0])throw{code:'no_db'};if(!got[1])throw{code:'no_user'};
         const uid=await got[1].id();if(!uid)throw{code:'no_user_id'};
         ZCL.db=got[0];ZCL.uid=uid;ZCL.st='on';ZCL.err='';for(const k in ZCL.games)zclPump(ZCL.games[k]);return}
-      catch(e){ZCL.st='off';ZCL.err=zErr(e);await zSleep(4000+a*4000)}}})();
+      catch(e){ZCL.st='off';ZCL.err=zErr(e);ZCL.fails=a+1;await zSleep(4000+a*4000)}}ZCL.fails=9})();
   return ZCL.boot}
 const zclCol=id=>ZCL.db.collection('data/users/'+ZCL.uid+'/'+String(id)+'/saves');
 const zclRef=(id,doc)=>zclCol(id).doc(String(doc||'main'));
@@ -1267,6 +1413,9 @@ const gameClaude=()=>{const c=window.claude;if(!c||typeof c.use!=='function')ret
 window.ZIGAPLAY=Object.freeze({
   version:2,
   panel:panelApi,
+  /* a game may ask Claude a question (the player is asked once to allow it); resolves the answer as JSON */
+  ask:async(input,opts)=>{let s=null;try{s=window.claude&&await window.claude.use('sample')}catch(e){}if(!s)throw{code:'unavailable'};return s.json(input,Object.assign({modelTier:'quick',cache:false},opts||{}))},
+  askText:async(input,opts)=>{let s=null;try{s=window.claude&&await window.claude.use('sample')}catch(e){}if(!s)throw{code:'unavailable'};return s(input,Object.assign({modelTier:'default',cache:false},opts||{}))},
   get claude(){return gameClaude()},
   cloud:Object.freeze({load:zclLoad,save:zclSave,flush:zclFlush,status:zclStatus,list:zclList}),
   AudioContext:ZPAudioContext,
@@ -1285,7 +1434,13 @@ const start=data=>{applyLayout();data=data||{};if(typeof data.sel==='number')sel
   else boot(false)};
 if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
 setTimeout(skinFromAccount,400);
-window.__zp={P2,panelApi,controlsBtn,swapHands,get hand(){return hand},test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},lib:{open:openLib,close:closeLib,edit:setEditing,libEdit:setLibEdit,home:()=>homeCarts().map(c=>c.id),inLib:()=>libCarts().map(c=>c.id),get sel(){return sel},get libSel(){return libUI&&libUI.i}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
+/* one line on the second screen: are saves reaching the player's account? (nothing to say when the page runs outside Claude) */
+function acctNote(){const e=$('#acct');if(!e)return;const g=ZCL.games['_console|main'];let t='',c='';
+  if(ZCL.st==='none')t='';else if(ZCL.st==='on'){if(ZCL.perm==='denied'||(g&&g.err==='not_granted')){t='Account saves not allowed';c='bad'}else{t='Account saves on';c='ok'}}
+  else if((ZCL.fails||0)>=2){t='Account saves off';c='bad'}else t='Finding your account…';
+  if(e.dataset.t!==t){e.dataset.t=t;e.textContent=t;e.className=c;e.hidden=!t}}
+zclBoot();acctNote();setInterval(acctNote,1200);
+window.__zp={get VER(){return VER},switchVer,P2,panelApi,controlsBtn,swapHands,get hand(){return hand},test:{launch:c=>launch(c),restore:(id,v)=>{restore[id]=v}},lib:{open:openLib,close:closeLib,edit:setEditing,libEdit:setLibEdit,home:()=>homeCarts().map(c=>c.id),inLib:()=>libCarts().map(c=>c.id),get sel(){return sel},get libSel(){return libUI&&libUI.i}},get state(){return state},get cur(){return cur},get frame(){return frame},pressBtn,releaseBtn,powerSwitch,launch:id=>launch(CARTS.find(c=>c.id===id)),eject,CARTS,gameContexts,get sel(){return sel},SKINS,wearSkin,get skin(){return skinChoice}};
 })();
 </script>
 </body>

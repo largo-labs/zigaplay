@@ -1,0 +1,21 @@
+body{--bg:#0b1020;--panel:#182448;--line:#3a4c86;--hot:#7df9d2;--hotink:#06231c;--veil:rgba(8,12,30,.82)}
+#hud{color:#fff;text-shadow:0 calc(var(--s)*1px) 0 rgba(8,10,28,.7)}
+#hPct{right:calc(var(--s)*5px);top:calc(var(--s)*2px);font-family:var(--num);font-size:calc(var(--s)*9px)}
+#hMode{left:calc(var(--s)*5px);top:calc(var(--s)*3px);font-size:calc(var(--s)*5.5px);letter-spacing:.1em;color:#6aee8a}
+#hTry{left:0;right:0;top:20%;text-align:center;font-size:calc(var(--s)*11px);font-weight:700;letter-spacing:.1em;opacity:0}
+#hTry.go{animation:try 1.5s ease-out}
+@keyframes try{0%{opacity:0;transform:translateX(calc(var(--s)*14px))}14%{opacity:1;transform:none}68%{opacity:1}100%{opacity:0;transform:translateX(calc(var(--s)*-10px))}}
+#ov.title{background:rgba(8,12,30,.5)}
+#ov.title p{text-shadow:0 calc(var(--s)*1px) 0 #0a0c20;opacity:1}
+.logo{display:flex;flex-direction:column;line-height:.92;letter-spacing:.08em;text-shadow:0 calc(var(--s)*2px) 0 #1c5a86,0 calc(var(--s)*3px) 0 #0a0c20}
+.logo b:first-child{color:#ffd23f}.logo b:last-child{color:#7df9d2}
+.keys{line-height:1.5}.keys b{color:#7df9d2;font-weight:700}
+/* the card for one level: its name, how hard, how far you have got, the notes found */
+.lcard{display:flex;flex-direction:column;align-items:center;gap:calc(var(--s)*2.5px);width:min(92%,calc(var(--s)*130px));padding:calc(var(--s)*5px) calc(var(--s)*6px);border-radius:calc(var(--s)*4px);
+  border:calc(var(--s)*1.5px) solid var(--c,#7df9d2);background:linear-gradient(180deg,rgba(8,12,30,.9),var(--b,#1c5a86));box-shadow:0 calc(var(--s)*3px) 0 rgba(8,10,28,.6)}
+.lcard small{font-size:calc(var(--s)*5.5px);letter-spacing:.1em;opacity:.8}
+.lcard b{font-size:calc(var(--s)*13px);line-height:1;letter-spacing:.06em;color:var(--c)}
+.lcard em{font-style:normal;font-size:calc(var(--s)*6px);letter-spacing:.14em;padding:calc(var(--s)*.5px) calc(var(--s)*5px);border-radius:calc(var(--s)*5px);background:var(--c);color:#0a0c20;font-weight:700}
+.lbar{width:100%;height:calc(var(--s)*5px);border-radius:calc(var(--s)*3px);background:rgba(8,10,28,.7);overflow:hidden;border:calc(var(--s)*1px) solid rgba(255,255,255,.25)}
+.lbar i{display:block;height:100%;background:var(--c)}
+.lcard span{font-size:calc(var(--s)*6.5px);letter-spacing:.06em}

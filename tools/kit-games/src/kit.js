@@ -25,7 +25,16 @@ const SND=(()=>{const AC=window.AudioContext||window.webkitAudioContext;let ctx=
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0008,t+d);os.connect(g);g.connect(o.dest||master);os.start(t);os.stop(t+d+.03)}
   function noise(d,o={}){if(!ctx||!mode||ctx.state!=='running')return;const t=Math.max(ctx.currentTime,o.t||0)+(o.at||0),s=ctx.createBufferSource(),g=ctx.createGain(),v=o.vol||.1;s.buffer=nbuf;
     let n=s;if(o.hp||o.lp){const f=ctx.createBiquadFilter();f.type=o.hp?'highpass':'lowpass';f.frequency.value=o.hp||o.lp;s.connect(f);n=f}
-    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+d);n.connect(g);g.connect(o.dest||master);s.start(t);s.stop(t+d+.03)}
+    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+d);n.connect(g);g.connect(o.dest||master);s.start(t,o.off||0);s.stop(t+d+.03)}
+  /* plays a buffer of samples made in code (a synthesised voice); data may be a function so nothing is built while sound is off */
+  function pcm(data,sr,o={}){if(!ctx||ctx.state!=='running')return;const d=typeof data==='function'?data():data;if(!d||!d.length)return;const b=ctx.createBuffer(1,d.length,sr);b.getChannelData(0).set(d);const s=ctx.createBufferSource();s.buffer=b;if(o.rate)s.playbackRate.value=o.rate;const g=ctx.createGain();g.gain.value=o.vol==null?.3:o.vol;s.connect(g);g.connect(o.dest||master);const t0=ctx.currentTime+(o.at||0);s.start(t0);
+    /* a handle so a voice can be cut off cleanly (a quick fade, no click) */
+    let live=true;s.onended=()=>{live=false};return{get live(){return live},stop(){if(!live)return;live=false;try{const n=ctx.currentTime;g.gain.cancelScheduledValues(n);g.gain.setValueAtTime(g.gain.value,n);g.gain.linearRampToValueAtTime(0,n+.02);s.stop(n+.03)}catch(e){}}}}
+  /* a held bed of filtered noise (rain, wind) that a scene turns up and down; returns null until sound is unlocked */
+  let lbuf=null;
+  function bed(o={}){if(!ctx||ctx.state!=='running')return null;if(!lbuf){lbuf=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate);const d=lbuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=rnd()*2-1}
+    const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=lbuf;s.loop=true;f.type=o.type||'lowpass';f.frequency.value=o.f||800;if(o.q)f.Q.value=o.q;g.gain.value=0;s.connect(f);f.connect(g);g.connect(o.dest||master);s.start(ctx.currentTime,rnd()*2.5);let dead=false;
+    return{set(v,fr,k){if(dead)return;const n=ctx.currentTime;g.gain.setTargetAtTime(Math.max(0,v),n,k||.15);if(fr)f.frequency.setTargetAtTime(fr,n,k||.15)},stop(){if(dead)return;dead=true;const n=ctx.currentTime;g.gain.setTargetAtTime(0,n,.25);s.stop(n+1.6)}}}
   /* a channel: 'E5 . G5 - k h' -> one token per sixteenth; '.' rests, '-' holds the note before it; k h s are drums */
   function seq(type,vol,str){const tk=str.trim().split(/\s+/),ev=[];let last=null;tk.forEach((x,i)=>{if(x==='.'){last=null}else if(x==='-'){if(last)last.n++}else{last={f:type==='drum'?x:freq(x),n:1};ev[i]=last}});return{type,vol,ev,len:tk.length}}
   function tick(){if(!ctx||!song||mode<2||ctx.state!=='running')return;const spb=60/song.bpm/4;if(sNext<ctx.currentTime)sNext=ctx.currentTime+.06;
@@ -33,7 +42,7 @@ const SND=(()=>{const AC=window.AudioContext||window.webkitAudioContext;let ctx=
         if(ch.type==='drum'){if(e.f==='k')tone(140,.11,{type:'sine',to:45,vol:ch.vol*1.6,t:sNext,dest:musicG});else if(e.f==='s')noise(.09,{vol:ch.vol,hp:1800,t:sNext,dest:musicG});else noise(.03,{vol:ch.vol*.6,hp:6000,t:sNext,dest:musicG})}
         else tone(e.f,Math.max(.06,e.n*spb*.95),{type:ch.type,vol:ch.vol,t:sNext,dest:musicG})}
       sStep++;sNext+=spb}}
-  return{unlock,tone,noise,seq,
+  return{unlock,tone,noise,bed,pcm,seq,
     play(sg){if(song===sg)return;song=sg;sStep=0;sNext=0;if(!timer)timer=setInterval(tick,60)},
     stop(){song=null},
     get mode(){return mode},set mode(v){mode=v;if(master)master.gain.value=v?0.55:0},

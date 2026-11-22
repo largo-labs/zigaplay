@@ -16,6 +16,9 @@ A pocket console for the browser. It folds open: the game plays on the screen in
 | **Drift Critters** | A kart racer: eight critters, six tracks, two cups and three speeds. Drift round the bends for a kick of speed and crack open crates for tricks. The second screen shows the track map and your place. | Stick or ◀ ▶ steer · A use your trick · B hop, hold to drift · ▼ brake · START pause |
 | **Pipsqueak** | A side-scroller: a small chick runs, jumps, stomps foes and bumps blocks across four lands to catch the balloon home. The second screen shows the stretch of level around you and your score. | ◀ ▶ run · A jump, hold for higher · B dash, or spit embers · START pause |
 | **Fourfall** | A falling-block puzzle: slide and turn the pieces and fill rows to clear them. Marathon, or a sprint to 40 lines. The second screen shows the held piece, the next three and your score. | ◀ ▶ slide · ▲ drop · ▼ faster · A and B turn · SELECT hold · START pause |
+| **Squarewave** | A one-button runner: a square that never stops running jumps over spikes, through rings and gliders and across upside-down stretches in three levels, each learnt a beat at a time. | A, ▲ or tap the screen: jump · hold to keep jumping · START pause |
+| **Moonstack** | You are a monkey with a hammer building ten thousand floors up to the moon: type what each floor has on it, tap the things in it, and join floors together. | A build or change a floor · B see all floors · ▲▼ move between floors · START leaves a game |
+| **The Tale of Wick: Hollow Wood** | A 3D adventure, about two hours long: two seedlings walk you off the path, a boy rides off on your horse, and a tree swallows you both. Get out of the tree, help the people it has already eaten, and kill it from the inside. On the ZigaPlay 2.0 shelf (hold A + B to switch). | Stick move · B sword, hold to spin, tap twice to lock on · A talk, open, roll · X Y items · SELECT lock on/off · START bag |
 | **Neon Rex** | A cyber-raptor races through a neon city at night: Rex runs right on his own, district after district, and keeps his speed up by dashing down onto the glitch goblins rushing at him. Levels never end. Played upright, on a tall screen. | B or A dash down · START pause |
 | **Grim Ascent** | A Doodle Jump-style climb up a haunted tower as a little reaper in a black cloak and skull mask. Tilt the phone to steer; you bounce on the platforms by yourself. Press B to dash at a nearby monster (or slam down) and finish them with A combos; tougher monsters take two, three or four combos. Played upright. | Tilt steer · B slam · A attack · START pause |
 | **Gray Squares** | Press the square to make a square, then buy things that make squares for you: an extra square, a small pile, a gray shelf, all the way up to gray everything. Everything is gray. It keeps going while you are away. | A press · ▲▼ choose · A buy · SELECT ×1/×10/max · START menu |
@@ -23,20 +26,22 @@ A pocket console for the browser. It folds open: the game plays on the screen in
 
 ## The fold-open console
 
+- **ZigaPlay 2.0.** Hold A + B on the shelf to switch between 1.0 and 2.0. On 2.0 the stick takes the D-pad's place and the face buttons become A B X Y (X on top, Y on the left), with black buttons and a finished body. Each version has its own shelf: a cart with `ver:2` (Hollow Wood) only shows on 2.0, and every other game only on 1.0.
+- **Account saves.** A small light on the second screen shows whether saves are reaching your account.
 - **Two screens.** The lid's screen is where the game plays. With no game in, it shows the store: a banner for the game you're on and a row of covers to move through. The second screen, in the base, tells you about that game and what the buttons do.
 - **The second screen in a game** shows the game's cover, its buttons and how long it has been on. A game can put its own numbers and a small picture there instead (see `ZIGAPLAY.panel` below); Drift Critters, Pipsqueak and Fourfall do.
 - **CONTROLS** (next to START) swaps the second screen between the game's numbers and what the buttons do. On the shelf it opens the controls screen, where each button's keyboard keys can be changed.
 - **A and B sit on the left** and the D-pad on the right. The last row of the controls screen swaps the two sides.
 - **Sideways.** A wide game (Pitchfork Rising, Spellsteel) still turns the console a quarter turn on an upright phone, with the D-pad on the left, the buttons on the right and no second screen. A phone held sideways gets the same shape.
 
-## Drift Critters, Pipsqueak and Fourfall
+## Drift Critters, Pipsqueak, Fourfall, Squarewave, Moonstack and Hollow Wood
 
-These three share one small kit: the hookup to the console (buttons, the second screen, saves), a little sound engine and the menus.
+These six share one small kit: the hookup to the console (buttons, the second screen, saves), a little sound engine and the menus.
 
 - **Drift Critters.** The ground is one big picture of the track drawn row by row as seen from behind the kart, and every kart is a handful of boxes drawn once from sixteen sides. By default the kart drives itself and A uses your trick; *GAS: A BUTTON* on the title screen puts the gas on A and the trick on ▲. Grand Prix is three races for points; the Ember Cup opens once you finish the Sprout Cup in the top three.
 - **Pipsqueak.** Four lands (meadow, cave, treetops, keep), each written as pieces of level in `pipsqueak.js`. A berry makes Pip big, a pepper lets him spit embers, 100 coins is an extra try, and the last land ends with a king on a bridge and a bell behind him. Finishing all four opens Spicy mode.
 - **Fourfall.** A seven-piece bag, a ghost piece, hold, and a short grace before a piece locks. In the console the well takes the whole lid screen and the next pieces move to the second screen.
-- They are built from `tools/kit-games/src/`: `python3 tools/kit-games/build.py` writes the three `games/<id>/index.html` files, and `node tools/kit-games/make-cart.js` redraws their labels (it needs Playwright).
+- They are built from `tools/kit-games/src/`: `python3 tools/kit-games/build.py` writes the six `games/<id>/index.html` files, and `node tools/kit-games/make-cart.js` redraws their labels (it needs Playwright).
 
 ## Spellsteel and Gearfist
 
@@ -182,7 +187,7 @@ tools/lynties-3d/           the Lynties game, its 3D world and the script that b
 tools/drownedmoon/          Strike at Night's source (src/*.js), its build script and label maker
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
-tools/kit-games/            Drift Critters, Pipsqueak and Fourfall: their shared kit, sources, build script and label maker
+tools/kit-games/            Drift Critters, Pipsqueak, Fourfall, Squarewave, Moonstack and Hollow Wood: their shared kit, sources, build script and label maker
 tools/strike/               Hammer Fall: its source (src/*.js and the page shell) and build script
 tools/grim/                 Grim Ascent: its source (src/*.js and the page shell) and build script
 tools/squares/              Gray Squares: its page shell, script and build script

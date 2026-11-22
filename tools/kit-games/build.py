@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Builds the three cartridges that share one small kit: Drift Critters, Pipsqueak and Fourfall.
+"""Builds the cartridges that share one small kit: Drift Critters, Pipsqueak, Fourfall, Squarewave, Moonstack and
+The Tale of Wick: Hollow Wood.
 
     python3 tools/kit-games/build.py
 
-Each game is src/<id>.js, src/<id>.css and src/<id>.body.html. src/kit.js and src/kit.css go into all three: the hookup to
+Each game is src/<id>.js, src/<id>.css and src/<id>.body.html. src/kit.js and src/kit.css go into all of them: the hookup to
 the console (buttons, the second screen, saves), a little sound engine and the menus. The script writes
 games/<id>/index.html, one self-contained page per game.
 """
@@ -11,7 +12,8 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-GAMES = [('driftcritters', 'Drift Critters'), ('pipsqueak', 'Pipsqueak'), ('fourfall', 'Fourfall')]
+GAMES = [('driftcritters', 'Drift Critters'), ('pipsqueak', 'Pipsqueak'), ('fourfall', 'Fourfall'),
+         ('squarewave', 'Squarewave'), ('moonstack', 'Moonstack'), ('hollowmere', 'The Tale of Wick: Hollow Wood')]
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
          '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=VT323&display=swap">\n')

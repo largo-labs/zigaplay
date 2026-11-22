@@ -129,7 +129,7 @@ function stitch(chunks){const rows=[];for(let y=0;y<LH;y++)rows.push('');for(con
 
 /* ---------- the running game ---------- */
 let SC=2,VW=240,VH=176,T=0,state='title',lvl=0,th=THEMES[0],tiles=TILES[0],G=[],LW=0,foes=[],items=[],plats=[],bumps=[],parts=[],pops=[],embers=[],decos=[],cps=[],goal=null,boss=null,bell=null,
-  multi={},P=null,camX=0,camY=0,lives=3,coins=0,score=0,timeLeft=300,respawn=null,chain=0,dieT=0,winT=0,cardT=0,SP=1,skyC=null,bossDone=false;
+  multi={},P=null,fire=-999,camX=0,camY=0,lives=3,coins=0,score=0,timeLeft=300,respawn=null,chain=0,dieT=0,winT=0,cardT=0,SP=1,skyC=null,bossDone=false;
 const SOLID='#B?MH*UXLS',isSolid=c=>SOLID.includes(c);
 const at=(tx,ty)=>tx<0||tx>=LW?'X':ty<0||ty>=LH?' ':G[ty][tx];
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
@@ -164,6 +164,7 @@ function loadLevel(i,keep){lvl=i;th=THEMES[i];tiles=TILES[i];SP=S.v.spicy?1.35:1
   for(let x=0;x<LW;x++)for(let y=2;y<LH;y++)if(G[y][x]==='#'&&G[y-1][x]===' '){const h=(x*2654435761>>>0)%11;if(h<3&&!cps.some(c=>Math.abs(c.x-x*TS)<20)){const d=tiles.deco[h%tiles.deco.length];decos.push({c:d,x:x*TS+((h*5)%(17-d.width)),y:y*TS-d.height})}}
   if(keep&&respawn&&respawn.l===i){start={x:respawn.x,y:respawn.y};for(const c of cps)if(c.sx<=respawn.x)c.on=true}else respawn=null;
   P={x:start.x,y:start.y,w:10,h:12,vx:0,vy:0,dir:1,onG:false,form:0,inv:0,coy:0,jbuf:0,dash:0,walk:0,ride:null,prevB:0};
+  fire=start.x-210;
   timeLeft=S.v.spicy?220:300;chain=0;camX=clamp(P.x-VW*.4,0,Math.max(0,LW*TS-VW));camY=camTargetY();mkSky()}
 function setForm(f){const oh=P.h;P.form=f;P.h=f?22:12;P.y+=oh-P.h}
 function mkSky(){skyC=mkCanvas(1,Math.max(1,VH));const x=skyC.getContext('2d'),gr=x.createLinearGradient(0,0,0,VH);gr.addColorStop(0,th.sky[0]);gr.addColorStop(1,th.sky[1]);x.fillStyle=gr;x.fillRect(0,0,1,VH)}
@@ -225,9 +226,11 @@ function stepPlay(dt){
   /* foes */
   for(const e of foes)stepFoe(e,dt);
   for(const b of foes){if(b.type!=='p'||!b.roll||b.dead)continue;for(const o of foes)if(o!==b&&!o.dead&&!o.sq&&o.act&&overlap(b,o)){if(o===boss){o.hp-=2;o.flash=.3;b.dead=true;b.vy=-200;b.vx=-b.dir*60;if(o.hp<=0)killFoe(o,b.dir)}else killFoe(o,b.dir,200)}}
-  for(const e of foes){if(e.dead||e.sq>0||!e.act||!overlap(P,e))continue;
+  for(const e of foes){if(e.dead||e.sq>0||!e.act)continue;
+    const stompBox={x:e.x-5,y:e.y-4,w:e.w+10,h:e.h+4},canStomp=P.vy>0&&P.prevB<=e.y+Math.max(9,e.h*.6)&&e.type!=='k'&&e.type!=='K';
+    if(!(canStomp?overlap(P,stompBox):overlap(P,e)))continue;
     if(e.type==='p'&&e.ball&&!e.roll){e.roll=true;e.dir=P.x+P.w/2<e.x+e.w/2?1:-1;e.vx=e.dir*190;e.kick=.3;SFX.kick();if(P.vy>0)P.vy=-190;continue}
-    if(P.vy>0&&P.prevB<=e.y+6&&e.type!=='k'&&e.type!=='K'){chain++;const pts=Math.min(1600,100*Math.pow(2,chain-1));P.vy=held.a?-310:-200;P.y=e.y-P.h;SFX.stomp();
+    if(canStomp){chain++;const pts=Math.min(1600,100*Math.pow(2,chain-1));P.vy=held.a?-310:-200;P.y=e.y-P.h;SFX.stomp();
       if(e.type==='s'){e.sq=.45;addScore(pts,e.x,e.y-8)}else if(e.type==='f')killFoe(e,P.dir,pts*2);
       else if(!e.ball){e.ball=true;e.roll=false;e.vx=0;e.ballT=6;e.y+=e.h-12;e.h=12;addScore(pts,e.x,e.y-8)}else{e.roll=false;e.vx=0;e.ballT=6}continue}
     if(e.type==='p'&&e.roll&&e.kick>0)continue;
@@ -240,6 +243,9 @@ function stepPlay(dt){
   for(const c of cps)if(!c.on&&P.x>c.x){c.on=true;respawn={l:lvl,x:c.sx,y:c.sy};SFX.cp();burst(c.x+6,c.y+6,['#ffd23f','#fff'],8,60)}
   if(bell&&!bell.rung&&overlap(P,bell))ringBell();
   if(goal&&overlap(P,{x:goal.x+6,y:goal.y+20,w:18,h:30})){if(bell&&!bell.rung)ringBell();state='win';winT=0;P.vx=P.vy=0;SND.stop();SFX.goal()}
+  /* the wall of fire creeps after Pip; it stops once the bell is rung or Pip is near the balloon */
+  if(!(bell&&bell.rung)&&!(goal&&P.x>goal.x-10*TS)){const gap=P.x-fire;fire+=(30+Math.max(0,gap-220)*.35)*dt}
+  if(P.x<fire+4){die();return}
   timeLeft-=dt*2.4;if(timeLeft<=0){timeLeft=0;die();return}
   items=items.filter(o=>!o.gone);foes=foes.filter(o=>!o.gone);embers=embers.filter(o=>!o.gone)}
 function stepFoe(e,dt){if(e.dead){e.vy+=1400*dt;e.y+=e.vy*dt;e.x+=e.vx*dt;if(e.y>LH*TS+50)e.gone=true;return}
@@ -295,6 +301,10 @@ function draw(){const cx=Math.round(camX),cy=Math.round(camY);g.drawImage(skyC,0
     else g.drawImage(SPR[e.type][e.type==='f'?Math.floor(e.t*10)%2:f][d],X-(e.type==='f'?2:1),Y-(e.type==='k'?3:e.type==='f'?1:2))}
   if(P&&!(P.inv>0&&Math.floor(T*20)%2)&&state!=='title'){const fr=state==='dying'?3:!P.onG?3:Math.abs(P.vx)>10?1+Math.floor(P.walk/9)%2:0,s=PIP[P.form][fr][P.dir>0?0:1],X=Math.round(P.x-cx)-(P.form?3:2),Y=Math.round(P.y-cy)-2;
     if(state==='dying'){g.save();g.translate(X+s.width/2,Y+s.height/2);g.scale(1,-1);g.drawImage(s,-s.width/2,-s.height/2);g.restore()}else g.drawImage(s,X,Y)}
+  {const fx=Math.round(fire-cx);if(fx>-40){g.fillStyle='rgba(255,90,20,.18)';g.fillRect(0,0,Math.max(0,fx+26),VH);g.fillStyle='#8a1a0c';g.fillRect(0,0,Math.max(0,fx-10),VH);
+    for(let y=0;y<VH;y+=4){const w1=Math.sin(y*.21+T*9)*5+Math.sin(y*.07-T*5)*4,w2=Math.sin(y*.33-T*12)*3;
+      g.fillStyle='#d8340e';g.fillRect(0,y,Math.max(0,fx-2+w1),4);g.fillStyle='#ff7a1a';g.fillRect(Math.max(0,fx-12+w1),y,10+w2,4);g.fillStyle='#ffd23f';g.fillRect(Math.max(0,fx-6+w1+w2),y,5,4)}
+    for(let i=0;i<14;i++){const ey=(VH-((T*60+i*53)%VH))|0,ex=fx+4+((i*37+T*20)%22);g.fillStyle=i&1?'#ffd23f':'#ff7a1a';g.fillRect(Math.round(ex),ey,2,2)}}}
   for(const m of embers)g.drawImage(SPR.ember[Math.floor(T*16)%2],Math.round(m.x-cx),Math.round(m.y-cy));
   for(const p of parts){if(p.coin)g.drawImage(SPR.coin[Math.floor(T*16)%4],Math.round(p.x-cx),Math.round(p.y-cy));else{g.fillStyle=p.c;g.fillRect(Math.round(p.x-cx),Math.round(p.y-cy),p.s,p.s)}}
   for(const p of pops){const X=Math.round(p.x-cx),Y=Math.round(p.y-cy);tiny(p.txt,X+1,Y+1,'#221633');tiny(p.txt,X,Y,p.txt==='1UP'?'#8affa0':'#ffffff')}}
@@ -305,6 +315,7 @@ let pcv=null;
 function panelDraw(){if(!PANEL||!P)return;if(!pcv)pcv=PANEL.canvas(96,38,'MAP');if(!pcv)return;const x=pcv.getContext('2d'),px=Math.floor(P.x/TS),x0=clamp(px-18,0,Math.max(0,LW-48));x.fillStyle=th.sky[1];x.fillRect(0,0,96,26);
   for(let ty=0;ty<LH;ty++)for(let i=0;i<48;i++){const c=G[ty][x0+i];if(!c||c===' ')continue;x.fillStyle=c==='#'?(ty>0&&!isSolid(G[ty-1][x0+i])?th.grass:th.dirt):c==='B'?th.brick:c==='o'?'#ffcf3a':c==='^'?'#ffffff':'?MH*'.includes(c)?'#f5b030':c==='='?th.log:th.stone;if(c==='o')x.fillRect(i*2,ty*2,1,1);else x.fillRect(i*2,ty*2,2,c==='='?1:2)}
   x.fillStyle='#e8344a';for(const e of foes)if(!e.dead&&!e.sq){const i=(e.x/TS-x0)*2;if(i>=0&&i<96)x.fillRect(i,e.y/TS*2,2,2)}if(goal){const i=(goal.x/TS-x0)*2;if(i>=0&&i<96){x.fillStyle='#ff5a5a';x.fillRect(i+1,(goal.y+10)/TS*2,3,3)}}
+  {const fi=(fire/TS-x0)*2;if(fi>0){x.fillStyle='rgba(255,90,20,.75)';x.fillRect(0,0,Math.min(96,fi),26)}}
   x.fillStyle='#1a1230';x.fillRect((P.x/TS-x0)*2-1,P.y/TS*2-1,4,4);x.fillStyle='#ffd23f';x.fillRect((P.x/TS-x0)*2,P.y/TS*2,2,2);
   x.fillStyle='#141a30';x.fillRect(0,26,96,12);x.fillStyle='#3a4468';x.fillRect(4,31,88,2);x.fillStyle='#ff5a5a';x.fillRect(90,28,3,7);x.fillStyle='#ffd23f';x.fillRect(4+Math.round(clamp(P.x/(LW*TS),0,1)*84),29,4,6)}
 function hudText(){if(PANEL){PANEL.rows([['SCORE',fmt(score)],['COINS',coins],['TRIES',lives],['TIME',Math.ceil(timeLeft)]]);panelDraw()}
@@ -337,5 +348,5 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play')paus
 hookConsole('pipsqueak','Pipsqueak',S);
 resize();title();requestAnimationFrame(frame);S.init(()=>{SND.mode=S.v.sound;if(state==='title')title()});
 window.__pq={at,isSolid,get plats(){return plats},get goal(){return goal},get bell(){return bell},get boss(){return boss},get cps(){return cps},get coins(){return coins},get time(){return timeLeft},get camX(){return camX},get held(){return held},get state(){return state},get P(){return P},get G(){return G},get foes(){return foes},get lives(){return lives},get score(){return score},get lvl(){return lvl},get LW(){return LW},step,draw,newRun,loadLevel,title,btnSet,setForm,LEVELS,
-  set cam(v){camX=v},set st(v){state=v},
+  set cam(v){camX=v},get fire(){return fire},set fire(v){fire=v},set st(v){state=v},
   mapImage(i){loadLevel(i);const ow=VW,oh=VH;VW=LW*TS;VH=LH*TS;cv.width=VW;cv.height=VH;mkSky();camX=0;camY=0;for(const e of foes)e.act=true;state='play';draw();const u=cv.toDataURL();VW=ow;VH=oh;cv.width=VW;cv.height=VH;return u}};
