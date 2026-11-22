@@ -696,7 +696,7 @@ function landFor(i,j){let best=null,bd=1e9;for(const[a,b]of[[1,0],[-1,0],[0,1],[
 function openChest(i,j){const ch=room.chests[i+','+j];if(!ch)return;setTile(room,i,j,'U',true);S.v.got[ch.id]=1;give(ch.loot)}
 let KEEPID='';
 function give(it,quiet){const v=S.v,I=Object.assign({},ITEMS[it]||{name:it});let extra='';
-  switch(it){case 'sword':v.items.sword=1;v.sword=Math.max(1,v.sword);v.flags.shield=1;extra=' And his old shield, strapped to the back. Hold still and it stops things thrown at you.';break;
+  switch(it){case 'sword':v.items.sword=1;v.sword=Math.max(1,v.sword);extra=' It goes across your back.';break;
     case 'sling':case 'hook':case 'lantern':case 'bombs':v.items[it]=1;if(it==='sling')v.ammo.seeds=v.cap.seeds;if(it==='bombs')v.ammo.bombs=v.cap.bombs;if(!v.xb)v.xb=it;else if(!v.yb)v.yb=it;extra=' It is set to '+(v.xb===it?'X':v.yb===it?'Y':'nothing yet: press START')+'.';break;
     case 'key':v.keys[room.map]=(v.keys[room.map]||0)+1;break;case 'big':v.big[room.map]=1;break;case 'map':v.maps[room.map]=1;break;
     case 'piece':v.pieces++;if(v.pieces%4===0){v.max+=2;v.hp=v.max;extra=' Four pieces make a whole heart.'}else extra=' ('+(v.pieces%4)+' of 4)';break;
@@ -779,7 +779,9 @@ function stepThings(dt){for(const e of E){if(e.dead)continue;switch(e.k){
   case 'dust':e.t-=dt;if(e.t<=0)e.dead=true;else if(Math.hypot(P.x-e.x,P.y-e.y)<14)P.slow=1;break;
   case 'foe':stepFoe(e,dt);break;case 'boss':stepBoss(e,dt);break;case 'part':stepPart(e,dt);break}}
   E=E.filter(e=>!e.dead)}
-function shieldBlocks(p){if(!S.v.flags.shield||P.swing>0||P.spin>0||P.roll>0||P.st==='hook')return false;const[fx,fy]=fvec();const d=Math.hypot(p.vx,p.vy)||1;return(p.vx/d)*fx+(p.vy/d)*fy<-.6}
+/* the hero carries no shield */
+const HAS_SHIELD=false;
+function shieldBlocks(p){if(!HAS_SHIELD||!S.v.flags.shield||P.swing>0||P.spin>0||P.roll>0||P.st==='hook')return false;const[fx,fy]=fvec();const d=Math.hypot(p.vx,p.vy)||1;return(p.vx/d)*fx+(p.vy/d)*fy<-.6}
 function eyeHit(i,j){SFX.secret();if(room.outdoors&&room.bridgeEdge){S.v.flags.bridge=1;const d=room.bridgeEdge;for(let al=4;al<=7;al++)for(const dp of[2,3]){const[a,b]=edgeAt(d,dp,al);setTile(room,a,b,'=',true)}say(['Somewhere across the water, chains run out. The bridge comes down with a sound like a door shutting.']);return}
   room.eyesHit=(room.eyesHit||0)+1;checkCond()}
 const leaf=(x,y)=>{for(let n=0;n<6;n++)E.push({k:'fx',x,y,vx:(rnd()-.5)*80,vy:-40-rnd()*40,t:.4,c:'#5ac04a'})};
@@ -1408,7 +1410,7 @@ function poseHero(dt){const h=G3.hero,[gx,gz]=gpos(P.x,P.y);let y=groundY(P.x,P.
   for(const l of h.legs)l.rotation.set(0,0,0);for(const a of h.arms)a.rotation.set(0,0,0);if(h.knees)h.knees.forEach(k=>k.rotation.x=.04);
   const mv=state==='play'?Math.hypot(moveV[0],moveV[1]):0,moving=mv>.2&&P.swing<=0&&P.roll<=0&&P.spin<=0&&!(P.jump>0);if(moving)walkPose(h,P.anim*7,Math.min(1,mv));
   const hasS=!!S.v.sword,charging=held.b&&P.charge>.15&&hasS&&P.swing<=0&&P.spin<=0,sw=P.swing>0||P.spin>0||P.jump>0||charging;
-  h.sword.visible=hasS&&sw;h.back.visible=hasS&&!sw;h.shield.visible=!!S.v.flags.shield;h.hook.visible=P.st==='hook';h.trail.visible=false;h.held.visible=false;
+  h.sword.visible=hasS&&sw;h.back.visible=hasS;h.backHilt.visible=!sw;h.shield.visible=!!S.v.flags.shield;h.hook.visible=P.st==='hook';h.trail.visible=false;h.held.visible=false;
   h.bladeG.scale.y=S.v.sword>=2?1.14:1;{const fl=charging&&P.charge>=.7&&Math.floor(T*12)%2;h.bladeMat.color.setHex(fl?0xffffff:S.v.sword>=2?0xfff0c4:0xf2f6fc);h.bladeMat.emissive.setHex(fl?0x6a6a6a:S.v.sword>=2?0x3a1404:0)}
   if(P.swing>0){const k=1-P.swing/.22;h.arms[1].rotation.set(-1.45,1.3-k*2.7,0)}
   if(P.spin>0){const k=1-P.spin/.32;h.root.rotation.y+=k*TAU;h.arms[1].rotation.set(-1.5,-1.4,0)}
@@ -1988,11 +1990,12 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   const bm=new TH.MeshPhongMaterial({color:0xf2f6fc,specular:0xb0b0b0,shininess:60,envMap:ENVT,combine:TH.MultiplyOperation,reflectivity:.9});h.bladeMat=bm;
   const bg=grp(sw,0,-.09,0);h.bladeG=bg;h.blade=pt(BLADEG,bm,0,-.22,0,.024,.44,.0075,bg);pt(TIPG,bm,0,-.475,0,.024,.07,.0075,bg,Math.PI);
   h.tipM=grp(bg,0,-.5,0);h.baseM=grp(bg,0,-.02,0);h.sword=sw;
-  h.back=grp(h.up,.14,-.01,-.06);h.back.rotation.set(-2.3,0,-.12);pt(LP.box,lea,0,.25,0,.05,.5,.022,h.back);pt(LP.box,brass,0,.5,0,.056,.03,.028,h.back);
-  pt(LP.cyl6,grip,0,-.06,0,.016,.1,.016,h.back);pt(LP.box,brass,0,.005,0,.14,.022,.034,h.back);pt(LP.ball,brass,0,-.12,0,.024,.022,.024,h.back);
-  /* a round shield of oak boards with an iron rim and boss, painted with the lamp-keeper's flame, on the left arm */
-  const shd=grp(h.arms[0],-.05,-.2,0);shd.rotation.y=-Math.PI/2;pt(LP.cyl8,cmat('#ffffff',shieldTex()),0,0,0,.17,.035,.17,shd,Math.PI/2);
-  pt(LP.tor,metalM('#b8bcc8',{r:.8}),0,0,0,.17,.17,.12,shd);pt(LP.ball,metalM('#d0d4de'),0,0,.03,.045,.045,.03,shd);h.shield=shd;
+  /* sheathed, the sword goes across his back: the hilt over the right shoulder, the point down by the left hip */
+  h.back=grp(h.up,.05,.21,-.13);h.back.rotation.set(-.12,0,Math.PI-.6);pt(LP.box,lea,0,.25,0,.05,.5,.022,h.back);pt(LP.box,brass,0,.5,0,.056,.03,.028,h.back);
+  /* the hilt sticking out of the sheath: it goes when the sword is drawn, the empty sheath stays */
+  h.backHilt=grp(h.back,0,0,0);pt(LP.cyl6,grip,0,-.06,0,.016,.1,.016,h.backHilt);pt(LP.box,brass,0,.005,0,.14,.022,.034,h.backHilt);pt(LP.ball,brass,0,-.12,0,.024,.022,.024,h.backHilt);
+  /* no shield: the group stays (the scenes and the rest of the game look for it) but holds nothing */
+  h.shield=grp(h.arms[0],-.05,-.2,0);
   h.hook=grp(h.hand[1],0,.02,0);pt(LP.box,skinM('#8a8a96'),0,-.06,0,.07,.18,.07,h.hook);pt(LP.cone4,skinM('#c8ccd8'),0,-.18,0,.05,.08,.05,h.hook,Math.PI);
   h.held=new TH.Sprite(new TH.SpriteMaterial({transparent:true,depthTest:false}));h.held.scale.set(.5,.5,1);h.held.position.y=1.3;h.held.visible=false;h.root.add(h.held);
   const ring=new TH.Mesh(new TH.RingGeometry(.55,1.05,10,1,-.95,1.9),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35,side:TH.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.55;ring.visible=false;h.root.add(ring);h.trail=ring;
@@ -2883,7 +2886,7 @@ function humanReset(h){if(h.base){restPose(h);h.root.visible=true;return}h.root.
 function place(h,p,ang){h.root.position.set(p[0],p[1],p[2]);if(ang!=null)h.root.rotation.y=ang}
 const lookAng=(from,to)=>Math.atan2(to[0]-from[0],to[2]-from[2]);
 function ridePose(h,ph,lean){h.legs[0].rotation.set(-1.25,0,.45);h.legs[1].rotation.set(-1.25,0,-.45);if(h.knees)h.knees.forEach(k=>k.rotation.x=1.25);h.arms[0].rotation.x=-.95;h.arms[1].rotation.x=-.95;h.body.rotation.x=lean||.12;h.body.position.y=.42+Math.abs(Math.sin(ph))*.05}
-function heroGear(h,drawn){h.sword.visible=drawn;h.back.visible=!drawn;h.shield.visible=true;h.hook.visible=false;h.trail.visible=false;h.held.visible=false;h.tail.rotation.x=.4+Math.sin(T*8)*.2;h.cape.rotation.x=.25}
+function heroGear(h,drawn){h.sword.visible=drawn;h.back.visible=true;h.backHilt.visible=!drawn;h.shield.visible=true;h.hook.visible=false;h.trail.visible=false;h.held.visible=false;h.tail.rotation.x=.4+Math.sin(T*8)*.2;h.cape.rotation.x=.25}
 
 /* ---------- the opening, part one: the ride ----------
    Long, slow shots. Rain and fog do the talking: a puddle shivering by the road, a horse coming out of the mist,
@@ -3137,7 +3140,7 @@ function bagDraw(){if(bagPage===1)return questDraw();const v=S.v,slots=USE_ITEMS
   const icon=k=>`<img src="${ICON[k].toDataURL()}" alt="">`;
   let h='<h3>BAG</h3><div class="slots">';slots.forEach((k,n)=>{h+=`<div class="slot${n===bagI?' hot':''}">${k?icon(k):''}${k&&v.xb===k?'<b class="tx">X</b>':''}${k&&v.yb===k?'<b class="ty">Y</b>':''}</div>`});h+='</div>';
   const k=slots[bagI];h+=`<p class="what">${k?'<b>'+cap1(ITEMS[k].name)+'</b>'+(k==='sling'?' · '+v.ammo.seeds+'/'+v.cap.seeds:k==='bombs'?' · '+v.ammo.bombs+'/'+v.cap.bombs:'')+'<br>'+ITEMS[k].text:'Nothing here yet.'}</p><p class="keys">Press <b>X</b> or <b>Y</b> to put it on that button.</p>`;
-  h+=`<div class="row">${v.sword?icon(v.sword>=2?'edge':'sword'):''}${v.flags.shield?icon('shield'):''}<span>${icon('piece')} ${v.pieces%4}/4</span><span>${icon('shard')} ${v.shards}</span><span>${v.flames.map(f=>icon(f?'flame':'flameOff')).join('')}</span></div>`;
+  h+=`<div class="row">${v.sword?icon(v.sword>=2?'edge':'sword'):''}${HAS_SHIELD&&v.flags.shield?icon('shield'):''}<span>${icon('piece')} ${v.pieces%4}/4</span><span>${icon('shard')} ${v.shards}</span><span>${v.flames.map(f=>icon(f?'flame':'flameOff')).join('')}</span></div>`;
   h+=`<p class="foot">${fmtTime(v.time)} · B closes · SELECT quests</p>`;bagEl.innerHTML=h}
 /* the quest log: what you're doing for whom, newest jobs first, finished ones at the bottom */
 function questDraw(){const v=S.v;let h='<h3>QUESTS</h3><div class="ql">';const st=q=>q.id==='main'?(v.done?99:1):qs(q.id);
@@ -3188,7 +3191,7 @@ function delMenu(){const used=[0,1,2].filter(n=>SLOTS[n].v.started);if(!used.len
   const ask=(h,yes)=>menu({html:`<h2>${h}</h2><p>This can't be undone.</p>`,items:[{t:'NO',fn:delMenu},{t:'YES, DELETE',fn:yes}],back:delMenu});
   menu({html:'<h2>DELETE SAVES</h2><p>Pick a file to delete.</p>',items:used.map(n=>({t:'FILE '+(n+1),v:()=>slotLabel(n),fn:()=>ask('DELETE FILE '+(n+1)+'?',()=>{eraseSlot(n);delMenu()})}))
     .concat(used.length>1?[{t:'DELETE ALL',fn:()=>ask('DELETE ALL '+used.length+' FILES?',()=>{used.forEach(eraseSlot);title()})}]:[],[{t:'BACK',fn:title}]),back:title})}
-function how(){menu({html:'<h2>HOW TO PLAY</h2><p class="keys">Walk with the <b>stick</b>; the camera follows behind you.<br><b>B</b> swings the sword: hold it and let go for a spin. Tap it <b>twice</b> quickly to lock on to the nearest enemy.<br><b>A</b> talks, reads and opens chests, and rolls when you\'re running (you can\'t be hurt mid-roll).<br><b>X</b> and <b>Y</b> use the items you set in the bag (<b>START</b>). They aim at whatever is in front of you.<br><b>SELECT</b> locks on too, lets go of a lock, or swings the camera behind you.<br>While locked on, <b>A</b> leaps at your target with a chop that hits twice as hard.<br>In the bag, <b>SELECT</b> turns to your quests, then the map.<br>Face a shot and your shield stops it.</p>',items:[{t:'BACK',fn:title}],back:title})}
+function how(){menu({html:'<h2>HOW TO PLAY</h2><p class="keys">Walk with the <b>stick</b>; the camera follows behind you.<br><b>B</b> swings the sword: hold it and let go for a spin. Tap it <b>twice</b> quickly to lock on to the nearest enemy.<br><b>A</b> talks, reads and opens chests, and rolls when you\'re running (you can\'t be hurt mid-roll).<br><b>X</b> and <b>Y</b> use the items you set in the bag (<b>START</b>). They aim at whatever is in front of you.<br><b>SELECT</b> locks on too, lets go of a lock, or swings the camera behind you.<br>While locked on, <b>A</b> leaps at your target with a chop that hits twice as hard.<br>In the bag, <b>SELECT</b> turns to your quests, then the map.</p>',items:[{t:'BACK',fn:title}],back:title})}
 function newGame(){const snd=S.v.sound;for(const k of Object.keys(S.v))delete S.v[k];Object.assign(S.v,FRESH());S.v.sound=snd;S.v.started=1;S.save();closeMenu();room=null;E=[];
   cineStart('intro',()=>{say(INTRO,{done:()=>{enterRoom('ow',2,5,cen(5),cen(6),'start');fade=1;state='fadein';setTimeout(()=>banner('NEW QUEST · OUT OF THE TREE'),1400)}})})}
 function cont(){closeMenu();S.v.q=S.v.q||{main:1};S.v.qc=S.v.qc||{};const a=S.v.at;try{if(a&&(a.map==='ow'||DUN[a.map]))enterRoom(a.map,a.rx,a.ry,a.x,a.y,'start');else enterRoom('ow',2,5,cen(5),cen(6),'start')}catch(e){enterRoom('ow',2,5,cen(5),cen(6),'start')}state='play'}

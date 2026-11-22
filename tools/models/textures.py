@@ -23,10 +23,10 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else 'tools/models/out'
 SS = 4  # supersampling
 
 SKIN = (239, 194, 155)
-HAIR = (74, 46, 26)
+HAIR = (222, 178, 86)
 IRIS = (61, 111, 181)
 LID = (42, 24, 16)
-BROW = (66, 40, 22)
+BROW = (150, 108, 44)
 
 
 def hexc(h):
@@ -87,10 +87,10 @@ def head(shut):
         y = lat_y(hl) * SS
         d.line((x, 0, x, y), fill=HAIR + (255,), width=SS)
     # the nose: a soft shadow along one side and under it, and two small nostrils
-    d.polygon([P(2.5, 2), P(5.5, -14), P(2, -17), P(0.5, -4)], fill=(120, 60, 40, 46))
-    ell(0, -18.5, 6, 2.6, fill=(110, 50, 35, 70))
+    d.polygon([P(3, 2), P(7, -15), P(2.5, -19.5), P(0.5, -4)], fill=(120, 60, 40, 50))
+    ell(0, -19.5, 7.5, 3, fill=(110, 50, 35, 75))
     for s in (-1, 1):
-        ell(s * 2.6, -18, 1.4, 1.0, fill=(80, 34, 24, 150))
+        ell(s * 3.3, -19, 1.7, 1.2, fill=(80, 34, 24, 155))
     # eyes: big, a rounded almond, white with a coloured iris that fills most of the height, a pupil, one light; a strong
     # dark line along the top lid and a fine one along the bottom; no lashes
     for s in (-1, 1):
@@ -99,37 +99,40 @@ def head(shut):
             pts = [P(cx - 8, cy - 0.5), P(cx - 3, cy - 2.5), P(cx + 3, cy - 2.5), P(cx + 8, cy - 0.5)]
             d.line(pts, fill=LID + (255,), width=int(2.6 * SS), joint='curve')
             continue
-        eye = [P(cx - 8.2, cy - 0.6), P(cx - 6, cy + 3.8), P(cx - 2, cy + 5.6), P(cx + 2.5, cy + 5.6), P(cx + 6.5, cy + 3.6), P(cx + 8.2, cy + 0.2),
-               P(cx + 6.5, cy - 3.6), P(cx + 2, cy - 5.0), P(cx - 3, cy - 4.8), P(cx - 7, cy - 3.0)]
+        eye = [P(cx - 9.4, cy - 0.7), P(cx - 7, cy + 3.6), P(cx - 2.5, cy + 5.4), P(cx + 2.8, cy + 5.5), P(cx + 7.4, cy + 3.8), P(cx + 9.4, cy + 0.2),
+               P(cx + 7.4, cy - 4.0), P(cx + 2.2, cy - 5.7), P(cx - 3.4, cy - 5.5), P(cx - 8, cy - 3.4)]
         d.polygon(eye, fill=(250, 246, 238, 255))
         mask = Image.new('L', big.size, 0)
         ImageDraw.Draw(mask).polygon(eye, fill=255)
         iris = Image.new('RGBA', big.size, (0, 0, 0, 0))
         di = ImageDraw.Draw(iris)
-        ix = cx - s * 1.2
-        x0, y0 = P(ix - 5.2, cy + 5.4)
-        x1, y1 = P(ix + 5.2, cy - 5.4)
+        ix = cx - s * 1.3
+        x0, y0 = P(ix - 6.0, cy + 6.0)
+        x1, y1 = P(ix + 6.0, cy - 6.0)
         di.ellipse((x0, y0, x1, y1), fill=IRIS + (255,))
         di.chord((x0, y0, x1, y1), 180, 360, fill=mul(IRIS, 0.55) + (255,))
-        x0, y0 = P(ix - 2.4, cy + 2.6)
-        x1, y1 = P(ix + 2.4, cy - 2.6)
+        x0, y0 = P(ix - 2.8, cy + 2.9)
+        x1, y1 = P(ix + 2.8, cy - 2.9)
         di.ellipse((x0, y0, x1, y1), fill=(10, 8, 6, 255))
-        x0, y0 = P(ix - 3.6, cy + 3.4)
-        x1, y1 = P(ix - 1.6, cy + 1.4)
+        x0, y0 = P(ix - 4.1, cy + 3.9)
+        x1, y1 = P(ix - 1.9, cy + 1.7)
         di.ellipse((x0, y0, x1, y1), fill=(255, 255, 255, 235))
+        # the upper lid's shadow over the top of the iris: a steady, serious look
+        x0, y0 = P(cx - 9.4, cy + 6.5)
+        x1, y1 = P(cx + 9.4, cy + 2.6)
+        di.rectangle((x0, y0, x1, y1), fill=(70, 40, 28, 120))
         big.paste(iris, (0, 0), Image.composite(iris, Image.new('RGBA', big.size, (0, 0, 0, 0)), mask))
         d = ImageDraw.Draw(big, 'RGBA')
-        # shadow of the lid across the top of the eye
-        top = [P(cx - 8.2, cy - 0.6), P(cx - 7, cy + 3.0), P(cx - 3, cy + 4.8), P(cx + 2, cy + 5.0), P(cx + 6.5, cy + 3.6), P(cx + 8.2, cy + 0.2)]
-        d.line(top, fill=LID + (255,), width=int(2.4 * SS), joint='curve')
-        bot = [P(cx - 7, cy - 3.0), P(cx - 3, cy - 4.8), P(cx + 2, cy - 5.0), P(cx + 6.5, cy - 3.6)]
+        top = [P(cx - 9.4, cy - 0.7), P(cx - 8, cy + 2.8), P(cx - 3.4, cy + 4.6), P(cx + 2.4, cy + 4.8), P(cx + 7.4, cy + 3.6), P(cx + 9.4, cy + 0.2)]
+        d.line(top, fill=LID + (255,), width=int(2.6 * SS), joint='curve')
+        bot = [P(cx - 8, cy - 3.4), P(cx - 3.4, cy - 5.5), P(cx + 2.2, cy - 5.7), P(cx + 7.4, cy - 4.0)]
         d.line(bot, fill=(90, 50, 35, 150), width=int(0.9 * SS), joint='curve')
     # brows: heavy, set low, lower at the inside: a determined look
     for s in (-1, 1):
-        d.polygon([P(s * 9.5, 14.5), P(s * 27.5, 18.5), P(s * 27.5, 16.2), P(s * 9.5, 11.2)], fill=BROW + (255,))
+        d.polygon([P(s * 8.5, 15.0), P(s * 28.5, 20.8), P(s * 28.5, 18.1), P(s * 8.5, 12.0)], fill=BROW + (255,))
     # a firm mouth, the corners turned a touch down, and the shadow under the lower lip
-    d.line([P(-7, -27.5), P(-3, -27.0), P(3, -27.0), P(7, -27.5)], fill=(118, 58, 44, 255), width=int(2.1 * SS), joint='curve')
-    ell(0, -30.5, 6, 1.6, fill=(120, 60, 40, 55))
+    d.line([P(-9, -28.2), P(-4, -27.5), P(4, -27.5), P(9, -28.2)], fill=(118, 58, 44, 255), width=int(2.6 * SS), joint='curve')
+    ell(0, -31.5, 7.5, 2, fill=(120, 60, 40, 60))
     ell(0, -47, 9, 4, fill=(110, 55, 38, 40))
     img = big.resize((W, H), Image.LANCZOS)
     return img
@@ -138,7 +141,7 @@ def head(shut):
 # ------------------------------------------------------------------------------------------------ the body atlas
 REG = {'coat': (0, 0, 128, 128), 'scarf': (128, 0, 64, 64), 'leather': (192, 0, 64, 64), 'boot': (128, 64, 64, 64),
        'trousers': (192, 64, 64, 64), 'skin': (0, 128, 64, 64), 'hair': (64, 128, 64, 64), 'glove': (128, 128, 64, 64),
-       'brass': (192, 128, 64, 64), 'hood': (0, 192, 64, 64), 'sole': (64, 192, 64, 64)}
+       'brass': (192, 128, 64, 64), 'hood': (0, 192, 64, 64), 'sole': (64, 192, 64, 64), 'hair2': (128, 192, 64, 64)}
 
 
 def body():
@@ -172,7 +175,11 @@ def body():
     fill('skin', SKIN, 2)
     x, y, w, h = fill('hair', HAIR, 4)
     for i in range(0, w, 3):
-        d.line((x + i, y, x + i + R.randint(-2, 2), y + h), fill=hexc('#5e3c22') if i % 2 else hexc('#3e2614'))
+        d.line((x + i, y, x + i + R.randint(-2, 2), y + h), fill=mul(HAIR, 1.12) if i % 2 else mul(HAIR, 0.8))
+    x, y, w, h = fill('hair2', HAIR, 4)
+    for i in range(0, w, 3):
+        d.line((x + i, y, x + i + R.randint(-2, 2), y + h), fill=mul(HAIR, 1.12) if i % 2 else mul(HAIR, 0.8))
+    d.line((x + w // 2, y, x + w // 2, y + h), fill=mul(HAIR, 0.55), width=2)
     x, y, w, h = fill('glove', hexc('#4e3220'), 6)
     d.rectangle((x, y, x + w, y + 8), fill=hexc('#5e3e28'))
     x, y, w, h = REG['brass']

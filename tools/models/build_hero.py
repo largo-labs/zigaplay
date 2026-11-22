@@ -24,7 +24,7 @@ TAU = math.pi * 2
 # the body atlas: name -> (x, y, w, h) in pixels of a 256 x 256 image, top-left origin (textures.py paints the same)
 REG = {'coat': (0, 0, 128, 128), 'scarf': (128, 0, 64, 64), 'leather': (192, 0, 64, 64), 'boot': (128, 64, 64, 64),
        'trousers': (192, 64, 64, 64), 'skin': (0, 128, 64, 64), 'hair': (64, 128, 64, 64), 'glove': (128, 128, 64, 64),
-       'brass': (192, 128, 64, 64), 'hood': (0, 192, 64, 64), 'sole': (64, 192, 64, 64)}
+       'brass': (192, 128, 64, 64), 'hood': (0, 192, 64, 64), 'sole': (64, 192, 64, 64), 'hair2': (128, 192, 64, 64)}
 
 
 def reg_uv(name, lu, lv):
@@ -120,6 +120,46 @@ class Part:
         self.faces_uv(faces, lambda co: reg_uv(region, ((co - base).dot(a) / (2 * r) + 0.5), 1 - (co - base).dot(d) / ((tip - base).length or 1)))
         return faces
 
+    def strand(self, pts, r0, r1, region, sides=5, flat=0.5, center=Vector((0, 0, 0))):
+        """a lock of hair along a curve: a tube tapering from r0 to r1, flattened against the head (away from center)"""
+        bm = self.bm
+        pts = [Vector(p) for p in pts]
+        n = len(pts)
+        rings = []
+        for i, p in enumerate(pts):
+            t = (pts[min(i + 1, n - 1)] - pts[max(i - 1, 0)]).normalized()
+            out = (p - center).normalized()
+            side = t.cross(out).normalized()
+            up = side.cross(t).normalized()
+            r = r0 + (r1 - r0) * i / (n - 1)
+            rings.append([bm.verts.new(p + side * math.cos(TAU * k / sides) * r + up * math.sin(TAU * k / sides) * r * flat) for k in range(sides)])
+        faces = []
+        for i in range(n - 1):
+            for k in range(sides):
+                faces.append(bm.faces.new((rings[i][k], rings[i][(k + 1) % sides], rings[i + 1][(k + 1) % sides], rings[i + 1][k])))
+        tip = bm.verts.new(pts[-1] + (pts[-1] - pts[-2]).normalized() * r1)
+        for k in range(sides):
+            faces.append(bm.faces.new((rings[-1][k], rings[-1][(k + 1) % sides], tip)))
+        root = bm.verts.new(pts[0] - (pts[1] - pts[0]).normalized() * r0 * 0.5)
+        for k in range(sides):
+            faces.append(bm.faces.new((rings[0][(k + 1) % sides], rings[0][k], root)))
+        # keep the outside out: check one side face against the curve
+        f = faces[0]
+        f.normal_update()
+        if f.normal.dot(f.calc_center_median() - (pts[0] + pts[1]) / 2) < 0:
+            bmesh.ops.reverse_faces(bm, faces=faces)
+        uvd = {}
+        for i, ring in enumerate(rings):
+            for k, v in enumerate(ring):
+                uvd[v] = (k / sides, 1 - i / (n - 1))
+        uvd[tip] = (0.5, 0.0)
+        uvd[root] = (0.5, 1.0)
+        for f in faces:
+            for l in f.loops:
+                u, v = uvd[l.vert]
+                l[self.uv].uv = reg_uv(region, u, v)
+        return faces
+
     def torus(self, center, R, r, region, seg=16, tseg=7, squash=(1.0, 1.0)):
         bm = self.bm
         vs = []
@@ -174,7 +214,7 @@ def head_shape(p, grow=0.0):
         z *= 1.05
     if y < 0:
         t = min(1.0, -y / 0.125)
-        x *= 1 - 0.30 * t ** 1.5
+        x *= 1 - 0.20 * t ** 1.25
         if z > 0:
             z *= 1 - 0.08 * t * t
     if z > 0.04 and -0.07 < y < 0.0:
@@ -184,12 +224,12 @@ def head_shape(p, grow=0.0):
         z = 0.075 + (z - 0.075) * 0.7
     if z > 0.05 and abs(x) < 0.085 and abs(y - 0.045) < 0.016:
         z += 0.006 * (1 - abs(y - 0.045) / 0.016)
-    dn = math.hypot(x / 0.019, (y + 0.02) / 0.03)
+    dn = math.hypot(x / 0.023, (y + 0.021) / 0.034)
     if z > 0 and dn < 1:
-        z += 0.022 * (1 - dn * dn)
+        z += 0.028 * (1 - dn * dn)
     dc = math.hypot(x / 0.05, (y + 0.104) / 0.028)
     if z > 0 and dc < 1:
-        z += 0.007 * (1 - dc * dc)
+        z += 0.004 * (1 - dc * dc)
     if grow:
         n = Vector((x, y, z)).normalized()
         x, y, z = x + n.x * grow, y + n.y * grow, z + n.z * grow
@@ -210,9 +250,9 @@ def head_part():
 
 
 def hair_part():
-    """a cap of hair over the crown and down the back, and chunky locks: a fringe, locks in front of the ears, a few at
-    the nape and some sticking up on top"""
-    P = Part('hair', smooth_angle=40)
+    """hair parted in the middle: a cap over the crown with the parting down its front, locks curtaining away from the
+    parting to each temple, the rest pulled back over the crown into a tie, and a ponytail hanging from it"""
+    P = Part('hair', smooth_angle=55)
     bm = P.bm
     r = bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=14, radius=1.0)
     for v in r['verts']:
@@ -221,37 +261,43 @@ def hair_part():
     for f in bm.faces:
         c = f.calc_center_median().normalized()
         th = abs(math.atan2(c.x, c.z))
-        if c.y < 0.5 - (th / math.pi) * 1.15:
+        if c.y < 0.55 - (th / math.pi) * 1.2:
             drop.append(f)
     bmesh.ops.delete(bm, geom=drop, context='FACES_ONLY')
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
-    P.faces_uv(list(bm.faces), lambda co: reg_uv('hair', math.atan2(co.x, co.z) / TAU + 0.5, 0.5 + co.normalized().y * 0.5))
+    P.faces_uv(list(bm.faces), lambda co: reg_uv('hair2', math.atan2(co.x, co.z) / TAU + 0.5, 0.5 + co.normalized().y * 0.5))
     for v in bm.verts:
-        v.co = Vector(head_shape(v.co, grow=0.011))
+        v.co = Vector(head_shape(v.co, grow=0.009))
 
-    def at(th, lat, grow=0.012):
+    def at(th, lat, grow=0.013):
         d = Vector((math.sin(th) * math.cos(lat), math.sin(lat), math.cos(th) * math.cos(lat)))
         return Vector(head_shape(d, grow=grow))
-    # the fringe: seven locks across the forehead, the middle ones shorter, all leaning out a little
-    for i in range(-3, 4):
-        th = i * 0.2
-        base = at(th, 0.62)
-        ln = 0.055 + abs(i) * 0.008
-        tip = base + Vector((math.sin(th) * 0.02 + i * 0.004, -ln, 0.022))
-        P.spike(base, tip, 0.024, 'hair', sides=4, flat=(1.0, 0.5))
-    # in front of the ears, at the back of the neck, and up on top
+
+    def path(keys, grow, n=7):
+        """points along the head's surface through (th, lat) keys"""
+        out = []
+        for i in range(n):
+            u = i / (n - 1) * (len(keys) - 1)
+            j = min(int(u), len(keys) - 2)
+            f = u - j
+            th = keys[j][0] + (keys[j + 1][0] - keys[j][0]) * f
+            lat = keys[j][1] + (keys[j + 1][1] - keys[j][1]) * f
+            out.append(at(th, lat, grow + 0.003 * math.sin(math.pi * i / (n - 1))))
+        return out
+    # the curtains: from the parting, sweeping out over the top of the forehead and down past each temple
     for sd in (-1, 1):
-        base = at(sd * 1.15, 0.35)
-        P.spike(base, base + Vector((sd * 0.012, -0.075, 0.012)), 0.026, 'hair', sides=4, flat=(1.0, 0.5))
-        base = at(sd * 1.6, 0.2)
-        P.spike(base, base + Vector((sd * 0.02, -0.07, -0.01)), 0.03, 'hair', sides=4, flat=(1.0, 0.55))
-    for th in (math.pi - 0.45, math.pi, math.pi + 0.45):
-        base = at(th, -0.1)
-        P.spike(base, base + Vector((math.sin(th) * 0.01, -0.065, -0.025)), 0.032, 'hair', sides=4, flat=(1.0, 0.55))
-    for th, lat in ((0.3, 1.05), (-0.4, 1.0), (2.2, 0.85), (-2.5, 0.9), (3.0, 0.7)):
-        base = at(th, lat, grow=0.006)
-        out = base.normalized()
-        P.spike(base, base + out * 0.045 + Vector((0, 0.02, -0.02)), 0.03, 'hair', sides=4, flat=(1.0, 0.6))
+        for k in range(4):
+            keys = [(sd * 0.05, 1.0 - k * 0.07), (sd * (0.32 + k * 0.08), 0.8 - k * 0.06), (sd * (0.62 + k * 0.1), 0.55 - k * 0.05),
+                    (sd * (0.88 + k * 0.1), 0.3 - k * 0.04), (sd * (1.02 + k * 0.1), 0.08 - k * 0.02)]
+            P.strand(path(keys, 0.012 + k * 0.004), 0.028, 0.009, 'hair', sides=5, flat=0.45)
+    # the rest combed back over the crown to the tie
+    for th in (1.9, 2.4, 2.85, -2.85, -2.4, -1.9, math.pi):
+        keys = [(th * 0.35, 1.25), (th * 0.8, 0.75), (th, 0.35), (math.pi if th > 0 else -math.pi, 0.05)]
+        P.strand(path(keys, 0.01, 6), 0.03, 0.012, 'hair', sides=5, flat=0.4)
+    # the tie, and the ponytail: thick where it is tied, tapering as it hangs down the back of the neck
+    P.blob((0, 0.0, -0.136), (0.024, 0.024, 0.018), 'leather', seg=8, ring=6)
+    P.strand([(0, 0.0, -0.14), (0, -0.03, -0.172), (0, -0.085, -0.186), (0, -0.15, -0.178), (0, -0.2, -0.162), (0, -0.232, -0.15)],
+             0.03, 0.008, 'hair', sides=6, flat=0.85, center=Vector((0, -0.05, -0.05)))
     return P.finish()
 
 
@@ -337,17 +383,22 @@ def forearm_part():
 
 
 def hand_part(sd):
-    """a bare hand: a palm facing the body, four fingers (the middle one longest) curling a little toward the palm, and
-    a thumb at the front. sd = -1 for the left arm (arms[0]), +1 for the right. The wrist is at y +.033 (the hand joint
-    sits a little below the end of the forearm)"""
+    """a bare hand: a palm facing the body, four fingers (the middle one longest) that start inside the palm and curl a
+    little toward it from the knuckle, and a thumb at the front. sd = -1 for the left arm (arms[0]), +1 for the right.
+    The wrist is at y +.033 (the hand joint sits a little below the end of the forearm)"""
     P = Part('hand' + ('L' if sd < 0 else 'R'), smooth_angle=70)
     inward = -sd  # the side the palm faces
-    P.blob((inward * 0.002, 0.008, 0.002), (0.013, 0.03, 0.027), 'skin', seg=10, ring=7)
-    for z, ln in ((0.019, 0.022), (0.0065, 0.025), (-0.0065, 0.023), (-0.018, 0.019)):
-        curl = Matrix.Rotation(inward * 0.32, 3, 'Z')
-        P.blob((inward * 0.004, -0.02 - ln * 0.9, z), (0.0075, ln, 0.0068), 'skin', seg=6, ring=5, rot=curl)
-    thumb = Matrix.Rotation(-0.7, 3, 'X') @ Matrix.Rotation(inward * 0.25, 3, 'Z')
-    P.blob((inward * 0.006, 0.0, 0.03), (0.0085, 0.02, 0.0085), 'skin', seg=6, ring=5, rot=thumb)
+    P.blob((inward * 0.002, 0.008, 0.002), (0.0135, 0.031, 0.027), 'skin', seg=10, ring=7)
+    curl = Matrix.Rotation(inward * 0.32, 3, 'Z')
+    d = curl @ Vector((0, -1, 0))
+    for z, ln in ((0.0185, 0.021), (0.0062, 0.024), (-0.0062, 0.022), (-0.0175, 0.018)):
+        knuckle = Vector((inward * 0.003, -0.012, z))
+        c = knuckle + d * ln * 0.92
+        P.blob(tuple(c), (0.0079, ln, 0.0071), 'skin', seg=6, ring=5, rot=curl)
+    thumb = Matrix.Rotation(-0.75, 3, 'X') @ Matrix.Rotation(inward * 0.25, 3, 'Z')
+    knuckle = Vector((inward * 0.004, 0.017, 0.016))
+    c = knuckle + (thumb @ Vector((0, -1, 0))) * 0.017
+    P.blob(tuple(c), (0.0088, 0.02, 0.0088), 'skin', seg=6, ring=5, rot=thumb)
     return P.finish()
 
 
