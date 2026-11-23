@@ -1962,7 +1962,7 @@ function mkHero(){const coatT=cloth('#3e4c68','seam','#34405a'),coat=cmat('#ffff
   if(BM){const strip=[];h.root.traverse(o=>{if(o.isMesh)strip.push(o)});strip.forEach(o=>o.parent.remove(o));
     const mp=(p,par,side)=>BM.parts[p]?mpart('hero',p,par,side):null;mp('torso',h.up);mp('neck',h.up);mp('hood',h.up);mp('scarf',h.up);mp('skirt',h.lo,true);mp('belt',h.lo);
     h.tail=grp(h.up,.03,.275,-.085);mp('tail',h.tail);h.cape=grp(h.up,0,.26,-.11);
-    h.fx.headMesh=mp('head',h.head);h.fx.faces=[mtex('hero','head'),mtex('hero','shut')];mp('hair',h.head);mp('ears',h.head);
+    h.fx.headMesh=mp('head',h.head);h.fx.faces=[mtex('hero','head'),mtex('hero','shut')];mp('hair',h.head);mp('cap',h.head);mp('ears',h.head);
     for(let i=0;i<2;i++){mp('uarm',h.arms[i]);mp('farm',h.elbows[i]);mp(i?'handR':'handL',h.hand[i]);mp('thigh',h.legs[i]);mp('shin',h.knees[i]);mp('foot',ankleOf(h.knees[i]))}}
   else{
   /* coat skirt to mid-thigh, belt and buckle, a pouch on the right hip */

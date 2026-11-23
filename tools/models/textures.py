@@ -54,8 +54,9 @@ def lat_y(lat):
     return (90.0 - lat) / 180.0 * H
 
 
-# the hairline (build_hero.py HAIRLINE): latitude in radians by azimuth from the middle of the face
-HAIRLINE = [(0.0, 0.56), (0.2, 0.56), (0.38, 0.56), (0.62, 0.46), (0.9, 0.36), (1.3, 0.25), (1.57, 0.2), (1.85, 0.06), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
+# the hairline (build_hero.py HAIRLINE): latitude in radians by azimuth from the middle of the face. Under the cap at the
+# front, so the forehead shows right up to it; below the cap's edge behind the ears and at the nape, where short hair shows
+HAIRLINE = [(0.0, 0.74), (0.5, 0.7), (1.1, 0.5), (1.57, 0.36), (1.85, 0.16), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
 
 
 def hairline_deg(az):

@@ -381,12 +381,13 @@ def head_part():
     return P.finish()
 
 
-HAIRLINE = [(0.0, 0.56), (0.2, 0.56), (0.38, 0.56), (0.62, 0.46), (0.9, 0.36), (1.3, 0.25), (1.57, 0.2), (1.85, 0.06), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
+HAIRLINE = [(0.0, 0.74), (0.5, 0.7), (1.1, 0.5), (1.57, 0.36), (1.85, 0.16), (2.25, -0.27), (2.7, -0.42), (math.pi, -0.46)]
 
 
 def hairline(th):
-    """the latitude of the hairline at azimuth th (radians, 0 = the middle of the face): the forehead, round over the
-    ears, down to the nape. textures.py paints the same line a little lower, so no skin shows under the edge"""
+    """the latitude of the painted hairline at azimuth th (radians, 0 = the middle of the face): under the cap at the
+    front, so the forehead shows right up to it; round over the ears and down to the nape behind, where short hair shows
+    under the cap. textures.py paints hair from a little below this line up"""
     a = abs(th)
     for (a0, l0), (a1, l1) in zip(HAIRLINE, HAIRLINE[1:]):
         if a <= a1:
@@ -415,48 +416,11 @@ def crom(keys, n):
 
 
 def hair_part():
-    """golden-blond hair, built the way that era did it: a smooth cap from the hairline to the crown with a defined middle
-    part down the front, then a few broad, smooth locks swept from the part to each side: two layers of bangs that frame
-    the forehead, a longer lock down each side of the face, one in front of each ear, layers over the sides and the back
-    gathered to a leather tie at the nape, and a small full ponytail hanging from it (colours in textures.py)"""
+    """golden-blond hair, most of it under the cap (cap_part): the bangs show under its front, parted in the middle so the
+    hairline goes up to a point at the part and down each side; a lock down each side of the face and one in front of each
+    ear; and a small full ponytail out from under the back of the cap, with a leather tie (colours in textures.py)"""
     P = Part('hair', smooth_angle=65)
     bm = P.bm
-    # the cap: rings from the hairline up to the crown, so its edge follows the hairline cleanly
-    NA, NL = 24, 6
-    rows = []
-    for j in range(NL):
-        row = []
-        for i in range(NA):
-            th = -math.pi + TAU * i / NA
-            l0 = hairline(th)
-            f = j / NL
-            lat = l0 + (math.pi / 2 - l0) * (1 - (1 - f) ** 1.4)
-            g = 0.004 + 0.005 * min(1.0, j / 2)
-            # the middle part: a crease down the front of the crown, the hair a little fuller each side of it
-            if abs(th) < 1e-6 and lat < 1.5:
-                g -= 0.01 * min(1.0, (1.5 - lat) / 0.25)
-            elif abs(abs(th) - TAU / NA) < 1e-6 and lat < 1.5:
-                g += 0.004
-            row.append((bm.verts.new(head_shape(dirv(th, lat), grow=g)), i / NA, 0.06 + 0.9 * f))
-        rows.append(row)
-    crown = bm.verts.new(head_shape(Vector((0, 1, 0)), grow=0.009))
-    cap = []
-    for j in range(NL - 1):
-        for i in range(NA):
-            a, b = rows[j][i], rows[j][(i + 1) % NA]
-            c, d = rows[j + 1][(i + 1) % NA], rows[j + 1][i]
-            ub = b[1] if i + 1 < NA else 1.0
-            uc = c[1] if i + 1 < NA else 1.0
-            fc = bm.faces.new((a[0], b[0], c[0], d[0]))
-            cap.append((fc, [(a[1], a[2]), (ub, b[2]), (uc, c[2]), (d[1], d[2])]))
-    for i in range(NA):
-        a, b = rows[-1][i], rows[-1][(i + 1) % NA]
-        ub = b[1] if i + 1 < NA else 1.0
-        fc = bm.faces.new((a[0], b[0], crown))
-        cap.append((fc, [(a[1], a[2]), (ub, b[2]), ((a[1] + ub) / 2, 0.98)]))
-    for fc, uvs in cap:
-        for l, (u, v) in zip(fc.loops, uvs):
-            l[P.uv].uv = reg_uv('hair2', u, v)
 
     def path(keys, n=7):
         """keys: (azimuth, latitude, how far off the head); a smooth curve over the head through them"""
@@ -466,24 +430,15 @@ def hair_part():
             out.append(Vector(head_shape(Vector(k[:3]).normalized(), grow=k[3])))
         return out
     for sd in (-1, 1):
-        # the middle part's bangs: a lock each side curls in from the part to meet the other in a point over the middle of
-        # the forehead; above, the top is swept from the part out to each side; and a big lock each side sweeps from the
-        # part out and down past the temple. The forehead shows in an arch over each brow, between them
-        P.lock(path([(sd * 0.06, 1.0, 0.007), (sd * 0.14, 0.82, 0.02), (sd * 0.11, 0.6, 0.022), (sd * 0.02, 0.38, 0.016)]), 0.024, 0.013, 'hair', swell=0.35)
-        P.lock(path([(sd * 0.05, 1.28, 0.006), (sd * 0.38, 1.06, 0.02), (sd * 0.55, 0.78, 0.018)]), 0.028, 0.013, 'hair', swell=0.3)
-        P.lock(path([(sd * 0.05, 1.14, 0.006), (sd * 0.4, 0.98, 0.02), (sd * 0.66, 0.7, 0.021), (sd * 0.8, 0.42, 0.019), (sd * 0.85, 0.12, 0.015)]), 0.027, 0.013, 'hair', swell=0.35)
-        # a longer lock down each side of the face, past the eyes
-        P.lock(path([(sd * 0.06, 1.28, 0.004), (sd * 0.55, 1.0, 0.012), (sd * 0.84, 0.58, 0.014), (sd * 0.97, 0.18, 0.013), (sd * 1.0, -0.1, 0.011)]),
-               0.022, 0.011, 'hair')
+        # the bangs, parted in the middle: from under the front of the cap, down and out to each side. The inner lock's
+        # edge runs from the part, right at the cap, down and out to the brow
+        P.lock(path([(sd * 0.26, 0.76, 0.004), (sd * 0.28, 0.58, 0.016), (sd * 0.36, 0.42, 0.018), (sd * 0.44, 0.27, 0.015)]), 0.024, 0.012, 'hair', swell=0.4)
+        P.lock(path([(sd * 0.48, 0.72, 0.004), (sd * 0.55, 0.52, 0.016), (sd * 0.64, 0.33, 0.017), (sd * 0.72, 0.17, 0.014)]), 0.027, 0.012, 'hair', swell=0.4)
+        # a lock down each side of the face, past the eyes
+        P.lock(path([(sd * 0.78, 0.66, 0.004), (sd * 0.92, 0.36, 0.014), (sd * 1.0, 0.06, 0.013), (sd * 1.02, -0.18, 0.011)]), 0.022, 0.011, 'hair')
         # in front of the ear, down to the jaw
-        P.lock(path([(sd * 0.95, 0.95, 0.004), (sd * 1.13, 0.5, 0.011), (sd * 1.2, 0.05, 0.012), (sd * 1.2, -0.4, 0.01)]), 0.02, 0.011, 'hair')
-        # over the side, above the ear and back toward the nape
-        P.lock(path([(sd * 0.1, 1.46, 0.004), (sd * 1.3, 1.05, 0.011), (sd * 1.8, 0.5, 0.012), (sd * 2.05, 0.05, 0.011), (sd * 2.2, -0.2, 0.009)]),
-               0.026, 0.011, 'hair')
-        # the back, gathered down to the tie
-        P.lock(path([(sd * 1.5, 1.32, 0.004), (sd * 2.2, 0.85, 0.011), (sd * 2.7, 0.2, 0.011), (sd * 2.97, -0.3, 0.007)]), 0.028, 0.011, 'hair')
-        P.lock(path([(sd * 2.6, 1.32, 0.004), (sd * 2.8, 0.7, 0.011), (sd * 2.95, 0.1, 0.01), (sd * 3.05, -0.3, 0.007)]), 0.026, 0.01, 'hair')
-    # the tie: a leather band round the gathered hair at the nape
+        P.lock(path([(sd * 1.1, 0.52, 0.004), (sd * 1.17, 0.2, 0.011), (sd * 1.2, -0.12, 0.012), (sd * 1.2, -0.42, 0.01)]), 0.02, 0.011, 'hair')
+    # the tie: a leather band round the gathered hair at the nape, under the back of the cap
     tie = Vector(head_shape(dirv(math.pi, -0.36), grow=0.006))
     ax = Vector((0, -0.62, -0.78)).normalized()
     a1 = Vector((1, 0, 0))
@@ -506,6 +461,71 @@ def hair_part():
     for sd in (-1, 1):
         P.lock([tie + Vector(o) for o in ((0, -0.055, -0.035), (sd * 0.009, -0.09, -0.035), (sd * 0.016, -0.118, -0.028))], 0.009, 0.009, 'hair',
                out_dir=back, swell=0.2, under=0.8)
+    return P.finish()
+
+
+CAPLINE = [(0.0, 0.64), (0.6, 0.6), (1.1, 0.44), (1.57, 0.32), (2.1, 0.02), (2.6, -0.18), (math.pi, -0.24)]
+CAP_BAND = 0.1       # how tall the white band is, in radians of latitude
+
+
+def capline(th):
+    """the latitude of the cap's lower edge at azimuth th: across the forehead above the bangs, round above the ears, down
+    to the nape above the ponytail"""
+    a = abs(th)
+    for (a0, l0), (a1, l1) in zip(CAPLINE, CAPLINE[1:]):
+        if a <= a1:
+            f = (a - a0) / (a1 - a0)
+            f = f * f * (3 - 2 * f)
+            return l0 + (l1 - l0) * f
+    return CAPLINE[-1][1]
+
+
+def cap_part():
+    """a soft cloth cap in the tunic's green, pulled down over the hair to the brow and round above the ears, a white band
+    round its edge, the crown slouching back a little. The bangs and the middle part show under its front, the ponytail
+    under its back"""
+    P = Part('cap', smooth_angle=60)
+    bm = P.bm
+    NA, NL = 28, 7
+    def slouch(f):
+        """the soft crown leans back and its top flops down a little behind the head"""
+        return Vector((0, -0.045 * _sm(0.55, 1.0, f) ** 2, -0.075 * _sm(0.35, 1.0, f) ** 1.6))
+
+    def crown(th, f):
+        l0 = capline(th) + CAP_BAND
+        lat = l0 + (math.pi / 2 - l0) * (1 - (1 - f) ** 1.3)
+        # a few soft folds in the cloth toward the top
+        g = 0.019 + 0.017 * f + 0.003 * math.sin(th * 3 + 0.6) * _sm(0.4, 1.0, f)
+        return Vector(head_shape(dirv(th, lat), grow=g)) + slouch(f)
+    rows = [[(bm.verts.new(crown(-math.pi + TAU * i / NA, j / NL)), i / NA, j / NL) for i in range(NA)] for j in range(NL)]
+    top = bm.verts.new(Vector(head_shape(Vector((0, 1, 0)), grow=0.036)) + slouch(1.0))
+    faces = []
+    for j in range(NL - 1):
+        for i in range(NA):
+            a, b = rows[j][i], rows[j][(i + 1) % NA]
+            c, d = rows[j + 1][(i + 1) % NA], rows[j + 1][i]
+            ub = b[1] if i + 1 < NA else 1.0
+            uc = c[1] if i + 1 < NA else 1.0
+            faces.append((bm.faces.new((a[0], b[0], c[0], d[0])), 'coat', [(a[1], a[2]), (ub, b[2]), (uc, c[2]), (d[1], d[2])]))
+    for i in range(NA):
+        a, b = rows[-1][i], rows[-1][(i + 1) % NA]
+        ub = b[1] if i + 1 < NA else 1.0
+        faces.append((bm.faces.new((a[0], b[0], top)), 'coat', [(a[1], a[2]), (ub, b[2]), ((a[1] + ub) / 2, 1.0)]))
+    # the band: its top meets the crown, its face stands a little proud, its underside tucks in to the head
+    ring = []
+    for i in range(NA):
+        th = -math.pi + TAU * i / NA
+        l0 = capline(th)
+        ring.append([bm.verts.new(head_shape(dirv(th, l0 + CAP_BAND), grow=0.019)), bm.verts.new(head_shape(dirv(th, l0 + CAP_BAND * 0.9), grow=0.023)),
+                     bm.verts.new(head_shape(dirv(th, l0 + CAP_BAND * 0.08), grow=0.023)), bm.verts.new(head_shape(dirv(th, l0 - 0.012), grow=0.006))])
+    for i in range(NA):
+        A, Bn = ring[i], ring[(i + 1) % NA]
+        u0, u1 = i / NA, ((i + 1) / NA if i + 1 < NA else 1.0)
+        for k, (v0, v1) in enumerate(((1.0, 0.88), (0.88, 0.12), (0.12, 0.0))):
+            faces.append((bm.faces.new((A[k + 1], Bn[k + 1], Bn[k], A[k])), 'trousers', [(u0, v1), (u1, v1), (u1, v0), (u0, v0)]))
+    for fc, region, uvs in faces:
+        for l, (u, v) in zip(fc.loops, uvs):
+            l[P.uv].uv = reg_uv(region, u, v)
     return P.finish()
 
 
@@ -726,7 +746,7 @@ def export(ob):
 
 def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    parts = [head_part(), hair_part(), ears_part(), torso_part(), neck_part(), skirt_part(),
+    parts = [head_part(), hair_part(), cap_part(), ears_part(), torso_part(), neck_part(), skirt_part(),
              belt_part(), upper_arm_part(), forearm_part(), hand_part(-1), hand_part(1), thigh_part(), shin_part(), foot_part()]
     out, tris = {}, 0
     for ob in parts:
