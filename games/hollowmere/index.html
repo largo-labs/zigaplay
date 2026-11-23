@@ -776,6 +776,10 @@ const overlap=(a,b,pad=0)=>Math.abs(a.x-b.x)<a.hw+b.hw+pad&&Math.abs(a.y-b.y)<a.
 const tc=v=>Math.floor(v/TS),cen=i=>i*TS+8;
 /* you face any way you like; puzzles that need a straight line use the nearest of the four */
 let camYaw=-Math.PI/2,lockT=null,camSnap=0,camSnapTo=0,moveV=[0,0];
+/* how far behind the hero the camera sits */
+const CAM_DIST=2.7;
+/* monsters drawn bigger and wider than their old size; and once killed, a monster stays gone for ten real minutes */
+const FOE_W=1.32,FOE_H=1.22,RESPAWN_MS=10*60*1000;
 const CARD=a=>{const c=Math.cos(a),s=Math.sin(a);return Math.abs(c)>=Math.abs(s)?[c>0?1:-1,0]:[0,s>0?1:-1]};
 const facing=()=>CARD(P.ang),fvec=()=>[Math.cos(P.ang),Math.sin(P.ang)];
 const angD=(a,b)=>{let d=a-b;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;return d};
@@ -784,16 +788,24 @@ function frontTiles(){const a=frontTile(),[vx,vy]=fvec(),b=[tc(P.x+vx*11),tc(P.y
 
 /* ---------- entering rooms ---------- */
 function enterRoom(map,rx,ry,px,py,how){room=buildRoom(map,rx,ry);room.crys=0;room.torchT={};room.eyesHit=0;E=[];P.entry=[px,py];P.x=px;P.y=py;P.st='walk';P.swing=0;P.spin=0;P.roll=0;P.jump=0;P.fall=0;
-  for(const s of room.ents)spawn(s);for(const b of room.blocks||[])E.push(mkBlock(b[0],b[1]));
+  room.ents.forEach((s,i)=>spawn(s,i));for(const b of room.blocks||[])E.push(mkBlock(b[0],b[1]));
   if(room.spec&&room.spec.boss&&!S.v.solved[room.key])spawnBoss(room.spec.boss);
   if(room.spec&&room.spec.boss&&S.v.solved[room.key]){if(!S.v.got[room.key+':container'])E.push(mkPickup('container',96,90,0,room.key+':container'));
     const fi=room.spec.flame;if(fi>=0&&!S.v.flames[fi])E.push(mkPickup('flame',96,70,0,'flame'+fi))}
   if(room.heal&&S.v.hp<S.v.max){S.v.hp=S.v.max;SFX.heart()}
   S.v.seen[room.key]=1;S.v.at={map,rx,ry,x:px,y:py};SND.play(SONGS[songFor(room)]);voxEnd();voxWarm(E);
   if(how==='warp'||how==='start'){const nm=room.outdoors?room.name:(DUN[map]?DUN[map].name:'');if(nm)banner(nm)}
-  if(how!=='seam'){const a=how==='door'?camSnapTo:how==='start'?-Math.PI/2:(room.outdoors?Math.PI/2:-Math.PI/2);P.ang=a;camYaw=a;G3.snap=true;lockT=null;G3.camDist=3.5}
+  if(how!=='seam'){const a=how==='door'?camSnapTo:how==='start'?-Math.PI/2:(room.outdoors?Math.PI/2:-Math.PI/2);P.ang=a;camYaw=a;G3.snap=true;lockT=null;G3.camDist=CAM_DIST}
   hudText();S.save()}
-function spawn(s){if(s.k==='foe'){if(room.outdoors&&!S.v.items.sword)return;const p=freeSpot();if(p)E.push(mkFoe(s.type,p[0],p[1]))}else if(s.k==='npc'){const C=CHAR[s.id]||CHAR._;E.push({k:'npc',id:s.id,x:cen(s.tx),y:cen(s.ty)+2,hw:C.hw||6,hh:C.hh||5,solid:true})}
+/* each of a room's monsters has a key (room and its place in the list); killing one writes down the time, and it stays away
+   until ten real minutes have passed (the save keeps the times, so it holds across sessions) */
+function foeAway(sk){const K=S.v.kills;if(!K||!K[sk])return false;if(Date.now()-K[sk]>=RESPAWN_MS){delete K[sk];return false}return true}
+function foeDown(e){if(e.sk==null)return;(S.v.kills||(S.v.kills={}))[e.sk]=Date.now();S.save()}
+let respT=0;
+function respawnTick(dt){respT-=dt;if(respT>0||!room||!S.v.kills)return;respT=1;if(room.outdoors&&!S.v.items.sword)return;
+  room.ents.forEach((s,i)=>{if(s.k!=='foe')return;const sk=room.key+':'+i;if(!S.v.kills[sk]||foeAway(sk)||E.some(f=>f.sk===sk&&!f.dead))return;
+    const p=freeSpot();if(!p)return;const f=mkFoe(s.type,p[0],p[1]);f.sk=sk;E.push(f);for(let n=0;n<8;n++)E.push({k:'fx',x:f.x,y:f.y,vx:(rnd()-.5)*70,vy:(rnd()-.5)*70-20,t:.45,c:'#b8a8c8'})})}
+function spawn(s,i){if(s.k==='foe'){if(room.outdoors&&!S.v.items.sword)return;const sk=i==null?null:room.key+':'+i;if(sk&&foeAway(sk))return;const p=freeSpot();if(p){const f=mkFoe(s.type,p[0],p[1]);f.sk=sk;E.push(f)}}else if(s.k==='npc'){const C=CHAR[s.id]||CHAR._;E.push({k:'npc',id:s.id,x:cen(s.tx),y:cen(s.ty)+2,hw:C.hw||6,hh:C.hh||5,solid:true})}
   else if(s.k==='pickup')E.push(mkPickup(s.it,cen(s.tx),cen(s.ty),0,s.id));else if(s.k==='ware')E.push({k:'ware',it:s.it,price:s.price,id:s.id,x:cen(s.tx),y:cen(s.ty),hw:6,hh:6,solid:true})}
 function freeSpot(){for(let t=0;t<80;t++){const i=1+(rnd()*10|0),j=1+(rnd()*10|0),x=cen(i),y=cen(j);if(blocked(i,j,'e')||'xop'.includes(tileAt(i,j)))continue;if(Math.hypot(x-P.x,y-P.y)<56)continue;
     if(E.some(e=>Math.hypot(e.x-x,e.y-y)<14))continue;return[x,y]}return null}
@@ -827,7 +839,7 @@ function stepPlayer(dt){P.inv=Math.max(0,P.inv-dt);P.rollCd=Math.max(0,P.rollCd-
   if(P.st==='hook')return;
   /* the stick is read against the camera: up is away from it */
   const[ax,ay]=AXIS(),cf=[Math.cos(camYaw),Math.sin(camYaw)],cr=[-Math.sin(camYaw),Math.cos(camYaw)],mx=cf[0]*(-ay)+cr[0]*ax,my=cf[1]*(-ay)+cr[1]*ax;moveV=[mx,my];
-  if(lockT&&(lockT.dead||!E.includes(lockT)||Math.hypot(lockT.x-P.x,lockT.y-P.y)>170))lockT=null;
+  if(lockT&&(lockT.dead||!E.includes(lockT))){lockT=nearFoe();if(lockT)SFX.tick()}else if(lockT&&Math.hypot(lockT.x-P.x,lockT.y-P.y)>170)lockT=null;
   if(P.roll>0){P.roll-=dt;moveBox(P,P.rvx*dt,0,'p');moveBox(P,0,P.rvy*dt,'p');if(P.roll<=0)P.st='walk'}
   else if(P.jump>0){P.jump-=dt;if(P.jump>.06){moveBox(P,P.jvx*dt,0,'p');moveBox(P,0,P.jvy*dt,'p')}if(P.jump<=.1&&!P.jhit){P.jhit=true;leapHit()}if(P.jump<=0){P.jump=0;P.st='walk'}}
   else if(P.swing>0||P.spin>0){if(P.swing>0){P.swing-=dt;swordHits(false)}if(P.spin>0){P.spin-=dt;swordHits(true)}}
@@ -950,7 +962,7 @@ function collect(p){const v=S.v;p.dead=true;switch(p.it){case 'heart':v.hp=Math.
     case 'flame':{const fi=room.spec.flame;v.flames[fi]=1;S.save();P.hold=1.6;P.holdIt='flame';SFX.get();const n=v.flames.filter(Boolean).length;
       setTimeout(()=>say(['You break the core of '+ROOTS[fi]+'. It cracks, bleeds sap and goes dark. Far above you, the whole tree flinches.',n<4?(4-n)+(4-n===1?' core left.':' cores left.'):'All four cores. The way to the main core is open.'],{done:()=>{const ex=EXITS[room.map];warp('ow',ex[0],ex[1],cen(ex[2]),cen(ex[3])+4)}}),700);break}}
   hudText()}
-function stepThings(dt){for(const e of E){if(e.dead)continue;switch(e.k){
+function stepThings(dt){respawnTick(dt);for(const e of E){if(e.dead)continue;switch(e.k){
   case 'npc':stepNpc(e,dt);break;
   case 'seed':case 'spit':case 'orb':case 'rock':{e.t+=dt;e.x+=e.vx*dt;e.y+=e.vy*dt;const i=tc(e.x),j=tc(e.y);
     if(e.x<0||e.y<0||e.x>GW||e.y>RH*TS||e.t>3){e.dead=true;break}
@@ -1002,7 +1014,7 @@ function doorCheck(){const[fi,fj]=frontTile(),c=tileAt(fi,fj);if(c!=='Z'&&c!=='X
 
 /* ---------- foes ---------- */
 const FOE={slime:{hp:2,dmg:1,sp:0},bat:{hp:1,dmg:1,fly:1},husk:{hp:4,dmg:2,sp:30},ghoul:{hp:7,dmg:2,sp:46},spitter:{hp:3,dmg:1},knight:{hp:6,dmg:2,sp:26},wisp:{hp:2,dmg:1,sp:22},crab:{hp:3,dmg:1},spinner:{hp:99,dmg:2},moth:{hp:1,dmg:1,fly:1},shade:{hp:2,dmg:1,sp:38,fly:1}};
-function mkFoe(type,x,y){const F=FOE[type];return{k:'foe',type,x,y,hw:6,hh:5,hp:F.hp,t:rnd()*2,dir:'down',vx:0,vy:0,stun:0,inv:0,kx:0,ky:0,kt:0,fly:!!F.fly,state:0,an:rnd()*3}}
+function mkFoe(type,x,y){const F=FOE[type];return{k:'foe',type,x,y,hw:7,hh:6,hp:F.hp,t:rnd()*2,dir:'down',vx:0,vy:0,stun:0,inv:0,kx:0,ky:0,kt:0,fly:!!F.fly,state:0,an:rnd()*3}}
 function stepFoe(e,dt){const F=FOE[e.type],who=e.fly?'fly':'e';e.inv=Math.max(0,e.inv-dt);e.an+=dt;
   if(e.kt>0){e.kt-=dt;moveBox(e,e.kx*dt,0,who);moveBox(e,0,e.ky*dt,who)}
   if(e.stun>0){e.stun-=dt}
@@ -1018,12 +1030,12 @@ function stepFoe(e,dt){const F=FOE[e.type],who=e.fly?'fly':'e';e.inv=Math.max(0,
       case 'spinner':if(!e.vx&&!e.vy){const a=(rnd()*4|0)*Math.PI/2+Math.PI/4;e.vx=Math.cos(a)*55;e.vy=Math.sin(a)*55}if(!moveBox(e,e.vx*dt,0,who))e.vx=-e.vx;if(!moveBox(e,0,e.vy*dt,who))e.vy=-e.vy;break}}
   if(overlap(e,P)&&P.fall<=0&&e.stun<=0)hurt(F.dmg,[e.x,e.y])}
 function hitThing(e,how,dmg,fx,fy,src){if(e.k==='boss')return bossHit(e,how,dmg,src);if(e.k==='part')return partHit(e,how,dmg,src);if(e.inv>0)return;
-  if(e.type==='spinner'){if(how==='bomb'){e.dead=true;rubble(e.x,e.y);maybeDrop(e.x,e.y,.8);checkCond()}else{SFX.clank();if(how==='sword'||how==='spin')P.kx=(P.x-e.x)*6,P.ky=(P.y-e.y)*6,P.kt=.1}return}
+  if(e.type==='spinner'){if(how==='bomb'){e.dead=true;foeDown(e);rubble(e.x,e.y);maybeDrop(e.x,e.y,.8);checkCond()}else{SFX.clank();if(how==='sword'||how==='spin')P.kx=(P.x-e.x)*6,P.ky=(P.y-e.y)*6,P.kt=.1}return}
   if(e.type==='knight'&&(how==='sword'||how==='spin')&&e.stun<=0){const fd=DIRV[{up:'n',down:'s',left:'w',right:'e'}[e.dir]];const dx=fx-e.x,dy=fy-e.y,d=Math.hypot(dx,dy)||1;
     if(how==='sword'&&(dx/d)*fd[0]+(dy/d)*fd[1]>.3){SFX.clank();P.kx=dx/d*120;P.ky=dy/d*120;P.kt=.1;e.kx=-dx/d*60;e.ky=-dy/d*60;e.kt=.1;return}}
   if(how==='seed'||how==='hook'){e.stun=Math.max(e.stun,e.type==='knight'?2.2:1.2);if(e.type==='knight'){SFX.clank();return}if(how==='hook'&&e.type!=='bat'&&e.type!=='moth')dmg=0}
   if(dmg<=0)return;e.hp-=dmg;e.inv=.25;SFX.hit();const d=Math.hypot(e.x-fx,e.y-fy)||1;e.kx=(e.x-fx)/d*160;e.ky=(e.y-fy)/d*160;e.kt=.12;
-  if(e.hp<=0){e.dead=true;if(e.type==='slime'&&qs('corvo')===1){S.v.qc.corvo=(S.v.qc.corvo||0)+1;if(S.v.qc.corvo>=10)questSet('corvo',2)}for(let n=0;n<8;n++)E.push({k:'fx',x:e.x,y:e.y,vx:(rnd()-.5)*90,vy:(rnd()-.5)*90-20,t:.4,c:'#e8e8f0'});maybeDrop(e.x,e.y,.45);setTimeout(checkCond,50)}}
+  if(e.hp<=0){e.dead=true;foeDown(e);if(e.type==='slime'&&qs('corvo')===1){S.v.qc.corvo=(S.v.qc.corvo||0)+1;if(S.v.qc.corvo>=10)questSet('corvo',2)}for(let n=0;n<8;n++)E.push({k:'fx',x:e.x,y:e.y,vx:(rnd()-.5)*90,vy:(rnd()-.5)*90-20,t:.4,c:'#e8e8f0'});maybeDrop(e.x,e.y,.45);setTimeout(checkCond,50)}}
 /* ---------- Part 5: the five things at the bottom ----------
    Bramble Beetle: armoured. Hit its eye with the Sling when it faces you, or make it charge into something hard; then the sword.
    Bell Warden: rings out waves and sends arms up from the water. Hook it down and hit it while it lies there.
@@ -1536,7 +1548,7 @@ const sprite=(k,s)=>{const m=new TH.Sprite(new TH.SpriteMaterial({map:iconTex(k)
 function textSprite(txt,col){const c=mkCanvas(32,8),x=c.getContext('2d');digits(x,txt,1,1,col||'#ffd23f');const t=new TH.CanvasTexture(c);t.magFilter=t.minFilter=TH.NearestFilter;t.generateMipmaps=false;const m=new TH.Sprite(new TH.SpriteMaterial({map:t,transparent:true}));m.scale.set(1.2,.3,1);return m}
 const blockMats={};
 function mkEnt(e){const g=new TH.Group(),u={};g.userData=u;switch(e.k){
-  case 'foe':{const m=mkFoeModel(e.type);g.add(m);u.m=m;if(!e.fly)shadow(g,.3);else shadow(g,.2);u.st=mkStars(g,1.15,1);break}
+  case 'foe':{const m=mkFoeModel(e.type);m.scale.set(FOE_W,FOE_H,FOE_W);g.add(m);u.m=m;if(!e.fly)shadow(g,.3*FOE_W);else shadow(g,.2*FOE_W);u.st=mkStars(g,1.15*FOE_H,1);break}
   case 'boss':{const m=mkBossModel(e);g.add(m);u.m=m;if(e.kind!=='hush')u.sh=shadow(g,e.hw/16+.25);u.st=mkStars(g,e.kind==='golem'?2.3:1.7,2);break}
   case 'npc':{const h=mkNpc(e.id);g.add(h.root);u.h=h;shadow(g,(CHAR[e.id]||CHAR._).hw/16*1.1+.12);break}
   case 'ware':{pc('box','#7a5432',0,.25,0,.6,.5,.5,g);const s=sprite(WARES[e.it].icon,.55);s.position.y=.85;g.add(s);const p=textSprite(e.price);p.position.y=1.25;g.add(p);break}
@@ -1637,12 +1649,12 @@ function camUpdate(dt){if(!room)return;const cam=G3.cam,[px,pz]=gpos(P.x,P.y),py
   if(state==='play'){if(lk){const ta=Math.atan2(lk.y-P.y,lk.x-P.x);camYaw+=angD(ta,camYaw)*Math.min(1,dt*6)}
     else if(camSnap>0){camSnap-=dt;camYaw+=angD(P.ang,camYaw)*Math.min(1,dt*12)}
     else{const mv=Math.hypot(moveV[0],moveV[1]);if(mv>.2){const d=angD(P.ang,camYaw);if(Math.abs(d)<2.35)camYaw+=d*Math.min(1,dt*1.5*mv)}}}
-  let dist=3.5,hgt=1.95;const fx=Math.cos(camYaw),fz=Math.sin(camYaw);let cx=px-fx*dist,cz=pz-fz*dist;
+  let dist=CAM_DIST,hgt=1.6;const fx=Math.cos(camYaw),fz=Math.sin(camYaw);let cx=px-fx*dist,cz=pz-fz*dist;
   if(room.outdoors){let d=dist;const qx=-fz,qz=fx;for(let s=.6;s<=dist+.4;s+=.2){const w=Math.min(.7,s*.25);if(camHit(px-fx*s,pz-fz*s,s)||camHit(px-fx*s+qx*w,pz-fz*s+qz*w,s)||camHit(px-fx*s-qx*w,pz-fz*s-qz*w,s)){d=Math.max(1.3,s-.55);break}}
     if(d<G3.camDist)G3.camDist=d;else G3.camDist+=(d-G3.camDist)*Math.min(1,dt*2.5)}
   else{const ox=room.rx*12,oz=room.ry*12;let d=dist;const lim=(v,a,b)=>v<a||v>b;for(let s=.4;s<=dist;s+=.1){const x=px-fx*s,z=pz-fz*s;if(lim(x-ox,-1.2,13.2)||lim(z-oz,-1.2,13.2)){d=Math.max(1.2,s-.1);break}}if(d<G3.camDist)G3.camDist=d;else G3.camDist+=(d-G3.camDist)*Math.min(1,dt*3)}
   const cd=G3.camDist;hgt+=(dist-cd)*.45;cx=px-fx*cd;cz=pz-fz*cd;const want=new TH.Vector3(cx,py+hgt,cz);
-  let look=new TH.Vector3(px,py+.75,pz);if(lk){const[tx,tz]=gpos(lk.x,lk.y);look.set((px+tx)/2,py+.7,(pz+tz)/2)}
+  let look=new TH.Vector3(px,py+.8,pz);if(lk){const[tx,tz]=gpos(lk.x,lk.y);look.set((px+tx)/2,py+.7,(pz+tz)/2)}
   const tk=talkCam(px,pz,py);if(tk){want.copy(tk[0]);look.copy(tk[1])}
   if(G3.snap){G3.camPos.copy(want);G3.camLook.copy(look);G3.snap=false}else{G3.camPos.lerp(want,Math.min(1,dt*9));G3.camLook.lerp(look,Math.min(1,dt*12))}
   FADE.value=state==='title'?1.5:Math.max(1.6,G3.camPos.distanceTo(G3.camLook)-.7);cam.position.copy(G3.camPos);if(shake>0)cam.position.add(new TH.Vector3((Math.random()-.5)*.25,(Math.random()-.5)*.18,(Math.random()-.5)*.25));cam.lookAt(G3.camLook)}
@@ -3410,6 +3422,8 @@ onBtn=(b,d)=>{if(d)SND.unlock();if(M){if(d)menuInput(b);return}
 /* SELECT: lock on to the nearest foe ahead, or swing the camera round behind you */
 function bestFoe(){let best=null,bs=1e9;for(const e of E){if(e.dead||!(e.k==='foe'||(e.k==='boss'&&!(e.kind==='hush'&&e.phase===1))))continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d>140)continue;
     const s=d+Math.abs(angD(Math.atan2(e.y-P.y,e.x-P.x),camYaw))*40;if(s<bs){bs=s;best=e}}return best}
+/* the nearest foe still standing, for the lock to move to when its target falls */
+function nearFoe(){let best=null,bd=170;for(const e of E){if(e.dead||!(e.k==='foe'||(e.k==='boss'&&!(e.kind==='hush'&&e.phase===1))))continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd){bd=d;best=e}}return best}
 function focus(){if(lockT){lockT=null;SFX.tick();return}const best=bestFoe();if(best){lockT=best;SFX.tick()}else camSnap=.35}
 /* B twice, quickly: lock on to the foe ahead (the first press still swings). While locked it moves the lock to whichever foe
    you now face, so hammering the sword at your target never drops it; SELECT lets go */
