@@ -14,6 +14,7 @@ A pocket console for the browser. It folds open: the game plays on the screen in
 | **Drift Critters** | A kart racer: eight critters, six tracks, two cups and three speeds. Drift round the bends for a kick of speed and crack open crates for tricks. The second screen shows the track map and your place. | Stick or ◀ ▶ steer · A use your trick · B hop, hold to drift · ▼ brake · START pause |
 | **Pipsqueak** | A side-scroller: a small chick runs, jumps, stomps foes and bumps blocks across four lands to catch the balloon home. The second screen shows the stretch of level around you and your score. | ◀ ▶ run · A jump, hold for higher · B dash, or spit embers · START pause |
 | **Fourfall** | A falling-block puzzle: slide and turn the pieces and fill rows to clear them. Marathon, or a sprint to 40 lines. The second screen shows the held piece, the next three and your score. | ◀ ▶ slide · ▲ drop · ▼ faster · A and B turn · SELECT hold · START pause |
+| **Vaultbreaker** | A side-on dungeon raid: a knight fights endless waves of monsters with a boss every fifth wave. Dodge their attacks, lunge in after them, and spend the coins and XP from each raid on four weapons, a forge, charms and three skill trees. Played sideways. | ◀ dodge back, hold to run · ▶ forward · ATK attack · SPC special · ULT ultimate · HP flask · START pause |
 
 ## The fold-open console
 
@@ -83,6 +84,18 @@ A corrupt lord is emptying Ashby's tithe barn, and Wat Tyler picks up a cudgel. 
 - **Winning and losing:** each battle has its own goal (rout them, survive till dawn, defeat the boss, burn the tax rolls, escort a cart). You lose if Wat falls, if your whole band falls, or if what you protect is destroyed, and then you try that battle again from camp.
 - Built from `tools/pitchfork/src/` with `python3 tools/pitchfork/build.py`, which writes `games/pitchfork/index.html`. `tools/pitchfork/make-cart.js` redraws its label.
 
+## Vaultbreaker
+
+A knight walks deeper into the dungeon, one wave of monsters at a time. Each wave fills a gated stretch of corridor; clear it and the far gate opens. Every fifth wave is a boss (the Bone Colossus, Gorehorn and the Lich Sovereign, then round again, stronger), and beating one lights a shrine where you pick one blessing for the rest of the raid.
+
+- **Moving.** ◀ is a backward dodge with a moment where nothing can touch you, and holding it keeps you running backwards. ▶ walks forward. Monsters are solid: you can't walk through them, so you dodge their swings, arrows and charges instead. A red **!** over a monster means it's about to attack.
+- **Fighting.** ATK lunges at the nearest monster in range and swings. Three presses in a row make a combo, and the third hit knocks foes back and breaks through shields. SPC is your weapon's special, and ULT is its ultimate once the bar is full (it fills as you deal and take damage). HP drinks a flask.
+- **Weapons.** Longsword & Shield (Shield Bash, Judgment), Spear (Skewer Charge, Dragon Lance), Greataxe (Whirlwind, Earthsplitter) and Twin Blades (Fan of Knives, Blade Storm). Buy them and upgrade each one to level 10 in the Armory.
+- **After every raid**, whether you fall or retreat from the pause menu, you keep the coins and XP you earned. Coins buy weapons, weapon levels, Forge upgrades (health, damage, armor, flasks) and eight charms (wear two, or three with the Charm Pocket skill). XP raises your level, and each level is a point for the Vanguard, Bulwark and Shadow skill trees. Their higher rows open once you've spent enough points in that tree, and RESET ALL gives every point back.
+- In the console it plays sideways with four face buttons: ATK on the right, SPC below, HP on the left and ULT on top. Played on its own on a phone, it draws its own buttons: ◀ ▶ bottom left, attack, special, ult and flask bottom right. On a keyboard: arrows, Z attack, X special, V ult, C flask, Enter pause.
+- `games/vaultbreaker/index.html` is the whole game, written by hand with no build step. `node tools/vaultbreaker/make-cart.js` redraws its label.
+- The console's `faces` option for a cart (used here) prints words in place of A, B, C and D on the face buttons.
+
 ## Playing it
 
 There are two ways to play from this repo:
@@ -109,6 +122,7 @@ tools/drownedmoon/          Strike at Night's source (src/*.js), its build scrip
 tools/dronestrike/          Drone Strike's source (src/*.js), its build script and label maker
 tools/pitchfork/            Pitchfork Rising's source (src/*.js), its build script and label maker
 tools/kit-games/            Drift Critters, Pipsqueak and Fourfall: their shared kit, sources, build script and label maker
+tools/vaultbreaker/         Vaultbreaker's label maker (the game itself is games/vaultbreaker/index.html)
 ```
 
 ## How the console works
@@ -121,6 +135,7 @@ tools/kit-games/            Drift Critters, Pipsqueak and Fourfall: their shared
   - `stick:true` puts a round control stick in place of the D-pad.
   - `wide:true` gives the game the console's sideways shape, which has no second screen. If the phone is upright, the console turns itself a quarter turn.
   - `face4:true` gives the game four face buttons in a diamond (A, B, C, D).
+  - `faces:{a:'ATK',…}` prints words on the face buttons instead of their letters.
   - `skin:'<id>'` names the console skin the game wears when the player picks *Match the game*.
 - **Home screen and Library:** the shelf is a row of covers for the games on the home screen, then a LIBRARY tile. Press EDIT (or START) on the home screen and choose a game to send it to the Library; in the Library, EDIT puts a game back. Games play from either place. A cart with `lib:true` starts out in the Library, and after that each player's own arrangement is kept (inside Claude it's also kept in their account, with the skin).
 - **Skins:** SELECT on the shelf opens the skin picker. Some skins move (aurora, galaxy and others), and each game can bring its own.

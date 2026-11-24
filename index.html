@@ -151,6 +151,7 @@ button:focus-visible{outline:3px solid #ffd36a;outline-offset:2px}
 .console.face4 .btn-ab.a{left:89px;right:auto;top:37px}.console.face4 .btn-ab.b{left:53px;top:73px}
 .console.face4 .btn-ab.c{left:17px;top:37px}.console.face4 .btn-ab.d{left:53px;top:1px}
 .console.face4 .btn-ab span{font-size:17px}
+.btn-ab span.word{font-size:11px!important;letter-spacing:.3px}
 .console.face4 .btn-ab::after{inset:-5px}
 
 @media (max-height:640px){.brand{display:none}.side{gap:7px}.hinge{margin-block:6px 7px}}
@@ -592,7 +593,8 @@ html.wide .shelf{height:76px}html.wide .cart{width:84px;height:56px;margin:-28px
    control stick in place of the D-pad while it runs; it sends the same four directions (two at once on a diagonal),
    and a game that defines ZPCart.stick(x, y) also gets where the stick points, x and y each from -1 to 1 (y down).
    A cart with `face4:true` gets four face buttons in a diamond while it runs: D on top, A right, B below, C left;
-   they reach the game as 'a' 'b' 'c' 'd'.
+   they reach the game as 'a' 'b' 'c' 'd'. A cart can print its own words on the face buttons with
+   `faces:{a:'ATK',b:'SPC',...}` (any it leaves out keep their letter).
 
    HOME SCREEN AND LIBRARY
    The home screen shows the games on the shelf; the rest are put away in the library (the LIBRARY tile on the shelf).
@@ -661,6 +663,10 @@ const CARTS=[
   {id:'fourfall',title:'Fourfall',file:'games/fourfall/index.html',art:'games/fourfall/cart.png',label:'#1c184a',ink:'#ffd15c',skin:'fourfall',
    blurb:'Slide and turn the falling pieces, fill rows to clear them and keep the well from filling up. Marathon, or a sprint to 40 lines.',
    note:'◀ ▶ slide · ▲ drop · ▼ faster · A and B turn · SELECT hold · START pause'},
+  {id:'vaultbreaker',title:'Vaultbreaker',file:'games/vaultbreaker/index.html',art:'games/vaultbreaker/cart.png',label:'#1c1220',ink:'#ffd36a',wide:true,face4:true,
+   faces:{a:'ATK',b:'SPC',c:'HP',d:'ULT'},
+   blurb:'A knight against endless waves of monsters. Dodge, lunge, pick from four weapons, and grow three skill trees with the coins and XP from every raid.',
+   note:'◀ dodge back, hold to run · ▶ forward · ATK attack · SPC special · ULT ultimate · HP flask · START pause'},
 ];
 const GHOST={id:'+',ghost:true,title:'Add a game',blurb:'Made another game here with Claude? Say “add this to the ZigaPlay” and its cartridge will appear on this shelf.',note:''};
 /* console skins: the colours live in the CSS (.console[data-shell=<id>]); fx draws the moving decoration of a live skin */
@@ -896,7 +902,8 @@ function applyLayout(){const de=document.documentElement,vv=window.visualViewpor
   de.style.setProperty('--zw',cw+'px');de.style.setProperty('--zh',(turned?W:H)+'px');
   const cz=wide?Math.max(.5,Math.min(wideGame?.94:1,(chh-34)/200,wideGame?cw/820:1)):1;
   de.style.setProperty('--cz',cz.toFixed(3));
-  consoleEl.classList.toggle('stickmode',!!(cur&&cur.stick));consoleEl.classList.toggle('face4',!!(cur&&cur.face4));consoleEl.classList.toggle('widegame',wideGame);consoleEl.classList.toggle('abright',hand==='right');
+  consoleEl.classList.toggle('stickmode',!!(cur&&cur.stick));consoleEl.classList.toggle('face4',!!(cur&&cur.face4));
+  document.querySelectorAll('.btn-ab').forEach(b=>{const k=b.dataset.btn,sp=b.querySelector('span'),w=cur&&cur.faces&&cur.faces[k];if(!sp)return;sp.textContent=w||k.toUpperCase();sp.classList.toggle('word',!!w&&w.length>1);b.setAttribute('aria-label',w||k.toUpperCase())});consoleEl.classList.toggle('widegame',wideGame);consoleEl.classList.toggle('abright',hand==='right');
   if(!wide){const bs=$('#base'),bw=bs.clientWidth,bh=bs.clientHeight-$('.brand').offsetHeight-6,sw=(bw-16)*.33;
     de.style.setProperty('--sz',Math.max(.5,Math.min(1,sw/142,bh/194)).toFixed(3));de.style.setProperty('--sa',Math.max(.55,Math.min(1,sw/116,bh/186)).toFixed(3))}
   panelFit();
