@@ -112,19 +112,39 @@ const sfx={
   gate(){S.noise(.4,{lp:400,vol:.1});S.tone(60,.4,{type:'square',vol:.04})}};
 
 /* ---------------------------------------------------------------- saves */
-function makeSave(id,fresh){const KEY=id+'-save';let SV=fresh(),cloud=false,t=0;
+/* Saved progress, kept in three places: this browser's storage (always), the console's account saves when the game runs
+   inside ZigaPlay, and the player's own private record in this artifact's database when it runs as a Claude artifact.
+   The newest copy wins when the game opens. save() writes only when something changed. */
+function makeSave(id,fresh){const KEY=id+'-save';let SV=fresh(),lastJ='',zt=0,dbRef=null,busy=false,again=false,where='device';
+  const norm=o=>{const c=Object.assign({},o);delete c.savedAt;return JSON.stringify(c)};
   try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&typeof s==='object')SV=Object.assign(fresh(),s)}catch(e){}
-  const ZC=ZP&&ZP.cloud&&typeof ZP.cloud.save==='function'?ZP.cloud:null,push=()=>{try{ZC.save(id,JSON.stringify(SV),{})}catch(e){}};
-  return{get v(){return SV},
-    save(){SV.savedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}if(cloud){clearTimeout(t);t=setTimeout(push,1500)}},
-    reset(){SV=fresh();this.save()},
-    async init(onLoad){if(!ZC)return;for(let a=0;a<6;a++){let r=null;try{r=await ZC.load(id)}catch(e){}
-        if(r&&r.ok){cloud=true;let cs=null;try{cs=r.json?JSON.parse(r.json):null}catch(e){}
-          if(cs&&typeof cs==='object'&&(+cs.savedAt||0)>(+SV.savedAt||0)){const snd=SV.sound;SV=Object.assign(fresh(),cs);SV.sound=snd;try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}if(onLoad)onLoad()}
-          else if(SV.savedAt)push();return}
-        await sleep(9000)}},
-    async flush(){if(!cloud)return;clearTimeout(t);push();try{await ZC.flush(id)}catch(e){}}}}
-const fresh=()=>({v:1,coins:0,xp:0,lvl:1,skills:{},weapon:'sword',owned:{sword:1},wlvl:{sword:1},forge:{},charms:{},equip:[],best:0,runs:0,kills:0,sound:2,seenHelp:0,cos:{found:{},armor:'steel',cape:'red',aura:'none'},savedAt:0});
+  lastJ=norm(SV);
+  const ZC=ZP&&ZP.cloud&&typeof ZP.cloud.save==='function'?ZP.cloud:null,CL=!ZC&&window.claude&&typeof window.claude.use==='function'?window.claude:null;
+  let zcOn=false;const pushZ=()=>{try{ZC.save(id,JSON.stringify(SV),{})}catch(e){}};
+  async function pushDb(){if(!dbRef)return;if(busy){again=true;return}busy=true;
+    try{await dbRef.set({json:JSON.stringify(SV),savedAt:SV.savedAt||0});where='account'}catch(e){lastJ=''}
+    busy=false;if(again){again=false;pushDb()}}
+  const adopt=cs=>{const snd=SV.sound;SV=Object.assign(fresh(),cs);if(snd!=null)SV.sound=snd;lastJ=norm(SV);try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}};
+  return{get v(){return SV},get where(){return where},
+    save(force){const j=norm(SV);if(j===lastJ&&!force)return false;lastJ=j;SV.savedAt=Date.now();
+      try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}
+      if(zcOn){clearTimeout(zt);zt=setTimeout(pushZ,1500)}if(dbRef)pushDb();return true},
+    reset(){SV=fresh();this.save(true)},
+    async init(onLoad){
+      if(ZC){for(let a=0;a<6;a++){let r=null;try{r=await ZC.load(id)}catch(e){}
+          if(r&&r.ok){zcOn=true;where='account';let cs=null;try{cs=r.json?JSON.parse(r.json):null}catch(e){}
+            if(cs&&typeof cs==='object'&&(+cs.savedAt||0)>(+SV.savedAt||0)){adopt(cs);if(onLoad)onLoad()}else if(SV.savedAt)pushZ();return}
+          await sleep(9000)}return}
+      if(!CL)return;let db=null,user=null;try{[db,user]=await Promise.all([CL.use('db'),CL.use('user')])}catch(e){}
+      const uid=user?await user.id():null;if(!db||!uid)return;
+      try{dbRef=db.doc('data/users/'+uid+'/'+id)}catch(e){dbRef=null;return}
+      let snap=null;for(let a=0;a<2&&!snap;a++){try{snap=await dbRef.get()}catch(e){await sleep(800+rnd()*800)}}
+      if(!snap)return;where='account';let cs=null;
+      if(snap.exists){try{cs=JSON.parse(snap.data().json)}catch(e){}}
+      if(cs&&typeof cs==='object'&&(+cs.savedAt||0)>(+SV.savedAt||0)){adopt(cs);if(onLoad)onLoad()}
+      else if(SV.savedAt||!snap.exists){if(!SV.savedAt)SV.savedAt=Date.now();pushDb()}},
+    async flush(){try{localStorage.setItem(KEY,JSON.stringify(SV))}catch(e){}if(zcOn){clearTimeout(zt);pushZ();try{await ZC.flush(id)}catch(e){}}if(dbRef)await pushDb()}}}
+const fresh=()=>({v:1,coins:0,xp:0,lvl:1,skills:{},weapon:'sword',owned:{sword:1},wlvl:{sword:1},forge:{},charms:{},equip:[],best:0,runs:0,kills:0,sound:2,seenHelp:0,pending:null,gift1:0,cos:{found:{},armor:'steel',cape:'red',aura:'none'},savedAt:0});
 const SV=makeSave('vaultbreaker',fresh);
 S.mode=SV.v.sound;
 
@@ -671,7 +691,7 @@ function stepRun(dt){if(paused||run.shrine)return;
   const tgt=clamp(K.x-W*.36,run.arena.l,run.arena.r-W);cam+=(tgt-cam)*Math.min(1,dt*6)}
 function endRun(reason){if(res)return;const waves=Math.max(0,run.wave-1+(run.waveDone?1:0)),v=SV.v;
   const coinsE=Math.round(run.coins+waves*8),xp=Math.round(run.xp+waves*14),lv0=v.lvl;
-  v.coins+=coinsE;v.xp+=xp;while(v.xp>=xpFor(v.lvl)){v.xp-=xpFor(v.lvl);v.lvl++}
+  v.pending=null;v.coins+=coinsE;v.xp+=xp;while(v.xp>=xpFor(v.lvl)){v.xp-=xpFor(v.lvl);v.lvl++}
   const best=waves>v.best;v.best=Math.max(v.best,waves);v.runs++;v.kills+=run.kills;SV.save();
   res={reason,waves,kills:run.kills,coins:coinsE,xp,lv0,lv1:v.lvl,best,t:0,bless:run.bless.slice(),weapon:run.w.short,found:run.found.slice()};scr='results';SEL.results='ok';
   SND.play(MUSIC.camp);if(v.lvl>lv0)setTimeout(sfx.level,900)}
@@ -988,7 +1008,7 @@ function drawPause(){ctx.fillStyle='rgba(6,3,10,.78)';ctx.fillRect(0,0,W,H);T('P
 function setSound(m){SND.mode=m;SV.v.sound=m;SV.save();sfx.ok()}
 
 /* ---------------------------------------------------------------- the camp and its shops */
-function goCamp(){scr='camp';res=null;run=null;toastT=0;SND.play(MUSIC.camp);sfx.ok()}
+function goCamp(){scr='camp';res=null;run=null;toastT=0;SND.play(MUSIC.camp);sfx.ok();if(laterMsg){toast(laterMsg);toastT=7;laterMsg=''}}
 function drawCampBg(t){drawDungeon(t*4,t,ZONES[0]);const fx0=W*.7,fy=GROUND;
   const gr=ctx.createRadialGradient(fx0,fy-10,4,fx0,fy-10,120);gr.addColorStop(0,'rgba(255,150,60,.35)');gr.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=gr;ctx.fillRect(fx0-130,fy-130,260,140);
   for(let i=0;i<5;i++)R(fx0-12+i*5,fy-3,6,3,'#4a3020');
@@ -1011,6 +1031,7 @@ function drawCamp(t){drawCampBg(t);topBar();const v=SV.v,sp=spFree();
   box(W-150,28,140,50,{bg:'rgba(18,12,20,.75)'});T(w0.short+'  +'+((v.wlvl[w0.id]||1)-1),W-142,41,{s:8,c:'#ffe9a0'});T('✦ '+w0.spec.name,W-142,53,{s:7,c:'#9adfff'});T('✸ '+w0.ult.name,W-142,63,{s:7,c:'#ffd080'});
   const eq=v.equip.slice(0,slots()).map(id=>CHARMS.find(c=>c.id===id).name);T(eq.length?eq.join(' · '):'No charms worn',W-142,73,{s:6.5,c:'#c8a8ff'});
   T('Best: wave '+v.best+'   ·   Raids: '+v.runs+'   ·   Kills: '+fmt(v.kills),x,H-10,{s:7,c:'#a89878'});
+  T(SV.where==='account'?'✓ Saved to your account':'✓ Saved on this device',W-10,H-10,{a:'right',s:6.5,c:'#7fa58a'});
   if(!v.seenHelp)drawHelp()}
 function drawWardrobe(t){drawCampBg(t);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,0,W,H);topBar('WARDROBE');const v=SV.v,all=cosAll(),nf=all.filter(c=>cosFound(c.id)).length;
   T(nf+' of '+all.length+' found',130,14,{s:7.5,c:'#c8b898'});
@@ -1156,10 +1177,28 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(scr==='
 
 window.ZPCart={title:'Vaultbreaker',input(b,d){btnSet(b,d)},async home(){try{await SV.flush()}catch(e){}return scr==='run'&&run&&!run.over?'ask':true},snapshot:()=>null};
 if(ZP){try{if(ZP.takeRestore)ZP.takeRestore('vaultbreaker')}catch(e){}try{if(ZP.cartReady)ZP.cartReady(window.ZPCart)}catch(e){}}
-SV.init(()=>{S.mode=SV.v.sound});
+/* ---------------------------------------------------------------- autosave */
+let laterMsg='';
+function notice(m){if(scr==='camp'){toast(m);toastT=7}else laterMsg=laterMsg?laterMsg+'  ·  '+m:m}
+/* the loot of a raid in progress, so closing the game mid-raid keeps it */
+function notePending(){if(scr==='run'&&run&&!run.over&&!res)SV.v.pending={coins:Math.round(run.coins+coins.reduce((a,c)=>a+c.v,0)),xp:Math.round(run.xp),kills:run.kills,waves:Math.max(0,run.wave-1+(run.waveDone?1:0))}}
+/* a raid that was left unfinished last time: its loot is added now */
+function bankPending(){const v=SV.v,p=v.pending;if(!p||typeof p!=='object')return;v.pending=null;
+  const w=+p.waves||0,c=Math.round((+p.coins||0)+w*8),x=Math.round((+p.xp||0)+w*14);v.coins+=c;v.xp+=x;while(v.xp>=xpFor(v.lvl)){v.xp-=xpFor(v.lvl);v.lvl++}
+  v.best=Math.max(v.best,w);v.kills+=+p.kills||0;v.runs++;SV.save();if(c||x)notice('Your unfinished raid was kept: +'+fmt(c)+' coins, +'+fmt(x)+' XP')}
+/* a one-time gift for the artifact's owner */
+async function ownerGift(){if(SV.v.gift1||!window.claude||typeof window.claude.use!=='function'||ZP)return;let user=null;try{user=await window.claude.use('user')}catch(e){}
+  if(!user||!(await user.isOwner())||SV.v.gift1)return;const v=SV.v;v.gift1=1;v.coins+=1000;Object.assign(v.cos.found,{embercape:1,obsidian:1,holy:1});
+  v.cos.armor='obsidian';v.cos.cape='embercape';v.cos.aura='holy';SV.save(true);sfx.level();notice('A gift: 1,000 coins, Obsidian Mail, Ember Cape and Holy Aura (now worn)')}
+function autosave(){notePending();SV.save()}
+setInterval(autosave,5000);
+addEventListener('pagehide',()=>{notePending();SV.save();SV.flush()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){notePending();SV.save();SV.flush()}});
+bankPending();
+SV.init(()=>{S.mode=SV.v.sound;bankPending()}).then(ownerGift,ownerGift);
 addEventListener('resize',resize);resize();requestAnimationFrame(frame);
 /* hooks for tests and the label maker */
 window.__vb={get scr(){return scr},set scr(v){scr=v},get run(){return run},get K(){return K},get foes(){return foes},SV,startRun,stepRun,btnSet,spawnFoe,endRun,goCamp,nextWave,calcStats,WEAPONS,TREES,
-  get res(){return res},openShrine,takeBless,placeDoor,nearDoor,goThrough,COS,AREAS,setCam(v){cam=v},drawRun};
+  get res(){return res},bankPending,notePending,autosave,openShrine,takeBless,placeDoor,nearDoor,goThrough,COS,AREAS,setCam(v){cam=v},drawRun};
 </script>
 </body></html>
